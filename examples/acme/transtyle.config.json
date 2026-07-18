@@ -1,0 +1,23 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "acme-design-system",
+  "tokens": ["tokens/*.tokens.json"],
+  "modes": {
+    "color-scheme": { "values": ["light", "dark"], "default": "light" }
+  },
+  "derivation": {
+    "rules": "standard@1",
+    "autoDark": false,
+    "require": ["semantic.color.primary"]
+  },
+  "targets": {
+    "shadcn": {
+      "output": "dist/shadcn",
+      "options": { "era": "tailwind-v4" }
+    }
+  },
+  "check": {
+    "failOn": "error",
+    "contrast": { "standard": "wcag21-aa" }
+  }
+}

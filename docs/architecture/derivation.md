@@ -24,12 +24,16 @@ Illustrative, not exhaustive; the full table ships as a generated reference doc.
 | `success` / `warning` / `danger` | fixed hue anchors (green/amber/red) with chroma/lightness matched to the brand palette — hue is conventional, temperature follows the brand |
 | role `hover` / `active` states | OKLCH lightness deltas from `base` (direction flips in dark mode) |
 | role `subtle` | base mixed toward `surface` (the generic form of Bootstrap's `-bg-subtle` and shadcn's muted pairings) |
-| `text-on-<role>` | pick white/black/near-neutral maximizing contrast against `<role>.base`; **hard rule: if no candidate reaches WCAG AA 4.5:1, emit a warning naming the role — never silently ship failing contrast** |
+| `text-on-<role>.base` | pick white/black/near-neutral maximizing contrast against `<role>.base`; **hard rule: if no candidate reaches WCAG AA 4.5:1, emit a warning naming the role — never silently ship failing contrast** |
+| `text-on-<role>.subtle` | contrast-pick against `<role>.subtle`, candidates include the role's darkened/lightened base (so tinted backgrounds get on-brand foregrounds); same AA hard rule ([exercise F1](../exercises/phase0-shadcn.md)) |
+| `surface-raised` / `overlay` | raise(`surface`): toward white in light mode, lightness increase in dark mode; `overlay` defaults to alias of `surface-raised` |
+| `ring` | alias of `primary.base`, lightened in dark mode for visibility ([exercise F3](../exercises/phase0-shadcn.md)) |
 | option color scales (`50…950`) from a single brand color | perceptual lightness ramp in OKLCH with chroma compensation |
 | dark mode values (only if `derivation.autoDark: true`, default **off**) | lightness inversion + chroma adjustment per role; off by default because auto-dark is the least trustworthy derivation class — it must be opted into, and its output is classified `derived` in coverage so teams see exactly how much of their dark theme is synthetic |
 | type scale from `base` + `ratio` | modular scale, rounded to a rounding policy |
 | spacing scale from `base` unit | linear ×n scale |
-| `shadow.*` | composed from `overlay` color at fixed alpha ramps |
+| `scrim` | near-black at fixed alpha (dimming veil; distinct from `overlay` — [exercise F2](../exercises/phase0-shadcn.md)) |
+| `shadow.*` | composed from `scrim` color at fixed alpha ramps |
 | `z.*` catalog | fixed default ladder (defaulted, not derived) |
 
 ## Provenance classes and the "defaulted" distinction

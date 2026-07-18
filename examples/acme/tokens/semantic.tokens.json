@@ -1,0 +1,57 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "base": { "$value": "{option.color.blue.600}" }
+      },
+      "background": {
+        "base": {
+          "$value": "{option.color.white}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.950}" } }
+          }
+        }
+      },
+      "surface": {
+        "base": {
+          "$value": "{option.color.gray.50}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } }
+          }
+        }
+      },
+      "text": {
+        "base": {
+          "$value": "{option.color.gray.900}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.50}" } }
+          }
+        }
+      },
+      "text-muted": {
+        "base": {
+          "$value": "{option.color.gray.500}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.400}" } }
+          }
+        }
+      },
+      "border": {
+        "base": {
+          "$value": "{option.color.gray.200}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.800}" } }
+          }
+        }
+      }
+    },
+    "radius": {
+      "md": { "$type": "dimension", "$value": "0.5rem" }
+    },
+    "font": {
+      "sans": { "$type": "fontFamily", "$value": "{option.font.sans}" },
+      "mono": { "$type": "fontFamily", "$value": "{option.font.mono}" }
+    }
+  }
+}

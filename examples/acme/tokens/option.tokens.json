@@ -1,0 +1,33 @@
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "white": { "$value": "oklch(1 0 0)" },
+      "blue": {
+        "500": { "$value": "oklch(0.62 0.17 255)" },
+        "600": { "$value": "oklch(0.55 0.18 255)" },
+        "700": { "$value": "oklch(0.48 0.16 255)" }
+      },
+      "gray": {
+        "50": { "$value": "oklch(0.985 0.003 255)" },
+        "100": { "$value": "oklch(0.96 0.004 255)" },
+        "200": { "$value": "oklch(0.92 0.006 255)" },
+        "400": { "$value": "oklch(0.7 0.01 255)" },
+        "500": { "$value": "oklch(0.55 0.012 255)" },
+        "800": { "$value": "oklch(0.3 0.012 255)" },
+        "900": { "$value": "oklch(0.22 0.012 255)" },
+        "950": { "$value": "oklch(0.15 0.01 255)" }
+      }
+    },
+    "font": {
+      "sans": {
+        "$type": "fontFamily",
+        "$value": ["Inter", "system-ui", "sans-serif"]
+      },
+      "mono": {
+        "$type": "fontFamily",
+        "$value": ["JetBrains Mono", "ui-monospace", "monospace"]
+      }
+    }
+  }
+}

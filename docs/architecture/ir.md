@@ -31,7 +31,7 @@ Tier is structural (top-level group name: `option.*`, `semantic.*`, `component.*
 
 A fixed, versioned catalog of semantic slots that exporters may rely on existing after DERIVE. Initial catalog (v0, foundations only):
 
-- **Color roles:** `primary`, `secondary`, `accent`, `success`, `warning`, `danger`, `info`, `neutral`; surfaces `background`, `surface`, `surface-raised`, `overlay`; content `text`, `text-muted`, `text-on-primary` (…`-on-<role>` generated per role); `border`, `ring`. Each role is a scale: `base`, `hover`, `active`, `subtle`, `contrast` — not a single value, because real targets need states.
+- **Color roles:** `primary`, `secondary`, `accent`, `success`, `warning`, `danger`, `info`, `neutral`; surfaces `background`, `surface`, `surface-raised`, `overlay` (floating layers: popover/menu/dialog), `scrim` (dimming veil behind modals — distinct from `overlay` per exercise finding [F2](../exercises/phase0-shadcn.md)); content `text`, `text-muted`, and per-role `text-on-<role>.{base, subtle}` (the `subtle` pairing exists because tinted backgrounds need their own readable foreground — finding [F1](../exercises/phase0-shadcn.md)); `border`, `ring`. Each role is a scale: `base`, `hover`, `active`, `subtle`, `contrast` — not a single value, because real targets need states.
 - **Typography:** family roles `sans`, `serif`, `mono`, `display`; a modular size scale `size.xs…size.4xl`; weights `regular`, `medium`, `semibold`, `bold`; `leading` and `tracking` scales.
 - **Spacing:** a numeric scale (`space.0…space.24`) + semantic aliases `inset.{sm,md,lg}`, `stack.{sm,md,lg}`, `gap.{sm,md,lg}`.
 - **Shape:** `radius.{none,sm,md,lg,xl,full}`, `border-width.{thin,medium,thick}`.
