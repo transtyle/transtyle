@@ -81,3 +81,5 @@ Rules: the mode matrix is the cross-product of dimensions, resolved per-dimensio
 ## Stability policy
 
 The IR schema carries `"$schema": ".../ir/v0"`. Within a major spec version: new optional slots and types may appear (minor); nothing is removed or re-typed. Exporters declare the IR spec range they support; core refuses mismatches with a clear diagnostic rather than corrupting output.
+
+**Cross-target value contracts.** Some *derived values* are shared by multiple exporters and therefore constitute an ABI stronger than rule-pack pinning: they may not change even across rule-pack versions without a major. The first such contract: **`palette.categorical.1–5` are frozen** — shadcn's `--chart-1…5` and ECharts' `color[]` consume the same entries, and "charts match across every target" is a product promise, not an implementation detail. Extending the palette appends entries only (5 → 8 was done this way, verified by byte-comparing shadcn output before/after). Any future shared derived value must be declared in this section when the second consumer appears.
