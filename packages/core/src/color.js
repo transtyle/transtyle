@@ -80,6 +80,46 @@ function srgbToOklch({ r, g, b }) {
   return { l: L, c, h, alpha: 1 };
 }
 
+const linearToSrgb = (v) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
+
+/**
+ * OKLCH → gamma-encoded sRGB. `clamped` is true when the color was outside the
+ * sRGB gamut and had to be clamped (coverage class: approximated).
+ */
+export function oklchToSrgb(color) {
+  const lin = oklchToLinearSrgb(color);
+  let clamped = false;
+  const enc = (v) => {
+    if (v < -0.005 || v > 1.005) clamped = true;
+    return linearToSrgb(Math.min(1, Math.max(0, v)));
+  };
+  return { r: enc(lin.r), g: enc(lin.g), b: enc(lin.b), clamped };
+}
+
+/**
+ * Format as an HSL channel triplet ("221 83% 53%") — the shadcn tailwind-v3
+ * convention (wrapped by components as hsl(var(--x))).
+ */
+export function formatHslTriplet(color) {
+  // Near-achromatic: drop the meaningless hue/saturation before conversion,
+  // otherwise rounding noise yields absurd triplets like "180 100% 99.9%".
+  const input = color.c < 0.002 ? { ...color, c: 0 } : color;
+  const { r, g, b, clamped } = oklchToSrgb(input);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  let h = 0, s = 0;
+  if (d > 1e-6) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  const r1 = (n) => Math.round(n * 10) / 10;
+  return { text: `${r1(h)} ${r1(s * 100)}% ${r1(l * 100)}%`, clamped };
+}
+
 /** WCAG 2.1 relative luminance (via linear sRGB, gamut-clamped). */
 export function relativeLuminance(color) {
   const { r, g, b } = oklchToLinearSrgb(color);

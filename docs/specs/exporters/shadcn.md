@@ -29,6 +29,12 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 
 Fixture Vite app with a representative shadcn component set; CI applies generated `globals.transtyle.css`, builds with the era's Tailwind, headless-renders light and dark, and asserts computed styles for key component/variable pairs. Also validates emitted CSS parses under the era's toolchain.
 
+## Out of scope
+
+`components.json` with `cssVariables: false` (utility-class theming) is not supported: without variables there is no theme *artifact* — theming means rewriting component files, which violates the generated-output-only principle. The exporter documents this as a limitation rather than emitting something misleading. Non-Tailwind consumers who want shadcn-convention variables are served by the `:root`/`.dark` blocks directly (self-contained) or, properly, by the `css-variables` exporter.
+
 ## Notes
+
+Both era profiles are implemented in the walking skeleton (`@transtyle/exporter-shadcn`), selected via target `options.era` using [target instances](../configuration.md#target-instances). In the tailwind-v3 profile, OKLCH → HSL conversion may clamp out-of-sRGB-gamut colors; clamped variables are classified `approximated` with a gamut note.
 
 No `transtyle doc` capability planned (shadcn's site documents the collection, not a themable build). Tier 1 preview covers the need with component samples. This exporter is also the primary showcase inside the [Storybook exporter](storybook.md)'s preview integration.

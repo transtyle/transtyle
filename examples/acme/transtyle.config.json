@@ -14,6 +14,11 @@
     "shadcn": {
       "output": "dist/shadcn",
       "options": { "era": "tailwind-v4" }
+    },
+    "shadcn-v3": {
+      "exporter": "shadcn",
+      "output": "dist/shadcn-v3",
+      "options": { "era": "tailwind-v3" }
     }
   },
   "check": {

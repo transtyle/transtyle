@@ -48,6 +48,19 @@ Rationale: token files stay valid, portable DTCG that Figma/Tokens Studio/Style 
 
 Target-specific `options` are defined and schema-validated by each exporter (the exporter manifest ships its options schema; unknown options are errors, not silent ignores).
 
+### Target instances
+
+A `targets` key is an **instance name**, not necessarily an exporter name. The optional `exporter` field selects the plugin (defaulting to the key), so one exporter can be configured multiple times with different options — e.g. shadcn in both Tailwind eras:
+
+```jsonc
+"targets": {
+  "shadcn":    { "exporter": "shadcn", "options": { "era": "tailwind-v4" }, "output": "dist/shadcn" },
+  "shadcn-v3": { "exporter": "shadcn", "options": { "era": "tailwind-v3" }, "output": "dist/shadcn-v3" }
+}
+```
+
+`transtyle build shadcn-v3` selects by instance name. Variant selection lives here — in reviewed, locked config — never in CLI flags, for the reproducibility reasons in [cli.md](cli.md). (Gap found while implementing the walking skeleton; the original spec assumed one instance per exporter.)
+
 ## Token file conventions
 
 Standard DTCG plus:

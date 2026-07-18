@@ -13,10 +13,11 @@ cd examples/acme
 npx transtyle build shadcn
 ```
 
-Output in `dist/shadcn/`:
+Two shadcn target instances are configured (same exporter, different era profiles — see the `exporter` field in `transtyle.config.json`):
 
-- `globals.transtyle.css` — complete shadcn theme (`:root` + `.dark` + `@theme inline`, Tailwind v4 era). Copy it into a shadcn project; instructions in the generated `usage.md`.
-- `report.json` — coverage (native/derived/approximated per variable) and provenance for every value.
+- `npx transtyle build shadcn` → `dist/shadcn/`: Tailwind **v4** era — `globals.transtyle.css` with `:root` + `.dark` + `@theme inline`, OKLCH values.
+- `npx transtyle build shadcn-v3` → `dist/shadcn-v3/`: Tailwind **v3** era — HSL channel triplets in `@layer base` plus a `tailwind.theme.transtyle.cjs` snippet to merge into `tailwind.config`.
+- `npx transtyle build` builds both. Each output includes a generated `usage.md` (paste instructions) and `report.json` (coverage + provenance per variable).
 
 `npx transtyle check` runs the same pipeline without writing files (validation, contrast checks, coverage).
 

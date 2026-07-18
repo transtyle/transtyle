@@ -10,9 +10,9 @@ import { normalize } from './normalize.js';
 import { derive } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
-import { formatColor, contrastRatio } from './color.js';
+import { formatColor, formatHslTriplet, contrastRatio } from './color.js';
 
-export { formatColor, contrastRatio } from './color.js';
+export { formatColor, formatHslTriplet, contrastRatio } from './color.js';
 export { Diagnostics } from './diagnostics.js';
 
 /**
@@ -49,10 +49,13 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
     }
     if (diagnostics.errors.length > 0) break; // never emit with errors present
 
-    const exporter = await loadExporter(name);
+    // Target instances: the config key is the instance name; `exporter` selects
+    // the plugin (defaults to the key), so one exporter can be configured twice
+    // with different options (docs/specs/configuration.md#target-instances).
+    const exporter = await loadExporter(targetConfig.exporter ?? name);
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
     const ctx = {
-      config, targetConfig, formatColor, contrastRatio,
+      config, targetConfig, formatColor, formatHslTriplet, contrastRatio,
       projectName: config.name ?? 'design-system',
     };
     const { files, coverage } = exporter.emit(normalized, ctx);
