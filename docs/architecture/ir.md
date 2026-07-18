@@ -54,7 +54,7 @@ DTCG has no mode concept yet; this is our largest extension.
 }
 ```
 
-Token files provide per-mode values via `$extensions`:
+Per-mode values have two equivalent authoring forms — inline `$extensions` (below), or **mode-scoped layer files** declared in the manifest so token sources stay pure DTCG ([ADR-0009](../adr/0009-token-layering.md), [configuration.md](../specs/configuration.md#token-layering)). Both produce the identical internal representation. Inline form:
 
 ```jsonc
 "surface": {

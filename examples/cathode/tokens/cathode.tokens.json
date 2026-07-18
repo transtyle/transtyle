@@ -27,5 +27,19 @@
         "$value": ["IBM Plex Mono", "Courier New", "monospace"]
       }
     }
+  },
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "crt": {
+        "ink": { "$value": "{option.color.phosphor.green}" },
+        "ink-dim": { "$value": "{option.color.phosphor.green-dim}" },
+        "tube": { "$value": "{option.color.tube.black}" },
+        "glass": { "$value": "{option.color.tube.glass}" },
+        "scanline": { "$value": "{option.color.tube.scanline}" },
+        "amber": { "$value": "{option.color.phosphor.amber}" },
+        "meltdown": { "$value": "{option.color.phosphor.red}" }
+      }
+    }
   }
 }

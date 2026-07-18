@@ -61,12 +61,27 @@ A `targets` key is an **instance name**, not necessarily an exporter name. The o
 
 `transtyle build shadcn-v3` selects by instance name. Variant selection lives here — in reviewed, locked config — never in CLI flags, for the reproducibility reasons in [cli.md](cli.md). (Gap found while implementing the walking skeleton; the original spec assumed one instance per exporter.)
 
+## Token layering
+
+The `tokens` array is an **ordered list of layers** ([ADR-0009](../adr/0009-token-layering.md)). A layer is either a glob (base layer) or a mode-scoped object:
+
+```jsonc
+"tokens": [
+  "tokens/cathode.tokens.json",                                              // base: source of truth, pure DTCG
+  { "files": "tokens/cathode.light.tokens.json",
+    "mode": { "color-scheme": "light" } },                                   // mode overlay: pure DTCG, mode assigned HERE
+  "tokens/transtyle.bindings.tokens.json"                                    // bindings: pure DTCG aliases → catalog slots
+]
+```
+
+This is the **recommended layout for teams whose token files are generated or owned elsewhere**: every token file stays valid, tool-ingestible DTCG; transtyle-specific syntax is confined to this manifest. Inline `$extensions["transtyle.modes"]` remains fully supported (see the Acme example) — both forms produce the identical internal representation, and may be mixed. Precedence: later layers win; overriding an existing mode value warns (`TST1108`); a mode value for a token with no default-mode value is skipped with a warning (`TST1107`); an undeclared mode errors (`TST1109`). Layer *order is semantic* — treat the manifest's `tokens` array as carefully as an import order.
+
 ## Token file conventions
 
 Standard DTCG plus:
 
 - Top-level groups define tier: `option`, `semantic`, `component` (reserved) — see [ir.md](../architecture/ir.md#the-three-tier-token-model).
-- `$extensions["transtyle.modes"]` for per-mode values.
+- Per-mode values: either `$extensions["transtyle.modes"]` inline, or mode-scoped layers (above).
 - Multiple files merge by group path; a token defined twice is a warning (override allowed only with explicit `"$extensions": {"transtyle.override": true}` on the winner — silent last-wins merging is how large token repos rot).
 
 Example:

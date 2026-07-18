@@ -12,3 +12,4 @@ Format: [MADR](https://adr.github.io/madr/)-lite — Status / Context / Decision
 | [0006](0006-version-ranges.md) | Target versions are compatibility ranges, not exact pins | accepted |
 | [0007](0007-doc-generation-scope.md) | Own preview site first; upstream doc rebuild is experimental | accepted |
 | [0008](0008-importers-first-class.md) | Importers are first-class frontends symmetric to exporters | accepted |
+| [0009](0009-token-layering.md) | Token sources stay pure DTCG; modes and bindings may live in separate layers | accepted |

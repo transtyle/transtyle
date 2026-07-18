@@ -1,7 +1,11 @@
 {
   "$schema": "https://transtyle.dev/schemas/config/v0.json",
   "name": "cathode-terminal",
-  "tokens": ["tokens/*.tokens.json"],
+  "tokens": [
+    "tokens/cathode.tokens.json",
+    { "files": "tokens/cathode.light.tokens.json", "mode": { "color-scheme": "light" } },
+    "tokens/transtyle.bindings.tokens.json"
+  ],
   "modes": {
     "color-scheme": { "values": ["dark", "light"], "default": "dark" }
   },

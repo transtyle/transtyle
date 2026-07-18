@@ -1,0 +1,14 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "crt": {
+        "ink": { "$value": "{option.color.paper.ink}" },
+        "ink-dim": { "$value": "{option.color.paper.ink-faded}" },
+        "tube": { "$value": "{option.color.paper.white}" },
+        "glass": { "$value": "{option.color.paper.shade}" },
+        "scanline": { "$value": "{option.color.paper.rule}" }
+      }
+    }
+  }
+}

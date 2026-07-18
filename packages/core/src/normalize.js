@@ -16,11 +16,39 @@ export function normalize(tokenTrees, config, diagnostics) {
   if (modeDims.length > 1) throw new Error('Skeleton supports a single mode dimension.');
   const [dimName, dim] = modeDims[0] ?? ['color-scheme', { values: ['light'], default: 'light' }];
 
+  // Base layers merge into the token forest; mode-scoped layers inject values
+  // into the same modeValues structure that inline $extensions produce — the
+  // two authoring forms are equivalent by construction (ADR-0009).
   const merged = mergeTrees(
-    tokenTrees.map((t) => t.tree),
+    tokenTrees.filter((t) => !t.modeScope).map((t) => t.tree),
     (p) => diagnostics.warn('TST1103', `Token defined more than once (last wins): ${p}`),
   );
   const raw = collectTokens(merged);
+
+  for (const layer of tokenTrees.filter((t) => t.modeScope)) {
+    const scopeEntries = Object.entries(layer.modeScope);
+    if (scopeEntries.length !== 1) {
+      diagnostics.error('TST1110', `${layer.file}: a mode-scoped layer must target exactly one dimension`);
+      continue;
+    }
+    const [scopeDim, scopeMode] = scopeEntries[0];
+    if (!config.modes?.[scopeDim]?.values.includes(scopeMode)) {
+      diagnostics.error('TST1109', `${layer.file}: unknown mode "${scopeDim}: ${scopeMode}" (not declared in config.modes)`);
+      continue;
+    }
+    for (const [tokenPath, tok] of collectTokens(layer.tree)) {
+      const base = raw.get(tokenPath);
+      if (!base) {
+        diagnostics.warn('TST1107', `${layer.file}: mode value for unknown token "${tokenPath}" (no default-mode value exists) — skipped`);
+        continue;
+      }
+      base.modeValues[scopeDim] ??= {};
+      if (base.modeValues[scopeDim][scopeMode] !== undefined) {
+        diagnostics.warn('TST1108', `${tokenPath}: ${scopeDim}=${scopeMode} value overridden by later layer ${layer.file}`);
+      }
+      base.modeValues[scopeDim][scopeMode] = tok.value;
+    }
+  }
 
   const modes = {};
   for (const mode of dim.values) {

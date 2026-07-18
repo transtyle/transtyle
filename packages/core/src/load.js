@@ -40,16 +40,25 @@ async function expandGlob(cwd, pattern) {
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export async function loadTokenTrees(cwd, globs, diagnostics) {
+/**
+ * Token entries are strings (globs) or objects `{ files, mode }` — the latter
+ * declares a mode-scoped layer: a pure DTCG file whose values apply to one
+ * mode of one dimension (docs/specs/configuration.md#token-layering).
+ */
+export async function loadTokenTrees(cwd, entries, diagnostics) {
   const trees = [];
-  for (const g of globs) {
-    const files = await expandGlob(cwd, g);
-    if (files.length === 0) diagnostics.warn('TST1001', `Token glob matched no files: ${g}`);
-    for (const f of files) {
-      try {
-        trees.push({ file: path.relative(cwd, f), tree: JSON.parse(await readFile(f, 'utf8')) });
-      } catch (e) {
-        diagnostics.error('TST1002', `Failed to parse ${f}: ${e.message}`);
+  for (const entry of entries) {
+    const globs = typeof entry === 'string' ? [entry] : [].concat(entry.files);
+    const modeScope = typeof entry === 'string' ? undefined : entry.mode;
+    for (const g of globs) {
+      const files = await expandGlob(cwd, g);
+      if (files.length === 0) diagnostics.warn('TST1001', `Token glob matched no files: ${g}`);
+      for (const f of files) {
+        try {
+          trees.push({ file: path.relative(cwd, f), tree: JSON.parse(await readFile(f, 'utf8')), modeScope });
+        } catch (e) {
+          diagnostics.error('TST1002', `Failed to parse ${f}: ${e.message}`);
+        }
       }
     }
   }
