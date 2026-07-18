@@ -1,0 +1,12 @@
+{
+  "name": "@transtyle/cli",
+  "version": "0.1.0",
+  "description": "Transtyle CLI — compile a design system to native framework themes.",
+  "type": "module",
+  "bin": { "transtyle": "./src/main.js" },
+  "dependencies": {
+    "@transtyle/core": "*",
+    "@transtyle/exporter-shadcn": "*"
+  },
+  "license": "MIT"
+}

@@ -2,7 +2,7 @@
 
 > A design system compiler. Describe your design system once; compile it to every ecosystem.
 
-**Status: design phase.** No code exists yet. This repository currently contains the complete product blueprint. See [docs/](docs/) for the full documentation set and [ROADMAP.md](ROADMAP.md) for the path to a first release.
+**Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a first working implementation: the core pipeline and a shadcn/ui exporter, exercised end-to-end by the [Acme example](examples/acme/). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
 
 ## What it is
 
@@ -29,16 +29,18 @@ One source of truth in the middle; pluggable frontends and backends on either si
 4. **Exporters are plugins.** The core knows nothing about Bootstrap. Official and third-party exporters use the same public plugin API, versioned independently of the CLI. See [docs/architecture/plugins.md](docs/architecture/plugins.md).
 5. **Generated output is native and disposable.** Outputs are idiomatic files for the target (a `_variables.scss` a Bootstrap dev would recognize), never a runtime dependency on us. Regeneration is byte-deterministic.
 
-## Quick taste (design target — not yet implemented)
+## Try it now
 
 ```bash
-npx transtyle init                      # scaffold tokens/ + transtyle.config.json
-npx transtyle add bootstrap shadcn      # install exporters
-npx transtyle build                     # compile all configured targets
-npx transtyle build bootstrap@5.3       # compile one target at a specific version line
-npx transtyle explain color.accent      # why does this token have this value?
-npx transtyle check                     # validate, contrast-check, coverage report
+npm install                 # link workspaces (zero external dependencies)
+cd examples/acme
+npx transtyle build shadcn  # → dist/shadcn/globals.transtyle.css + usage.md + report.json
+npx transtyle check         # pipeline without emit: validation + contrast + coverage
 ```
+
+The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project — see the generated `usage.md`. 11 authored tokens produce the full shadcn variable set; everything else is derived deterministically with provenance recorded in `report.json`.
+
+Full design-target CLI (`init`, `add`, `explain`, `diff`, version pinning) is specced in [docs/specs/cli.md](docs/specs/cli.md); the skeleton implements `build` and `check`.
 
 ## Documentation map
 

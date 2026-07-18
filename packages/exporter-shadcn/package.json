@@ -1,0 +1,18 @@
+{
+  "name": "@transtyle/exporter-shadcn",
+  "version": "0.1.0",
+  "description": "Transtyle exporter for shadcn/ui (tailwind-v4 era).",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js" },
+  "transtyle": {
+    "kind": "exporter",
+    "name": "shadcn",
+    "irSpec": "v0-draft",
+    "pluginApi": "0",
+    "targets": { "shadcn": ["tailwind-v3", "tailwind-v4"] },
+    "modes": ["color-scheme"],
+    "capabilities": ["build"]
+  },
+  "license": "MIT"
+}

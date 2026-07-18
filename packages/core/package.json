@@ -1,0 +1,10 @@
+{
+  "name": "@transtyle/core",
+  "version": "0.1.0",
+  "description": "Transtyle core: compilation pipeline (load, normalize, derive, resolve, emit, report).",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js" },
+  "dependencies": { "@transtyle/ir": "*" },
+  "license": "MIT"
+}
