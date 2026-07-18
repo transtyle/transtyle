@@ -15,7 +15,7 @@ The tractable, high-value 90%: describe how components should **look** — not h
   "button": {
     "radius":   { "$value": "{semantic.radius.interactive}" },
     "paddingX": { "$value": "{semantic.space.4}" },
-    "variants": { "$extensions": { "dsx.variants": {
+    "variants": { "$extensions": { "transtyle.variants": {
       "primary": { "bg": "{semantic.color.primary.base}", "fg": "{semantic.color.text-on-primary.base}" },
       "ghost":   { "bg": "transparent", "fg": "{semantic.color.primary.base}" }
     } } }

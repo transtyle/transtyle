@@ -10,7 +10,7 @@ The original vision: `--doc` downloads a target framework's documentation site, 
 
 The underlying user need is real, though: *see and share your brand applied to a target ecosystem*. We meet it in three tiers, cheapest first.
 
-## Tier 1 — Themed preview site (`dsx preview`, Phase 2, core feature)
+## Tier 1 — Themed preview site (`transtyle preview`, Phase 2, core feature)
 
 Our own static site, generated from build output + report:
 
@@ -25,7 +25,7 @@ Fully deterministic, fully ours, one site to maintain. This is what most compani
 
 For teams with their own Storybook, the [Storybook exporter](exporters/storybook.md) themes manager + preview and can scaffold token-reference stories. Their components, our theme — the highest-value "branded documentation" with none of the upstream-rebuild cost.
 
-## Tier 3 — Upstream doc rebuild (`dsx doc <target>`, Phase 3, experimental, capability-gated)
+## Tier 3 — Upstream doc rebuild (`transtyle doc <target>`, Phase 3, experimental, capability-gated)
 
 The original vision's feature, kept — but honestly scoped:
 

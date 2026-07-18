@@ -4,7 +4,7 @@ Four independently-versioned surfaces. Conflating them is how ecosystems end up 
 
 | Surface | Versioned as | Stability promise |
 |---|---|---|
-| **IR spec** | `ir/v0`, `ir/v1`… (major.minor) | The slowest-moving artifact. Minor = additive only (new optional slots/types). Major = migration guide + `dsx migrate` codemod. Token files written by users are covered by this promise. |
+| **IR spec** | `ir/v0`, `ir/v1`… (major.minor) | The slowest-moving artifact. Minor = additive only (new optional slots/types). Major = migration guide + `transtyle migrate` codemod. Token files written by users are covered by this promise. |
 | **Plugin API** | its own semver (`pluginApi: ^0`) | Interfaces + `plugin-kit`. Core supports ≥2 adjacent majors during deprecation windows so the plugin ecosystem never has to move in lockstep. |
 | **CLI / core packages** | normal npm semver | UX may evolve fast; `report.json` and other machine outputs get schema fields so CI consumers survive changes. |
 | **Each exporter** | its own npm semver | Independent release cadence — a Bootstrap 5.4 release must be shippable the same week without touching core. |
@@ -13,7 +13,7 @@ Core checks declared ranges at load time (`irSpec`, `pluginApi` from the manifes
 
 ## Target framework versions ([ADR-0006](../adr/0006-version-ranges.md))
 
-The vision pitched `dsx build bootstrap 5.3.8` — patch-level targeting. We deliberately weaken this to **range-based compatibility**:
+The vision pitched `transtyle build bootstrap 5.3.8` — patch-level targeting. We deliberately weaken this to **range-based compatibility**:
 
 - Exporters declare supported ranges per framework: `"bootstrap": [">=5.2 <5.3", ">=5.3 <6"]`, each backed by a mapping profile.
 - Users request a version (`bootstrap@5.3.8`, or pinned in config); core selects the covering profile. The *requested* version is recorded in the build manifest; the *profile* determines output.
@@ -25,12 +25,12 @@ The vision pitched `dsx build bootstrap 5.3.8` — patch-level targeting. We del
 
 - *Bootstrap 6 releases* → exporter major or minor (new profile), no core change.
 - *New semantic slot added to catalog* (e.g. `color.link`) → IR spec minor; exporters opt in when ready; coverage reports "slot unmapped by this exporter version" in the meantime.
-- *Standard derivation rule-pack changes a formula* → new rule-pack version (`standard@2`); users upgrade explicitly in config; `dsx diff` shows the resulting token changes ([derivation.md](derivation.md)).
+- *Standard derivation rule-pack changes a formula* → new rule-pack version (`standard@2`); users upgrade explicitly in config; `transtyle diff` shows the resulting token changes ([derivation.md](derivation.md)).
 - *Exporter `emit` output format improves* (same inputs, different file contents) → exporter minor at least, and release notes must say "regenerated output will differ" — byte-determinism is promised per version set, not across upgrades.
 
 ## Reproducibility
 
-`dsx.lock` (generated) records: core/CLI versions, every plugin version, rule-pack version, IR spec version. Committed to the user's repo. `dsx build --frozen` (default in CI) fails on any drift. This is the Terraform lockfile lesson applied to design systems: a theme regenerated two years later must either be identical or fail loudly asking to upgrade intentionally.
+`transtyle.lock` (generated) records: core/CLI versions, every plugin version, rule-pack version, IR spec version. Committed to the user's repo. `transtyle build --frozen` (default in CI) fails on any drift. This is the Terraform lockfile lesson applied to design systems: a theme regenerated two years later must either be identical or fail loudly asking to upgrade intentionally.
 
 ## Deprecation policy
 

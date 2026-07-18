@@ -8,11 +8,11 @@ The vision sketched plugins as file bundles (`resolver.json`, `mapping.json`, `g
 
 ## Decision
 
-A plugin is an npm package: declarative mapping profiles + a small programmatic interface (`resolve`/`emit`/`doc`), with a static `dsx` manifest in `package.json` readable without executing code ([plugins.md](../architecture/plugins.md)). Official plugins live in the monorepo under `@ds-exporter/*`, independently versioned; community plugins are ordinary npm packages.
+A plugin is an npm package: declarative mapping profiles + a small programmatic interface (`resolve`/`emit`/`doc`), with a static `transtyle` manifest in `package.json` readable without executing code ([plugins.md](../architecture/plugins.md)). Official plugins live in the monorepo under `@transtyle/*`, independently versioned; community plugins are ordinary npm packages.
 
 ## Consequences
 
-- Versioning, distribution, locking, deprecation, and org-scoped trust come free from npm; `dsx.lock` reproducibility builds on it ([versioning.md](../architecture/versioning.md)).
+- Versioning, distribution, locking, deprecation, and org-scoped trust come free from npm; `transtyle.lock` reproducibility builds on it ([versioning.md](../architecture/versioning.md)).
 - Static manifests enable pre-install review, registry tooling, and compatibility checking without arbitrary code execution.
 - Declarative-first design (most exporters ≈ 90% mapping tables) keeps plugins introspectable and opens a future safe `declarative-only` plugin class.
 - Cost accepted: full-trust code execution in v1 (the Babel/ESLint model) with its supply-chain risk — documented plainly rather than papered over.

@@ -10,7 +10,7 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 
 | File | Purpose |
 |---|---|
-| `globals.dsx.css` | `:root` + `.dark` blocks defining the full shadcn variable set in OKLCH; `@theme inline` block wiring tokens to Tailwind utilities |
+| `globals.transtyle.css` | `:root` + `.dark` blocks defining the full shadcn variable set in OKLCH; `@theme inline` block wiring tokens to Tailwind utilities |
 | `usage.md` | Where to paste/import, how it interacts with `components.json`, coverage summary |
 
 (tailwind-v3 profile: HSL channel-triplet variables + a `tailwind.config` theme-extension snippet instead of `@theme`.)
@@ -27,8 +27,8 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 
 ## Ground-truth testing
 
-Fixture Vite app with a representative shadcn component set; CI applies generated `globals.dsx.css`, builds with the era's Tailwind, headless-renders light and dark, and asserts computed styles for key component/variable pairs. Also validates emitted CSS parses under the era's toolchain.
+Fixture Vite app with a representative shadcn component set; CI applies generated `globals.transtyle.css`, builds with the era's Tailwind, headless-renders light and dark, and asserts computed styles for key component/variable pairs. Also validates emitted CSS parses under the era's toolchain.
 
 ## Notes
 
-No `dsx doc` capability planned (shadcn's site documents the collection, not a themable build). Tier 1 preview covers the need with component samples. This exporter is also the primary showcase inside the [Storybook exporter](storybook.md)'s preview integration.
+No `transtyle doc` capability planned (shadcn's site documents the collection, not a themable build). Tier 1 preview covers the need with component samples. This exporter is also the primary showcase inside the [Storybook exporter](storybook.md)'s preview integration.

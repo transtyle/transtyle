@@ -8,7 +8,7 @@
 
 ## Decision
 
-Derivation = versioned, pinned rule packs of pure functions over OKLCH color math and scale generators, evaluated on a DAG, filling only unauthored catalog slots, recording provenance for `dsx explain` ([derivation.md](../architecture/derivation.md)). Rule packs are pinned in config; upgrades are explicit and diffable. Auto-dark-mode is opt-in. No ML, no environment-dependent heuristics, no arbitrary user JS in rules (declarative expression language only, v1).
+Derivation = versioned, pinned rule packs of pure functions over OKLCH color math and scale generators, evaluated on a DAG, filling only unauthored catalog slots, recording provenance for `transtyle explain` ([derivation.md](../architecture/derivation.md)). Rule packs are pinned in config; upgrades are explicit and diffable. Auto-dark-mode is opt-in. No ML, no environment-dependent heuristics, no arbitrary user JS in rules (declarative expression language only, v1).
 
 ## Consequences
 

@@ -12,8 +12,8 @@ Two consumption paths, because the Bootstrap community is split between Sass bui
 
 | File | Purpose |
 |---|---|
-| `_variables.dsx.scss` | Sass variable overrides (`$primary`, `$font-family-sans-serif`, `$border-radius`, spacer scale…) to import **before** Bootstrap — the idiomatic customization path; users keep Bootstrap's own build pipeline |
-| `_maps.dsx.scss` | `$theme-colors` map merge + subtle/emphasis map overrides where our derived values should replace Bootstrap's own derivations |
+| `_variables.transtyle.scss` | Sass variable overrides (`$primary`, `$font-family-sans-serif`, `$border-radius`, spacer scale…) to import **before** Bootstrap — the idiomatic customization path; users keep Bootstrap's own build pipeline |
+| `_maps.transtyle.scss` | `$theme-colors` map merge + subtle/emphasis map overrides where our derived values should replace Bootstrap's own derivations |
 | `bootstrap-theme.css` | Pure CSS-variable override layer (`--bs-primary`, `--bs-body-bg`, `--bs-border-radius`, + `[data-bs-theme=dark]` block) for no-Sass users; documented as the lower-fidelity path (Sass-compiled derivations like button hover states can't all be reached from CSS vars) |
 | `usage.md` | Generated per-build: exact import order, which path to choose, coverage summary |
 
@@ -33,4 +33,4 @@ CI compiles real Bootstrap (each supported minor) with our emitted Sass; asserts
 
 ## Doc capability (Tier 3, later)
 
-Candidate for `dsx doc`: docs build is Hugo at pinned tags, license CC BY 3.0 (attribution required — noted in generated output). Ships only with a named maintainer per [doc-generation.md](../doc-generation.md).
+Candidate for `transtyle doc`: docs build is Hugo at pinned tags, license CC BY 3.0 (attribution required — noted in generated output). Ships only with a named maintainer per [doc-generation.md](../doc-generation.md).

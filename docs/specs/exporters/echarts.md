@@ -22,7 +22,7 @@ ECharts' most important themable value is `color: [...]` — a list of series co
 
 - inputs: `primary`, `accent`, `secondary` + option-palette hues if present;
 - generates N (default 10) colors by distributing hues in OKLCH around the brand anchors, holding lightness/chroma in bands tuned for adjacent-distinguishability on both light and dark surfaces;
-- deterministic, explainable (`dsx explain` shows anchors and generated hue positions), overridable (`derivation.overrides` may pin an authored palette list — authored always wins);
+- deterministic, explainable (`transtyle explain` shows anchors and generated hue positions), overridable (`derivation.overrides` may pin an authored palette list — authored always wins);
 - classified `derived` in coverage; a diagnostic warns when two generated colors fall below a perceptual-distance threshold (e.g. brand constraints force near-collisions).
 
 The same rule feeds shadcn's `--chart-*` variables — one brand, one data-viz palette everywhere. This cross-target consistency is exactly the single-source-of-truth promise, applied where hand-maintained themes always drift.

@@ -19,8 +19,8 @@ Existing token tooling (Style Dictionary, Terrazzo) solves the *bottom half* of 
 
 - A company defines its brand once and gets branded, deployable artifacts for every framework its teams use — plus a themed Storybook and preview site — in minutes.
 - Framework authors ship an official exporter for their library the way they ship a TypeScript types package today.
-- "Speaks DTCG + has a dsx exporter" becomes a checklist item for new UI libraries.
-- Migrating a product from framework A to framework B starts with `dsx import a && dsx build b` instead of a spreadsheet.
+- "Speaks DTCG + has a transtyle exporter" becomes a checklist item for new UI libraries.
+- Migrating a product from framework A to framework B starts with `transtyle import a && transtyle build b` instead of a spreadsheet.
 
 ## Non-goals
 
@@ -36,5 +36,5 @@ These are explicit, permanent boundaries. Scope discipline is the project's surv
 
 - **Component abstraction layer** (v2, specced in [docs/specs/component-layer.md](docs/specs/component-layer.md)): map semantic component intents (Button, Modal, Combobox) across ecosystems.
 - **Bidirectional sync**: importers become good enough that a target's theme edits can be lifted back into the IR with provenance.
-- **Registry**: a public index of exporters/importers with compatibility metadata, so `dsx add <anything>` just works.
+- **Registry**: a public index of exporters/importers with compatibility metadata, so `transtyle add <anything>` just works.
 - **CI-native workflows**: design-system diffs on pull requests ("this change reduces contrast on `danger` in dark mode; 3 targets affected").

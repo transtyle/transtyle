@@ -12,7 +12,7 @@ The system is structured as a classic multi-stage compiler ([ADR-0001](../adr/00
                     ┌─────────────────────────────┐
                     │  LOAD      read + parse      │
                     │  NORMALIZE canonical IR      │
-                    │  DERIVE    fill gaps (rules) │   @ds-exporter/core
+                    │  DERIVE    fill gaps (rules) │   @transtyle/core
                     │  RESOLVE   per-target map    │
                     │  EMIT      write artifacts   │
                     │  REPORT    coverage + diags  │
@@ -24,16 +24,16 @@ The system is structured as a classic multi-stage compiler ([ADR-0001](../adr/00
 
 Everything user-facing hangs off this spine: the CLI drives the pipeline, `check` runs it without EMIT, `explain` queries the provenance the pipeline records, `diff` runs it twice and compares IRs.
 
-## Package layout (provisional names)
+## Package layout
 
 | Package | Responsibility | Depends on |
 |---|---|---|
-| `@ds-exporter/ir` | IR types, schema, validation. Zero runtime deps. The published spec artifact. | — |
-| `@ds-exporter/core` | Pipeline: loader, normalizer, derivation, resolver host, emitter, diagnostics, provenance. | ir |
-| `@ds-exporter/cli` | Command surface, config discovery, plugin loading, output/UX. | core |
-| `@ds-exporter/plugin-kit` | Helpers + conformance test suite for plugin authors. | ir, core (test-only) |
-| `@ds-exporter/exporter-*` | One package per official exporter. | plugin-kit (dev), ir |
-| `@ds-exporter/importer-*` | One package per official importer. | plugin-kit (dev), ir |
+| `@transtyle/ir` | IR types, schema, validation. Zero runtime deps. The published spec artifact. | — |
+| `@transtyle/core` | Pipeline: loader, normalizer, derivation, resolver host, emitter, diagnostics, provenance. | ir |
+| `@transtyle/cli` | Command surface, config discovery, plugin loading, output/UX. | core |
+| `@transtyle/plugin-kit` | Helpers + conformance test suite for plugin authors. | ir, core (test-only) |
+| `@transtyle/exporter-*` | One package per official exporter. | plugin-kit (dev), ir |
+| `@transtyle/importer-*` | One package per official importer. | plugin-kit (dev), ir |
 
 Design rules embedded in this layout:
 
@@ -54,7 +54,7 @@ Three data shapes cross public boundaries, and each is schema-versioned:
 - **Determinism:** identical inputs (config + tokens + plugin versions) produce byte-identical outputs. No timestamps, no randomness, no network access during build. Verified in CI by double-build comparison.
 - **Isolation:** exporters cannot mutate the IR or affect other exporters. Exporters return *file descriptions* (path + content); only core touches the filesystem — this enables dry-runs, atomic writes, and the manifest.
 - **Provenance everywhere:** every value in the IR knows whether it was authored, aliased, derived (by which rule, from what), or defaulted. This powers `explain`, coverage classification, and trustworthy diffs.
-- **No network at build time.** Plugin installation (`dsx add`) touches the network; `dsx build` never does. Doc generation ([specs/doc-generation.md](../specs/doc-generation.md)) is the sole, explicitly-flagged exception.
+- **No network at build time.** Plugin installation (`transtyle add`) touches the network; `transtyle build` never does. Doc generation ([specs/doc-generation.md](../specs/doc-generation.md)) is the sole, explicitly-flagged exception.
 
 ## What is deliberately absent
 

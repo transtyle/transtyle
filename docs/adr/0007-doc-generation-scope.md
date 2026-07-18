@@ -8,7 +8,7 @@ The vision's `--doc` flag rebuilds a target framework's own documentation site w
 
 ## Decision
 
-Three tiers ([doc-generation.md](../specs/doc-generation.md)): (1) our own deterministic themed preview site (`dsx preview`, core feature, deploy-anywhere static output) — this carries the vision's deployability promise; (2) themed Storybook via the Storybook exporter for teams' own components; (3) upstream doc rebuild (`dsx doc <target>`) as a per-exporter opt-in capability, permanently experimental, pinned-upstream-ref only, excluded from semver stability promises, and shipped only while a named maintainer keeps it green.
+Three tiers ([doc-generation.md](../specs/doc-generation.md)): (1) our own deterministic themed preview site (`transtyle preview`, core feature, deploy-anywhere static output) — this carries the vision's deployability promise; (2) themed Storybook via the Storybook exporter for teams' own components; (3) upstream doc rebuild (`transtyle doc <target>`) as a per-exporter opt-in capability, permanently experimental, pinned-upstream-ref only, excluded from semver stability promises, and shipped only while a named maintainer keeps it green.
 
 ## Consequences
 

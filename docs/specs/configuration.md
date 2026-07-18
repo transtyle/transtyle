@@ -4,20 +4,20 @@
 
 The original vision had one `ds-exporter.config.*` holding everything. We split it:
 
-- **`dsx.config.json`** — the build manifest: *how* to compile (targets, modes, derivation policy, paths).
+- **`transtyle.config.json`** — the build manifest: *how* to compile (targets, modes, derivation policy, paths).
 - **`tokens/**/*.tokens.json`** — the design system itself: *what* to compile (pure DTCG superset).
 
 Rationale: token files stay valid, portable DTCG that Figma/Tokens Studio/Style Dictionary can read and that designers' tools can write, uncontaminated by build concerns; the manifest can change freely (new target added) without touching the design system, which keeps diffs reviewable ("this PR changes the brand" vs "this PR adds a target" are different reviewers); and importers have a clean output format (token files only).
 
 ## Config is data
 
-`dsx.config.json` (JSON with comments/JSON5, and YAML accepted). **No `dsx.config.ts` in v1.** Executable config would: break `explain`/introspection guarantees, make configs non-portable to future non-Node tooling and web-based viewers, reopen the determinism hole, and complicate the security story. The pressure for code-in-config usually means a missing declarative feature — we'd rather hear about it. (Revisitable in a future major if evidence demands; the loader architecture doesn't preclude it.)
+`transtyle.config.json` (JSON with comments/JSON5, and YAML accepted). **No `transtyle.config.ts` in v1.** Executable config would: break `explain`/introspection guarantees, make configs non-portable to future non-Node tooling and web-based viewers, reopen the determinism hole, and complicate the security story. The pressure for code-in-config usually means a missing declarative feature — we'd rather hear about it. (Revisitable in a future major if evidence demands; the loader architecture doesn't preclude it.)
 
 ## Manifest shape (v0)
 
 ```jsonc
 {
-  "$schema": "https://…/dsx.config/v0.json",
+  "$schema": "https://…/transtyle.config/v0.json",
   "name": "acme-design-system",
   "tokens": ["tokens/**/*.tokens.json"],        // ordered; later files may override earlier (explicit, warned)
 
@@ -53,8 +53,8 @@ Target-specific `options` are defined and schema-validated by each exporter (the
 Standard DTCG plus:
 
 - Top-level groups define tier: `option`, `semantic`, `component` (reserved) — see [ir.md](../architecture/ir.md#the-three-tier-token-model).
-- `$extensions["dsx.modes"]` for per-mode values.
-- Multiple files merge by group path; a token defined twice is a warning (override allowed only with explicit `"$extensions": {"dsx.override": true}` on the winner — silent last-wins merging is how large token repos rot).
+- `$extensions["transtyle.modes"]` for per-mode values.
+- Multiple files merge by group path; a token defined twice is a warning (override allowed only with explicit `"$extensions": {"transtyle.override": true}` on the winner — silent last-wins merging is how large token repos rot).
 
 Example:
 
@@ -73,7 +73,7 @@ Example:
       "surface": {
         "base": {
           "$type": "color", "$value": "{option.color.white}",
-          "$extensions": { "dsx.modes": { "color-scheme": { "dark": "oklch(0.2 0.02 255)" } } }
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "oklch(0.2 0.02 255)" } } }
         }
       }
     }
@@ -86,5 +86,5 @@ This file, with the manifest above and the standard rule pack, is a *complete, c
 ## Validation & DX
 
 - Published JSON Schemas for manifest and token files → editor autocomplete and red squiggles with zero custom tooling.
-- `dsx init` scaffolds the pair above interactively (brand color prompt → working system).
-- All diagnostics reference file + line (source maps from LOAD) and carry stable codes (`DSX1042`) for suppression and docs deep-links.
+- `transtyle init` scaffolds the pair above interactively (brand color prompt → working system).
+- All diagnostics reference file + line (source maps from LOAD) and carry stable codes (`TST1042`) for suppression and docs deep-links.

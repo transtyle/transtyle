@@ -8,7 +8,7 @@ The token source format could be (a) a bespoke format optimized for our features
 
 ## Decision
 
-Token files are valid DTCG documents; all additions live in the namespaced `$extensions` or in the separate build manifest ([configuration.md](../specs/configuration.md)). When DTCG standardizes a concept we extended, we deprecate our extension in its favor with a `dsx migrate` codemod.
+Token files are valid DTCG documents; all additions live in the namespaced `$extensions` or in the separate build manifest ([configuration.md](../specs/configuration.md)). When DTCG standardizes a concept we extended, we deprecate our extension in its favor with a `transtyle migrate` codemod.
 
 ## Consequences
 

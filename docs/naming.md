@@ -1,31 +1,28 @@
 # Naming
 
-`ds-exporter` must be replaced before any public release: it undersells the product ("exporter" implies one-way, mechanical output — the product is a compiler with importers, derivation, and analysis), and "DS" collides with data science.
+## Decision (2026-07-18): **Transtyle**
 
-## Criteria
+Transpile × style. The product is a source-to-source compiler for design systems; the name states the mechanism (transpilation) and the domain (styling) in one coined, pronounceable, verb-able word ("transtyle your design system to Bootstrap"). As a coined word it owns its search results and carries low trademark risk.
 
-A name should be: pronounceable in most languages; short enough for a CLI binary; available as npm scope, GitHub org, and .dev/.com domain; free of trademark conflict with existing dev tools; and evocative of *translation/compilation* rather than *design* alone (the design-tool space is crowded with color/paint metaphors).
+**Secured:** npm org (`@transtyle`) and GitHub org — registered 2026-07-18.
+**Remaining:** `transtyle.dev` / `transtyle.com` domains; formal trademark search; rename this repository to `transtyle`.
 
-## Candidates (availability unchecked — verify npm/GitHub/domains/trademarks before committing)
+## Canonical identifiers (now frozen)
 
-| Name | Rationale | Risk |
-|---|---|---|
-| **Tokamak** | Token + fusion reactor: contains and transforms energy (tokens) into usable output. Distinctive, technical audience will love it. | Possible npm collisions; physics naming is common. |
-| **Transmute** | Alchemical transformation; verb-able ("transmute your DS to Bootstrap"). | Generic word, likely npm squatting. |
-| **Dialekt** | Design systems as dialects of one language; the tool translates between them. Matches the compiler framing exactly. | i18n-library connotations for "dialect". |
-| **Alloy** | Many metals, one material; strong + composable. | Heavily used name in software (Alloy analyzer, Titanium Alloy). |
-| **Portage** | Carrying a boat between waterways — moving a DS between ecosystems. | Gentoo package manager collision. |
-
-Recommended shortlist for the availability check: **Tokamak**, **Dialekt**, **Portage**.
-
-## Provisional identifiers used throughout the docs
-
-Until the name is settled, all documents use these placeholders consistently. Renaming is a find-and-replace, not a redesign.
-
-| Placeholder | Used for |
+| Identifier | Value |
 |---|---|
-| `dsx` | CLI binary and config prefix (`dsx.config.json`) |
-| `@ds-exporter/*` | npm scope (`@ds-exporter/core`, `@ds-exporter/exporter-bootstrap`, …) |
-| `dsx.*` | Extension namespace inside DTCG `$extensions` (e.g. `dsx.modes`) |
+| CLI binary | `transtyle` |
+| npm scope | `@transtyle/*` (`core`, `cli`, `ir`, `plugin-kit`, `exporter-*`, `importer-*`) |
+| Config file | `transtyle.config.json` |
+| DTCG extension namespace | `transtyle.*` (e.g. `transtyle.modes`) — ships inside user token files; frozen at first public IR release |
+| package.json manifest key | `"transtyle"` |
+| Plugin discovery keyword | `transtyle-exporter` / `transtyle-importer` |
+| Diagnostic code prefix | `TST####` |
+| Lockfile / build manifest | `transtyle.lock`, `transtyle-manifest.json` |
+| Generated-file infix | `*.transtyle.*` (e.g. `_variables.transtyle.scss`) |
 
-**Naming consequence to remember:** the `$extensions` namespace ships inside *users' token files*. Once released, that string is effectively frozen (or must be aliased forever). The real name must be chosen **before** the first public release of the IR spec — this is a Phase 0 blocker in [ROADMAP.md](../ROADMAP.md).
+## Selection history
+
+Criteria: pronounceable across languages; short enough for a CLI; npm/GitHub/domain/trademark availability; evocative of *translation/compilation* rather than design alone. The transpiler framing is technically accurate — we translate between same-level representations through an IR, which is source-to-source compilation.
+
+Rejected after availability verification against the npm registry (2026-07-18): `dialekt` (active AI CLI tool, published 2026-07 — the strongest conceptual alternative, killed by a live collision), `koine` (taken + i18n project), `transpose`, `retheme`, `refract` (also the API Blueprint parse format), `kaleido` (also Plotly's export engine), `tokamak` / `alloy` / `portage` (crowded namespaces). Runner-up `interlingua` (the machine-translation term for a universal pivot language — conceptually exact) was free on npm but long, and its GitHub org is occupied. `themec` and `themeport` were available but "theme" undersells a design-system compiler.

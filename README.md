@@ -1,4 +1,4 @@
-# ds-exporter (working name)
+# Transtyle
 
 > A design system compiler. Describe your design system once; compile it to every ecosystem.
 
@@ -6,7 +6,7 @@
 
 ## What it is
 
-ds-exporter is a **compiler for design systems**. It takes a framework-agnostic description of a design system — tokens, semantics, modes — and produces native, ready-to-use theme artifacts for many target ecosystems: Bootstrap, shadcn/ui, Apache ECharts, Storybook, Tailwind, Material UI, and more.
+Transtyle is a **compiler for design systems**. It takes a framework-agnostic description of a design system — tokens, semantics, modes — and produces native, ready-to-use theme artifacts for many target ecosystems: Bootstrap, shadcn/ui, Apache ECharts, Storybook, Tailwind, Material UI, and more.
 
 The mental model is deliberately borrowed from Babel and LLVM:
 
@@ -24,7 +24,7 @@ One source of truth in the middle; pluggable frontends and backends on either si
 ## Core principles
 
 1. **DTCG superset, not a proprietary format.** The token source format is valid [W3C Design Tokens (DTCG)](https://design-tokens.github.io/community-group/format/) plus namespaced extensions. Anything that speaks DTCG (Style Dictionary, Tokens Studio, Figma) interoperates for free. See [ADR-0002](docs/adr/0002-dtcg-superset-ir.md).
-2. **Deterministic, explainable derivation.** Missing tokens (e.g. `accent` when only `primary` is defined) are filled by declarative, inspectable rules — never by hidden magic. Every generated value carries provenance you can query with `dsx explain`. See [docs/architecture/derivation.md](docs/architecture/derivation.md).
+2. **Deterministic, explainable derivation.** Missing tokens (e.g. `accent` when only `primary` is defined) are filled by declarative, inspectable rules — never by hidden magic. Every generated value carries provenance you can query with `transtyle explain`. See [docs/architecture/derivation.md](docs/architecture/derivation.md).
 3. **Honest about lossiness.** Every build emits a coverage report: what mapped natively, what was derived, what was approximated, what the target cannot express. Trust is the product. See [docs/specs/validation-and-coverage.md](docs/specs/validation-and-coverage.md).
 4. **Exporters are plugins.** The core knows nothing about Bootstrap. Official and third-party exporters use the same public plugin API, versioned independently of the CLI. See [docs/architecture/plugins.md](docs/architecture/plugins.md).
 5. **Generated output is native and disposable.** Outputs are idiomatic files for the target (a `_variables.scss` a Bootstrap dev would recognize), never a runtime dependency on us. Regeneration is byte-deterministic.
@@ -32,12 +32,12 @@ One source of truth in the middle; pluggable frontends and backends on either si
 ## Quick taste (design target — not yet implemented)
 
 ```bash
-npx dsx init                      # scaffold tokens/ + dsx.config.json
-npx dsx add bootstrap shadcn      # install exporters
-npx dsx build                     # compile all configured targets
-npx dsx build bootstrap@5.3       # compile one target at a specific version line
-npx dsx explain color.accent      # why does this token have this value?
-npx dsx check                     # validate, contrast-check, coverage report
+npx transtyle init                      # scaffold tokens/ + transtyle.config.json
+npx transtyle add bootstrap shadcn      # install exporters
+npx transtyle build                     # compile all configured targets
+npx transtyle build bootstrap@5.3       # compile one target at a specific version line
+npx transtyle explain color.accent      # why does this token have this value?
+npx transtyle check                     # validate, contrast-check, coverage report
 ```
 
 ## Documentation map
@@ -53,7 +53,7 @@ npx dsx check                     # validate, contrast-check, coverage report
 
 ## Naming
 
-`ds-exporter` is a placeholder — and a misleading one, since the product is a compiler, not an exporter. Candidate names and selection criteria live in [docs/naming.md](docs/naming.md). All package names (`@ds-exporter/*`) and the CLI binary (`dsx`) in these documents are provisional.
+**Transtyle** (transpile × style): the product is a source-to-source compiler for design systems, and the name says so. npm org (`@transtyle`) and GitHub org are registered. Selection history and rejected candidates live in [docs/naming.md](docs/naming.md).
 
 ## License
 

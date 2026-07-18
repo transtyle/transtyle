@@ -4,10 +4,10 @@ The IR is the contract between everything: importers produce it, derivation comp
 
 ## Foundation: DTCG superset ([ADR-0002](../adr/0002-dtcg-superset-ir.md))
 
-Source token files are **valid DTCG documents**. All additions live under `$extensions` with the `dsx.` namespace (name provisional — see [naming.md](../naming.md)) or in the separate config file. Two consequences we commit to:
+Source token files are **valid DTCG documents**. All additions live under `$extensions` with the `transtyle.` namespace (see [naming.md](../naming.md)) or in the separate config file. Two consequences we commit to:
 
 1. Any DTCG tool can read our token files (ignoring extensions) and produce something sensible.
-2. When the DTCG spec standardizes something we extended (modes are the likely first case), we deprecate our extension in favor of the spec form, with a codemod (`dsx migrate`).
+2. When the DTCG spec standardizes something we extended (modes are the likely first case), we deprecate our extension in favor of the spec form, with a codemod (`transtyle migrate`).
 
 Supported `$type`s: the DTCG set — `color`, `dimension`, `fontFamily`, `fontWeight`, `duration`, `cubicBezier`, `number`, plus composites `typography`, `shadow`, `border`, `gradient`, `transition`, `strokeStyle`. Extension types are not allowed in v1; anything a target needs beyond these is the exporter's job to construct.
 
@@ -47,7 +47,7 @@ Users may add custom semantic tokens (they flow to exporters that look them up),
 DTCG has no mode concept yet; this is our largest extension.
 
 ```jsonc
-// dsx.config.json (modes are config, not token-file content)
+// transtyle.config.json (modes are config, not token-file content)
 "modes": {
   "color-scheme": { "values": ["light", "dark"], "default": "light" },
   "density":      { "values": ["comfortable", "compact"], "default": "comfortable" }
@@ -60,7 +60,7 @@ Token files provide per-mode values via `$extensions`:
 "surface": {
   "$type": "color",
   "$value": "{option.color.white}",            // default-mode value — plain DTCG readers see this
-  "$extensions": { "dsx.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } } }
+  "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } } }
 }
 ```
 

@@ -4,20 +4,20 @@ Plugins are the product's growth mechanism. The design optimizes for one metric:
 
 ## Packaging
 
-A plugin is an npm package. Official: `@ds-exporter/exporter-bootstrap`; community: anything, discoverable via the `dsx-exporter` keyword and (later) registry metadata. No custom file archive format, no config-folder copying: npm already solves versioning, distribution, deprecation, and locking — a bespoke mechanism would re-solve all four, badly.
+A plugin is an npm package. Official: `@transtyle/exporter-bootstrap`; community: anything, discoverable via the `transtyle-exporter` keyword and (later) registry metadata. No custom file archive format, no config-folder copying: npm already solves versioning, distribution, deprecation, and locking — a bespoke mechanism would re-solve all four, badly.
 
 ```
 exporter-bootstrap/
-  package.json          # declares: dsx plugin manifest (see below)
+  package.json          # declares: transtyle plugin manifest (see below)
   src/index.ts          # default export: the plugin object
   mappings/5.x.json     # declarative mapping profiles, one per supported version line
   test/                 # conformance kit + snapshot fixtures
 ```
 
-`package.json` carries the manifest — static metadata readable *without executing the plugin* (needed for `dsx add`, registry tooling, and trust review):
+`package.json` carries the manifest — static metadata readable *without executing the plugin* (needed for `transtyle add`, registry tooling, and trust review):
 
 ```jsonc
-"dsx": {
+"transtyle": {
   "kind": "exporter",                 // or "importer"
   "name": "bootstrap",
   "irSpec": ">=0.1 <1",               // IR spec range it understands
@@ -57,17 +57,17 @@ Constraints enforced by core, not convention: exporters receive an **immutable**
 
 ## Importer interface
 
-Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the *source format* (DTCG superset), not IR internals ([pipeline.md](pipeline.md#1-load)). This keeps import materializable (`dsx import --write` produces token files the user can adopt and edit) and keeps importers decoupled from IR internals. Importers also emit an import-coverage report (what the source expressed that the IR cannot yet represent).
+Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the *source format* (DTCG superset), not IR internals ([pipeline.md](pipeline.md#1-load)). This keeps import materializable (`transtyle import --write` produces token files the user can adopt and edit) and keeps importers decoupled from IR internals. Importers also emit an import-coverage report (what the source expressed that the IR cannot yet represent).
 
 ## The plugin-kit and conformance
 
-`@ds-exporter/plugin-kit` ships: TypeScript types, a test harness (`conformance(plugin)`) that runs a canonical fixture design system through the plugin and asserts determinism, manifest validity, IR-range honesty, and snapshot stability; plus authoring docs. **The conformance suite is the real plugin spec** — prose drifts, executable fixtures don't. Passing it is required for the "official" label and listed in registry metadata for community plugins.
+`@transtyle/plugin-kit` ships: TypeScript types, a test harness (`conformance(plugin)`) that runs a canonical fixture design system through the plugin and asserts determinism, manifest validity, IR-range honesty, and snapshot stability; plus authoring docs. **The conformance suite is the real plugin spec** — prose drifts, executable fixtures don't. Passing it is required for the "official" label and listed in registry metadata for community plugins.
 
 The built-in `css-variables` exporter is intentionally trivial and serves as the living reference implementation.
 
 ## Trust model
 
-v1 plugins execute with full trust in the user's process — the same model as Babel/ESLint/Vite plugins, and the same supply-chain risks. We say so plainly in docs rather than implying safety we don't provide. Mitigations, in order of arrival: static manifests reviewable pre-install; `dsx add` prints the manifest + capability summary before installing; conformance/registry metadata as a soft signal; **later, if warranted:** a `declarative-only` plugin class (mappings without code) that *can* be loaded without execution — worth designing toward, since most exporters are 90% tables.
+v1 plugins execute with full trust in the user's process — the same model as Babel/ESLint/Vite plugins, and the same supply-chain risks. We say so plainly in docs rather than implying safety we don't provide. Mitigations, in order of arrival: static manifests reviewable pre-install; `transtyle add` prints the manifest + capability summary before installing; conformance/registry metadata as a soft signal; **later, if warranted:** a `declarative-only` plugin class (mappings without code) that *can* be loaded without execution — worth designing toward, since most exporters are 90% tables.
 
 ## Anti-goals
 

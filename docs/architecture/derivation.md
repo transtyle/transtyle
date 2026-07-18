@@ -3,14 +3,14 @@
 "Intelligent automatic mapping" is the vision's most seductive idea and its biggest credibility risk. A tool that silently invents brand colors will be rejected by exactly the professional audience we target. The engine is therefore built on three non-negotiables:
 
 1. **Deterministic.** Same inputs → same outputs, forever, on every machine. No ML, no heuristic that depends on environment. ([ADR-0005](../adr/0005-deterministic-derivation.md))
-2. **Explainable.** Every derived value answers `dsx explain <token>` with the rule chain and inputs that produced it.
+2. **Explainable.** Every derived value answers `transtyle explain <token>` with the rule chain and inputs that produced it.
 3. **Governable.** Every rule can be pinned, overridden, or disabled. Authored values always win. `check` can be configured to fail if *specified* tokens were derived rather than authored (`derivation.require: [color.danger, ...]`) — teams choose how much automation they trust.
 
 ## How it works
 
 Derivation rules form a DAG evaluated to fixpoint during the DERIVE stage. A rule = `(target slot, inputs, function, priority)`. Rules only fill **holes** — slots in the [semantic catalog](ir.md#the-semantic-contract) with no authored value. They never overwrite.
 
-Rule sources, by precedence: user-defined rules in config → rule-pack overrides → the built-in **standard rule pack** (versioned; pinned in config as `derivation.rules: "standard@1"` so upgrading the CLI cannot silently change your compiled theme — changing rule-pack versions shows up in `dsx diff`).
+Rule sources, by precedence: user-defined rules in config → rule-pack overrides → the built-in **standard rule pack** (versioned; pinned in config as `derivation.rules: "standard@1"` so upgrading the CLI cannot silently change your compiled theme — changing rule-pack versions shows up in `transtyle diff`).
 
 ## The standard rule pack (v0 catalog, foundations)
 
