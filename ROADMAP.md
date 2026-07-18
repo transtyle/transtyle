@@ -18,7 +18,7 @@ Scope: **foundations only** — colors, typography, spacing, radius, shadows, bo
 - `@transtyle/core`: loader, normalizer, derivation engine, resolver host, emitter, diagnostics.
 - `@transtyle/cli`: `init`, `build`, `check`, `explain`, `add`.
 - A trivial built-in **css-variables exporter** as the executable specification of the plugin API (simplest possible backend; also the conformance fixture for plugin testing).
-- Reference exporters, in order: **Bootstrap** (hardest constraint set: Sass), **shadcn/ui** (modes), **ECharts** (non-CSS output, palette derivation), **Storybook** (docs integration).
+- Reference exporters, in order: **Bootstrap** (hardest constraint set: Sass), **shadcn/ui** (modes — ✅ shipped in the skeleton, both Tailwind eras), **ECharts** (non-CSS output, palette derivation — ✅ shipped in the skeleton), **Storybook** (docs integration).
 - Coverage report and `check` diagnostics ([docs/specs/validation-and-coverage.md](docs/specs/validation-and-coverage.md)).
 - DTCG import (a DTCG file *is* valid input, so this is mostly validation UX).
 

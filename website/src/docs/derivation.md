@@ -32,7 +32,7 @@ The engine walks the semantic catalog; any slot with an authored or aliased valu
 | `surface-raised` / `overlay` | surface raised toward white (light) or lightened (dark); overlay = floating layers |
 | `scrim` | near-black veil at fixed alpha |
 | `ring.base` | primary, lightened in dark mode for visibility |
-| `palette.categorical.1–5` | data-viz palette: hues rotated from your brand anchor, lightness/chroma banded for adjacent distinguishability; feeds shadcn's `--chart-*` |
+| `palette.categorical.1–8` | data-viz palette: hues rotated from your brand anchor, lightness/chroma banded for adjacent distinguishability; feeds shadcn's `--chart-1…5` (first five, frozen) and [ECharts' `color[]`](/docs/exporter-echarts/) (all eight) |
 
 Approximate OKLCH values in this table are produced by real color math in `packages/core/src/color.js` — including proper OKLab↔sRGB conversion and WCAG 2.1 contrast ratios.
 

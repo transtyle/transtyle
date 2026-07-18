@@ -120,6 +120,14 @@ export function formatHslTriplet(color) {
   return { text: `${r1(h)} ${r1(s * 100)}% ${r1(l * 100)}%`, clamped };
 }
 
+/** Format as #rrggbb hex (canvas-friendly: ECharts). `clamped` mirrors oklchToSrgb. */
+export function formatHex(color) {
+  const input = color.c < 0.002 ? { ...color, c: 0 } : color;
+  const { r, g, b, clamped } = oklchToSrgb(input);
+  const h2 = (v) => Math.round(v * 255).toString(16).padStart(2, '0');
+  return { text: `#${h2(r)}${h2(g)}${h2(b)}`, clamped };
+}
+
 /** WCAG 2.1 relative luminance (via linear sRGB, gamut-clamped). */
 export function relativeLuminance(color) {
   const { r, g, b } = oklchToLinearSrgb(color);

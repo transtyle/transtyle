@@ -32,13 +32,13 @@ One source of truth in the middle; pluggable frontends and backends on either si
 ## Try it now
 
 ```bash
-npm install                 # link workspaces (zero external dependencies)
+npm install                 # link workspaces (compiler packages have zero external dependencies)
 cd examples/acme
-npx transtyle build shadcn  # → dist/shadcn/globals.transtyle.css + usage.md + report.json
+npx transtyle build         # shadcn (both Tailwind eras) + Apache ECharts themes
 npx transtyle check         # pipeline without emit: validation + contrast + coverage
 ```
 
-The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project — see the generated `usage.md`. 11 authored tokens produce the full shadcn variable set; everything else is derived deterministically with provenance recorded in `report.json`.
+The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project, and `theme.*-{light,dark}.json` registers straight into Apache ECharts — see each generated `usage.md`. 11 authored tokens produce the full shadcn variable set plus per-mode chart themes with a brand-derived 8-color categorical palette; everything unauthored is derived deterministically with provenance recorded in `report.json`.
 
 A second, deliberately hostile example lives in [examples/cathode/](examples/cathode/): a dark-native CRT terminal DS with its own vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`) bound to the semantic catalog through one-line aliases — the pattern for compiling *uncommon* design systems.
 

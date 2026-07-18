@@ -18,6 +18,7 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | Derivation: standard@1 color subset (roles, states, subtles, on-colors, surfaces, ring, chart palette) | ✅ with provenance |
 | OKLCH color engine, WCAG 2.1 contrast checks | ✅ zero-dep, in-house |
 | shadcn/ui exporter, tailwind-v4 + tailwind-v3 era profiles | ✅ |
+| Apache ECharts exporter: per-mode theme JSON + self-registering scripts, 8-color derived palette | ✅ |
 | Target instances (one exporter, many configs) | ✅ |
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
 | CLI: `build`, `check`, `--cwd` | ✅ |
@@ -29,7 +30,7 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 
 | Feature | Where the design lives |
 |---|---|
-| Exporters: Bootstrap, Apache ECharts, Storybook, css-variables | `docs/specs/exporters/` |
+| Exporters: Bootstrap, Storybook, css-variables | `docs/specs/exporters/` |
 | CLI: `init`, `add`, `explain`, `diff`, `import`, `preview`, `migrate` | `docs/specs/cli.md` |
 | Full semantic catalog: spacing, shadows/elevation, motion, z-index, typography scales | `docs/architecture/ir.md` |
 | Derivation `overrides`, user rule expressions, `autoDark` audit flow | `docs/architecture/derivation.md` |
@@ -41,7 +42,7 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 
 ## Sequencing (from the project ROADMAP)
 
-1. **Phase 0 — validate the IR on paper** (in progress): shadcn round done, three IR amendments accepted. Next rounds: Bootstrap (the hardest constraint set), ECharts (non-CSS output), Storybook (meta-target), then a clean shadcn re-run.
+1. **Phase 0 — validate the IR** (in progress): shadcn round done on paper (three IR amendments accepted); the ECharts round was validated directly in code — the exporter shipped without requiring IR changes, a good sign for the catalog. Remaining: Bootstrap (the hardest constraint set), Storybook (meta-target), then a clean shadcn re-run.
 2. **Phase 1 — foundations compiler + four reference exporters**, npm publication, `init`.
 3. **Phase 2 — trust & workflow**: `explain`, `diff`, preview site, plugin conformance kit, importers beyond DTCG. Exit criterion for v1.0: a third party ships a working exporter using only public docs.
 4. **Phase 3 — ecosystem translation**: importers from Bootstrap/MUI/shadcn; round-trip fidelity reporting.

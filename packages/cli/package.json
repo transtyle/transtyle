@@ -6,7 +6,8 @@
   "bin": { "transtyle": "./src/main.js" },
   "dependencies": {
     "@transtyle/core": "*",
-    "@transtyle/exporter-shadcn": "*"
+    "@transtyle/exporter-shadcn": "*",
+    "@transtyle/exporter-echarts": "*"
   },
   "license": "MIT"
 }

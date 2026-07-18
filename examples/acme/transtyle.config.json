@@ -19,6 +19,9 @@
       "exporter": "shadcn",
       "output": "dist/shadcn-v3",
       "options": { "era": "tailwind-v3" }
+    },
+    "echarts": {
+      "output": "dist/echarts"
     }
   },
   "check": {

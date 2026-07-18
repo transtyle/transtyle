@@ -6,7 +6,7 @@ order: 1
 
 # A compiler for design systems
 
-Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts** for many ecosystems: shadcn/ui today; Bootstrap, Apache ECharts, Storybook and more per the roadmap.
+Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts** for many ecosystems: shadcn/ui and Apache ECharts today; Bootstrap, Storybook and more per the roadmap.
 
 Describe your design system once. Change it in one place. Regenerate every target.
 
@@ -34,16 +34,15 @@ Existing token pipelines (Style Dictionary, Terrazzo) transform token files into
 ```
 frontends (importers)      intermediate representation      backends (exporters)
 ─────────────────────      ──────────────────────────       ────────────────────
-DTCG token files      ──→  normalized, derived,        ──→  shadcn/ui (today)
-Figma, Tailwind (soon)     validated token graph            Bootstrap, ECharts,
-                                                            Storybook (specced)
+DTCG token files      ──→  normalized, derived,        ──→  shadcn/ui, ECharts (today)
+Figma, Tailwind (soon)     validated token graph            Bootstrap, Storybook (specced)
 ```
 
 Like Babel or LLVM: one intermediate representation in the middle, pluggable frontends and backends on either side. That architecture is why ecosystem-to-ecosystem translation (Bootstrap → shadcn) will be a composition of existing parts, not a special feature.
 
 ## Minimal input, complete output
 
-The [Acme example](/docs/examples/) authors **11 tokens** — one brand color, neutrals, a radius, two fonts — and compiles to the complete 33-variable shadcn theme with hover states, subtle tints, contrast-checked on-colors, dark mode, and a five-color categorical chart palette. Every generated value knows where it came from.
+The [Acme example](/docs/examples/) authors **11 tokens** — one brand color, neutrals, a radius, two fonts — and compiles to the complete 33-variable shadcn theme with hover states, subtle tints, contrast-checked on-colors, dark mode, and a brand-derived categorical chart palette — plus, from the same tokens, per-mode Apache ECharts themes. Every generated value knows where it came from.
 
 The [Cathode example](/docs/examples/#cathode-the-hostile-example) proves the opposite direction: a design system with completely alien vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`), dark-native, brand-color-as-text-color — compiled through the same catalog via one-line bindings.
 

@@ -10,6 +10,7 @@ import { compile } from '@transtyle/core';
 
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
+  echarts: '@transtyle/exporter-echarts',
 };
 
 async function loadExporter(name) {

@@ -80,11 +80,13 @@ export function derive(normalized, config, diagnostics) {
       'ring-from-primary', ['primary.base']);
 
     // --- Categorical data palette (docs/specs/exporters/echarts.md; shadcn --chart-*) ---
-    const HUE_OFFSETS = [0, 130, -105, -170, 55];
-    const LIGHT_L = [primary.l, 0.62, 0.6, 0.75, 0.58];
-    const CHROMA = [primary.c, 0.15, 0.14, 0.13, 0.16];
-    const DARK_DL = [0.07, 0.06, 0.06, 0.03, 0.06];
-    for (let i = 0; i < 5; i++) {
+    // 8 colors. The first 5 are frozen: extending the palette must never change
+    // existing targets' output (shadcn maps 1–5; ECharts consumes all 8).
+    const HUE_OFFSETS = [0, 130, -105, -170, 55, -55, 85, -140];
+    const LIGHT_L = [primary.l, 0.62, 0.6, 0.75, 0.58, 0.65, 0.7, 0.6];
+    const CHROMA = [primary.c, 0.15, 0.14, 0.13, 0.16, 0.13, 0.14, 0.13];
+    const DARK_DL = [0.07, 0.06, 0.06, 0.03, 0.06, 0.05, 0.04, 0.06];
+    for (let i = 0; i < 8; i++) {
       fill(ctx, `semantic.palette.categorical.${i + 1}`, {
         l: clamp01(LIGHT_L[i] + (isDark ? DARK_DL[i] : 0)),
         c: CHROMA[i],

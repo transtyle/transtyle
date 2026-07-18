@@ -14,7 +14,7 @@ Two example design systems live in the repo, chosen as opposites: Acme shows the
 
 ```bash
 cd examples/acme
-npx transtyle build          # builds both configured instances (v4 + v3 eras)
+npx transtyle build          # three targets: shadcn (v4 era), shadcn-v3, echarts
 ```
 
 What to study:
@@ -22,7 +22,7 @@ What to study:
 - **Derivation in action.** The other 20+ variables in the output are derived: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
 - **One brand color drives everything.** Change `option.color.blue.600`, rebuild, and watch the accent tint, on-colors, and all five chart colors follow coherently.
 - **Both mode-authoring forms.** Acme uses inline `$extensions` for dark values — the compact form for hand-edited files.
-- **Target instances.** Its config builds the same design system for both shadcn eras side by side.
+- **Target instances.** Its config builds the same design system for both shadcn eras side by side — plus [per-mode ECharts themes](/docs/exporter-echarts/) whose `color[]` palette shares its first five colors with shadcn's `--chart-*`: one brand, one data-viz palette, everywhere.
 - **A live diagnostic.** Acme's muted text sits near the AA contrast boundary — a deliberate teaching case for `TST2101`.
 
 Acme is also the conformance fixture from the Phase 0 design exercise; `examples/acme/expected/` preserves the original hand-written expected output for comparison against real compiler output.
@@ -38,14 +38,14 @@ Acme is also the conformance fixture from the Phase 0 design exercise; `examples
 
 ```bash
 cd examples/cathode
-npx transtyle build shadcn
+npx transtyle build          # shadcn + echarts
 ```
 
 What to study:
 
 - **The layered layout.** Three token files, all pure DTCG: `cathode.tokens.json` (source of truth), `cathode.light.tokens.json` (mode overlay — its mode assignment lives in the config), `transtyle.bindings.tokens.json` (catalog → vocabulary aliases). The pattern for real teams whose token files are generated. Restructuring Cathode from inline-extensions form to this layout produced byte-identical output — the equivalence is proven, not claimed.
 - **Mode polarity.** `:root` in the output is paper mode, `.dark` is the terminal: exporters bind mode names, not your default flag. Cathode found this bug during development; it's now a stated IR rule.
-- **Derivation under stress.** `--primary-foreground` in dark mode is near-black, contrast-picked against glowing green. The chart palette derives green-anchored. `success` derives to hue 150 — nearly phosphor. On a CRT, everything is success.
+- **Derivation under stress.** `--primary-foreground` in dark mode is near-black, contrast-picked against glowing green. The chart palette derives green-anchored — build the ECharts target and open the dark theme: phosphor-green series on tube-black, a dashboard from 1983. `success` derives to hue 150 — nearly phosphor. On a CRT, everything is success.
 - **The honest limitation.** Derived `info` is conventionally blue — coherent, wrong for the aesthetic, and fixed by one authored line. Derivation has no taste; that's your job.
 - **A CSS curiosity.** `--radius: 0rem` makes shadcn's `calc(var(--radius) - 4px)` negative; browsers reject negative radii and render 0 — the correct brutalist result by accident of CSS.
 

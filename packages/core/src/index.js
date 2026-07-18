@@ -10,9 +10,9 @@ import { normalize } from './normalize.js';
 import { derive } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
-import { formatColor, formatHslTriplet, contrastRatio } from './color.js';
+import { formatColor, formatHslTriplet, formatHex, contrastRatio } from './color.js';
 
-export { formatColor, formatHslTriplet, contrastRatio } from './color.js';
+export { formatColor, formatHslTriplet, formatHex, contrastRatio } from './color.js';
 export { Diagnostics } from './diagnostics.js';
 
 /**
@@ -55,7 +55,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
     const exporter = await loadExporter(targetConfig.exporter ?? name);
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
     const ctx = {
-      config, targetConfig, formatColor, formatHslTriplet, contrastRatio,
+      config, targetConfig, formatColor, formatHslTriplet, formatHex, contrastRatio,
       projectName: config.name ?? 'design-system',
     };
     const { files, coverage } = exporter.emit(normalized, ctx);
