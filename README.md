@@ -1,0 +1,60 @@
+# ds-exporter (working name)
+
+> A design system compiler. Describe your design system once; compile it to every ecosystem.
+
+**Status: design phase.** No code exists yet. This repository currently contains the complete product blueprint. See [docs/](docs/) for the full documentation set and [ROADMAP.md](ROADMAP.md) for the path to a first release.
+
+## What it is
+
+ds-exporter is a **compiler for design systems**. It takes a framework-agnostic description of a design system — tokens, semantics, modes — and produces native, ready-to-use theme artifacts for many target ecosystems: Bootstrap, shadcn/ui, Apache ECharts, Storybook, Tailwind, Material UI, and more.
+
+The mental model is deliberately borrowed from Babel and LLVM:
+
+```
+importers (frontends)      intermediate representation       exporters (backends)
+─────────────────────      ───────────────────────────       ────────────────────
+DTCG token files      ┐                                  ┌→  Bootstrap (Sass + CSS vars)
+Figma variables       ├──→   normalized, derived,     ───┼→  shadcn/ui (globals.css)
+Tailwind config       ┘      validated token graph       ├→  Apache ECharts (theme JSON)
+                                                         └→  Storybook (manager + preview)
+```
+
+One source of truth in the middle; pluggable frontends and backends on either side. This is what makes ecosystem-to-ecosystem translation (Bootstrap → shadcn/ui) a composition of existing parts rather than a special feature.
+
+## Core principles
+
+1. **DTCG superset, not a proprietary format.** The token source format is valid [W3C Design Tokens (DTCG)](https://design-tokens.github.io/community-group/format/) plus namespaced extensions. Anything that speaks DTCG (Style Dictionary, Tokens Studio, Figma) interoperates for free. See [ADR-0002](docs/adr/0002-dtcg-superset-ir.md).
+2. **Deterministic, explainable derivation.** Missing tokens (e.g. `accent` when only `primary` is defined) are filled by declarative, inspectable rules — never by hidden magic. Every generated value carries provenance you can query with `dsx explain`. See [docs/architecture/derivation.md](docs/architecture/derivation.md).
+3. **Honest about lossiness.** Every build emits a coverage report: what mapped natively, what was derived, what was approximated, what the target cannot express. Trust is the product. See [docs/specs/validation-and-coverage.md](docs/specs/validation-and-coverage.md).
+4. **Exporters are plugins.** The core knows nothing about Bootstrap. Official and third-party exporters use the same public plugin API, versioned independently of the CLI. See [docs/architecture/plugins.md](docs/architecture/plugins.md).
+5. **Generated output is native and disposable.** Outputs are idiomatic files for the target (a `_variables.scss` a Bootstrap dev would recognize), never a runtime dependency on us. Regeneration is byte-deterministic.
+
+## Quick taste (design target — not yet implemented)
+
+```bash
+npx dsx init                      # scaffold tokens/ + dsx.config.json
+npx dsx add bootstrap shadcn      # install exporters
+npx dsx build                     # compile all configured targets
+npx dsx build bootstrap@5.3       # compile one target at a specific version line
+npx dsx explain color.accent      # why does this token have this value?
+npx dsx check                     # validate, contrast-check, coverage report
+```
+
+## Documentation map
+
+| Area | Documents |
+|---|---|
+| Why / what | [VISION.md](VISION.md), [docs/prior-art.md](docs/prior-art.md), [docs/naming.md](docs/naming.md) |
+| Architecture | [overview](docs/architecture/overview.md), [pipeline](docs/architecture/pipeline.md), [IR](docs/architecture/ir.md), [derivation](docs/architecture/derivation.md), [plugins](docs/architecture/plugins.md), [versioning](docs/architecture/versioning.md) |
+| Specifications | [configuration](docs/specs/configuration.md), [CLI](docs/specs/cli.md), [validation & coverage](docs/specs/validation-and-coverage.md), [doc generation](docs/specs/doc-generation.md), [component layer (v2)](docs/specs/component-layer.md) |
+| Reference exporters | [Bootstrap](docs/specs/exporters/bootstrap.md), [shadcn/ui](docs/specs/exporters/shadcn.md), [ECharts](docs/specs/exporters/echarts.md), [Storybook](docs/specs/exporters/storybook.md) |
+| Decisions | [docs/adr/](docs/adr/) |
+| Plan | [ROADMAP.md](ROADMAP.md) |
+
+## Naming
+
+`ds-exporter` is a placeholder — and a misleading one, since the product is a compiler, not an exporter. Candidate names and selection criteria live in [docs/naming.md](docs/naming.md). All package names (`@ds-exporter/*`) and the CLI binary (`dsx`) in these documents are provisional.
+
+## License
+
+MIT (intended).
