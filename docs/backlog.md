@@ -20,8 +20,7 @@ Raw product ideas with initial analysis. Graduating an item means: an ADR if it 
 
 **Decision needed:** ordered exporter roadmap. Proposal, ranked by theming-surface fit (CSS-variable-native first — cheapest, highest fidelity), adoption, and what each teaches the IR:
 
-1. ~~shadcn/ui~~, ~~Apache ECharts~~ — shipped.
-2. **DaisyUI** — pure CSS-variable themes, huge Tailwind adoption; probably the *easiest* remaining exporter and an immediate demo win.
+1. ~~shadcn/ui~~, ~~Apache ECharts~~, ~~daisyUI~~ — shipped.
 3. **Bootstrap** — largest legacy footprint; hardest constraint set (Sass path); already fully specced. The IR stress test.
 4. **Radix Themes** — CSS-var native, principled scale system; tests our option-scale generation (their 12-step scales).
 5. **Storybook** — meta-target; unlocks the "themed showcase" story and B2's demo rendering.

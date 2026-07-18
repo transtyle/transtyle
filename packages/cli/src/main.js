@@ -11,6 +11,7 @@ import { compile } from '@transtyle/core';
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
   echarts: '@transtyle/exporter-echarts',
+  daisyui: '@transtyle/exporter-daisyui',
 };
 
 async function loadExporter(name) {

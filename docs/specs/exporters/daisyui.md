@@ -1,0 +1,17 @@
+# Exporter spec: daisyUI
+
+> **Status: implemented** (`@transtyle/exporter-daisyui`), era `v5` (Tailwind 4, `@plugin "daisyui/theme"` blocks, OKLCH-native). **Verify the exact v5 variable set against daisyui.com before npm publication** — implemented from known format, not re-checked against current docs. daisyUI 4 (Tailwind 3 config themes) could be a second era profile if demanded.
+
+**Why it matters:** the first target whose `secondary`/`accent` are *true brand roles* — mapping is nearly 1:1 with the catalog (the anti-shadcn), which makes it the cleanest demonstration of the false-friends principle: same words, opposite mapping decisions, both correct.
+
+## Artifacts
+
+`daisyui.transtyle.css` — two `@plugin "daisyui/theme"` blocks (`<project>-light`, `default: true`; `<project>-dark`, `prefersdark: true`), colors in OKLCH — plus `usage.md` and `report.json`.
+
+## Mapping highlights
+
+Base ramp `base-100/200/300` ← `background`/`surface`/`border` (base-300 `approximated`: daisyUI wants a third background step the IR doesn't define — catalog watch item alongside shadcn's `--input`). All role+`-content` pairs ← role base + `text-on-<role>.base` (contrast-checked by derivation). `danger` → `error` (name translation). One authored radius feeds `--radius-{selector,field,box}` (`approximated`). `--depth`/`--noise`/`--size-*`: `dropped` — stylistic effects with no token semantics; daisyUI defaults apply.
+
+## Ground-truth testing (pending)
+
+CI should build a fixture Tailwind 4 + daisyUI app with the generated blocks and assert computed styles on a component sample, per the standard exporter testing pattern.

@@ -1,31 +1,50 @@
 {
   "$schema": "https://transtyle.dev/schemas/config/v0.json",
   "name": "acme-design-system",
-  "tokens": ["tokens/*.tokens.json"],
+  "tokens": [
+    "tokens/*.tokens.json"
+  ],
   "modes": {
-    "color-scheme": { "values": ["light", "dark"], "default": "light" }
+    "color-scheme": {
+      "values": [
+        "light",
+        "dark"
+      ],
+      "default": "light"
+    }
   },
   "derivation": {
     "rules": "standard@1",
     "autoDark": false,
-    "require": ["semantic.color.primary"]
+    "require": [
+      "semantic.color.primary"
+    ]
   },
   "targets": {
     "shadcn": {
       "output": "dist/shadcn",
-      "options": { "era": "tailwind-v4" }
+      "options": {
+        "era": "tailwind-v4"
+      }
     },
     "shadcn-v3": {
       "exporter": "shadcn",
       "output": "dist/shadcn-v3",
-      "options": { "era": "tailwind-v3" }
+      "options": {
+        "era": "tailwind-v3"
+      }
     },
     "echarts": {
       "output": "dist/echarts"
+    },
+    "daisyui": {
+      "output": "dist/daisyui"
     }
   },
   "check": {
     "failOn": "error",
-    "contrast": { "standard": "wcag21-aa" }
+    "contrast": {
+      "standard": "wcag21-aa"
+    }
   }
 }

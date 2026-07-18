@@ -3,28 +3,48 @@
   "name": "cathode-terminal",
   "tokens": [
     "tokens/cathode.tokens.json",
-    { "files": "tokens/cathode.light.tokens.json", "mode": { "color-scheme": "light" } },
+    {
+      "files": "tokens/cathode.light.tokens.json",
+      "mode": {
+        "color-scheme": "light"
+      }
+    },
     "tokens/transtyle.bindings.tokens.json"
   ],
   "modes": {
-    "color-scheme": { "values": ["dark", "light"], "default": "dark" }
+    "color-scheme": {
+      "values": [
+        "dark",
+        "light"
+      ],
+      "default": "dark"
+    }
   },
   "derivation": {
     "rules": "standard@1",
     "autoDark": false,
-    "require": ["semantic.color.primary"]
+    "require": [
+      "semantic.color.primary"
+    ]
   },
   "targets": {
     "shadcn": {
       "output": "dist/shadcn",
-      "options": { "era": "tailwind-v4" }
+      "options": {
+        "era": "tailwind-v4"
+      }
     },
     "echarts": {
       "output": "dist/echarts"
+    },
+    "daisyui": {
+      "output": "dist/daisyui"
     }
   },
   "check": {
     "failOn": "error",
-    "contrast": { "standard": "wcag21-aa" }
+    "contrast": {
+      "standard": "wcag21-aa"
+    }
   }
 }

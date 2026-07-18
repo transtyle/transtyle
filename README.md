@@ -34,7 +34,7 @@ One source of truth in the middle; pluggable frontends and backends on either si
 ```bash
 npm install                 # link workspaces (compiler packages have zero external dependencies)
 cd examples/acme
-npx transtyle build         # shadcn (both Tailwind eras) + Apache ECharts themes
+npx transtyle build         # shadcn (both Tailwind eras) + daisyUI + Apache ECharts themes
 npx transtyle check         # pipeline without emit: validation + contrast + coverage
 ```
 

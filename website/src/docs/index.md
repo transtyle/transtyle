@@ -6,7 +6,7 @@ order: 1
 
 # A compiler for design systems
 
-Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts** for many ecosystems: shadcn/ui and Apache ECharts today; Bootstrap, Storybook and more per the roadmap.
+Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts** for many ecosystems: shadcn/ui, daisyUI and Apache ECharts today; Bootstrap, Storybook and more per the roadmap.
 
 Describe your design system once. Change it in one place. Regenerate every target.
 
@@ -34,7 +34,7 @@ Existing token pipelines (Style Dictionary, Terrazzo) transform token files into
 ```
 frontends (importers)      intermediate representation      backends (exporters)
 ─────────────────────      ──────────────────────────       ────────────────────
-DTCG token files      ──→  normalized, derived,        ──→  shadcn/ui, ECharts (today)
+DTCG token files      ──→  normalized, derived,        ──→  shadcn/ui, daisyUI, ECharts
 Figma, Tailwind (soon)     validated token graph            Bootstrap, Storybook (specced)
 ```
 

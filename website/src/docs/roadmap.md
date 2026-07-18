@@ -19,6 +19,7 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | OKLCH color engine, WCAG 2.1 contrast checks | ✅ zero-dep, in-house |
 | shadcn/ui exporter, tailwind-v4 + tailwind-v3 era profiles | ✅ |
 | Apache ECharts exporter: per-mode theme JSON + self-registering scripts, 8-color derived palette | ✅ |
+| daisyUI exporter (v5 era): light+dark theme blocks, brand-direct role mapping | ✅ |
 | Target instances (one exporter, many configs) | ✅ |
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
 | CLI: `build`, `check`, `--cwd` | ✅ |
