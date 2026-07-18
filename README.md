@@ -44,6 +44,12 @@ A second, deliberately hostile example lives in [examples/cathode/](examples/cat
 
 Full design-target CLI (`init`, `add`, `explain`, `diff`, version pinning) is specced in [docs/specs/cli.md](docs/specs/cli.md); the skeleton implements `build` and `check`.
 
+## Documentation
+
+**User documentation lives on the website** (`website/` — Astro; `npm run site:dev` locally, deployable static output via `npm run site:build`): getting started, concepts, configuration reference, CLI, exporter guides, example walkthroughs, diagnostics, and a dedicated guide for [operating Transtyle with AI agents](website/src/docs/ai-agents.md). The site also serves `llms.txt`, `llms-full.txt`, and every page as raw markdown.
+
+Engineering documentation (architecture, specs, ADRs) lives in [docs/](docs/) — see the map below. The sync rule between code, specs, website, README, and examples is defined in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Documentation map
 
 | Area | Documents |

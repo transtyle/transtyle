@@ -5,10 +5,13 @@
   "description": "Transtyle — a design system compiler. Monorepo root.",
   "type": "module",
   "engines": { "node": ">=18" },
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/*", "website"],
   "scripts": {
     "example:shadcn": "transtyle build shadcn --cwd examples/acme",
-    "example:check": "transtyle check --cwd examples/acme"
+    "example:check": "transtyle check --cwd examples/acme",
+    "site:dev": "npm run dev -w @transtyle/website",
+    "site:build": "npm run build -w @transtyle/website",
+    "site:preview": "npm run preview -w @transtyle/website"
   },
   "license": "MIT"
 }

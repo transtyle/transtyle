@@ -1,0 +1,196 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Transtyle — the design system compiler" current="home">
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Design System Compiler</p>
+      <h1>One design system.<br /><span class="grad">Every ecosystem.</span></h1>
+      <p class="sub">
+        Describe your design system once, as standard W3C design tokens. Transtyle compiles it into
+        native, idiomatic themes — shadcn/ui today; Bootstrap, ECharts, Storybook next.
+        Deterministic. Explainable. Zero runtime.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="/docs/getting-started/">Get started</a>
+        <a class="btn" href="/docs/">Read the docs</a>
+      </div>
+
+      <div class="terminal" role="img" aria-label="Terminal output of a transtyle build">
+        <div class="term-bar"><span></span><span></span><span></span><em>examples/acme</em></div>
+        <pre><code><span class="dim">$</span> npx transtyle build shadcn
+
+shadcn  <span class="cov-n">43% native</span> · <span class="cov-d">54% derived</span> · <span class="cov-a">3% approximated</span>
+  ↳ dist/shadcn/globals.transtyle.css
+  ↳ dist/shadcn/usage.md
+  ↳ dist/shadcn/report.json
+
+<span class="ok">✔ build complete</span></code></pre>
+      </div>
+
+      <p class="strip">
+        <span>Deterministic — byte-identical rebuilds</span>
+        <span>DTCG-native — no lock-in</span>
+        <span>Zero runtime — files out, nothing in</span>
+        <span>Agent-ready — JSON in, JSON out</span>
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>A compiler, not a converter</h2>
+      <p class="band-sub">The architecture of Babel and LLVM, applied to design systems: pluggable frontends and backends around one intermediate representation. N sources + M targets = N×M translation paths, for N+M cost.</p>
+      <div class="pipeline">
+        <div class="pipe-col">
+          <h3>Frontends</h3>
+          <div class="chip">DTCG token files</div>
+          <div class="chip soon">Figma variables</div>
+          <div class="chip soon">Tailwind config</div>
+          <div class="chip soon">Bootstrap Sass</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-col ir">
+          <h3>Intermediate representation</h3>
+          <div class="chip ir-chip">normalize · derive ·<br />validate · explain</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-col">
+          <h3>Backends</h3>
+          <div class="chip">shadcn/ui</div>
+          <div class="chip soon">Bootstrap</div>
+          <div class="chip soon">Apache ECharts</div>
+          <div class="chip soon">Storybook</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band alt">
+      <h2>Author 11 tokens. Ship a complete theme.</h2>
+      <p class="band-sub">The derivation engine fills every slot you didn't author — hover states, on-colors, subtle tints, dark mode wiring, a data-viz palette — with deterministic, versioned rules. Authored values always win. Every value knows its origin.</p>
+      <div class="duo">
+        <div class="card">
+          <div class="card-label">You write</div>
+          <pre><code>{`{ "semantic": { "color": {
+    "primary":    { "base": "oklch(0.55 0.18 255)" },
+    "background": { "base": "…", "dark": "…" },
+    "text":       { "base": "…", "dark": "…" }
+} } }`}</code></pre>
+        </div>
+        <div class="card">
+          <div class="card-label">You get</div>
+          <pre><code>{`--primary: oklch(0.55 0.18 255);
+--primary-foreground: oklch(1 0 0);  /* contrast-picked, AA ✓ */
+--accent: oklch(0.95 0.017 255);     /* brand-tinted  · derived */
+--chart-1 … --chart-5               /* palette        · derived */
++ 26 more variables, light + dark`}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <h2>Honest about lossiness</h2>
+      <p class="band-sub">Translation between ecosystems is lossy. Transtyle doesn't hide it — it measures it. Every build classifies every variable, so trust is a number, not a vibe.</p>
+      <div class="coverage">
+        <div class="cov-bar">
+          <span class="seg native" style="width:43%">native</span><span class="seg derived" style="width:54%">derived</span><span class="seg approx" style="width:3%"></span>
+        </div>
+        <div class="cov-legend">
+          <span><i class="dot native"></i> native — lossless, first-class mapping</span>
+          <span><i class="dot derived"></i> derived — synthesized by rules, provenance recorded</span>
+          <span><i class="dot approx"></i> approximated — mapped, meaning changed; reason given</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="band alt">
+      <h2>Built for humans <em>and</em> agents</h2>
+      <p class="band-sub">
+        Deterministic builds, config-as-data, stable diagnostic codes, and a JSON report per build make
+        Transtyle operable by AI agents end-to-end — while the compiler itself stays rule-based and auditable.
+        Agents write config; the compiler compiles it.
+      </p>
+      <div class="cta">
+        <a class="btn" href="/docs/ai-agents/">The agent guide</a>
+        <a class="btn" href="/llms.txt">llms.txt</a>
+      </div>
+    </section>
+
+    <section class="band final">
+      <h2>Start compiling</h2>
+      <pre class="start"><code>git clone https://github.com/transtyle/transtyle && cd transtyle
+npm install
+cd examples/acme && npx transtyle build shadcn</code></pre>
+      <div class="cta center">
+        <a class="btn primary" href="/docs/getting-started/">Getting started guide</a>
+      </div>
+    </section>
+  </main>
+
+  <style>
+    main { max-width: 68rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
+    .hero { text-align: center; padding: 4.5rem 0 3rem; }
+    .eyebrow {
+      display: inline-block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--primary); background: var(--primary-soft); padding: 0.3rem 0.9rem; border-radius: 99px;
+    }
+    h1 { font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.08; letter-spacing: -0.035em; font-weight: 800; margin: 1rem 0; }
+    .grad { background: linear-gradient(90deg, var(--primary), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .sub { max-width: 42rem; margin: 0 auto 1.6rem; font-size: 1.1rem; color: var(--text-muted); }
+    .cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+    .cta.center { margin-top: 1.4rem; }
+    .btn {
+      display: inline-block; padding: 0.6rem 1.3rem; border-radius: 10px; font-weight: 600; font-size: 0.95rem;
+      border: 1px solid var(--border); color: var(--text);
+    }
+    .btn:hover { text-decoration: none; border-color: var(--text-muted); }
+    .btn.primary { background: linear-gradient(90deg, var(--primary), var(--violet)); border: none; color: white; }
+    .btn.primary:hover { filter: brightness(1.08); }
+
+    .terminal {
+      max-width: 38rem; margin: 2.6rem auto 0; border-radius: 14px; overflow: hidden;
+      box-shadow: var(--shadow); border: 1px solid var(--border); text-align: left;
+    }
+    .term-bar { display: flex; align-items: center; gap: 6px; padding: 0.6rem 0.9rem; background: var(--bg-soft); border-bottom: 1px solid var(--border-soft); }
+    .term-bar span { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
+    .term-bar em { margin-left: auto; font-size: 0.75rem; color: var(--text-muted); font-style: normal; font-family: 'JetBrains Mono Variable', monospace; }
+    .terminal pre { margin: 0; padding: 1.1rem 1.3rem; background: var(--terminal-bg); color: var(--terminal-text); font-size: 0.83rem; line-height: 1.7; overflow-x: auto; }
+    .dim { opacity: 0.5; }
+    .ok { color: oklch(0.75 0.15 150); }
+    .cov-n { color: oklch(0.75 0.13 150); }
+    .cov-d { color: oklch(0.78 0.12 262); }
+    .cov-a { color: oklch(0.8 0.13 85); }
+
+    .strip { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; justify-content: center; margin-top: 2.4rem; font-size: 0.85rem; color: var(--text-muted); }
+    .strip span::before { content: '✓ '; color: var(--ok); }
+
+    .band { padding: 3.5rem 0; border-top: 1px solid var(--border-soft); text-align: center; }
+    .band h2 { font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.025em; margin: 0 0 0.6rem; }
+    .band-sub { max-width: 44rem; margin: 0 auto 2rem; color: var(--text-muted); }
+
+    .pipeline { display: flex; align-items: stretch; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+    .pipe-col { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.3rem; min-width: 13rem; box-shadow: var(--shadow); }
+    .pipe-col h3 { margin: 0 0 0.7rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+    .pipe-arrow { align-self: center; color: var(--text-muted); font-size: 1.4rem; }
+    .chip { border: 1px solid var(--border); border-radius: 8px; padding: 0.35rem 0.7rem; margin: 0.4rem 0; font-size: 0.88rem; font-weight: 500; }
+    .chip.soon { color: var(--text-muted); border-style: dashed; }
+    .chip.soon::after { content: ' · specced'; font-size: 0.72rem; }
+    .pipe-col.ir { background: linear-gradient(135deg, var(--primary-soft), transparent); border-color: var(--primary); }
+    .ir-chip { border: none; font-family: 'JetBrains Mono Variable', monospace; font-size: 0.82rem; }
+
+    .duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 1.2rem; text-align: left; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+    .card-label { padding: 0.55rem 1.1rem; font-size: 0.75rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); background: var(--bg-soft); }
+    .card pre { margin: 0; padding: 1rem 1.2rem; font-size: 0.8rem; line-height: 1.65; overflow-x: auto; background: none; }
+
+    .coverage { max-width: 44rem; margin: 0 auto; }
+    .cov-bar { display: flex; height: 2.4rem; border-radius: 10px; overflow: hidden; font-size: 0.8rem; font-weight: 650; color: white; box-shadow: var(--shadow); }
+    .seg { display: grid; place-items: center; }
+    .seg.native, .dot.native { background: oklch(0.62 0.14 150); }
+    .seg.derived, .dot.derived { background: oklch(0.58 0.17 262); }
+    .seg.approx, .dot.approx { background: oklch(0.75 0.14 85); }
+    .cov-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; justify-content: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; }
+
+    .band.alt { background: transparent; }
+    .band.final .start { max-width: 38rem; margin: 0 auto; text-align: left; background: var(--terminal-bg); color: var(--terminal-text); border-radius: 12px; padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; }
+  </style>
+</Base>
