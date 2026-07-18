@@ -12,6 +12,8 @@ Transtyle treats documentation drift as a defect. **A feature is not done until 
 
 Review checklist for any PR: does `npx transtyle build` still produce byte-identical output on double-build? Do all internal doc links resolve? Does the roadmap ledger still tell the truth?
 
+**Implemented-only editorial policy:** user-facing docs (website, README) may name an unimplemented capability only inside an explicit status construct — the roadmap ledger, a "specced" label, or a "not yet implemented" sentence — never in feature prose. Engineering specs in `docs/` are exempt; they are the plan and say so.
+
 ## Principles that constrain changes
 
 - **Compiler packages stay zero-dependency.** The website workspace may have dependencies; `packages/*` may not. A PR adding a dependency to core needs an ADR-level justification.

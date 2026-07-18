@@ -48,4 +48,4 @@ The [Cathode example](/docs/examples/#cathode-the-hostile-example) proves the op
 
 > **Status honesty:** Transtyle is a v0.1 walking skeleton. The pipeline, derivation engine, mode system, and shadcn exporter work end-to-end and deterministically. Many specced features (more exporters, `init`, `explain`, `diff`, importers) are design-complete but not implemented. The [roadmap](/docs/roadmap/) tells the truth about which is which.
 
-Start with [Getting started](/docs/getting-started/), or read [Core concepts](/docs/concepts/) first if you like to know what you're typing.
+Start with [Getting started](/docs/getting-started/) for a greenfield project — or, for the most common case, [You already have a design system](/docs/adopt-existing/): map your existing vocabulary onto [the Transtyle language](/docs/language/) without renaming anything.

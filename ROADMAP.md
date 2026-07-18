@@ -45,6 +45,10 @@ Scope: **foundations only** — colors, typography, spacing, radius, shadows, bo
 
 Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); deliberately deferred ([ADR-0003](docs/adr/0003-tokens-first.md)). Begins only after ≥3 community exporters exist and the token IR has survived a year of real use.
 
+## Backlog
+
+Captured-but-unscheduled ideas live in [docs/backlog.md](docs/backlog.md) — currently: implemented-only editorial policy (adopted), starter theme-kit template with a shared demo app, target priority order (DaisyUI proposed next), the "adopt an existing design system" guide, and "the Transtyle language" reference page.
+
 ## Standing tracks (all phases)
 
 - **Spec hygiene:** track DTCG evolution; migrate extensions to spec features as they land.
