@@ -1,0 +1,31 @@
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "phosphor": {
+        "green": { "$value": "oklch(0.87 0.24 144)" },
+        "green-dim": { "$value": "oklch(0.64 0.14 144)" },
+        "amber": { "$value": "oklch(0.8 0.16 80)" },
+        "red": { "$value": "oklch(0.62 0.22 27)" }
+      },
+      "tube": {
+        "black": { "$value": "oklch(0.13 0.02 145)" },
+        "glass": { "$value": "oklch(0.17 0.025 145)" },
+        "scanline": { "$value": "oklch(0.32 0.06 145)" }
+      },
+      "paper": {
+        "white": { "$value": "oklch(0.97 0.012 100)" },
+        "shade": { "$value": "oklch(0.93 0.015 100)" },
+        "rule": { "$value": "oklch(0.84 0.02 100)" },
+        "ink": { "$value": "oklch(0.27 0.07 145)" },
+        "ink-faded": { "$value": "oklch(0.48 0.045 145)" }
+      }
+    },
+    "font": {
+      "mono": {
+        "$type": "fontFamily",
+        "$value": ["IBM Plex Mono", "Courier New", "monospace"]
+      }
+    }
+  }
+}

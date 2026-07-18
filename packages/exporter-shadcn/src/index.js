@@ -58,7 +58,10 @@ export default {
     if (!ERAS.includes(era)) {
       throw new Error(`exporter-shadcn: unknown era "${era}" (supported: ${ERAS.join(', ')})`);
     }
-    const light = normalized.modes[normalized.defaultMode];
+    // Mode polarity: shadcn's structure is fixed (:root = light, .dark = dark).
+    // Bind mode NAMES, never the DS's default flag — a dark-native design
+    // system still compiles to shadcn's light-first layout (ir.md#modes).
+    const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
     const dark = normalized.modes.dark;
 
     // RESOLVE: shared, era-independent

@@ -1,0 +1,58 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+
+      "crt": {
+        "ink": {
+          "$value": "{option.color.phosphor.green}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "light": "{option.color.paper.ink}" } }
+          }
+        },
+        "ink-dim": {
+          "$value": "{option.color.phosphor.green-dim}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "light": "{option.color.paper.ink-faded}" } }
+          }
+        },
+        "tube": {
+          "$value": "{option.color.tube.black}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "light": "{option.color.paper.white}" } }
+          }
+        },
+        "glass": {
+          "$value": "{option.color.tube.glass}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "light": "{option.color.paper.shade}" } }
+          }
+        },
+        "scanline": {
+          "$value": "{option.color.tube.scanline}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "light": "{option.color.paper.rule}" } }
+          }
+        },
+        "amber": { "$value": "{option.color.phosphor.amber}" },
+        "meltdown": { "$value": "{option.color.phosphor.red}" }
+      },
+
+      "primary": { "base": { "$value": "{semantic.color.crt.ink}" } },
+      "text": { "base": { "$value": "{semantic.color.crt.ink}" } },
+      "text-muted": { "base": { "$value": "{semantic.color.crt.ink-dim}" } },
+      "background": { "base": { "$value": "{semantic.color.crt.tube}" } },
+      "surface": { "base": { "$value": "{semantic.color.crt.glass}" } },
+      "border": { "base": { "$value": "{semantic.color.crt.scanline}" } },
+      "warning": { "base": { "$value": "{semantic.color.crt.amber}" } },
+      "danger": { "base": { "$value": "{semantic.color.crt.meltdown}" } }
+    },
+    "radius": {
+      "md": { "$type": "dimension", "$value": "0rem" }
+    },
+    "font": {
+      "sans": { "$type": "fontFamily", "$value": "{option.font.mono}" },
+      "mono": { "$type": "fontFamily", "$value": "{option.font.mono}" }
+    }
+  }
+}
