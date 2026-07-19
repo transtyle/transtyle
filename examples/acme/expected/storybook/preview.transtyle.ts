@@ -49,7 +49,7 @@ export const parameters = {
     // background.base per mode — so stories opted out of the decorator still sit on DS canvases
     options: {
       light: { name: 'acme light', value: '#ffffff' },   // background.base · authored
-      dark: { name: 'acme dark', value: '#121419' },     // background.base[dark] · authored
+      dark: { name: 'acme dark', value: '#080b0f' },     // background.base[dark] · authored (engine-exact, round 8)
     },
     grid: {
       cellSize: 16,       // space.4 (1rem) → px via config rem base · approximated (F16)
