@@ -67,4 +67,4 @@ Engineering documentation (architecture, specs, ADRs) lives in [docs/](docs/) â€
 
 ## License
 
-MIT (intended).
+[MIT](LICENSE).
