@@ -5,3 +5,5 @@ examples/*/dist/
 .DS_Store
 
 website/.astro/
+
+.claude/settings.local.json
