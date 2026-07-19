@@ -6,6 +6,10 @@ Nothing is published to npm yet; entries under *Unreleased* describe what exists
 
 ## [Unreleased]
 
+### Changed
+
+- `text-on-<role>.subtle` derivation is now the **on-brand walk** (Phase 0 exercise finding F19): start at `<role>.active`, step lightness away from the tinted background until WCAG AA clears, fall back to max contrast only when the ramp runs out. Light-mode output is unchanged for the examples; dark-mode subtle foregrounds become on-brand (e.g. Acme's `--accent-foreground` in dark is now a lightened brand blue instead of plain text color). The AA hard-rule warning (`TST2101`) now also fires for `subtle` pairings.
+
 ### Added
 
 - `@transtyle/core` — loader, normalizer, derivation engine, emitter, diagnostics; zero runtime dependencies.

@@ -63,14 +63,29 @@ export function derive(normalized, config, diagnostics) {
           `text-on-${role}.base is ${onBase.ratio.toFixed(1)}:1 against ${role}.base in ${mode} mode (< 4.5:1 AA)`);
       }
 
-      // text-on-<role>.subtle (F1): prefer on-brand foreground if it clears AA, else text.base
+      // text-on-<role>.subtle (F1, ratified by F19): on-brand walk — start at
+      // <role>.active (the state-consistent on-brand candidate) and step
+      // lightness away from the subtle background in 0.01 increments until the
+      // pair clears AA; if the lightness clamp is reached first, fall back to
+      // the max-contrast pick among text/white/near-black. Same AA hard rule.
       const subtle = get(map, `${S}${role}.subtle`);
       if (subtle) {
         const active = get(map, `${S}${role}.active`);
-        const candidates = [active, text, WHITE, NEARBLACK].filter(Boolean);
-        let chosen = candidates.find((cand) => contrastRatio(subtle, cand) >= 4.5)
-          ?? contrastPick(subtle, candidates).color;
+        const dir = subtle.l >= 0.5 ? -1 : 1;
+        let chosen = null;
+        for (let i = 0; ; i++) {
+          const l = r3(active.l + dir * i * 0.01);
+          if (l < 0 || l > 1) break;
+          const cand = { ...active, l };
+          if (contrastRatio(subtle, cand) >= 4.5) { chosen = cand; break; }
+        }
+        chosen ??= contrastPick(subtle, [text, WHITE, NEARBLACK].filter(Boolean)).color;
         fill(ctx, `${S}text-on-${role}.subtle`, { ...chosen }, 'contrast-pick(subtle)', [`${role}.subtle`]);
+        const ratio = contrastRatio(subtle, get(map, `${S}text-on-${role}.subtle`));
+        if (ratio < 4.5) {
+          diagnostics.warn('TST2101',
+            `text-on-${role}.subtle is ${ratio.toFixed(1)}:1 against ${role}.subtle in ${mode} mode (< 4.5:1 AA)`);
+        }
       }
     }
 
