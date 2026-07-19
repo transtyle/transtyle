@@ -67,10 +67,12 @@ And every emitted variable is classified in `report.json`:
 
 | Coverage class | Meaning |
 |---|---|
-| `native` | The target has a first-class slot; lossless mapping |
-| `derived` | Synthesized by derivation, then mapped natively |
-| `approximated` | Mapped, but meaning changed (unit conversion, gamut clamp, concept mismatch) |
-| `dropped` | Your system expresses it; this target can't; omitted with a reason |
-| `unsupported` | The target has a themable slot Transtyle doesn't cover yet |
+| <span class="sw" style="--c:oklch(0.62 0.14 150)"></span>`native` | The target has a first-class slot; lossless mapping |
+| <span class="sw" style="--c:oklch(0.58 0.17 262)"></span>`derived` | Synthesized by derivation, then mapped natively |
+| <span class="sw" style="--c:oklch(0.75 0.14 85)"></span>`approximated` | Mapped, but meaning changed (unit conversion, gamut clamp, concept mismatch) |
+| <span class="sw" style="--c:oklch(0.55 0.02 262)"></span>`dropped` | Your system expresses it; this target can't; omitted with a reason |
+| <span class="sw" style="--c:oklch(0.4 0.09 25)"></span>`unsupported` | The target has a themable slot Transtyle doesn't cover yet |
+
+A build isn't "done" at 100% native — that's impossible across real ecosystems. It's done when the report matches your intent: your decisions authored, coherent derivation for the rest, every approximation known and accepted.
 
 This is the trust mechanism: Transtyle never pretends translation is lossless — it measures the loss and shows you.

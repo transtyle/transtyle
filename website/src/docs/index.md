@@ -40,6 +40,20 @@ Figma, Tailwind (soon)     validated token graph            Bootstrap, Storybook
 
 Like Babel or LLVM: one intermediate representation in the middle, pluggable frontends and backends on either side. That architecture is why ecosystem-to-ecosystem translation (Bootstrap → shadcn) will be a composition of existing parts, not a special feature.
 
+## If you run a design system, this is for you
+
+In your vocabulary: **option tokens** are your primitives, **semantic tokens** are your alias/decision layer, and the catalog is a *published interface* over that decision layer which frameworks plug into. You keep your names, your Figma sync, your governance; Transtyle compiles the decision layer outward — and reports, per variable, what was your decision (`authored`), what was inferred from it (`derived`), and what got bent in translation (`approximated`).
+
+Seeing is believing. From **one authored brand color** <span class="sw" style="--c:oklch(0.55 0.18 255)"></span> `oklch(0.55 0.18 255)`, the standard rules derive the full role set:
+
+<div class="pal"><span style="--c:oklch(0.55 0.18 255)" data-l="primary"></span><span style="--c:oklch(0.58 0.063 255)" data-l="secondary"></span><span style="--c:oklch(0.95 0.017 255)" data-l="accent·subtle"></span><span style="--c:oklch(0.55 0.19 25)" data-l="danger"></span><span style="--c:oklch(0.76 0.14 85)" data-l="warning"></span><span style="--c:oklch(0.6 0.14 150)" data-l="success"></span><span style="--c:oklch(0.58 0.15 230)" data-l="info"></span><span style="--c:oklch(0.55 0.012 255)" data-l="neutral"></span></div>
+
+…and an 8-color categorical data-viz palette, hue-rotated from the brand, shared verbatim between shadcn's `--chart-*` and ECharts' `color[]`:
+
+<div class="pal"><span style="--c:#026fd7" data-l="1"></span><span style="--c:#d15c56" data-l="2"></span><span style="--c:#319751" data-l="3"></span><span style="--c:#d4a73e" data-l="4"></span><span style="--c:#975ac0" data-l="5"></span><span style="--c:#00a6ae" data-l="6"></span><span style="--c:#d779ba" data-l="7"></span><span style="--c:#7e8814" data-l="8"></span></div>
+
+Every one of these is deterministic, provenance-tagged, contrast-checked where it pairs with text, and overridable by authoring one token. Nothing here is a mockup — these are the compiled values from the [Acme example](/docs/examples/).
+
 ## Minimal input, complete output
 
 The [Acme example](/docs/examples/) authors **11 tokens** — one brand color, neutrals, a radius, two fonts — and compiles to the complete 33-variable shadcn theme with hover states, subtle tints, contrast-checked on-colors, dark mode, and a brand-derived categorical chart palette — plus, from the same tokens, per-mode Apache ECharts themes. Every generated value knows where it came from.

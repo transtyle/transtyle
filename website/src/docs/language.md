@@ -16,7 +16,7 @@ your semantics            the catalog (pivot)           each library's semantics
 (nothing)        ─rule──→ text-on-primary.base ─table→  --primary-foreground
 ```
 
-This page is the full pivot vocabulary as implemented today. Slots marked *specced* exist in the [IR specification](/docs/internals/) but are not yet compiled.
+This page is the full pivot vocabulary as implemented today — <span class="badge live">compiled</span> unless marked <span class="badge spec">specced</span> (exists in the [IR specification](/docs/internals/), not yet compiled). Swatches show real derived values from the [Acme example](/docs/examples/)'s single blue brand color.
 
 ## Color roles
 
@@ -29,13 +29,13 @@ Eight roles; each is a **scale**, because targets need states, not single values
 | `<role>.subtle` | Tinted background version | mix toward `surface` (92%) |
 | `<role>.contrast` | Max-contrast counterpart | contrast-pick *(specced)* |
 
-| Role | Meaning | Base derivation when unauthored |
-|---|---|---|
-| `primary` | The action/brand color | **must be authored** — the one non-negotiable input |
-| `secondary` | Second brand color | desaturated primary |
-| `accent` | Emphasis/highlight | alias of primary |
-| `success` / `warning` / `danger` / `info` | Status colors | fixed hue anchors (150/85/25/230), brand-matched chroma |
-| `neutral` | The gray family | brand-hued near-gray |
+| Role | Meaning | Base derivation when unauthored | e.g. (from a blue brand) |
+|---|---|---|---|
+| `primary` | The action/brand color | **must be authored** — the one non-negotiable input | <span class="sw" style="--c:oklch(0.55 0.18 255)"></span> |
+| `secondary` | Second brand color | desaturated primary | <span class="sw" style="--c:oklch(0.58 0.063 255)"></span> |
+| `accent` | Emphasis/highlight | alias of primary | <span class="sw" style="--c:oklch(0.55 0.18 255)"></span> |
+| `success` / `warning` / `danger` / `info` | Status colors | fixed hue anchors (150/85/25/230), brand-matched chroma | <span class="sw" style="--c:oklch(0.6 0.14 150)"></span><span class="sw" style="--c:oklch(0.76 0.14 85)"></span><span class="sw" style="--c:oklch(0.55 0.19 25)"></span><span class="sw" style="--c:oklch(0.58 0.15 230)"></span> |
+| `neutral` | The gray family | brand-hued near-gray | <span class="sw" style="--c:oklch(0.55 0.012 255)"></span> |
 
 ## Surfaces, content, and the rest
 
@@ -49,7 +49,7 @@ Eight roles; each is a **scale**, because targets need states, not single values
 | `text` / `text-muted` | Content colors | author them |
 | `text-on-<role>.base` / `.subtle` | Readable foreground on a role's base / tinted background | contrast-pick, AA-checked, warning if impossible |
 | `border` / `ring` | Lines and focus | author border; ring ← primary, lightened in dark |
-| `palette.categorical.1–8` | Data-viz series colors | hue rotation from primary, distinguishability-banded |
+| `palette.categorical.1–8` | Data-viz series colors <span class="sw" style="--c:#026fd7"></span><span class="sw" style="--c:#d15c56"></span><span class="sw" style="--c:#319751"></span><span class="sw" style="--c:#d4a73e"></span><span class="sw" style="--c:#975ac0"></span><span class="sw" style="--c:#00a6ae"></span><span class="sw" style="--c:#d779ba"></span><span class="sw" style="--c:#7e8814"></span> | hue rotation from primary, distinguishability-banded; entries 1–5 frozen (cross-target contract) |
 | `radius.md`, `font.sans`, `font.mono` | Shape and type | author them |
 | spacing, shadows, motion, z-index, type scales | — | *specced*, not yet compiled |
 

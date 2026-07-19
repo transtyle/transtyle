@@ -8,6 +8,11 @@ order: 3
 
 This is the primary use case. Your design system exists — in Figma, in Sass variables, in a brand book — with its own names and its own logic. **You do not rename anything.** You express your system in its own vocabulary, then bind Transtyle's catalog to it with one-line aliases. Five steps.
 
+<div class="callout"><div class="callout-title">In Figma-token terms</div>
+
+If you use primitive → alias → component token layering (Tokens Studio, Figma variables collections): your primitives go in `option.*` unchanged, your alias layer becomes custom semantic tokens under *your* names, and the binding file below is a second, tiny alias layer that only the build pipeline knows about. Your designers never see it.
+</div>
+
 ## 1. Dump your raw values into `option.*`, verbatim
 
 Your palette, your names, your structure. This tier is private vocabulary — nothing downstream depends on its shape:
@@ -70,5 +75,10 @@ Where a derived value contradicts your system, bind it — one alias, versioned,
 Now a build fails if someone deletes the binding and derivation silently takes over. Your migration is done when the report's authored/derived split matches your intent — not when it hits 100% authored. Most systems settle around 40–60% authored; the rest is coherent derivation that tracks your brand automatically.
 
 ## The two mistakes to avoid
+
+<div class="callout warn"><div class="callout-title">Practitioner warning</div>
+
+The failures we see are never technical — they're these two, both preventable on day one.
+</div>
 
 **Don't rename your system into our catalog.** The catalog names never leak into your design language — they're the compilation interface. If your team says "flame", your tokens say "flame" forever. **Don't bind by name similarity.** Your "secondary" and shadcn's `--secondary` and Bootstrap's `$secondary` are three different concepts that happen to share a word — bind by *meaning*, and read [the language reference](/docs/language/#false-friends) before assuming. The [Cathode example](/docs/examples/#cathode-the-hostile-example) runs this whole playbook against a maximally alien system, with file layout included.

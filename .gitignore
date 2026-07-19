@@ -3,3 +3,5 @@ dist/
 examples/*/dist/
 *.log
 .DS_Store
+
+website/.astro/
