@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m 'docs: Phase 0 round 3 — Storybook paper exercise \\(F14–F18, first clean attempt\\) *)",
+      "Bash(git push *)"
+    ]
+  }
+}
