@@ -1,5 +1,7 @@
 # Intermediate representation (IR)
 
+> **Status: FROZEN at v0 — declared 2026-07-19.** Prerequisite met: the Phase 0 exercise exit criterion (two consecutive clean attempts, rounds 7–8; ledger F1–F21 in [docs/exercises/](../exercises/)). From this declaration on, this document changes only per the [versioning model](versioning.md): additive minors (new optional slots/types), nothing removed or re-typed within v0, and rule-pack semantics move only via a new rule-pack version (`standard@2`), never by editing `standard@1`'s meaning. Editorial fixes that do not change meaning are exempt.
+
 The IR is the contract between everything: importers produce it, derivation completes it, exporters consume it. It is the project's most stability-critical artifact — more stable than the CLI, more stable than any exporter. Spec-versioned independently (see [versioning.md](versioning.md)).
 
 ## Foundation: DTCG superset ([ADR-0002](../adr/0002-dtcg-superset-ir.md))
