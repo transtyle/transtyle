@@ -24,7 +24,7 @@ The historical round-1 expected file differs from current `dist/shadcn/` output 
 
 ## Observations recorded (no amendments)
 
-- **Hue behavior of `subtle` mixes:** mixing is cartesian in OKLab, so a role's hue drifts toward the surface hue as chroma collapses (dark `warning.subtle` lands at h≈241 because Acme's dark surface is mildly blue-chromatic; light surfaces are near-achromatic, so no visible drift). This is correct "mix toward surface" behavior and why dark subtle tints look ambient rather than garish — documented here so a future reader doesn't misread it as a bug.
+- **Hue behavior of `subtle` mixes:** ~~mixing is cartesian in OKLab, so a role's hue drifts toward the surface hue as chroma collapses~~ **[Erratum — corrected in round 6:** the symptom was real but this mechanism was wrong. The implementation at the time lerped hue in *polar* OKLCH; at t = 0.92 that lands near the cartesian result, which is how the misdiagnosis survived this round. Round 6's Bootstrap border tints (t = 0.70) exposed the difference — polar lerp routes amber through cyan — and [F21](phase0-bootstrap-rerun.md) pinned true cartesian OKLab in spec and code. The conclusion that dark subtle tints legitimately drift toward a chromatic surface's hue stands.**]**
 - **Margin policy:** the walk stops at the first AA-passing step, so derived subtle foregrounds can sit at barely-AA (4.58:1). Deliberate: AA is the standard; wanting headroom is a `check` policy concern (a future `check.contrast.margin`), not a derivation concern. Watch, don't act.
 
 ## Verdict

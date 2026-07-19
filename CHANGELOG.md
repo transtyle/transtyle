@@ -8,6 +8,8 @@ Nothing is published to npm yet; entries under *Unreleased* describe what exists
 
 ### Changed
 
+- `<role>.contrast` is now derived (Phase 0 exercise finding F20): the role's hue/chroma re-anchored at the text lightness per mode. The catalog had guaranteed the slot since v0, but no rule filled it — caught by the Bootstrap re-run when the engine had nothing where the exercise's hand maps had consumed `neutral.contrast`. No existing exporter consumes the slot, so emitted outputs are unchanged.
+- `mix` semantics pinned **and the implementation brought into conformance** (F21): cartesian OKLab interpolation, alpha linear. The previous implementation lerped hue in polar OKLCH (behind an achromatic guard), which passes through unrelated hues at moderate mix ratios — an amber border tint on a blue-cast dark surface came out cyan. Emitted example outputs are byte-unchanged (the affected slots aren't consumed by shipped exporters yet); the fix matters for the upcoming Bootstrap exporter's `-border-subtle` values.
 - `text-on-<role>.subtle` derivation is now the **on-brand walk** (Phase 0 exercise finding F19): start at `<role>.active`, step lightness away from the tinted background until WCAG AA clears, fall back to max contrast only when the ramp runs out. Light-mode output is unchanged for the examples; dark-mode subtle foregrounds become on-brand (e.g. Acme's `--accent-foreground` in dark is now a lightened brand blue instead of plain text color). The AA hard-rule warning (`TST2101`) now also fires for `subtle` pairings.
 
 ### Added

@@ -29,15 +29,16 @@ export function formatColor({ l, c, h, alpha = 1 }) {
 
 /** Mix a toward b by t (0 = a, 1 = b), in OKLCH with shortest-path hue. */
 export function mix(a, b, t) {
+  // Cartesian OKLab interpolation (derivation.md, pinned by exercise F21).
+  // Polar hue lerp passes through unrelated hues at moderate ratios (an amber
+  // border tint on a blue-cast surface must not travel through cyan).
   const lerp = (x, y) => x + (y - x) * t;
-  let h;
-  if (a.c < 0.01) h = b.h;
-  else if (b.c < 0.01) h = a.h;
-  else {
-    let d = ((b.h - a.h + 540) % 360) - 180;
-    h = (a.h + d * t + 360) % 360;
-  }
-  return { l: lerp(a.l, b.l), c: lerp(a.c, b.c), h, alpha: lerp(a.alpha ?? 1, b.alpha ?? 1) };
+  const rad = Math.PI / 180;
+  const A = lerp(a.c * Math.cos(a.h * rad), b.c * Math.cos(b.h * rad));
+  const B = lerp(a.c * Math.sin(a.h * rad), b.c * Math.sin(b.h * rad));
+  const c = Math.sqrt(A * A + B * B);
+  const h = c < 1e-9 ? 0 : (Math.atan2(B, A) / rad + 360) % 360;
+  return { l: lerp(a.l, b.l), c, h, alpha: lerp(a.alpha ?? 1, b.alpha ?? 1) };
 }
 
 // ---- OKLab <-> linear sRGB (Björn Ottosson's matrices) ----

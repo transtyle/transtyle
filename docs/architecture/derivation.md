@@ -28,6 +28,7 @@ Illustrative, not exhaustive; the full table ships as a generated reference doc.
 | `text-on-<role>.subtle` | **on-brand walk** (ratified by [exercise F19](../exercises/phase0-shadcn-rerun.md), intent from [F1](../exercises/phase0-shadcn.md)): start at `<role>.active` (the state-consistent on-brand candidate), step OKLCH lightness away from `<role>.subtle` in 0.01 increments until the pair clears AA 4.5:1; if the lightness clamp is reached first, fall back to the max-contrast pick among `text`, white, near-black; same AA hard rule |
 | `surface-raised` / `overlay` | raise(`surface`): toward white in light mode, lightness increase in dark mode; `overlay` defaults to alias of `surface-raised` |
 | `ring` | alias of `primary.base`, lightened in dark mode for visibility ([exercise F3](../exercises/phase0-shadcn.md)) |
+| `<role>.contrast` | the role re-anchored at text lightness: `{ l: text.base.l, c: role.c, h: role.h }` per mode — the role's hue/chroma pushed to text-level contrast against the mode's surfaces; gamut clamping applies. Fills a slot the catalog guaranteed but standard@1 never derived — caught when the engine had nothing where the Bootstrap exercise had consumed `neutral.contrast` twice, with two different hand values ([exercise F20](../exercises/phase0-bootstrap-rerun.md)) |
 | `radius.{none,sm,lg,xl,full}` from `radius.md` | multiplicative ramp: none = 0, sm = md × 0.5, lg = md × 1.5, xl = md × 2, full = 9999px — multiplicative so the ramp stays sane at any authored `md`; exporters may re-express in the target's idiom ([exercise F8](../exercises/phase0-bootstrap.md)) |
 | option color scales (`50…950`) from a single brand color | perceptual lightness ramp in OKLCH with chroma compensation |
 | dark mode values (only if `derivation.autoDark: true`, default **off**) | lightness inversion + chroma adjustment per role; off by default because auto-dark is the least trustworthy derivation class — it must be opted into, and its output is classified `derived` in coverage so teams see exactly how much of their dark theme is synthetic |
@@ -36,6 +37,8 @@ Illustrative, not exhaustive; the full table ships as a generated reference doc.
 | `scrim` | near-black at fixed alpha (dimming veil; distinct from `overlay` — [exercise F2](../exercises/phase0-shadcn.md)) |
 | `shadow.*` | composed from `scrim` color at fixed alpha ramps |
 | `z.*` catalog | fixed default ladder (defaulted, not derived) |
+
+**Mix semantics (pinned by [exercise F21](../exercises/phase0-bootstrap-rerun.md)):** every `mix` in the rule pack and the expression language interpolates in **cartesian OKLab** (l, a, b components; alpha linear). Hue is therefore *not* preserved when the mix partner is chromatic: as chroma collapses toward a tinted surface, the result's hue drifts toward the surface hue (visible in dark-mode `subtle` tints over a blue-cast surface). This is deliberate — cartesian mixing is what makes heavy tints sit ambiently on their surface instead of glowing — but it was previously implied rather than specified, and a hue-preserving implementation would have been a conforming reading of "mixed toward surface". It is not one anymore.
 
 ## Provenance classes and the "defaulted" distinction
 

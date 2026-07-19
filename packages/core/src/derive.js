@@ -87,6 +87,13 @@ export function derive(normalized, config, diagnostics) {
             `text-on-${role}.subtle is ${ratio.toFixed(1)}:1 against ${role}.subtle in ${mode} mode (< 4.5:1 AA)`);
         }
       }
+
+      // <role>.contrast (F20): the role re-anchored at text lightness — its
+      // hue/chroma pushed to text-level contrast against the mode's surfaces.
+      if (text) {
+        fill(ctx, `${S}${role}.contrast`, { l: text.l, c: base.c, h: base.h, alpha: 1 },
+          'contrast-anchor(text)', [`${role}.base`, 'text.base']);
+      }
     }
 
     // --- Ring (F3): primary, lightened in dark for visibility ---

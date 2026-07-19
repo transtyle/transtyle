@@ -26,7 +26,8 @@ The engine walks the semantic catalog; any slot with an authored or aliased valu
 | `success.base` / `warning.base` / `info.base` | fixed hue anchors (150 / 85 / 230) — hue is conventional, temperature follows the brand |
 | `neutral.base` | neutral gray carrying your brand's hue cast |
 | `<role>.hover` / `<role>.active` | lightness deltas from base; **direction flips in dark mode** (darken on light, lighten on dark) |
-| `<role>.subtle` | base mixed 92% toward `surface` — the tinted-background family (shadcn's muted/secondary/accent surfaces) |
+| `<role>.subtle` | base mixed 92% toward `surface` in cartesian OKLab — the tinted-background family (shadcn's muted/secondary/accent surfaces); hue follows the surface as chroma collapses, so heavy tints sit ambiently instead of glowing |
+| `<role>.contrast` | the role re-anchored at your text lightness — its hue/chroma pushed to text-level contrast (Bootstrap's `$dark`/`$light`, emphasis text) |
 | `text-on-<role>.base` | contrast-pick white vs. near-black against the role base; **hard rule: below 4.5:1 emits a warning, never silence** |
 | `text-on-<role>.subtle` | on-brand walk: starts at the role's active shade and steps lightness away from the tinted background until AA clears; falls back to the max-contrast neutral only if the ramp runs out |
 | `surface-raised` / `overlay` | surface raised toward white (light) or lightened (dark); overlay = floating layers |
