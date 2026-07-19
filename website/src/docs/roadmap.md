@@ -43,7 +43,7 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 
 ## Sequencing (from the project ROADMAP)
 
-1. **Phase 0 — validate the IR** (in progress): shadcn round done on paper (three IR amendments accepted); the ECharts round was validated directly in code — the exporter shipped without requiring IR changes, a good sign for the catalog. Remaining: Bootstrap (the hardest constraint set), Storybook (meta-target), then a clean shadcn re-run.
+1. **Phase 0 — validate the IR** (in progress): shadcn round done on paper (three IR amendments accepted); the ECharts round was validated directly in code — the exporter shipped without requiring IR changes, a good sign for the catalog; the Bootstrap round (the hardest constraint set) is done on paper — zero IR-catalog changes, one rule-pack amendment (radius-scale derivation), and round 1's key amendment confirmed as general. Remaining: Storybook (meta-target), then clean shadcn and Bootstrap re-runs.
 2. **Phase 1 — foundations compiler + four reference exporters**, npm publication, `init`.
 3. **Phase 2 — trust & workflow**: `explain`, `diff`, preview site, plugin conformance kit, importers beyond DTCG. Exit criterion for v1.0: a third party ships a working exporter using only public docs.
 4. **Phase 3 — ecosystem translation**: importers from Bootstrap/MUI/shadcn; round-trip fidelity reporting.

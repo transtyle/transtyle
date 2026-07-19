@@ -7,7 +7,8 @@ Phases gate on outcomes, not dates. Each phase has an explicit exit criterion; w
 - ~~Finalize name~~ **Done: Transtyle** ([docs/naming.md](docs/naming.md)) — npm + GitHub orgs registered 2026-07-18. Remaining: domains, trademark search, repo rename.
 - Freeze IR spec v0 ([docs/architecture/ir.md](docs/architecture/ir.md)) and plugin API v0 ([docs/architecture/plugins.md](docs/architecture/plugins.md)) as written specs.
 - Validate the IR on paper: hand-translate one real design system (e.g. an open corporate DS) into the IR and hand-map it to all four reference targets. Every gap found here is 10× cheaper than after code exists.
-  - **Round 1 (shadcn) done 2026-07-18** — 3 IR/rule-pack amendments accepted (F1–F3); see [docs/exercises/phase0-shadcn.md](docs/exercises/phase0-shadcn.md). Fixture DS lives in [examples/acme/](examples/acme/). Next rounds: Bootstrap (predicted to test F1's generality via `-text-emphasis`), then ECharts, Storybook, then a clean shadcn re-run.
+  - **Round 1 (shadcn) done 2026-07-18** — 3 IR/rule-pack amendments accepted (F1–F3); see [docs/exercises/phase0-shadcn.md](docs/exercises/phase0-shadcn.md). Fixture DS lives in [examples/acme/](examples/acme/).
+  - **Round 2 (Bootstrap) done 2026-07-19** — F1's generality confirmed (`text-on-<role>.subtle` ≡ `-text-emphasis`, the round's prediction); zero IR-catalog changes; 1 rule-pack amendment accepted (F8: radius-scale derivation); see [docs/exercises/phase0-bootstrap.md](docs/exercises/phase0-bootstrap.md). Counter reset by F8. Next rounds: Storybook (ECharts was validated in code — its exporter shipped without IR changes), then clean shadcn and Bootstrap re-runs.
 
 **Exit:** the paper exercise produces acceptable Bootstrap/shadcn/ECharts/Storybook themes with no IR changes needed for two consecutive attempts.
 
