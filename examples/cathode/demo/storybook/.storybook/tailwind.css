@@ -1,6 +1,0 @@
-/* Tailwind pipeline for the preview iframe: lets the sibling daisyUI theme
- * (imported by dist/storybook/preview.transtyle.ts as @plugin blocks) and the
- * daisyUI component classes used in stories actually compile. */
-@import "tailwindcss";
-@plugin "daisyui";
-@source "../stories";

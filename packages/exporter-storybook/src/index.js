@@ -20,6 +20,8 @@ const SIBLING_PROFILES = {
     stylesheet: 'globals.transtyle.css',
     encoding: '`.dark` class on <html>',
     decorator: (p) => `root.classList.toggle('dark', scheme === 'dark');`,
+    // the canvas wears the DS canvas (F18) — mode-following via the sibling's own variables
+    canvas: ["document.body.style.background = 'var(--background)';", "document.body.style.color = 'var(--foreground)';"],
   },
   daisyui: {
     stylesheet: 'daisyui.transtyle.css',
@@ -211,6 +213,9 @@ function renderPreview(normalized, ctx, coverage) {
     }
     importLines.push(`import '${relPath(myOutput, sibling.output)}/${profile.stylesheet}';  // sibling: ${name} · mode encoding: ${profile.encoding}`);
     decoratorLines.push(`    ${profile.decorator(ctx.projectName)}  // ${name}`);
+    if (profile.canvas && !decoratorLines.some((l) => l.includes('document.body.style'))) {
+      decoratorLines.push(...profile.canvas.map((l) => `    ${l}  // canvas = DS canvas (F18), via ${name}'s variables`));
+    }
     coverage.push({ variable: `previewTargets.${name}`, slot: '—', class: 'native', note: `composition by artifact path (${sibling.output}/${profile.stylesheet})` });
   }
 
