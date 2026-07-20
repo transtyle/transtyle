@@ -12,6 +12,7 @@ const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
   echarts: '@transtyle/exporter-echarts',
   daisyui: '@transtyle/exporter-daisyui',
+  bootstrap: '@transtyle/exporter-bootstrap',
 };
 
 async function loadExporter(name) {

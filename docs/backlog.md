@@ -16,6 +16,8 @@ Raw product ideas with initial analysis. Graduating an item means: an ADR if it 
 
 **Shape.** `create-transtyle` npm initializer + `templates/theme-kit/` in-repo; the demo app is a spec (`docs/specs/demo-app.md`: header, buttons in all roles, form, card, table, modal, chart) implemented once per supported target. Depends on: npm publication (Phase 1).
 
+**Status 2026-07-20:** the demo-app half shipped — [docs/specs/demo-app.md](specs/demo-app.md) + [examples/demo-app/](../examples/demo-app/) render the same fake app (Nimbus Console) in Bootstrap (acceptance fixture, labeled), daisyUI, and shadcn (token contract), with the ECharts theme embedded, for both example DSs, side by side. The `create-transtyle` template packaging remains here, still gated on npm publication.
+
 ## B3 — Target priority list
 
 **Decision needed:** ordered exporter roadmap. Proposal, ranked by theming-surface fit (CSS-variable-native first — cheapest, highest fidelity), adoption, and what each teaches the IR:

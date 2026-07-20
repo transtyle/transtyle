@@ -22,6 +22,8 @@ Three targets are configured (note the `exporter` field enabling two shadcn inst
 
 `npx transtyle check` runs the same pipeline without writing files (validation, contrast checks, coverage).
 
+**See it rendered:** [examples/demo-app/](../demo-app/) shows the same fake app themed by these outputs in Bootstrap (fixture), daisyUI, and shadcn, side by side — open `examples/demo-app/index.html`.
+
 ## Things to try
 
 Change `option.color.blue.600` in `tokens/option.tokens.json` and rebuild — the whole theme (hovers, subtle tints, on-colors, chart palette) follows the brand. Delete a dark-mode value and rebuild to watch fallback behavior. Set a `primary` with poor contrast to see the `TST2101` accessibility warnings.

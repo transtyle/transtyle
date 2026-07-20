@@ -39,6 +39,9 @@
     },
     "daisyui": {
       "output": "dist/daisyui"
+    },
+    "bootstrap": {
+      "output": "dist/bootstrap"
     }
   },
   "check": {

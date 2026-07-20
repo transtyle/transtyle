@@ -10,7 +10,7 @@ import { normalize } from './normalize.js';
 import { derive } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
-import { formatColor, formatHslTriplet, formatHex, contrastRatio } from './color.js';
+import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 
 export { formatColor, formatHslTriplet, formatHex, contrastRatio } from './color.js';
 export { Diagnostics } from './diagnostics.js';
@@ -55,8 +55,15 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
     const exporter = await loadExporter(targetConfig.exporter ?? name);
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
     const ctx = {
-      config, targetConfig, formatColor, formatHslTriplet, formatHex, contrastRatio,
+      config, targetConfig, formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
       projectName: config.name ?? 'design-system',
+      // Sibling-target manifest (docs/specs/exporters/storybook.md#composition):
+      // name, exporter, and output dir of every configured target — never their
+      // resolutions. Lets composition-capable exporters reference sibling
+      // ARTIFACT PATHS, keeping the no-cross-target-coupling invariant.
+      siblings: Object.entries(config.targets ?? {}).map(([n, t]) => ({
+        name: n, exporter: t.exporter ?? n, output: t.output ?? `dist/${n}`,
+      })),
     };
     const { files, coverage } = exporter.emit(normalized, ctx);
 

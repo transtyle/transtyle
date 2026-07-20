@@ -1,0 +1,183 @@
+/*
+ * Demo scaffolding: the fixed demo chrome bar + framework-neutral layout helpers.
+ * Deliberately NO colors/fonts/radii on app content — those must come from the
+ * theme under test. Only the chrome bar (which is demo UI, not the fake app)
+ * has its own fixed styling.
+ */
+
+/* ---- demo chrome (not part of the fake app) ---- */
+.demo-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #14181d;
+  color: #dfe4ea;
+  font: 13px/1.4 system-ui, sans-serif;
+  border-bottom: 2px solid #2c333b;
+}
+.demo-chrome a {
+  color: #8ab8f0;
+  text-decoration: none;
+}
+.demo-chrome a:hover {
+  text-decoration: underline;
+}
+.demo-chrome a.active {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.demo-chrome .demo-brand {
+  font-weight: 700;
+  color: #fff;
+}
+.demo-chrome select,
+.demo-chrome button {
+  font: inherit;
+  background: #232a32;
+  color: #dfe4ea;
+  border: 1px solid #3a424c;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+.demo-chrome .demo-sep {
+  opacity: 0.35;
+}
+.demo-note {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: #e8c66b;
+}
+.demo-note:empty {
+  display: none;
+}
+.demo-embed .demo-chrome {
+  display: none;
+}
+#demo-targets {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+
+/* ---- neutral layout helpers for the fake app ---- */
+.app-main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 4rem;
+}
+.app-section {
+  margin-top: 2.5rem;
+}
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin: 0 0 0.9rem;
+}
+.row-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.75rem;
+  align-items: start;
+}
+.field {
+  display: block;
+  margin-bottom: 1.1rem;
+}
+.field-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+#demo-chart {
+  width: 100%;
+  height: 340px;
+}
+.demo-unavailable {
+  max-width: 640px;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+  font-family: system-ui, sans-serif;
+}
+.app-bar-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.5rem;
+}
+.app-bar-spacer {
+  flex: 1;
+}
+.full {
+  width: 100%;
+}
+.ta-right {
+  text-align: right;
+}
+.app-brand {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+/* ---- daisyUI page hooks: the CDN stylesheet ships components + themes but no
+   Tailwind utilities, so base surface/typography wiring (normally `bg-base-100`
+   etc.) is done here — values always via theme variables. ---- */
+html[data-demo-target="daisyui"] body {
+  margin: 0;
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+html[data-demo-target="daisyui"] .navbar {
+  background: var(--color-base-200);
+  border-bottom: 1px solid var(--color-base-300);
+}
+html[data-demo-target="daisyui"] .card {
+  background: var(--color-base-200);
+}
+html[data-demo-target="daisyui"] code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  background: var(--color-base-200);
+  border: 1px solid var(--color-base-300);
+  border-radius: var(--radius-field, 0.25rem);
+  padding: 0.1em 0.35em;
+  font-size: 0.85em;
+}
+html[data-demo-target="daisyui"] .field .label {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+html[data-demo-target="daisyui"] .field .label + .input,
+html[data-demo-target="daisyui"] .field .label + .select {
+  margin-bottom: 0.35rem;
+}
+html[data-demo-target="daisyui"] .muted {
+  opacity: 0.65;
+}
+html[data-demo-target="daisyui"] .error-text {
+  color: var(--color-error);
+  font-size: 0.85em;
+}

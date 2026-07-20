@@ -9,6 +9,8 @@
   "scripts": {
     "example:shadcn": "transtyle build shadcn --cwd examples/acme",
     "example:check": "transtyle check --cwd examples/acme",
+    "example:demo": "python3 -m http.server 8123 --directory examples",
+    "example:demo:themes": "node examples/demo-app/build-themes.mjs",
     "site:dev": "npm run dev -w @transtyle/website",
     "site:build": "npm run build -w @transtyle/website",
     "site:preview": "npm run preview -w @transtyle/website"

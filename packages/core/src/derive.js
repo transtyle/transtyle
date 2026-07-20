@@ -101,6 +101,22 @@ export function derive(normalized, config, diagnostics) {
       isDark ? { ...primary, l: clamp01(primary.l + 0.07), c: Math.max(0, primary.c - 0.01) } : { ...primary },
       'ring-from-primary', ['primary.base']);
 
+    // --- Radius scale (F8): sm/lg/xl derived from authored md by fixed ratios;
+    // full is the pill idiom. First implemented for the Bootstrap exporter
+    // (Phase 0 fixtures carried these values hand-derived; now engine-owned). ---
+    const radiusMd = map.get('semantic.radius.md');
+    if (radiusMd?.value !== undefined) {
+      const dim = /^([\d.]+)([a-z%]+)$/.exec(String(radiusMd.value));
+      if (dim) {
+        const [, n, unit] = dim;
+        const scale = (f) => `${trimNum(parseFloat(n) * f)}${unit}`;
+        fillDim(ctx, 'semantic.radius.sm', scale(0.5), 'radius-scale(0.5)', ['radius.md']);
+        fillDim(ctx, 'semantic.radius.lg', scale(1.5), 'radius-scale(1.5)', ['radius.md']);
+        fillDim(ctx, 'semantic.radius.xl', scale(2), 'radius-scale(2)', ['radius.md']);
+        fillDim(ctx, 'semantic.radius.full', '9999px', 'radius-scale(full)', ['radius.md']);
+      }
+    }
+
     // --- Categorical data palette (docs/specs/exporters/echarts.md; shadcn --chart-*) ---
     // 8 colors. The first 5 are frozen: extending the palette must never change
     // existing targets' output (shadcn maps 1–5; ECharts consumes all 8).
@@ -135,3 +151,15 @@ function fill(ctx, path, value, rule, inputs) {
     provenance: { kind: PROVENANCE.DERIVED, rule: `${rule}@standard@1`, inputs, mode: ctx.mode },
   });
 }
+
+function fillDim(ctx, path, value, rule, inputs) {
+  const existing = ctx.map.get(path);
+  if (existing?.value !== undefined) return;
+  ctx.map.set(path, {
+    type: 'dimension',
+    value,
+    provenance: { kind: PROVENANCE.DERIVED, rule: `${rule}@standard@1`, inputs, mode: ctx.mode },
+  });
+}
+
+const trimNum = (n) => String(Math.round(n * 1000) / 1000);
