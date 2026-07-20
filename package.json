@@ -16,6 +16,8 @@
     "example:build": "transtyle build --cwd examples/acme && transtyle build --cwd examples/cathode",
     "example:shadcn": "transtyle build shadcn --cwd examples/acme",
     "example:check": "transtyle check --cwd examples/acme",
+    "check:sync": "node scripts/check-sync.mjs",
+    "presite:build": "npm run check:sync",
     "site:dev": "npm run dev -w @transtyle/website",
     "site:build": "npm run build -w @transtyle/website",
     "site:preview": "npm run preview -w @transtyle/website"

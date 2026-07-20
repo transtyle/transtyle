@@ -14,7 +14,7 @@ Two example design systems live in the repo, chosen as opposites: Acme shows the
 
 ```bash
 cd examples/acme
-npx transtyle build          # three targets: shadcn (v4 era), shadcn-v3, echarts
+npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook
 ```
 
 What to study:
@@ -38,7 +38,7 @@ Acme is also the conformance fixture from the Phase 0 design exercise; `examples
 
 ```bash
 cd examples/cathode
-npx transtyle build          # shadcn + echarts
+npx transtyle build          # same targets as Acme, radically different values
 ```
 
 What to study:
@@ -48,6 +48,10 @@ What to study:
 - **Derivation under stress.** `--primary-foreground` in dark mode is near-black, contrast-picked against glowing green. The chart palette derives green-anchored — build the ECharts target and open the dark theme: phosphor-green series on tube-black, a dashboard from 1983. `success` derives to hue 150 — nearly phosphor. On a CRT, everything is success.
 - **The honest limitation.** Derived `info` is conventionally blue — coherent, wrong for the aesthetic, and fixed by one authored line. Derivation has no taste; that's your job.
 - **A CSS curiosity.** `--radius: 0rem` makes shadcn's `calc(var(--radius) - 4px)` negative; browsers reject negative radii and render 0 — the correct brutalist result by accident of CSS.
+
+## See the themes on real frameworks
+
+Each example ships five npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, and [daisyUI](/docs/exporter-daisyui/); an [ECharts](/docs/exporter-echarts/) dashboard; and a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme. Every project consumes only the compiled `dist/` artifacts. From the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4104, 6101; Cathode: 4201–4204, 6201).
 
 ## Using them as templates
 

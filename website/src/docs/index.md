@@ -6,7 +6,7 @@ order: 1
 
 # A compiler for design systems
 
-Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts** for many ecosystems: shadcn/ui, daisyUI and Apache ECharts today; Bootstrap, Storybook and more per the roadmap.
+Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts** for many ecosystems: shadcn/ui, daisyUI, Apache ECharts, Bootstrap and Storybook today; more per the roadmap.
 
 Describe your design system once. Change it in one place. Regenerate every target.
 
