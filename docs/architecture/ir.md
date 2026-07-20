@@ -1,6 +1,6 @@
 # Intermediate representation (IR)
 
-> **Status: v0, superseded by the accepted catalog v1 — see [ADR-0010](../adr/0010-pre-release-breaking-changes.md).** The 2026-07-19 freeze is lifted for the pre-release window: [proposal 0001](../proposals/0001-universal-token-ir.md) (the role grid) replaces this catalog as a clean break, implemented per [docs/plan/catalog-v1.md](../plan/catalog-v1.md) (task V1-T1 rewrites this document). The freeze discipline — additive minors only, rule semantics move only via new rule-pack versions — re-arms at first npm publication. Until V1-T1 lands, this document describes what the shipped engine implements.
+> **Status: IR spec v0 (draft, pre-release) — catalog revised in place.** The role-grid catalog below (per [proposal 0001](../proposals/0001-universal-token-ir.md) and [ADR-0010](../adr/0010-pre-release-breaking-changes.md)) replaces the previous catalog as a clean break, **not a version bump**: Transtyle is unreleased, so old slot names are simply removed rather than aliased, and the spec stays `v0` throughout. This document is the spec; the engine lands it per [docs/plan/catalog-revision.md](../plan/catalog-revision.md) task T2, and existing exporters/examples migrate in T3 — **until those tasks land, the shipped engine still implements the catalog this document used to describe.** The freeze discipline (additive minors only; rule semantics move only via new rule-pack versions) re-arms at first npm publication, at which point version numbers start moving.
 
 The IR is the contract between everything: importers produce it, derivation completes it, exporters consume it. It is the project's most stability-critical artifact — more stable than the CLI, more stable than any exporter. Spec-versioned independently (see [versioning.md](versioning.md)).
 
@@ -31,18 +31,58 @@ Tier is structural (top-level group name: `option.*`, `semantic.*`, `component.*
 
 ## The semantic contract
 
-A fixed, versioned catalog of semantic slots that exporters may rely on existing after DERIVE. Initial catalog (v0, foundations only):
+A fixed, versioned catalog of semantic slots that exporters may rely on existing after DERIVE. **The catalog — the role grid**, derived from a comparative study of ~14 design-system ecosystems ([proposal 0001](../proposals/0001-universal-token-ir.md)) to be the smallest set of concepts capable of representing all of them:
 
-- **Color roles:** `primary`, `secondary`, `accent`, `success`, `warning`, `danger`, `info`, `neutral`; surfaces `background`, `surface`, `surface-raised`, `overlay` (floating layers: popover/menu/dialog), `scrim` (dimming veil behind modals — distinct from `overlay` per exercise finding [F2](../exercises/phase0-shadcn.md)); content `text`, `text-muted`, and per-role `text-on-<role>.{base, subtle}` (the `subtle` pairing exists because tinted backgrounds need their own readable foreground — finding [F1](../exercises/phase0-shadcn.md)); `border`, `ring`. Each role is a scale: `base`, `hover`, `active`, `subtle`, `contrast` — not a single value, because real targets need states.
-- **Typography:** family roles `sans`, `serif`, `mono`, `display`; a modular size scale `size.xs…size.4xl`; weights `regular`, `medium`, `semibold`, `bold`; `leading` and `tracking` scales.
-- **Spacing:** a numeric scale (`space.0…space.24`) + semantic aliases `inset.{sm,md,lg}`, `stack.{sm,md,lg}`, `gap.{sm,md,lg}`.
-- **Shape:** `radius.{none,sm,md,lg,xl,full}`, `border-width.{thin,medium,thick}`.
-- **Elevation:** `shadow.{none,sm,md,lg,xl}` paired with `z.{base,dropdown,sticky,overlay,modal,popover,tooltip,toast}` — shadows and z-index are one concept ("elevation") split into two renderable properties.
-- **Motion:** `duration.{instant,fast,normal,slow}`, `easing.{standard,decelerate,accelerate,bounce}`.
+### Color: the role grid
 
-Users may add custom semantic tokens (they flow to exporters that look them up), but only catalog slots are *guaranteed* and derivable. The catalog grows via minor IR spec versions; slots are never removed within a major.
+Every color role is a **two-axis grid** — prominence × interaction state — not a flat set of named values. This is the central finding of proposal 0001: every mature ecosystem (Radix's 12 steps, Ant's map tokens, Bootstrap's subtle triad, Chakra's colorPalette, Material 3's container/on pairs) is sampling the same grid; naming it directly instead of re-deriving a private sample per exporter is what makes exporters composable and custom roles derivable.
 
-**Why a fixed catalog (a real trade-off):** it constrains exotic design systems, but it is what makes exporters composable — every exporter targets the same known surface instead of each inventing its own required-token list. The catalog is the instruction set of this compiler.
+**Cell naming rule:** within a role, the *rest* state is the bare prominence name; other states suffix with `-<state>`; on-colors prefix `on-`. Grid paths are `semantic.color.<role>.<cell>`:
+
+```
+prominence →   solid            tint            outline          text
+state ↓
+rest           solid            tint            outline          text
+hover          solid-hover      tint-hover      outline-hover    text-hover
+active         solid-active     tint-active     —                text-active
+selected       solid-selected   tint-selected   —                —
+on-colors      on-solid         on-tint         —                —
+strong         —                —               —                text-strong
+```
+
+- **Roles:** `primary`, `secondary`, `accent`, `success`, `warning`, `danger`, `info`, `neutral` — unchanged from before, each now carrying the full grid above.
+- The **authored anchor** of a role is `<role>.solid` (its principal value — what the previous catalog called `.base`). `derivation.require` continues to point at roles; requiring a role means its `solid` cell must be authored or aliased.
+- **Custom roles** may declare an *archetype* (`brand`, `status`, `neutral`) via `$extensions.transtyle.role: { "archetype": "..." }` and get the full grid derived like a built-in role (engine support: plan task T7).
+
+### Elevation ladder (replaces the old surface slots)
+
+`semantic.elevation.<n>.surface` for `n = 0..5`; `semantic.elevation.<n>.shadow` for `n = 1..4`. The old names `background`, `surface`, `surface-raised`, `overlay` are **gone** — they were single steps of this ladder wearing separate names; all consumers now say `elevation.0.surface`, `elevation.1.surface`, etc. `scrim` remains its own slot, `semantic.color.scrim` — a dimming veil, not an elevation level (exercise finding [F2](../exercises/phase0-shadcn.md)).
+
+### Content hierarchy
+
+`semantic.color.text.{strong, base, muted, subtle, disabled, inverse}` and `semantic.color.link.{base, hover, visited}`. (`text.base` is the *default rung* of this ladder — not a leftover of the old `.base` state suffix, which no longer exists outside the grid.) `border` and `ring` are single-value slots (`semantic.color.border`, `semantic.color.ring` — no `.base` suffix).
+
+### Data visualization
+
+`semantic.palette.categorical.1–8` — unchanged from before, including the **frozen 1–5 cross-target contract** (see [Stability policy](#stability-policy)).
+
+### Scales
+
+- **Shape:** `radius.{none,sm,md,lg,xl,full}` + family aliases `radius.{control,field,container}` (each defaults to `{radius.md}`); `border-width.{thin,medium,thick}`.
+- **Spacing:** `space.{0,1,2,3,4,5,6,8,10,12,16,20,24}`.
+- **Sizing:** `size.control.{sm,md,lg}` — the one component-adjacent primitive every consuming library needs pre-component-tier.
+- **Layout:** `breakpoint.{xs,sm,md,lg,xl,2xl}`; `z.{hide,base,dropdown,sticky,banner,overlay,modal,popover,toast,tooltip}` — key *order* is the contract, values are catalog defaults unless authored.
+- **Typography primitives:** `font.{sans,serif,mono,display}`; `type.size.{xs,sm,md,lg,xl,2xl,3xl,4xl}`; `type.weight.{regular,medium,semibold,bold}`; `type.leading.{tight,normal,loose}`; `type.tracking.{tight,normal,wide}`.
+- **Typography roles** (DTCG `typography` composites, projecting the primitives): `type.role.{display,heading,title,body,label,code}.{sm,md,lg}`.
+- **Motion:** `duration.{instant,fast,normal,slow,slower}`; `easing.{standard,enter,exit,emphasized,spring}` (`enter` ≡ decelerate, `exit` ≡ accelerate; the old `bounce` renamed `spring`).
+
+### Reserved mode dimensions
+
+Names only — every dimension stays optional and a design system declares only what it uses: `color-scheme`, `density` (`compact|comfortable|spacious`), `contrast` (`standard|more`), `motion` (`full|reduced`), `platform` (`desktop|touch`).
+
+Users may add custom semantic tokens beyond the catalog (they flow to exporters that look them up), but only catalog slots are *guaranteed* and derivable. The catalog grows via minor IR spec versions; slots are never removed within a major (once the freeze re-arms — see the status banner).
+
+**Why a fixed catalog (a real trade-off):** it constrains exotic design systems, but it is what makes exporters composable — every exporter targets the same known surface instead of each inventing its own required-token list. The catalog is the instruction set of this compiler. The full grid is what makes that instruction set actually universal rather than a sample biased toward the first exporter written — see proposal 0001 §2.2 for the finding that motivated it.
 
 ## Modes
 

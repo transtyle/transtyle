@@ -30,23 +30,23 @@ Scope: **foundations only** — colors, typography, spacing, radius, shadows, bo
 - ✅ **Demo projects** (2026-07-20, [docs/specs/demo-app.md](docs/specs/demo-app.md)): ten npm projects (5 targets × 2 examples) rendering the themes on each target's *real* toolchain and components, consuming only `dist/`. This is the standing harness for the exit criterion's manual review.
 - ✅ DTCG files are valid input end-to-end (both examples are pure DTCG + config).
 
-### Remaining — the catalog v1 sequence
+### Remaining — the catalog revision sequence
 
-Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir.md) (the role grid as universal IR) is **accepted**, and per [ADR-0010](docs/adr/0010-pre-release-breaking-changes.md) it lands as a **clean break** — Transtyle is unreleased, so catalog v0 names are removed, not aliased; the freeze re-arms at first npm publication. Every task below is fully specified for any implementer (including lower-capability AI models) in **[docs/plan/catalog-v1.md](docs/plan/catalog-v1.md)** — exact slot names, formulas, file lists, acceptance commands. Execute strictly in order; one task = one pushed commit series; the CONTRIBUTING sync rule and `npm run check:sync` apply to every one.
+Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir.md) (the role grid as universal IR) is **accepted**, and per [ADR-0010](docs/adr/0010-pre-release-breaking-changes.md) it lands as a **clean break, not a version bump** — Transtyle is unreleased and every schema is still `v0`, so old catalog names are removed, not aliased, and no version number moves; the freeze re-arms at first npm publication. Every task below is fully specified for any implementer (including lower-capability AI models) in **[docs/plan/catalog-revision.md](docs/plan/catalog-revision.md)** — exact slot names, formulas, file lists, acceptance commands. Execute strictly in order; one task = one pushed commit series; the CONTRIBUTING sync rule and `npm run check:sync` apply to every one.
 
-- [ ] **V1-T1** — Rewrite the IR spec to catalog v1 (grid cells, elevation ladder, content hierarchy, scales, reserved modes; ir.md + derivation.md + website mirror).
-- [ ] **V1-T2** — Engine: the v1 rule pack (grid derivation with pinned formulas, elevation/shadow/z ladders, type & space scales, motion; `scripts/check-grid.mjs` proves promoted conventions reproduce the Bootstrap fixture values byte-for-byte).
-- [ ] **V1-T3** — Migrate all six exporters, examples, fixtures, demos to v1 names; add the dead-vocabulary guard to `check-sync` (no v0 slot name survives anywhere).
-- [ ] **V1-T4** — css-variables exporter: the grid-complete conformance dump (+ demo projects, all five surfaces).
-- [ ] **V1-T5** — Permanent ground-truth scripts (`check-fixtures`, `check-determinism`, `check:all`) + GitHub Actions CI.
-- [ ] **V1-T6** — CLI `explain` / `init` / `add` (+ `check-cli` golden tests).
-- [ ] **V1-T7** — Role archetypes: custom roles derive the full grid and export to open-role targets (Cathode's `crt-amber` as showcase).
-- [ ] **V1-T8** — Multi-dimension modes + reserved dimensions (`density` worked example on Acme).
-- [ ] **V1-T9** — **Radix Themes exporter** — the grid's designated acceptance test (its 12 steps consume every grid column); clean attempt №1 toward re-freezing the catalog.
-- [ ] **V1-T10** — DTCG validation UX (new stable diagnostic codes + `check --json`).
-- [ ] **V1-T11** — The real-DS run: adopt an external open design system via the binding-layer playbook; practitioner review; Phase 1 exit.
+- [ ] **T1** — Rewrite the IR spec to the revised catalog (grid cells, elevation ladder, content hierarchy, scales, reserved modes; ir.md + derivation.md + website mirror).
+- [ ] **T2** — Engine: the revised rule pack, still `standard@1` (grid derivation with pinned formulas, elevation/shadow/z ladders, type & space scales, motion; `scripts/check-grid.mjs` proves promoted conventions reproduce the Bootstrap fixture values byte-for-byte).
+- [ ] **T3** — Migrate all six exporters, examples, fixtures, demos to the revised names; add the dead-vocabulary guard to `check-sync` (no old slot name survives anywhere).
+- [ ] **T4** — css-variables exporter: the grid-complete conformance dump (+ demo projects, all five surfaces).
+- [ ] **T5** — Permanent ground-truth scripts (`check-fixtures`, `check-determinism`, `check:all`) + GitHub Actions CI.
+- [ ] **T6** — CLI `explain` / `init` / `add` (+ `check-cli` golden tests).
+- [ ] **T7** — Role archetypes: custom roles derive the full grid and export to open-role targets (Cathode's `crt-amber` as showcase).
+- [ ] **T8** — Multi-dimension modes + reserved dimensions (`density` worked example on Acme).
+- [ ] **T9** — **Radix Themes exporter** — the grid's designated acceptance test (its 12 steps consume every grid column); clean attempt №1 toward re-freezing the catalog.
+- [ ] **T10** — DTCG validation UX (new stable diagnostic codes + `check --json`).
+- [ ] **T11** — The real-DS run: adopt an external open design system via the binding-layer playbook; practitioner review; Phase 1 exit.
 
-**Exit:** a real design system compiles to all reference targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — *Progress 2026-07-20: both example DSs compile to all five shipped targets and render in the demo projects; the v1 sequence above carries the rest.*
+**Exit:** a real design system compiles to all reference targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — *Progress 2026-07-20: both example DSs compile to all five shipped targets and render in the demo projects; the sequence above carries the rest.*
 
 ## Phase 2 — Trust and workflow (v1.0)
 

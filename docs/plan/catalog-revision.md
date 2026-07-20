@@ -1,9 +1,9 @@
-# Implementation plan — catalog v1 and the road to a reviewable Phase 1
+# Implementation plan — the catalog revision and the road to a reviewable Phase 1
 
 **Audience: any implementer, including lower-capability AI models.** Every task below is self-contained: exact files, exact names, exact values, exact acceptance commands. Do not improvise where this document specifies; where it is silent, follow the referenced spec, and if still ambiguous, stop and ask rather than invent. Authority chain: [ADR-0010](../adr/0010-pre-release-breaking-changes.md) → [proposal 0001](../proposals/0001-universal-token-ir.md) (as amended by ADR-0010: clean break, no aliases) → this plan.
 
 **Non-negotiable process for every task (from CONTRIBUTING):**
-1. One task = one commit series ending in a push to `main`; commit message starts `feat:`/`fix:`/`docs:` and names the task id (e.g. `feat: V1-T2 …`).
+1. One task = one commit series ending in a push to `main`; commit message starts `feat:`/`fix:`/`docs:` and names the task id (e.g. `feat: T2 …`).
 2. Before committing: `npm run check:sync` passes; `npx transtyle build --cwd examples/acme && npx transtyle build --cwd examples/cathode` succeed; build twice and confirm `dist/` is byte-identical (determinism).
 3. The **sync rule**: if the task changes user-visible behavior or vocabulary, update in the same series: `docs/` specs, `website/src/docs/*` (+ nav + roadmap page), `README.md`, examples (tokens/configs/READMEs/demo projects), and the [ROADMAP](../../ROADMAP.md) ledger. `scripts/check-sync.mjs` must be *extended* when a task creates a new drift class.
 4. Worklog: add or extend a `docs/worklog/<date>-<task>.md` entry describing what was done and any deviation from this plan (deviations require a stated reason).
@@ -12,11 +12,11 @@
 
 ---
 
-## V1-T1 — Rewrite the IR spec to catalog v1
+## T1 — Rewrite the IR spec to the revised catalog
 
-**Depends:** nothing. **Files:** `docs/architecture/ir.md` (rewrite the catalog + status sections), `docs/architecture/derivation.md` (rule table, same commit), `website/src/docs/language.md` + `concepts.md` + `derivation.md` (user-facing mirror), `docs/exercises/` (add a one-line pointer at the top of each file: "Catalog v0 names herein are historical; see ADR-0010").
+**Depends:** nothing. **Files:** `docs/architecture/ir.md` (rewrite the catalog + status sections), `docs/architecture/derivation.md` (rule table, same commit), `website/src/docs/language.md` + `concepts.md` + `derivation.md` (user-facing mirror), `docs/exercises/` (add a one-line pointer at the top of each file: "Slot names herein predate the role-grid catalog revision; see ADR-0010").
 
-### The v1 catalog (normative — copy into ir.md verbatim as the new contract)
+### The revised catalog (normative — copy into ir.md verbatim as the new contract)
 
 **Cell naming rule:** within a role, the *rest* state is the bare prominence name; other states suffix with `-<state>`; on-colors prefix `on-`. Grid paths are `semantic.color.<role>.<cell>`:
 
@@ -28,9 +28,9 @@ text   text-hover   text-active   text-strong
 ```
 
 - Roles: `primary, secondary, accent, success, warning, danger, info, neutral` (unchanged), each carrying the full grid.
-- The **authored anchor** of a role is `<role>.solid` (v0's `.base`). `derivation.require` continues to point at roles; requiring a role means its `solid` cell must be authored/aliased.
+- The **authored anchor** of a role is `<role>.solid` (the pre-revision catalog's `.base`). `derivation.require` continues to point at roles; requiring a role means its `solid` cell must be authored/aliased.
 - **Elevation ladder:** `semantic.elevation.<n>.surface` for `n = 0..5`; `semantic.elevation.<n>.shadow` for `n = 1..4`. Semantic aliases are *removed* (ADR-0010): the old names `background, surface, surface-raised, overlay` become **the ladder itself** — all consumers say `elevation.0.surface` etc. `scrim` remains `semantic.color.scrim` (a veil, not a level — F2).
-- **Content hierarchy:** `semantic.color.text.{strong, base, muted, subtle, disabled, inverse}` and `semantic.color.link.{base, hover, visited}`. (Note: `text.base` here means the *default rung* of the text ladder — `base` is the rung name, not the v0 state suffix. `text-muted` as a top-level slot is removed; it becomes `text.muted`.)
+- **Content hierarchy:** `semantic.color.text.{strong, base, muted, subtle, disabled, inverse}` and `semantic.color.link.{base, hover, visited}`. (Note: `text.base` here means the *default rung* of the text ladder — `base` is the rung name, not the old state suffix. `text-muted` as a top-level slot is removed; it becomes `text.muted`.)
 - `border`, `ring`: unchanged (`semantic.color.border.base` → now simply `semantic.color.border`; single-value slots lose the `.base` suffix: `border`, `ring`).
 - `semantic.palette.categorical.1–8`: unchanged, including the 1–5 freeze (this contract predates release and is kept: charts matching across targets is a product promise).
 - **Scales:**
@@ -42,22 +42,22 @@ text   text-hover   text-active   text-strong
   - `semantic.z.{hide,base,dropdown,sticky,banner,overlay,modal,popover,toast,tooltip}`.
   - Type primitives: `semantic.font.{sans,serif,mono,display}`, `semantic.type.size.{xs,sm,md,lg,xl,2xl,3xl,4xl}`, `semantic.type.weight.{regular,medium,semibold,bold}`, `semantic.type.leading.{tight,normal,loose}`, `semantic.type.tracking.{tight,normal,wide}`.
   - Type roles (DTCG `typography` composites): `semantic.type.role.{display,heading,title,body,label,code}.{sm,md,lg}`.
-  - Motion: `semantic.duration.{instant,fast,normal,slow,slower}`, `semantic.easing.{standard,enter,exit,emphasized,spring}` (document: `enter`≡decelerate, `exit`≡accelerate; v0's `bounce` renames to `spring`).
+  - Motion: `semantic.duration.{instant,fast,normal,slow,slower}`, `semantic.easing.{standard,enter,exit,emphasized,spring}` (document: `enter`≡decelerate, `exit`≡accelerate; the old `bounce` easing renames to `spring`).
 - **Reserved mode dimensions** (names only; all optional): `color-scheme`, `density(compact|comfortable|spacious)`, `contrast(standard|more)`, `motion(full|reduced)`, `platform(desktop|touch)`.
-- **Archetype extension** (spec now, engine in V1-T7): `$extensions.transtyle.role: { "archetype": "brand"|"status"|"neutral" }` on a custom `semantic.color.<name>` group.
+- **Archetype extension** (spec now, engine in T7): `$extensions.transtyle.role: { "archetype": "brand"|"status"|"neutral" }` on a custom `semantic.color.<name>` group.
 
 ### Steps
 
-1. Rewrite ir.md sections "The semantic contract" and the status banner (banner → "IR spec v1 (draft, pre-release); see ADR-0010; freeze re-arms at first publication"). Keep tiers/modes/values/provenance/stability sections, editing the stability text per ADR-0010.
-2. Rewrite the derivation.md rule table to the V1-T2 table below (spec and engine must land in the same window; T1+T2 may be one commit series).
+1. Rewrite ir.md sections "The semantic contract" and the status banner (banner → "IR spec v0 (revised in place, pre-release); see ADR-0010; freeze re-arms at first publication"). Keep tiers/modes/values/provenance/stability sections, editing the stability text per ADR-0010.
+2. Rewrite the derivation.md rule table to the T2 table below (spec and engine must land in the same window; T1+T2 may be one commit series).
 3. Mirror on the website (language.md gets the grid table and the new false-friends appendix from proposal §2.2).
 4. Add the historical-note line to each `docs/exercises/phase0-*.md`.
 
-**Acceptance:** `grep -rn "\.base\b" docs/architecture/ir.md` returns only the `text.base` ladder rung and prose about v0 history; website builds; `npm run check:sync` passes (extend the checker per V1-T3 first if executing together).
+**Acceptance:** `grep -rn "\.base\b" docs/architecture/ir.md` returns only the `text.base` ladder rung and prose about the pre-revision catalog; website builds; `npm run check:sync` passes (extend the checker per T3 first if executing together).
 
 ---
 
-## V1-T2 — Engine: the v1 rule pack (grid + ladders + scales)
+## T2 — Engine: the revised rule pack (grid + ladders + scales)
 
 **Depends:** T1. **Files:** `packages/core/src/derive.js` (main), `packages/core/src/checks.js` (contrast checks follow new slot names), `packages/ir/src/index.js` (COLOR_ROLES unchanged; add `GRID_CELLS`, `TEXT_RUNGS`, `Z_LADDER` constants).
 
@@ -80,7 +80,7 @@ text   text-hover   text-active   text-strong
 | `text` | on-brand walk of `solid` against `surface(0)` (same algorithm, background as the pair) |
 | `text-hover` | `L ± 0.05` from `text` |
 | `text-active` | `L ± 0.07` from `text` |
-| `text-strong` | `{ l: text-ladder base L, c: solid.c, h: solid.h }` (v0 contrast-anchor, F20) |
+| `text-strong` | `{ l: text-ladder base L, c: solid.c, h: solid.h }` (the pre-revision contrast-anchor rule, F20) |
 | `elevation.0.surface` | authored (was `background`) — required-with-fallback: if unauthored, white in light / `oklch(0.145 0 0)` in dark, provenance `defaulted` |
 | `elevation.1.surface` | authored (was `surface`); fallback = `elevation.0.surface` |
 | `elevation.n.surface` (n=2..5) | `raise(elevation.(n-1).surface)` — existing raise() applied iteratively |
@@ -103,11 +103,11 @@ text   text-hover   text-active   text-strong
 
 **Implementation notes:** keep `fill()`/`fillDim()`; add `fillAlias()` (provenance `derived`, rule `alias(<cell>)`); the cross-mode `text.inverse` pass runs after the per-mode loop; lazy evaluation is *not* required — eager fill of the whole catalog is acceptable at this scale (~150 slots/mode) and simpler.
 
-**Acceptance:** a new `scripts/check-grid.mjs` (write it in this task): compiles Acme, asserts (a) every catalog slot above exists in both modes with a value, (b) 12 exact spot values (list them in the script from a hand-verified run and freeze), (c) `tint` equals v0's `subtle` value `#e7effa` for primary, `outline` equals `#b7d2f4` (the F10 fixture value), `on-tint` equals `#005bb6` — proving the promoted conventions reproduce the shipped Bootstrap fixture byte-for-byte.
+**Acceptance:** a new `scripts/check-grid.mjs` (write it in this task): compiles Acme, asserts (a) every catalog slot above exists in both modes with a value, (b) 12 exact spot values (list them in the script from a hand-verified run and freeze), (c) `tint` equals the pre-revision `subtle` value `#e7effa` for primary, `outline` equals `#b7d2f4` (the F10 fixture value), `on-tint` equals `#005bb6` — proving the promoted conventions reproduce the shipped Bootstrap fixture byte-for-byte.
 
 ---
 
-## V1-T3 — Migrate exporters, examples, fixtures, demos to v1 names
+## T3 — Migrate exporters, examples, fixtures, demos to the revised names
 
 **Depends:** T2. **Files:** all six `packages/exporter-*/src/index.js`, `examples/*/tokens/*.json`, `examples/*/transtyle.config.json` (`derivation.require` unchanged — roles), `examples/acme/expected/*` (headers + any slot-name comments; **values must not change**), demo projects only if they reference slot names (they don't — they consume dist), `scripts/check-sync.mjs`.
 
@@ -119,11 +119,11 @@ Exporter-specific: Bootstrap's private border mix is **deleted** and replaced by
 
 Add to `scripts/check-sync.mjs`: a **dead-vocabulary guard** — fail if any of these regexes match in `packages/`, `examples/*/tokens`, `examples/*/transtyle.config.json`, or `website/src/docs`: `text-on-`, `\.subtle\b` (color context), `surface-raised`, `semantic\.color\.[a-z-]+\.base\b` except `text.base`. Keep the list in an array with comments.
 
-**Acceptance:** `npx transtyle build` on both examples; **color values in `dist/` byte-identical to the pre-migration build** for shadcn/daisyui/echarts/bootstrap/storybook (save a pre-migration `dist/` copy and `diff -r`, ignoring the provenance comments if slot names appear in them — normalize comments before diff or update fixture comments in the same commit); `scripts/check-fixtures.mjs` (from V1-T5, or the scratch acceptance scripts until then) passes; all ten demo projects `npm run build` green.
+**Acceptance:** `npx transtyle build` on both examples; **color values in `dist/` byte-identical to the pre-migration build** for shadcn/daisyui/echarts/bootstrap/storybook (save a pre-migration `dist/` copy and `diff -r`, ignoring the provenance comments if slot names appear in them — normalize comments before diff or update fixture comments in the same commit); `scripts/check-fixtures.mjs` (from T5, or the scratch acceptance scripts until then) passes; all ten demo projects `npm run build` green.
 
 ---
 
-## V1-T4 — css-variables exporter (the conformance dump, now grid-complete)
+## T4 — css-variables exporter (the conformance dump, now grid-complete)
 
 **Depends:** T3. **Files:** new `packages/exporter-css-variables/{package.json,src/index.js}`, CLI registry + deps, both example configs (`"css-variables": { "output": "dist/css-variables" }`), new demo projects `examples/*/demo/css-variables/` (vanilla Vite, ports 4105/4205), spec `docs/specs/exporters/css-variables.md`, website page + nav + roadmap table, README mention, `check-sync` NAMES entry (and fix its registry regex to accept quoted keys: `/^\s*['"]?([\w-]+)['"]?:/gm`).
 
@@ -133,9 +133,9 @@ Behavior: emit `variables.transtyle.css` + `usage.md`. Every `semantic.*` slot w
 
 ---
 
-## V1-T5 — Permanent ground-truth scripts + CI
+## T5 — Permanent ground-truth scripts + CI
 
-**Depends:** T3 (fixtures stable in v1 form). **Files:** `scripts/check-fixtures.mjs`, `scripts/check-determinism.mjs`, `.github/workflows/ci.yml`, CONTRIBUTING pointer, website roadmap row.
+**Depends:** T3 (fixtures stable in the revised form). **Files:** `scripts/check-fixtures.mjs`, `scripts/check-determinism.mjs`, `.github/workflows/ci.yml`, CONTRIBUTING pointer, website roadmap row.
 
 - `check-fixtures.mjs`: port the session's acceptance parsers — key/value diff of `examples/acme/expected/bootstrap/{_variables,_maps,bootstrap-theme.css}` and `expected/storybook/theme.transtyle.ts` (+ preview/manager probes) against a fresh `dist/` build; value-normalized (leading-zero, whitespace, comments); exit 1 on any mismatch, printing per-key diffs.
 - `check-determinism.mjs`: build each example twice into temp dirs, `diff -r`; exit 1 on any byte difference.
@@ -146,7 +146,7 @@ Behavior: emit `variables.transtyle.css` + `usage.md`. Every `semantic.*` slot w
 
 ---
 
-## V1-T6 — CLI: `explain`, `init`, `add`
+## T6 — CLI: `explain`, `init`, `add`
 
 **Depends:** T2. **Files:** `packages/cli/src/main.js` (+ optionally split `src/commands/*.js`), `docs/specs/cli.md` (mark implemented), website `cli.md`, README.
 
@@ -158,7 +158,7 @@ Behavior: emit `variables.transtyle.css` + `usage.md`. Every `semantic.*` slot w
 
 ---
 
-## V1-T7 — Role archetypes
+## T7 — Role archetypes
 
 **Depends:** T2, T3. **Files:** `packages/ir` (read `$extensions.transtyle.role`), `packages/core/src/derive.js` (extend role list per compile from archetyped customs), `docs/architecture/ir.md` §archetypes (written in T1, mark implemented), exporters daisyui + css-variables (open-role emission), `examples/cathode` (author `crt-amber` as archetype `status`, bind nothing else — the showcase), website language.md.
 
@@ -168,7 +168,7 @@ Behavior: any `semantic.color.<name>` group carrying the extension joins `COLOR_
 
 ---
 
-## V1-T8 — Multi-dimension modes + reserved dimensions
+## T8 — Multi-dimension modes + reserved dimensions
 
 **Depends:** T2. **Files:** `packages/core/src/normalize.js` (remove the single-dimension throw; resolve per-dimension independently; expanded matrix keyed `mode1+mode2` only where a token varies on both), `derive.js` (mode loop iterates the expanded matrix), exporters receive the matrix (existing API; they declare expressible dimensions — non-expressible → coverage `dropped(mode:<dim>)`), spec ir.md modes section (T1 text stands), one worked example: add `density` (`comfortable|compact`) to Acme varying `space.*` ×0.875 in compact via a mode-scoped layer file.
 
@@ -176,17 +176,17 @@ Behavior: any `semantic.color.<name>` group carrying the extension joins `COLOR_
 
 ---
 
-## V1-T9 — Radix Themes exporter (the grid's acceptance test)
+## T9 — Radix Themes exporter (the grid's acceptance test)
 
 **Depends:** T3 (grid live), T7 recommended. **Files:** new `packages/exporter-radix/`, CLI registry, configs, spec `docs/specs/exporters/radix.md`, website page/nav/roadmap, README, demo projects `demo/radix/` (ports 4106/4206; use `@radix-ui/themes` npm with `--<color>-1..12` custom palette CSS), `check-sync` NAMES.
 
 Mapping (per role; both modes): step 1 ← `elevation.0.surface` · 2 ← `mix(solid, surface(0), 0.96)` `approximated` · 3/4/5 ← `tint`/`tint-hover`/`tint-active` · 6 ← `mix(solid, surface(1), 0.78)` `approximated` · 7/8 ← `outline`/`outline-hover` · 9/10 ← `solid`/`solid-hover` · 11/12 ← `text`/`text-strong`. Also emit the gray scale from `neutral`, and alpha variants (`--<color>-a1..a12`) as the same colors with computed alpha over white/black — mark `approximated`. Output: `radix-colors.transtyle.css` (custom palette per Radix docs) + `usage.md`.
 
-**Exit gate (from proposal §7):** this exporter shipping with zero catalog amendments = one clean attempt for the v1 catalog; two consecutive clean exporter additions re-freeze the catalog per ADR-0010.
+**Exit gate (from proposal §7):** this exporter shipping with zero catalog amendments = one clean attempt for the revised catalog; two consecutive clean exporter additions re-freeze the catalog per ADR-0010.
 
 ---
 
-## V1-T10 — DTCG validation UX
+## T10 — DTCG validation UX
 
 **Depends:** none (parallel-safe after T3). **Files:** `packages/core/src/load.js` + `diagnostics.js`, `docs/specs/validation-and-coverage.md`, website diagnostics page.
 
@@ -196,7 +196,7 @@ New diagnostics (stable codes): `TST1301` unknown `$type` (warn, token carried o
 
 ---
 
-## V1-T11 — The real-DS run (Phase 1 exit)
+## T11 — The real-DS run (Phase 1 exit)
 
 **Depends:** T3–T9. Adopt one open, real design system (candidate: **GOV.UK Design System** tokens, or IBM's Carbon white theme as source) via the binding-layer pattern (`docs/website adopt-existing.md` playbook): its tokens stay pure DTCG, one bindings file maps catalog slots. Deliver: `examples/<real-ds>/` with tokens+config+README+demo projects, a review checklist per target filled by a human practitioner (the maintainer), findings ledger (any catalog amendment = counter reset per ADR-0010 re-freeze rules).
 
@@ -204,6 +204,6 @@ New diagnostics (stable codes): `TST1301` unknown `$type` (warn, token carried o
 
 ---
 
-## Deferred (explicitly not in v1)
+## Deferred (explicitly out of scope for this revision)
 
 M3/Fluent/Carbon/Chakra exporters (Phase 3 order per backlog B3) · importers (Phase 3) · component tier (v2, ADR-0003) · state-layer mechanism (`transtyle.state-mechanism`) until an exporter needs it (M3) · `emphasized` two-segment easing · vendor round-trip extensions (Phase 3 importers).

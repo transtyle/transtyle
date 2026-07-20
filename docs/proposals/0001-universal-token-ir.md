@@ -1,6 +1,6 @@
-# Proposal 0001 — The universal token IR (catalog v1: "the role grid")
+# Proposal 0001 — The universal token IR (the role grid)
 
-**Status: ACCEPTED 2026-07-20, as amended by [ADR-0010](../adr/0010-pre-release-breaking-changes.md).** The amendment supersedes this document's compatibility posture: Transtyle is unreleased, so catalog v1 lands as a **clean break** — v0 names are removed, not aliased; §3.1's alias table is reinterpreted as the *migration rename table*; cell naming is flattened (`solid`, `solid-hover`, `on-solid` — rest is the bare prominence name). Implementation is sequenced and fully specified in [docs/plan/catalog-v1.md](../plan/catalog-v1.md) (tasks V1-T1…T11); the freeze policy re-arms at first npm publication.
+**Status: ACCEPTED 2026-07-20, as amended by [ADR-0010](../adr/0010-pre-release-breaking-changes.md).** The amendment supersedes this document's compatibility posture and its version framing: Transtyle is unreleased, so the revised catalog lands as a **clean break, not a version bump** — old names are removed, not aliased; there is no "v1", the spec stays `v0` throughout (§7's "v1"/`standard@2` language below is superseded — the rule pack keeps its id `standard@1` and is redefined in place); §3.1's alias table is reinterpreted as the *migration rename table*; cell naming is flattened (`solid`, `solid-hover`, `on-solid` — rest is the bare prominence name). Implementation is sequenced and fully specified in [docs/plan/catalog-revision.md](../plan/catalog-revision.md) (tasks T1…T11); the freeze policy re-arms at first npm publication.
 **Original posture (historical):** written to land as additive minors within v0's stability policy, with every v0 name preserved as a permanent alias.
 **Provenance of the study:** ecosystem facts below are from direct knowledge of these systems' public token sets (state of early 2026). Exact pixel/step *values* in vendor tables are illustrative and may drift with vendor releases; the proposal depends only on their *shapes*, which are stable across years of releases. Verify values against upstream before implementing any single mapping table.
 
@@ -133,7 +133,7 @@ Everything any surveyed system expresses is a *projection* of these ten; everyth
 
 ---
 
-## 3. The redesigned catalog (v1)
+## 3. The redesigned catalog
 
 ### 3.1 The role grid (replaces-by-refounding the five-position scale)
 
@@ -152,9 +152,9 @@ extra tones    tint-deep¹    —              —              text-strong²
 ```
 ¹ `tint-deep` = Chakra `emphasized` / Radix 5-as-tone; ² `text-strong` = Radix 12 / high-contrast.
 
-**v0 names become permanent aliases** (normative table):
+**Original posture (historical — see the status note above): v0 names become permanent aliases.** As amended, this table is the *migration rename table* instead — old names are removed, not kept:
 
-| v0 slot (kept forever) | v1 canonical |
+| Old slot (removed, not kept) | Revised canonical |
 |---|---|
 | `<role>.base` | `<role>.solid.rest` |
 | `<role>.hover` / `.active` | `<role>.solid.hover` / `.active` |
@@ -167,7 +167,7 @@ extra tones    tint-deep¹    —              —              text-strong²
 
 Derivation: the grid is filled by generalizing the existing standard@1 rules — the state deltas apply *per prominence column*, the tint/outline mixes are the F10/F21-pinned formulas, `on-*` use the ratified contrast-pick/on-brand-walk. Authored values always win, per cell. Cost control: exporters *pull* cells; derivation is lazy per requested cell, so the grid does not inflate build output for targets that sample three cells.
 
-**Why this is the right abstraction and not over-engineering:** three shipped exporters already needed cells v0 lacks (F10 border tints; Bootstrap `-text-emphasis` semantics; Storybook `Selected` chrome vars fell back to conventions), Radix Themes — the next B3 target — *cannot be exported at all* without the full grid (its 12 steps are the grid), and component-library variant translation (§5.6) becomes table lookup instead of per-exporter invention.
+**Why this is the right abstraction and not over-engineering:** three shipped exporters already needed cells the previous catalog lacked (F10 border tints; Bootstrap `-text-emphasis` semantics; Storybook `Selected` chrome vars fell back to conventions), Radix Themes — the next B3 target — *cannot be exported at all* without the full grid (its 12 steps are the grid), and component-library variant translation (§5.6) becomes table lookup instead of per-exporter invention.
 
 ### 3.2 Elevation ladder
 
@@ -205,11 +205,11 @@ The Cathode pattern is the universal adoption mechanism: DS keeps its vocabulary
 "crt-amber": { "$type": "color", "$value": "{option.crt.amber}",
   "$extensions": { "transtyle.role": { "archetype": "status" } } }
 ```
-A custom role declaring an archetype gets the **full grid derived** and is exported wherever a target has open role slots (daisyUI custom theme colors, Chakra colorPalette, Tailwind theme extension) and reported `dropped` where it doesn't (Bootstrap's closed set). Archetypes: `brand`, `status`, `neutral`. This makes the catalog *open* without sacrificing derivability — the single biggest agnosticism win over v0.
+A custom role declaring an archetype gets the **full grid derived** and is exported wherever a target has open role slots (daisyUI custom theme colors, Chakra colorPalette, Tailwind theme extension) and reported `dropped` where it doesn't (Bootstrap's closed set). Archetypes: `brand`, `status`, `neutral`. This makes the catalog *open* without sacrificing derivability — the single biggest agnosticism win over the previous catalog.
 
 ### 4.3 Inheritance
 
-Explicit and shallow, in resolution order: (1) grid cells inherit from their `rest` row, then from the role's `solid.rest`; (2) mode values inherit from default mode (v0 rule, unchanged); (3) component-tier tokens (v2) inherit from a declared semantic slot: `component.button.radius = inherits(radius.control)` — carried now, resolved in v2 so tier-3 never invents values, only overrides them. Provenance records every hop.
+Explicit and shallow, in resolution order: (1) grid cells inherit from their `rest` row, then from the role's `solid.rest`; (2) mode values inherit from default mode (unchanged rule); (3) component-tier tokens (v2) inherit from a declared semantic slot: `component.button.radius = inherits(radius.control)` — carried now, resolved in v2 so tier-3 never invents values, only overrides them. Provenance records every hop.
 
 ### 4.4 Extension points
 
@@ -263,9 +263,9 @@ Same table, Cathode (`primary = crt.ink`, dark-native): every column re-derives 
 
 ## 7. Migration & sequencing
 
-1. **No breaking step exists.** v1 = v0 + grid slots + ladders + archetypes, with §3.1 aliases making every existing token file, exporter, fixture, and demo bit-identical (regression-tested by rebuilding all six targets before/after).
-2. Land order: (a) ratify this proposal → ir.md gains the grid as an **additive minor** with the alias table; (b) `standard@1` stays frozen; grid rules ship as **`standard@2`** (rule-pack version bump per the freeze policy — v0 outputs never shift silently); (c) exporters adopt grid cells opportunistically (Bootstrap's F10 convention → `outline.rest` first); (d) Radix Themes exporter becomes the grid's acceptance test (it consumes all 12 columns); (e) archetypes + reserved modes; (f) importers (Phase 3) use the transposed tables.
-3. The Phase 0 exercise protocol applies again: each new exporter = a probe of the grid; two consecutive clean attempts before the v1 catalog is declared frozen.
+1. **Superseded by ADR-0010** (original posture, kept for the record): this section originally proposed a non-breaking landing — additive minor, `standard@1` frozen, grid rules as a new `standard@2` rule-pack version. **As decided:** Transtyle is unreleased, so none of that applies. The catalog is revised in place as a breaking change; `standard@1` keeps its id and is redefined in place; no version number moves. See [docs/plan/catalog-revision.md](../plan/catalog-revision.md) for the actual landing sequence (tasks T1…T11).
+2. Land order (as actually executed, per the plan): (a) rewrite ir.md's catalog section directly (T1); (b) engine implements the grid rules under `standard@1`, redefined (T2); (c) all exporters/examples/fixtures/demos migrate to the new names in the same window, with a dead-vocabulary guard preventing old names from surviving anywhere (T3); (d) exporters adopt remaining grid cells opportunistically; (e) Radix Themes exporter becomes the grid's acceptance test (T9, consumes all 12 columns); (f) archetypes (T7) + reserved modes (T8); (g) importers (Phase 3) use the transposed tables.
+3. The Phase 0 exercise protocol applies again once the freeze re-arms (first npm publication): each new exporter = a probe of the grid; two consecutive clean attempts before the catalog is declared frozen. Until then, the grid can still change in place if a real gap is found — pre-release, that's a fix, not a break.
 
 ## 8. Open questions
 
