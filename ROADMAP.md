@@ -16,20 +16,30 @@ Phases gate on outcomes, not dates. Each phase has an explicit exit criterion; w
   - **Round 7 (Bootstrap, ratified pack) done 2026-07-19** — **clean on both probes** (counter: 1 of 2). Probe (b) mechanized: every hex in the fixture parsed and exact-matched against a fresh engine run; scope limitation recorded (non-color rules remain unimplemented, unverifiable by this probe until Phase 1). See [docs/exercises/phase0-bootstrap-rerun2.md](docs/exercises/phase0-bootstrap-rerun2.md).
   - **Round 8 (shadcn, ratified pack) done 2026-07-19 — clean; rounds 7+8 are two consecutive clean attempts.** Also swept the Storybook fixture engine-exact (one more hand-run slot collapse found and fixed, no amendment). Exercise ledger closed at F1–F21 over 8 rounds. See [docs/exercises/phase0-shadcn-round8.md](docs/exercises/phase0-shadcn-round8.md).
 
-**Exit:** the paper exercise produces acceptable Bootstrap/shadcn/ECharts/Storybook themes with no IR changes needed for two consecutive attempts. — **Met 2026-07-19** (rounds 7 and 8, under the upgraded two-probe protocol; scope limit recorded: non-color rules are specced but unimplemented and get their verification in Phase 1's ground-truth tests). Remaining before Phase 1 fully opens: the formal freeze declaration of IR spec v0 + plugin API v0, and the naming tail (domains, trademark search, repo rename).
+**Exit:** the paper exercise produces acceptable Bootstrap/shadcn/ECharts/Storybook themes with no IR changes needed for two consecutive attempts. — **Met 2026-07-19** (rounds 7 and 8, under the upgraded two-probe protocol; scope limit recorded: non-color rules are specced but unimplemented and get their verification in Phase 1's ground-truth tests). Remaining: the formal freeze declaration of IR spec v0 + plugin API v0, and the naming tail (domains, trademark search, repo rename) — Phase 1 implementation has proceeded meanwhile (all reference exporters shipped 2026-07-20 without IR-catalog changes, which is itself evidence the freeze is ready to declare).
 
 ## Phase 1 — Core compiler + reference exporters (v0.1–v0.x)
 
 Scope: **foundations only** — colors, typography, spacing, radius, shadows, borders, motion, z-index/elevation. No component abstraction ([ADR-0003](docs/adr/0003-tokens-first.md)).
 
-- `@transtyle/core`: loader, normalizer, derivation engine, resolver host, emitter, diagnostics.
-- `@transtyle/cli`: `init`, `build`, `check`, `explain`, `add`.
-- A trivial built-in **css-variables exporter** as the executable specification of the plugin API (simplest possible backend; also the conformance fixture for plugin testing).
-- Reference exporters, in order: **Bootstrap** (hardest constraint set: Sass — ✅ shipped 2026-07-20, Sass + CSS-variable paths, engine-exact vs the Phase 0 fixtures), **shadcn/ui** (modes — ✅ shipped in the skeleton, both Tailwind eras), **ECharts** (non-CSS output, palette derivation — ✅ shipped in the skeleton), **Storybook** (docs integration — ✅ shipped 2026-07-20, chrome ThemeVars + sibling preview composition).
-- Coverage report and `check` diagnostics ([docs/specs/validation-and-coverage.md](docs/specs/validation-and-coverage.md)).
-- DTCG import (a DTCG file *is* valid input, so this is mostly validation UX).
+### Done
 
-**Exit:** a real design system compiles to all four targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI.
+- ✅ `@transtyle/core`: loader, normalizer, derivation engine (standard@1 color subset + the F8 radius scale, engine-owned since 2026-07-20), resolver host, emitter, diagnostics, coverage report (`report.json`; [docs/specs/validation-and-coverage.md](docs/specs/validation-and-coverage.md)).
+- ✅ `@transtyle/cli`: `build`, `check`, `--cwd`, target instances.
+- ✅ **All four reference exporters** — **shadcn/ui** (both Tailwind eras), **ECharts** (per-mode themes, derived 8-color palette), **Bootstrap** (2026-07-20: Sass path `_variables`+`_maps` *and* CSS-variable path; the IR stress test), **Storybook** (2026-07-20: chrome ThemeVars in the DS-native mode + sibling preview composition via the `ctx.siblings` manifest) — plus **daisyUI** (B3 pull-forward). Bootstrap and Storybook were accepted value-exact against their Phase 0 fixtures, closing the fixtures' purpose.
+- ✅ **Demo projects** (2026-07-20, [docs/specs/demo-app.md](docs/specs/demo-app.md)): ten npm projects (5 targets × 2 examples) rendering the themes on each target's *real* toolchain and components, consuming only `dist/`. This is the standing harness for the exit criterion's manual review.
+- ✅ DTCG files are valid input end-to-end (both examples are pure DTCG + config).
+
+### Remaining
+
+- **css-variables exporter** — the executable specification of the plugin API and the conformance fixture for plugin testing (smallest possible backend; also unblocks composing targets whose native artifact needs their ecosystem's build step — see the daisyUI note in the [2026-07-20 worklog](docs/worklog/2026-07-20-demo-app.md)).
+- **Non-color catalog in the engine**: spacing, shadows, type scales, motion, z-index are specced but the rule pack implements only colors + radius; the Bootstrap exporter currently defaults type/space scales in-exporter — that logic moves into standard@1 with ground-truth tests.
+- `@transtyle/cli`: `init`, `explain`, `add`.
+- DTCG import validation UX (friendly diagnostics for foreign-but-valid files).
+- **CI**: deterministic-build verification, exporter fixture tests, and the specced ground-truth runs (compile real Bootstrap Sass against our emitted files; boot the fixture Storybook).
+- **The "real DS" run**: adopt an open external design system via the binding-layer workflow (Cathode's pattern, guide B4) and compile it to all targets.
+
+**Exit:** a real design system compiles to all four targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — *Progress 2026-07-20: both example DSs compile to all five targets and render in the demo projects; still open: an external real DS, the practitioner reviews, and CI.*
 
 ## Phase 2 — Trust and workflow (v1.0)
 
@@ -54,7 +64,7 @@ Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); delib
 
 ## Backlog
 
-Captured-but-unscheduled ideas live in [docs/backlog.md](docs/backlog.md) — currently: implemented-only editorial policy (adopted), starter theme-kit template with a shared demo app (the demo-app half shipped 2026-07-20: [docs/specs/demo-app.md](docs/specs/demo-app.md) + a `demo/` in each example; template packaging still gated on npm publication), target priority order (DaisyUI proposed next), the "adopt an existing design system" guide, and "the Transtyle language" reference page.
+Captured-but-unscheduled ideas live in [docs/backlog.md](docs/backlog.md) — currently: implemented-only editorial policy (adopted), starter theme-kit template (its demo-app half shipped 2026-07-20 as the real npm demo projects; the `create-transtyle` packaging stays gated on npm publication), target priority order (daisyUI, Bootstrap, and Storybook now shipped; **Radix Themes** is next on the B3 list), the "adopt an existing design system" guide (written — it becomes Phase 1's "real DS" run), and "the Transtyle language" reference page (written).
 
 ## Standing tracks (all phases)
 
