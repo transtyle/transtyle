@@ -23,7 +23,7 @@ Raw product ideas with initial analysis. Graduating an item means: an ADR if it 
 **Decision needed:** ordered exporter roadmap. Proposal, ranked by theming-surface fit (CSS-variable-native first — cheapest, highest fidelity), adoption, and what each teaches the IR:
 
 1. ~~shadcn/ui~~, ~~Apache ECharts~~, ~~daisyUI~~, ~~Bootstrap~~, ~~Storybook~~ — shipped (the last two 2026-07-20, pulled forward for B2's demo projects).
-4. **Radix Themes** — CSS-var native, principled scale system; tests our option-scale generation (their 12-step scales).
+4. **Radix Themes** — CSS-var native, principled scale system; tests our option-scale generation (their 12-step scales). Now also designated the acceptance test for [proposal 0001](proposals/0001-universal-token-ir.md)'s role grid (its 12 steps consume every grid column).
 6. **Mantine** — CSS vars + TS theme object hybrid, strong adoption.
 7. **Chakra UI** — semantic-token native (their `semanticTokens` maps almost 1:1 to our catalog).
 8. **MUI** — JS theme object, enormous adoption, but deepest API surface; after the object-emitters (6–7) prove the pattern.
