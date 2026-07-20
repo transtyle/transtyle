@@ -22,7 +22,7 @@ Three targets are configured (note the `exporter` field enabling two shadcn inst
 
 `npx transtyle check` runs the same pipeline without writing files (validation, contrast checks, coverage).
 
-**See it rendered:** [examples/demo-app/](../demo-app/) shows the same fake app themed by these outputs in Bootstrap (fixture), daisyUI, and shadcn, side by side — open `examples/demo-app/index.html`.
+**See it rendered:** [demo/](demo/) shows the same fake app themed by the built `dist/` outputs in Bootstrap (fixture), daisyUI, and shadcn, side by side. Run `npm run example:demo` (→ http://localhost:8123/acme/demo/) — it refreshes the derived demo CSS from `dist/` and serves `examples/`; `demo/index.html` also opens straight from disk.
 
 ## Things to try
 

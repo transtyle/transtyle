@@ -4,16 +4,24 @@
   "version": "0.1.0",
   "description": "Transtyle — a design system compiler. Monorepo root.",
   "type": "module",
-  "engines": { "node": ">=18" },
-  "workspaces": ["packages/*", "website"],
+  "engines": {
+    "node": ">=18"
+  },
+  "workspaces": [
+    "packages/*",
+    "website"
+  ],
   "scripts": {
     "example:shadcn": "transtyle build shadcn --cwd examples/acme",
     "example:check": "transtyle check --cwd examples/acme",
-    "example:demo": "python3 -m http.server 8123 --directory examples",
-    "example:demo:themes": "node examples/demo-app/build-themes.mjs",
+    "example:demo": "npm run example:demo:themes && http-server examples -p 8123 -c-1",
+    "example:demo:themes": "node examples/build-demo-themes.mjs",
     "site:dev": "npm run dev -w @transtyle/website",
     "site:build": "npm run build -w @transtyle/website",
     "site:preview": "npm run preview -w @transtyle/website"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
 }

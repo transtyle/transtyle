@@ -54,7 +54,7 @@ Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); delib
 
 ## Backlog
 
-Captured-but-unscheduled ideas live in [docs/backlog.md](docs/backlog.md) — currently: implemented-only editorial policy (adopted), starter theme-kit template with a shared demo app (the demo-app half shipped 2026-07-20: [docs/specs/demo-app.md](docs/specs/demo-app.md) + [examples/demo-app/](examples/demo-app/); template packaging still gated on npm publication), target priority order (DaisyUI proposed next), the "adopt an existing design system" guide, and "the Transtyle language" reference page.
+Captured-but-unscheduled ideas live in [docs/backlog.md](docs/backlog.md) — currently: implemented-only editorial policy (adopted), starter theme-kit template with a shared demo app (the demo-app half shipped 2026-07-20: [docs/specs/demo-app.md](docs/specs/demo-app.md) + a `demo/` in each example; template packaging still gated on npm publication), target priority order (DaisyUI proposed next), the "adopt an existing design system" guide, and "the Transtyle language" reference page.
 
 ## Standing tracks (all phases)
 
