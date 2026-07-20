@@ -13,6 +13,7 @@ const OFFICIAL_EXPORTERS = {
   echarts: '@transtyle/exporter-echarts',
   daisyui: '@transtyle/exporter-daisyui',
   bootstrap: '@transtyle/exporter-bootstrap',
+  storybook: '@transtyle/exporter-storybook',
 };
 
 async function loadExporter(name) {
