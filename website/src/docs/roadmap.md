@@ -43,6 +43,7 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 | Lockfile (`transtyle.lock`), `--frozen` CI mode | `docs/architecture/versioning.md` |
 | Multi-dimension modes (density, brand variants) | `docs/architecture/ir.md` |
 | Component theming layer (v2) | `docs/specs/component-layer.md`, ADR-0003 |
+| **Revised semantic catalog — the role grid** (prominence × state per color role, an elevation ladder, a content hierarchy, reserved mode dimensions) | [proposal 0001](/docs/language/#coming-the-role-grid), `docs/architecture/ir.md`, `docs/plan/catalog-revision.md`. Accepted; lands as a pre-release breaking revision (no version bump — still IR spec v0, see ADR-0010), sequenced in eleven tasks. |
 
 ## Sequencing (from the project ROADMAP)
 

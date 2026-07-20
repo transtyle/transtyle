@@ -16,6 +16,8 @@ Derivation fills every semantic slot you didn't author. It's the reason 11 token
 
 The engine walks the semantic catalog; any slot with an authored or aliased value is untouched. Overriding a derived value = authoring that token. One line, visible in your token files, versioned with your design system.
 
+<span class="badge spec">specced</span> This page describes the rule pack **as implemented today**. A revised, grid-shaped rule pack is accepted and sequenced for implementation — see [the language reference](/docs/language/#coming-the-role-grid) and the [roadmap](/docs/roadmap/); it will replace this table when it lands, under the same rule-pack id (`standard@1` — no version bump pre-release).
+
 ## The standard@1 rule pack (implemented subset)
 
 | Slot filled | Rule |

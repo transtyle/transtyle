@@ -46,6 +46,8 @@ The catalog is the fixed set of semantic slots that exporters can rely on existi
 
 You may add **custom semantic tokens** beyond the catalog — they're carried with full provenance and can be aliased by catalog slots. That's how a design system keeps its own vocabulary: see [the Cathode walkthrough](/docs/examples/#cathode-the-hostile-example).
 
+<span class="badge spec">specced</span> A revised catalog — the role grid — is accepted and in progress: every color role becomes a full prominence-×-state grid instead of the five-position scale above. See [the language reference](/docs/language/#coming-the-role-grid) and the [roadmap](/docs/roadmap/) for what's compiled today versus what's landing.
+
 ## 4. Modes
 
 A mode dimension is a declared axis of variation — the skeleton supports one, `color-scheme`, with values like `light`/`dark`. Every token resolves per mode; unspecified mode values fall back to the default-mode value.

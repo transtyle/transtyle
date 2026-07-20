@@ -67,6 +67,31 @@ The reason a pivot language must exist: the same word means different things acr
 
 Exporter mapping tables encode these translations once, reviewed by people who know both languages — that's why exporters bind to the catalog and never to your names, and why you should bind your names by meaning, not spelling.
 
+## Coming: the role grid
+
+<span class="badge spec">specced</span> — accepted, not yet compiled. The five-position scale above (`base/hover/active/subtle/contrast`) turns out to be a sparse sample of something every mature design system independently arrives at: a **two-axis grid** — how prominent a color is (`solid` fill → `tint` wash → `outline` → `text`) crossed with interaction state (`rest → hover → active → selected`), plus on-colors for the two surface-like columns. Radix's 12 steps, Ant Design's map tokens, Bootstrap's subtle triad, Chakra's `colorPalette`, and Material 3's container/`on-*` pairs are all differently-named samples of this same grid — which is exactly why exporters kept inventing private conventions for cells the old scale had no name for (Bootstrap's border tints, `-text-emphasis` semantics, Storybook's `Selected` chrome).
+
+```
+prominence →   solid            tint            outline          text
+rest           solid            tint            outline          text
+hover          solid-hover      tint-hover      outline-hover    text-hover
+active         solid-active     tint-active     —                text-active
+on-colors      on-solid         on-tint         —                —
+strong         —                —               —                text-strong
+```
+
+Every v0 slot maps onto the grid directly: `<role>.base` → `<role>.solid`, `<role>.subtle` → `<role>.tint`, `text-on-<role>.base` → `<role>.on-solid`, `<role>.contrast` → `<role>.text-strong`. The old surface slots (`background`, `surface`, `surface-raised`, `overlay`) become an explicit **elevation ladder** (`elevation.0..5.surface`), and content gets a real hierarchy (`text.{strong,base,muted,subtle,disabled,inverse}`) instead of two slots.
+
+This is a **breaking revision, not a new version** — Transtyle is unreleased, so there's no compatibility to preserve and no "v1" to bump to; the IR spec stays v0 throughout (`docs/adr/0010-pre-release-breaking-changes.md`). Full derivation: `docs/architecture/ir.md`; the comparative study and per-ecosystem conversion tables behind it: `docs/proposals/0001-universal-token-ir.md`; the sequenced implementation plan: `docs/plan/catalog-revision.md`.
+
+**Extended false friends** (the grid makes more of these precise):
+
+| Word | In the catalog | In shadcn | In Radix | In Chakra |
+|---|---|---|---|---|
+| **outline** | `<role>.outline` — a border-only wash, one prominence step below `solid` | not a slot (Tailwind `border` utility on `--border`) | steps 7/8 | not distinguished from `subtle` |
+| **subtle / muted / emphasized** | `<role>.tint` (one wash, all states) | `muted` = a surface+foreground pair | steps 3–5 (a *range*, not one value) | three distinct depths: `subtle`, `muted`, `emphasized` |
+| **selected** | `<role>.solid-selected` / `tint-selected` (aliases of `-active` unless authored) | not a concept | not a concept | not a concept |
+
 ## How the language grows
 
-The catalog is deliberately fixed per version — it's the compiler's instruction set. Growth is evidence-driven: when exporters repeatedly report a target slot as `unsupported` (shadcn's `--input` is the current watch item), that's the data that justifies a new catalog slot in a minor IR revision. Additive only; nothing is removed or re-typed within a major. Your token files outlive our versions.
+The catalog is deliberately fixed per version — it's the compiler's instruction set. Growth is evidence-driven: when exporters repeatedly report a target slot as `unsupported` (shadcn's `--input` is the current watch item), that's the data that justifies a new catalog slot. Pre-release, revisions like the role grid above can still change the catalog in place; once Transtyle publishes, growth becomes additive-only — nothing removed or re-typed within a major. Your token files outlive our versions.
