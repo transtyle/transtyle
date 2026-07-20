@@ -2,6 +2,8 @@
 
 **Date:** 2026-07-18 · **Status:** complete, findings applied · **Exit criterion:** not yet met (by design — see verdict)
 
+> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The *findings* below (F1–F21) remain valid evidence; only the vocabulary changed.
+
 Method per [ROADMAP Phase 0](../../ROADMAP.md): take a design system authored in our source format, hand-execute the pipeline (normalize → derive → resolve → emit) against the [shadcn exporter spec](../specs/exporters/shadcn.md) (tailwind-v4 era), and record every point of friction as an IR finding. shadcn was chosen first deliberately: its variable set is nearly a 1:1 image of our semantic catalog, so friction here is IR signal, not target noise.
 
 ## Inputs

@@ -2,6 +2,8 @@
 
 **Date:** 2026-07-19 · **Status:** complete, two amendments (F20, F21) · **Exit criterion:** NOT met — counter reset to 0
 
+> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The *findings* below (F1–F21) remain valid evidence; only the vocabulary changed.
+
 Method: re-run round 2 ([phase0-bootstrap.md](phase0-bootstrap.md)) under the two-probe protocol. No Bootstrap exporter exists yet, so probe (b) diffs the round-2 hand values against the **derivation engine's resolved slots** — the target-independent part of the pipeline, dumped directly from `normalize → derive` and hex-formatted with the engine's own converter.
 
 Findings continue the shared numbering; this round produced F20 and F21.

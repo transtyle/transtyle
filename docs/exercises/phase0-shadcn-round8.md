@@ -2,6 +2,8 @@
 
 **Date:** 2026-07-19 · **Status:** complete, **clean** · **Exit criterion: MET** (rounds 7 and 8 — two consecutive clean attempts)
 
+> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The *findings* below (F1–F21) remain valid evidence; only the vocabulary changed.
+
 Method: the two-probe protocol against the fully ratified rule pack (post F19/F20/F21).
 
 ## Probe (a): paper mapping — clean

@@ -2,6 +2,8 @@
 
 **Date:** 2026-07-19 · **Status:** complete, **clean** · **Exit criterion:** counter at 1 of 2
 
+> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The *findings* below (F1–F21) remain valid evidence; only the vocabulary changed.
+
 Method: the upgraded protocol from [round 4](phase0-shadcn-rerun.md) — an attempt is clean only if **both** probes pass: (a) the paper mapping against current specs needs no amendments, and (b) a value-level diff against real compiler output shows no *rule-level* disagreements. Round 5 is the first attempt run under this protocol from the start, and the first under the post-F19 rule pack.
 
 ## Probe (a): paper mapping — clean

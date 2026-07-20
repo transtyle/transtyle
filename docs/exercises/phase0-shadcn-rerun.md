@@ -2,6 +2,8 @@
 
 **Date:** 2026-07-19 · **Status:** complete, one amendment (F19) · **Exit criterion:** NOT met — counter reset to 0
 
+> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The *findings* below (F1–F21) remain valid evidence; only the vocabulary changed.
+
 Method: re-execute round 1 ([phase0-shadcn.md](phase0-shadcn.md)) against the **amended** specs (post F1–F8) and — new since round 1 — against the **real shadcn exporter**, which now exists. The re-run therefore had two probes instead of one: (a) does the paper mapping still go through with no amendments, and (b) does the hand-derived expectation agree with what the compiler actually produces? Probe (b) is stronger, and it is the one that found something.
 
 Findings continue the shared numbering; this round produced F19 plus two recorded hand-run corrections.

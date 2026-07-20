@@ -2,6 +2,8 @@
 
 **Date:** 2026-07-19 · **Status:** complete, no amendments needed · **Exit criterion:** first clean attempt (counter: 1 of 2)
 
+> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The *findings* below (F1–F21) remain valid evidence; only the vocabulary changed.
+
 Method per [ROADMAP Phase 0](../../ROADMAP.md): hand-execute the pipeline for the [Acme fixture](../../examples/acme/) against the [Storybook exporter spec](../specs/exporters/storybook.md) (`>=8 <10`). Storybook is the meta-target: it themes a *tool's chrome* rather than a UI framework, and it is the only exporter that composes with sibling targets' outputs. Round 2 left a prediction: friction here should be **presentational** (mode switching, chrome constraints), not **semantic** (missing catalog slots) — if Storybook demanded new slots, that would be a surprise worth taking seriously.
 
 Findings continue the shared numbering ([F1–F7](phase0-shadcn.md), [F8–F13](phase0-bootstrap.md)); this round produced F14–F18.

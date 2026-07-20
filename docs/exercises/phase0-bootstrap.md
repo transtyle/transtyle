@@ -2,6 +2,8 @@
 
 **Date:** 2026-07-19 · **Status:** complete, findings applied · **Exit criterion:** not yet met (counter reset by F8)
 
+> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The *findings* below (F1–F21) remain valid evidence; only the vocabulary changed.
+
 Method per [ROADMAP Phase 0](../../ROADMAP.md): hand-execute the pipeline (normalize → derive → resolve → emit) for the [Acme fixture](../../examples/acme/) against the [Bootstrap exporter spec](../specs/exporters/bootstrap.md) (`>=5.3 <6`, both consumption paths). Bootstrap was chosen second deliberately: it is the hardest constraint set of the four reference targets (Sass compilation, an opinionated generated-derivation color model, its own dark-mode mechanism), and round 1 left a specific prediction to falsify — that F1's `text-on-<role>.subtle` amendment maps onto `-text-emphasis` and is therefore general, not shadcn-shaped.
 
 Findings continue round 1's numbering (F1–F7 in [phase0-shadcn.md](phase0-shadcn.md)); this round produced F8–F13.
