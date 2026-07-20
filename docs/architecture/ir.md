@@ -1,6 +1,6 @@
 # Intermediate representation (IR)
 
-> **Status: FROZEN at v0 — declared 2026-07-19.** Prerequisite met: the Phase 0 exercise exit criterion (two consecutive clean attempts, rounds 7–8; ledger F1–F21 in [docs/exercises/](../exercises/)). From this declaration on, this document changes only per the [versioning model](versioning.md): additive minors (new optional slots/types), nothing removed or re-typed within v0, and rule-pack semantics move only via a new rule-pack version (`standard@2`), never by editing `standard@1`'s meaning. Editorial fixes that do not change meaning are exempt.
+> **Status: v0, superseded by the accepted catalog v1 — see [ADR-0010](../adr/0010-pre-release-breaking-changes.md).** The 2026-07-19 freeze is lifted for the pre-release window: [proposal 0001](../proposals/0001-universal-token-ir.md) (the role grid) replaces this catalog as a clean break, implemented per [docs/plan/catalog-v1.md](../plan/catalog-v1.md) (task V1-T1 rewrites this document). The freeze discipline — additive minors only, rule semantics move only via new rule-pack versions — re-arms at first npm publication. Until V1-T1 lands, this document describes what the shipped engine implements.
 
 The IR is the contract between everything: importers produce it, derivation completes it, exporters consume it. It is the project's most stability-critical artifact — more stable than the CLI, more stable than any exporter. Spec-versioned independently (see [versioning.md](versioning.md)).
 

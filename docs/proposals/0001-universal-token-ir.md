@@ -1,7 +1,7 @@
 # Proposal 0001 — The universal token IR (catalog v1: "the role grid")
 
-**Status: PROPOSED** (not ratified; changes nothing shipped). Author: compiled from a comparative study of 14 ecosystems, 2026-07-20.
-**Relationship to the v0 freeze:** [ir.md](../architecture/ir.md) froze IR v0 on 2026-07-19. Everything here is designed to land as **additive minors within v0's stability policy** — new slots, new optional axes, new extensions — with every v0 name preserved as a permanent canonical alias. Nothing shipped breaks; no exporter needs a same-day change. Where this document says "replace", it means "re-found and alias", never "remove".
+**Status: ACCEPTED 2026-07-20, as amended by [ADR-0010](../adr/0010-pre-release-breaking-changes.md).** The amendment supersedes this document's compatibility posture: Transtyle is unreleased, so catalog v1 lands as a **clean break** — v0 names are removed, not aliased; §3.1's alias table is reinterpreted as the *migration rename table*; cell naming is flattened (`solid`, `solid-hover`, `on-solid` — rest is the bare prominence name). Implementation is sequenced and fully specified in [docs/plan/catalog-v1.md](../plan/catalog-v1.md) (tasks V1-T1…T11); the freeze policy re-arms at first npm publication.
+**Original posture (historical):** written to land as additive minors within v0's stability policy, with every v0 name preserved as a permanent alias.
 **Provenance of the study:** ecosystem facts below are from direct knowledge of these systems' public token sets (state of early 2026). Exact pixel/step *values* in vendor tables are illustrative and may drift with vendor releases; the proposal depends only on their *shapes*, which are stable across years of releases. Verify values against upstream before implementing any single mapping table.
 
 ---

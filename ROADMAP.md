@@ -30,16 +30,23 @@ Scope: **foundations only** — colors, typography, spacing, radius, shadows, bo
 - ✅ **Demo projects** (2026-07-20, [docs/specs/demo-app.md](docs/specs/demo-app.md)): ten npm projects (5 targets × 2 examples) rendering the themes on each target's *real* toolchain and components, consuming only `dist/`. This is the standing harness for the exit criterion's manual review.
 - ✅ DTCG files are valid input end-to-end (both examples are pure DTCG + config).
 
-### Remaining
+### Remaining — the catalog v1 sequence
 
-- **css-variables exporter** — the executable specification of the plugin API and the conformance fixture for plugin testing (smallest possible backend; also unblocks composing targets whose native artifact needs their ecosystem's build step — see the daisyUI note in the [2026-07-20 worklog](docs/worklog/2026-07-20-demo-app.md)).
-- **Non-color catalog in the engine**: spacing, shadows, type scales, motion, z-index are specced but the rule pack implements only colors + radius; the Bootstrap exporter currently defaults type/space scales in-exporter — that logic moves into standard@1 with ground-truth tests.
-- `@transtyle/cli`: `init`, `explain`, `add`.
-- DTCG import validation UX (friendly diagnostics for foreign-but-valid files).
-- **CI**: deterministic-build verification, exporter fixture tests, and the specced ground-truth runs (compile real Bootstrap Sass against our emitted files; boot the fixture Storybook).
-- **The "real DS" run**: adopt an open external design system via the binding-layer workflow (Cathode's pattern, guide B4) and compile it to all targets.
+Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir.md) (the role grid as universal IR) is **accepted**, and per [ADR-0010](docs/adr/0010-pre-release-breaking-changes.md) it lands as a **clean break** — Transtyle is unreleased, so catalog v0 names are removed, not aliased; the freeze re-arms at first npm publication. Every task below is fully specified for any implementer (including lower-capability AI models) in **[docs/plan/catalog-v1.md](docs/plan/catalog-v1.md)** — exact slot names, formulas, file lists, acceptance commands. Execute strictly in order; one task = one pushed commit series; the CONTRIBUTING sync rule and `npm run check:sync` apply to every one.
 
-**Exit:** a real design system compiles to all four targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — *Progress 2026-07-20: both example DSs compile to all five targets and render in the demo projects; still open: an external real DS, the practitioner reviews, and CI.*
+- [ ] **V1-T1** — Rewrite the IR spec to catalog v1 (grid cells, elevation ladder, content hierarchy, scales, reserved modes; ir.md + derivation.md + website mirror).
+- [ ] **V1-T2** — Engine: the v1 rule pack (grid derivation with pinned formulas, elevation/shadow/z ladders, type & space scales, motion; `scripts/check-grid.mjs` proves promoted conventions reproduce the Bootstrap fixture values byte-for-byte).
+- [ ] **V1-T3** — Migrate all six exporters, examples, fixtures, demos to v1 names; add the dead-vocabulary guard to `check-sync` (no v0 slot name survives anywhere).
+- [ ] **V1-T4** — css-variables exporter: the grid-complete conformance dump (+ demo projects, all five surfaces).
+- [ ] **V1-T5** — Permanent ground-truth scripts (`check-fixtures`, `check-determinism`, `check:all`) + GitHub Actions CI.
+- [ ] **V1-T6** — CLI `explain` / `init` / `add` (+ `check-cli` golden tests).
+- [ ] **V1-T7** — Role archetypes: custom roles derive the full grid and export to open-role targets (Cathode's `crt-amber` as showcase).
+- [ ] **V1-T8** — Multi-dimension modes + reserved dimensions (`density` worked example on Acme).
+- [ ] **V1-T9** — **Radix Themes exporter** — the grid's designated acceptance test (its 12 steps consume every grid column); clean attempt №1 toward re-freezing the catalog.
+- [ ] **V1-T10** — DTCG validation UX (new stable diagnostic codes + `check --json`).
+- [ ] **V1-T11** — The real-DS run: adopt an external open design system via the binding-layer playbook; practitioner review; Phase 1 exit.
+
+**Exit:** a real design system compiles to all reference targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — *Progress 2026-07-20: both example DSs compile to all five shipped targets and render in the demo projects; the v1 sequence above carries the rest.*
 
 ## Phase 2 — Trust and workflow (v1.0)
 
