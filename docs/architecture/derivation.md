@@ -12,9 +12,11 @@ Derivation rules form a DAG evaluated to fixpoint during the DERIVE stage. A rul
 
 Rule sources, by precedence: user-defined rules in config → rule-pack overrides → the built-in **standard rule pack** (versioned; pinned in config as `derivation.rules: "standard@1"` so upgrading the CLI cannot silently change your compiled theme — changing rule-pack versions shows up in `transtyle diff`).
 
-## The standard rule pack (v0 catalog, foundations)
+## The standard rule pack (foundations)
 
-Illustrative, not exhaustive; the full table ships as a generated reference doc.
+**Status: this table describes the revised catalog** — the role grid, elevation ladder, and content hierarchy from [proposal 0001](../proposals/0001-universal-token-ir.md) / [ADR-0010](../adr/0010-pre-release-breaking-changes.md), specified for implementation in [docs/plan/catalog-revision.md](../plan/catalog-revision.md) task T2. **The engine does not implement this table yet** — until T2 lands, the shipped `derive.js` implements the previous (pre-revision) rule set. Illustrative, not exhaustive; the full table ships as a generated reference doc once implemented.
+
+Every color role is a **grid**: prominence (`solid`, `tint`, `outline`, `text`) × interaction state (rest, `-hover`, `-active`, `-selected`) + on-colors (`on-solid`, `on-tint`). The *rest* state is the bare prominence name; the role's authored anchor is `<role>.solid`.
 
 | Hole | Rule |
 |---|---|
@@ -22,23 +24,33 @@ Illustrative, not exhaustive; the full table ships as a generated reference doc.
 | `secondary` | desaturated rotation of `primary` (OKLCH: chroma ×0.35, lightness toward neutral) — *not* "closest available token"; nearest-neighbor guessing is unexplainable and unstable under edits |
 | `info` | fixed blue anchored to `primary`'s chroma |
 | `success` / `warning` / `danger` | fixed hue anchors (green/amber/red) with chroma/lightness matched to the brand palette — hue is conventional, temperature follows the brand |
-| role `hover` / `active` states | OKLCH lightness deltas from `base` (direction flips in dark mode) |
-| role `subtle` | base mixed toward `surface` (the generic form of Bootstrap's `-bg-subtle` and shadcn's muted pairings) |
-| `text-on-<role>.base` | pick white/black/near-neutral maximizing contrast against `<role>.base`; **hard rule: if no candidate reaches WCAG AA 4.5:1, emit a warning naming the role — never silently ship failing contrast** |
-| `text-on-<role>.subtle` | **on-brand walk** (ratified by [exercise F19](../exercises/phase0-shadcn-rerun.md), intent from [F1](../exercises/phase0-shadcn.md)): start at `<role>.active` (the state-consistent on-brand candidate), step OKLCH lightness away from `<role>.subtle` in 0.01 increments until the pair clears AA 4.5:1; if the lightness clamp is reached first, fall back to the max-contrast pick among `text`, white, near-black; same AA hard rule |
-| `surface-raised` / `overlay` | raise(`surface`): toward white in light mode, lightness increase in dark mode; `overlay` defaults to alias of `surface-raised` |
-| `ring` | alias of `primary.base`, lightened in dark mode for visibility ([exercise F3](../exercises/phase0-shadcn.md)) |
-| `<role>.contrast` | the role re-anchored at text lightness: `{ l: text.base.l, c: role.c, h: role.h }` per mode — the role's hue/chroma pushed to text-level contrast against the mode's surfaces; gamut clamping applies. Fills a slot the catalog guaranteed but standard@1 never derived — caught when the engine had nothing where the Bootstrap exercise had consumed `neutral.contrast` twice, with two different hand values ([exercise F20](../exercises/phase0-bootstrap-rerun.md)) |
+| `solid-hover` / `solid-active` / `solid-selected` | OKLCH lightness deltas from `solid` (`±0.05` / `±0.07` with chroma ×0.9 / alias of `-active`; direction flips in dark mode) |
+| `tint` | `solid` mixed toward `elevation.1.surface` at 0.92 (the generic form of Bootstrap's `-bg-subtle` and shadcn's muted pairings) |
+| `tint-hover` / `tint-active` / `tint-selected` | same mix at 0.88 / 0.84 / alias of `-active` |
+| `outline` / `outline-hover` | `solid` mixed toward `elevation.1.surface` at 0.70 / 0.55 — promoted from a private Bootstrap-exporter convention ([exercise F10](../exercises/phase0-bootstrap.md)) into an engine-owned grid cell |
+| `on-solid` | pick white/black/near-neutral maximizing contrast against `solid`; **hard rule: if no candidate reaches WCAG AA 4.5:1, emit a warning naming the role — never silently ship failing contrast** |
+| `on-tint` | **on-brand walk** (ratified by [exercise F19](../exercises/phase0-shadcn-rerun.md), intent from [F1](../exercises/phase0-shadcn.md)): start at `solid-active` (the state-consistent on-brand candidate), step OKLCH lightness away from `tint` in 0.01 increments until the pair clears AA 4.5:1; if the lightness clamp is reached first, fall back to the max-contrast pick among `text.base`, white, near-black; same AA hard rule |
+| `text` / `text-hover` / `text-active` | on-brand walk of `solid` against `elevation.0.surface`, then the same lightness deltas as the solid states |
+| `text-strong` | the role re-anchored at text lightness: `{ l: text.base.l, c: role.c, h: role.h }` per mode — the role's hue/chroma pushed to text-level contrast against the mode's surfaces; gamut clamping applies. Fills a slot the catalog guaranteed but the previous rule set never derived — caught when the engine had nothing where the Bootstrap exercise had consumed the equivalent slot twice, with two different hand values ([exercise F20](../exercises/phase0-bootstrap-rerun.md)) |
+| `elevation.1..5.surface` | iterative raise() from `elevation.0.surface`: toward white in light mode, lightness increase in dark mode, each level raised from the previous |
+| `elevation.1..4.shadow` | composed from `scrim` color at fixed geometry/alpha ramps, one per level |
+| `ring` | alias of `primary.solid`, lightened in dark mode for visibility ([exercise F3](../exercises/phase0-shadcn.md)) |
+| `text.muted` / `text.subtle` / `text.disabled` | `text.base` mixed toward `elevation.1.surface` at increasing ratios / at reduced alpha |
+| `text.inverse` | `text.base` **of the other color-scheme mode** — a cross-mode read, resolved after both modes' per-mode passes complete |
+| `link.base` / `link.hover` / `link.visited` | alias of `primary.text` / `primary.text-hover` / hue-shifted `link.base` |
 | `radius.{none,sm,lg,xl,full}` from `radius.md` | multiplicative ramp: none = 0, sm = md × 0.5, lg = md × 1.5, xl = md × 2, full = 9999px — multiplicative so the ramp stays sane at any authored `md`; exporters may re-express in the target's idiom ([exercise F8](../exercises/phase0-bootstrap.md)) |
+| `radius.{control,field,container}` | alias of `radius.md` (daisyUI-motivated family aliases — override individually where a target needs per-family radii) |
 | option color scales (`50…950`) from a single brand color | perceptual lightness ramp in OKLCH with chroma compensation |
 | dark mode values (only if `derivation.autoDark: true`, default **off**) | lightness inversion + chroma adjustment per role; off by default because auto-dark is the least trustworthy derivation class — it must be opted into, and its output is classified `derived` in coverage so teams see exactly how much of their dark theme is synthetic |
-| type scale from `base` + `ratio` | modular scale, rounded to a rounding policy |
-| spacing scale from `base` unit | linear ×n scale |
-| `scrim` | near-black at fixed alpha (dimming veil; distinct from `overlay` — [exercise F2](../exercises/phase0-shadcn.md)) |
-| `shadow.*` | composed from `scrim` color at fixed alpha ramps |
+| `type.size.*` from `type.base` + `type.ratio` | modular scale, rounded to a rounding policy; defaulted to base 1rem, ratio 1.25 when unauthored |
+| `type.role.<r>.<s>` | composite typography values projected from the primitive scales (family/size/weight/leading) by a fixed mapping table per role/size |
+| `space.*` from a base unit | linear ×n scale, defaulted to 0.25rem when unauthored |
+| `size.control.*` / `border-width.*` / `breakpoint.*` | catalog-default constants (defaulted, not derived) unless authored |
+| `scrim` | near-black at fixed alpha (dimming veil; distinct from any elevation level — [exercise F2](../exercises/phase0-shadcn.md)) |
+| `duration.*` / `easing.*` | catalog-default constants (defaulted) |
 | `z.*` catalog | fixed default ladder (defaulted, not derived) |
 
-**Mix semantics (pinned by [exercise F21](../exercises/phase0-bootstrap-rerun.md)):** every `mix` in the rule pack and the expression language interpolates in **cartesian OKLab** (l, a, b components; alpha linear). Hue is therefore *not* preserved when the mix partner is chromatic: as chroma collapses toward a tinted surface, the result's hue drifts toward the surface hue (visible in dark-mode `subtle` tints over a blue-cast surface). This is deliberate — cartesian mixing is what makes heavy tints sit ambiently on their surface instead of glowing — but it was previously implied rather than specified, and a hue-preserving implementation would have been a conforming reading of "mixed toward surface". It is not one anymore.
+**Mix semantics (pinned by [exercise F21](../exercises/phase0-bootstrap-rerun.md)):** every `mix` in the rule pack and the expression language interpolates in **cartesian OKLab** (l, a, b components; alpha linear). Hue is therefore *not* preserved when the mix partner is chromatic: as chroma collapses toward a tinted surface, the result's hue drifts toward the surface hue (visible in dark-mode `tint` cells over a blue-cast surface). This is deliberate — cartesian mixing is what makes heavy tints sit ambiently on their surface instead of glowing — but it was previously implied rather than specified, and a hue-preserving implementation would have been a conforming reading of "mixed toward surface". It is not one anymore.
 
 ## Provenance classes and the "defaulted" distinction
 
@@ -52,8 +64,8 @@ Config may add rules in a small declarative expression form (color functions: `m
 "derivation": {
   "rules": "standard@1",
   "overrides": {
-    "semantic.color.secondary": { "alias": "option.color.slate.600" },
-    "semantic.color.accent":    { "fn": "mix", "args": ["{semantic.color.primary}", "#ffffff", 0.15] }
+    "semantic.color.secondary.solid": { "alias": "option.color.slate.600" },
+    "semantic.color.accent.solid":    { "fn": "mix", "args": ["{semantic.color.primary.solid}", "#ffffff", 0.15] }
   }
 }
 ```
@@ -62,4 +74,4 @@ Arbitrary JS in rules is deliberately excluded from v1: it would break the "conf
 
 ## Failure honesty
 
-When a rule cannot produce a defensible value (e.g. `text-on-primary` against a mid-tone brand color where nothing reaches AA), the engine still produces the best candidate but attaches a `warning` diagnostic with the measured contrast and remediation hint. Derivation never blocks a build; it makes problems visible and lets `check` policy decide severity.
+When a rule cannot produce a defensible value (e.g. `primary.on-solid` against a mid-tone brand color where nothing reaches AA), the engine still produces the best candidate but attaches a `warning` diagnostic with the measured contrast and remediation hint. Derivation never blocks a build; it makes problems visible and lets `check` policy decide severity.
