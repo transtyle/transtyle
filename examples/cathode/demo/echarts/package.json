@@ -1,0 +1,20 @@
+{
+  "name": "cathode-demo-echarts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "transtyle build --cwd ../..",
+    "dev": "vite --port 4204",
+    "prebuild": "transtyle build --cwd ../..",
+    "build": "vite build",
+    "preview": "vite preview --port 4204"
+  },
+  "dependencies": {
+    "echarts": "^5.5.0"
+  },
+  "devDependencies": {
+    "@transtyle/cli": "*",
+    "vite": "^6.0.0"
+  }
+}

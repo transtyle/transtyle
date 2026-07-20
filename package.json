@@ -9,19 +9,16 @@
   },
   "workspaces": [
     "packages/*",
-    "website"
+    "website",
+    "examples/*/demo/*"
   ],
   "scripts": {
+    "example:build": "transtyle build --cwd examples/acme && transtyle build --cwd examples/cathode",
     "example:shadcn": "transtyle build shadcn --cwd examples/acme",
     "example:check": "transtyle check --cwd examples/acme",
-    "example:demo": "npm run example:demo:themes && http-server examples -p 8123 -c-1",
-    "example:demo:themes": "node examples/build-demo-themes.mjs",
     "site:dev": "npm run dev -w @transtyle/website",
     "site:build": "npm run build -w @transtyle/website",
     "site:preview": "npm run preview -w @transtyle/website"
   },
-  "license": "MIT",
-  "devDependencies": {
-    "http-server": "^14.1.1"
-  }
+  "license": "MIT"
 }

@@ -8,7 +8,9 @@
     "@transtyle/core": "*",
     "@transtyle/exporter-shadcn": "*",
     "@transtyle/exporter-echarts": "*",
-    "@transtyle/exporter-daisyui": "*"
+    "@transtyle/exporter-daisyui": "*",
+    "@transtyle/exporter-bootstrap": "*",
+    "@transtyle/exporter-storybook": "*"
   },
   "license": "MIT"
 }

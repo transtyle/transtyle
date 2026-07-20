@@ -1,0 +1,20 @@
+/*
+ * Nimbus Console — shadcn/ui (Tailwind v4), themed ONLY by transtyle-built output.
+ * The generated globals file carries :root/.dark variables AND the @theme inline
+ * block wiring them into Tailwind — exactly what `npx shadcn init` would have
+ * scaffolded, but compiled from the design system.
+ */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../../../dist/shadcn/globals.transtyle.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}

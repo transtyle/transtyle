@@ -2,7 +2,7 @@
 
 > A design system compiler. Describe your design system once; compile it to every ecosystem.
 
-**Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a first working implementation: the core pipeline and a shadcn/ui exporter, exercised end-to-end by the [Acme example](examples/acme/). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
+**Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a working implementation: the core pipeline and five reference exporters (shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook), exercised end-to-end by the [Acme](examples/acme/) and [Cathode](examples/cathode/) examples and their runnable [demo projects](examples/acme/demo/). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
 
 ## What it is
 
@@ -34,11 +34,19 @@ One source of truth in the middle; pluggable frontends and backends on either si
 ```bash
 npm install                 # link workspaces (compiler packages have zero external dependencies)
 cd examples/acme
-npx transtyle build         # shadcn (both Tailwind eras) + daisyUI + Apache ECharts themes
+npx transtyle build         # shadcn (both Tailwind eras) + daisyUI + Apache ECharts + Bootstrap + Storybook themes
 npx transtyle check         # pipeline without emit: validation + contrast + coverage
 ```
 
-The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project, and `theme.*-{light,dark}.json` registers straight into Apache ECharts — see each generated `usage.md`. 11 authored tokens produce the full shadcn variable set plus per-mode chart themes with a brand-derived 8-color categorical palette; everything unauthored is derived deterministically with provenance recorded in `report.json`.
+The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project, `_variables.transtyle.scss`/`_maps.transtyle.scss` import around Bootstrap's own Sass build, and `theme.*-{light,dark}.json` registers straight into Apache ECharts — see each generated `usage.md`. 11 authored tokens produce the full variable set of every target; everything unauthored is derived deterministically with provenance recorded in `report.json`.
+
+To *see* the themes on real framework components, each example ships npm-runnable demo projects (`examples/<example>/demo/<target>/`, one Vite/Storybook project per target, consuming only the compiled `dist/`):
+
+```bash
+npm run dev -w acme-demo-bootstrap     # Nimbus Console in real Bootstrap (Sass path), port 4101
+npm run dev -w acme-demo-shadcn        # the same page in real shadcn/ui components, port 4103
+npm run dev -w cathode-demo-storybook  # a phosphor-green Storybook, port 6201
+```
 
 A second, deliberately hostile example lives in [examples/cathode/](examples/cathode/): a dark-native CRT terminal DS with its own vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`) bound to the semantic catalog through one-line aliases — the pattern for compiling *uncommon* design systems.
 

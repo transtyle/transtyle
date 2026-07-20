@@ -1,0 +1,10 @@
+// Nimbus Console — Bootstrap Sass path, themed ONLY by transtyle-built output.
+// Import order per dist/bootstrap/usage.md: theme variables BEFORE Bootstrap,
+// theme maps AFTER Bootstrap's variables (they replace its tint/shade
+// derivations), then Bootstrap itself compiles every component from the theme.
+@import "bootstrap/scss/functions";
+@import "../../../dist/bootstrap/variables.transtyle";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "../../../dist/bootstrap/maps.transtyle";
+@import "bootstrap/scss/bootstrap";

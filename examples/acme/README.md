@@ -22,10 +22,14 @@ Three targets are configured (note the `exporter` field enabling two shadcn inst
 
 `npx transtyle check` runs the same pipeline without writing files (validation, contrast checks, coverage).
 
-**See it rendered:** [demo/](demo/) shows the same fake app themed by the built `dist/` outputs in Bootstrap (fixture), daisyUI, and shadcn, side by side. Run `npm run example:demo` (→ http://localhost:8123/acme/demo/) — it refreshes the derived demo CSS from `dist/` and serves `examples/`; `demo/index.html` also opens straight from disk.
+**See it rendered:** [demo/](demo/) contains five real npm projects — the same fake page in Bootstrap (Sass path), shadcn/ui, and daisyUI, an ECharts dashboard, and a minimal themed Storybook — each consuming only the `dist/` artifacts this example compiles (spec: [docs/specs/demo-app.md](../../docs/specs/demo-app.md)). From the repo root:
+
+```bash
+npm run dev -w acme-demo-bootstrap   # port 4101   (also: -daisyui 4102, -shadcn 4103, -echarts 4104, -storybook 6101)
+```
 
 ## Things to try
 
 Change `option.color.blue.600` in `tokens/option.tokens.json` and rebuild — the whole theme (hovers, subtle tints, on-colors, chart palette) follows the brand. Delete a dark-mode value and rebuild to watch fallback behavior. Set a `primary` with poor contrast to see the `TST2101` accessibility warnings.
 
-Note on `expected/`: `expected/bootstrap/` and `expected/storybook/` are **acceptance fixtures** for the exporters that don't exist yet — their color values are engine-exact (regenerated in exercise rounds [6](../../docs/exercises/phase0-bootstrap-rerun.md) and [8](../../docs/exercises/phase0-shadcn-round8.md)); non-color values are hand-derived against specced-but-unimplemented rules. `expected/shadcn/` is different: it is the *historical* hand-written artifact from [round 1](../../docs/exercises/phase0-shadcn.md), superseded as a fixture by the real exporter's own output (`dist/` + `report.json`); its documented deltas vs `dist/` are classified in the [round 5](../../docs/exercises/phase0-shadcn-rerun2.md) report.
+Note on `expected/`: `expected/bootstrap/` and `expected/storybook/` are the Phase 0 **acceptance fixtures** their exporters were verified against when they shipped (2026-07-20: every fixture value matches the real `dist/` output; color values were engine-exact since exercise rounds [6](../../docs/exercises/phase0-bootstrap-rerun.md) and [8](../../docs/exercises/phase0-shadcn-round8.md)). `expected/shadcn/` is different: it is the *historical* hand-written artifact from [round 1](../../docs/exercises/phase0-shadcn.md), superseded as a fixture by the real exporter's own output (`dist/` + `report.json`); its documented deltas vs `dist/` are classified in the [round 5](../../docs/exercises/phase0-shadcn-rerun2.md) report.

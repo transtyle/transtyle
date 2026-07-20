@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nimbus Analytics — Apache ECharts · transtyle demo</title>
+  </head>
+  <body>
+    <!-- demo chrome (not part of the fake app) -->
+    <div class="demo-chrome">
+      <strong id="demo-brand">transtyle demo</strong>
+      <span>Apache ECharts — every chart initialized with the generated theme (palette, axes, tooltip, background)</span>
+      <button id="demo-mode"></button>
+    </div>
+
+    <!-- The fake page: "Nimbus Analytics", the dashboard behind Nimbus Console -->
+    <main class="page">
+      <header class="page-head">
+        <h1>Nimbus Analytics</h1>
+        <p>Q2 operations overview</p>
+      </header>
+      <div class="grid">
+        <section class="panel"><h2>Revenue vs costs</h2><div class="chart" id="chart-revenue"></div></section>
+        <section class="panel"><h2>Signups trend</h2><div class="chart" id="chart-signups"></div></section>
+        <section class="panel"><h2>Traffic by channel</h2><div class="chart" id="chart-channels"></div></section>
+        <section class="panel"><h2>Regional load</h2><div class="chart" id="chart-load"></div></section>
+      </div>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

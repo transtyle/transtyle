@@ -16,16 +16,14 @@ Raw product ideas with initial analysis. Graduating an item means: an ADR if it 
 
 **Shape.** `create-transtyle` npm initializer + `templates/theme-kit/` in-repo; the demo app is a spec (`docs/specs/demo-app.md`: header, buttons in all roles, form, card, table, modal, chart) implemented once per supported target. Depends on: npm publication (Phase 1).
 
-**Status 2026-07-20:** the demo-app half shipped — [docs/specs/demo-app.md](specs/demo-app.md) + a self-contained `demo/` in each example ([acme](../examples/acme/demo/), [cathode](../examples/cathode/demo/)) rendering the same fake app (Nimbus Console) in Bootstrap (acceptance fixture, labeled), daisyUI, and shadcn (token contract), with the ECharts theme embedded, side by side per example and cross-linked between examples. The `create-transtyle` template packaging remains here, still gated on npm publication.
+**Status 2026-07-20:** the demo-app half shipped as **real npm projects** — [docs/specs/demo-app.md](specs/demo-app.md) + five projects per example under `examples/<example>/demo/` (Bootstrap Sass-path Vite app, shadcn/ui React app with registry components, daisyUI Tailwind app, an ECharts dashboard, a minimal Storybook), each consuming only the transtyle-built `dist/`. Shipping them forced the Bootstrap and Storybook exporters forward from Phase 1 (fixtures became their acceptance tests). The `create-transtyle` template packaging remains here, still gated on npm publication.
 
 ## B3 — Target priority list
 
 **Decision needed:** ordered exporter roadmap. Proposal, ranked by theming-surface fit (CSS-variable-native first — cheapest, highest fidelity), adoption, and what each teaches the IR:
 
-1. ~~shadcn/ui~~, ~~Apache ECharts~~, ~~daisyUI~~ — shipped.
-3. **Bootstrap** — largest legacy footprint; hardest constraint set (Sass path); already fully specced. The IR stress test.
+1. ~~shadcn/ui~~, ~~Apache ECharts~~, ~~daisyUI~~, ~~Bootstrap~~, ~~Storybook~~ — shipped (the last two 2026-07-20, pulled forward for B2's demo projects).
 4. **Radix Themes** — CSS-var native, principled scale system; tests our option-scale generation (their 12-step scales).
-5. **Storybook** — meta-target; unlocks the "themed showcase" story and B2's demo rendering.
 6. **Mantine** — CSS vars + TS theme object hybrid, strong adoption.
 7. **Chakra UI** — semantic-token native (their `semanticTokens` maps almost 1:1 to our catalog).
 8. **MUI** — JS theme object, enormous adoption, but deepest API surface; after the object-emitters (6–7) prove the pattern.

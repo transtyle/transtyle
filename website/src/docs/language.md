@@ -27,7 +27,7 @@ Eight roles; each is a **scale**, because targets need states, not single values
 | `<role>.base` | The role's principal value | per-role rule below |
 | `<role>.hover` / `.active` | Interaction states | lightness deltas, direction flips in dark mode |
 | `<role>.subtle` | Tinted background version | mix toward `surface` (92%) |
-| `<role>.contrast` | Max-contrast counterpart | contrast-pick *(specced)* |
+| `<role>.contrast` | Max-contrast counterpart | contrast-anchor(text) |
 
 | Role | Meaning | Base derivation when unauthored | e.g. (from a blue brand) |
 |---|---|---|---|

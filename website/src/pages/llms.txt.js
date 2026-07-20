@@ -11,7 +11,7 @@ export function GET({ site }) {
   const lines = [
     '# Transtyle',
     '',
-    '> Transtyle is a design system compiler: describe a design system once as W3C (DTCG) design tokens, and compile native, idiomatic theme artifacts for many ecosystems (shadcn/ui today; Bootstrap, Apache ECharts, Storybook specced). Deterministic builds, explainable derivation, coverage reporting, zero runtime. Designed to be operated by AI agents: config is JSON, diagnostics have stable codes, every build emits report.json.',
+    '> Transtyle is a design system compiler: describe a design system once as W3C (DTCG) design tokens, and compile native, idiomatic theme artifacts for many ecosystems (shadcn/ui, daisyUI, Bootstrap, Apache ECharts, Storybook today). Deterministic builds, explainable derivation, coverage reporting, zero runtime. Designed to be operated by AI agents: config is JSON, diagnostics have stable codes, every build emits report.json.',
     '',
     'Every docs page is also available as raw markdown by appending `.md` to its URL. The full documentation as one file: ' + base + '/llms-full.txt',
     '',

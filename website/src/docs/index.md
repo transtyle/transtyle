@@ -34,8 +34,8 @@ Existing token pipelines (Style Dictionary, Terrazzo) transform token files into
 ```
 frontends (importers)      intermediate representation      backends (exporters)
 ─────────────────────      ──────────────────────────       ────────────────────
-DTCG token files      ──→  normalized, derived,        ──→  shadcn/ui, daisyUI, ECharts
-Figma, Tailwind (soon)     validated token graph            Bootstrap, Storybook (specced)
+DTCG token files      ──→  normalized, derived,        ──→  shadcn/ui, daisyUI, ECharts,
+Figma, Tailwind (soon)     validated token graph            Bootstrap, Storybook
 ```
 
 Like Babel or LLVM: one intermediate representation in the middle, pluggable frontends and backends on either side. That architecture is why ecosystem-to-ecosystem translation (Bootstrap → shadcn) will be a composition of existing parts, not a special feature.

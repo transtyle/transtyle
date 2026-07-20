@@ -15,11 +15,14 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | Compiler pipeline (load → normalize → derive → resolve → emit → report) | ✅ end-to-end, byte-deterministic |
 | DTCG-superset token loading, aliases, cycle detection, tiers | ✅ |
 | Modes: one dimension, inline `$extensions` **and** mode-scoped layer files | ✅ equivalent by construction |
-| Derivation: standard@1 color subset (roles, states, subtles, on-colors, surfaces, ring, chart palette) | ✅ with provenance |
+| Derivation: standard@1 color subset (roles, states, subtles, on-colors, surfaces, ring, chart palette) + radius scale (F8) | ✅ with provenance |
 | OKLCH color engine, WCAG 2.1 contrast checks | ✅ zero-dep, in-house |
 | shadcn/ui exporter, tailwind-v4 + tailwind-v3 era profiles | ✅ |
 | Apache ECharts exporter: per-mode theme JSON + self-registering scripts, 8-color derived palette | ✅ |
 | daisyUI exporter (v5 era): light+dark theme blocks, brand-direct role mapping | ✅ |
+| Bootstrap exporter (≥5.3): Sass path (`_variables` + `_maps`) **and** CSS-variable path | ✅ engine-exact vs the Phase 0 fixtures |
+| Storybook exporter (SB 8–9): chrome ThemeVars + sibling preview composition | ✅ |
+| Per-example demo projects (`examples/*/demo/*`): the same fake app per target, npm-run-dev-able | ✅ consume `dist/` only |
 | Target instances (one exporter, many configs) | ✅ |
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
 | CLI: `build`, `check`, `--cwd` | ✅ |
@@ -31,7 +34,7 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 
 | Feature | Where the design lives |
 |---|---|
-| Exporters: Bootstrap, Storybook, css-variables | `docs/specs/exporters/` |
+| Exporters: css-variables (plugin-API conformance fixture) | `docs/specs/exporters/` |
 | CLI: `init`, `add`, `explain`, `diff`, `import`, `preview`, `migrate` | `docs/specs/cli.md` |
 | Full semantic catalog: spacing, shadows/elevation, motion, z-index, typography scales | `docs/architecture/ir.md` |
 | Derivation `overrides`, user rule expressions, `autoDark` audit flow | `docs/architecture/derivation.md` |
