@@ -1,11 +1,15 @@
 {
   "version": "0.0.1",
   "configurations": [
-    {
-      "name": "demo-app",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "example:demo"],
-      "port": 8123
-    }
+    { "name": "acme-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-bootstrap"], "port": 4101 },
+    { "name": "acme-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-daisyui"], "port": 4102 },
+    { "name": "acme-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-shadcn"], "port": 4103 },
+    { "name": "acme-echarts", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-echarts"], "port": 4104 },
+    { "name": "acme-storybook", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-storybook"], "port": 6101 },
+    { "name": "cathode-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-bootstrap"], "port": 4201 },
+    { "name": "cathode-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-daisyui"], "port": 4202 },
+    { "name": "cathode-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-shadcn"], "port": 4203 },
+    { "name": "cathode-echarts", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-echarts"], "port": 4204 },
+    { "name": "cathode-storybook", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-storybook"], "port": 6201 }
   ]
 }
