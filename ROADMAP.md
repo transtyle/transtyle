@@ -71,13 +71,13 @@ Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); delib
 
 **Evidence-gathering in progress, not Phase 4 itself:** [docs/plan/component-tier.md](docs/plan/component-tier.md) (tasks C1–C7, each with a suggested-model note) builds one real, working PrimeNG exporter — the "hand-written component-theming prototype" ADR-0003's precondition list calls for — using PrimeNG's own three-tier design-token system (`primitive`/`semantic`/`components`) as the forcing function. See [proposal 0002](docs/proposals/0002-component-theming-primeng.md) for the architecture analysis. This does **not** flip ADR-0003's gate or start Phase 4 early; a second independent component-heavy prototype is still the actual trigger for that conversation.
 
-- [ ] **C1** — Cross-ecosystem component-tier study (Material 3, Fluent 2, Ant Design, Chakra/Panda recipes) — confirms or rejects the `field`/`list`/`navigation`/`overlay` archetype grouping as genuinely convergent vocabulary, vs. PrimeNG-specific.
+- [x] **C1** — Cross-ecosystem component-tier study ([docs/findings/component-tier-study.md](docs/findings/component-tier-study.md), 6 systems) — **verdict: not convergent.** Only PrimeNG groups shared component tokens into named objects; Material 3/Fluent/Chakra use per-component namespaces, Spectrum/Ant use flat shared vocabularies. All of `field`/`list`/`navigation`/`overlay`/`content` stay exporter-private; **C7 is skipped.** The one convergent pattern (component tokens alias a lower semantic tier) is exactly what C2 built.
 - [x] **C2** — Component-tier engine resolution: `component.*` actually resolves (empty tier still compiles; authored always wins), independent of C1.
 - [ ] **C3** — `exporter-primeng`: generic severity-grid mapper + ramp projector, proven on Button.
 - [ ] **C4** — Extend the mapper across ~25–35 severity-colored PrimeNG components via shape descriptors.
 - [ ] **C5** — Exporter-private archetype helpers (`field`/`list`/`navigation`/`overlay`) + structural residue components.
 - [ ] **C6** — Official launch: CLI registry, docs, demo projects for all four examples (first Angular demo profile in the repo).
-- [ ] **C7** — Promote confirmed archetype groups into the shared semantic catalog — conditional on C1's verdict; skipped entirely if nothing converged.
+- [x] ~~**C7** — Promote confirmed archetype groups into the shared semantic catalog~~ — **skipped: C1 found no convergence.** Exporter-private is the permanent, correct end state for all five groups. Reopens only if a second component-heavy exporter independently needs the identical grouping.
 
 ## Backlog
 
