@@ -21,17 +21,17 @@ Emits **daisyUI v5** theme blocks (Tailwind 4 era): one `@plugin "daisyui/theme"
 
 ## The interesting part: false friends, resolved correctly
 
-daisyUI's `secondary` and `accent` are **true brand roles** — so this exporter maps them from `secondary.base` and `accent.base`. shadcn's identically-named variables are subtle surfaces — so that exporter maps them from `neutral.subtle` and `accent.subtle`. Same design system, same words, opposite mapping decisions, both correct: this is [the pivot-language principle](/docs/language/#false-friends) doing its job. Every role ships with its `-content` pair from `text-on-<role>.base`, contrast-checked at derivation time.
+daisyUI's `secondary` and `accent` are **true brand roles** — so this exporter maps them from `secondary.solid` and `accent.solid`. shadcn's identically-named variables are subtle surfaces — so that exporter maps them from `neutral.tint` and `accent.tint`. Same design system, same words, opposite mapping decisions, both correct: this is [the pivot-language principle](/docs/language/#false-friends) doing its job. Every role ships with its `-content` pair from `<role>.on-solid`, contrast-checked at derivation time.
 
 ## Mapping table
 
 | daisyUI variable | Comes from | Note |
 |---|---|---|
-| `--color-base-100` / `-200` | `background.base` / `surface.base` | |
-| `--color-base-300` | `border.base` | `approximated` — daisyUI wants a third bg-ramp step the IR doesn't define (catalog watch item) |
+| `--color-base-100` / `-200` | `elevation.0.surface` / `elevation.1.surface` | |
+| `--color-base-300` | `border` | `approximated` — daisyUI wants a third bg-ramp step the IR doesn't define (catalog watch item) |
 | `--color-base-content` | `text.base` | |
-| `--color-{primary,secondary,accent,neutral,info,success,warning}` + `-content` | the same-named roles + `text-on-<role>.base` | brand-direct |
-| `--color-error` + `-content` | `danger.base` + `text-on-danger.base` | name translation |
+| `--color-{primary,secondary,accent,neutral,info,success,warning}` + `-content` | the same-named roles' `.solid` + `.on-solid` grid cells | brand-direct |
+| `--color-error` + `-content` | `danger.solid` + `danger.on-solid` | name translation |
 | `--radius-{selector,field,box}` | `radius.md` | one radius feeds three families — `approximated` |
 | `--depth`, `--noise`, `--size-*` | — | `dropped`: stylistic effects without token semantics; daisyUI defaults apply |
 

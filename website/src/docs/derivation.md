@@ -16,25 +16,33 @@ Derivation fills every semantic slot you didn't author. It's the reason 11 token
 
 The engine walks the semantic catalog; any slot with an authored or aliased value is untouched. Overriding a derived value = authoring that token. One line, visible in your token files, versioned with your design system.
 
-<span class="badge spec">specced</span> This page describes the rule pack **as implemented today**. A revised, grid-shaped rule pack is accepted and sequenced for implementation — see [the language reference](/docs/language/#coming-the-role-grid) and the [roadmap](/docs/roadmap/); it will replace this table when it lands, under the same rule-pack id (`standard@1` — no version bump pre-release).
+## The standard@1 rule pack: the role grid
 
-## The standard@1 rule pack (implemented subset)
+Every color role fills a **grid** — prominence × interaction state — not a flat list; see [the language reference](/docs/language/#color-roles-the-role-grid) for the full shape and why.
 
 | Slot filled | Rule |
 |---|---|
-| `accent.base` | alias of `primary` |
-| `secondary.base` | desaturated primary (chroma × 0.35, lightness toward mid) |
-| `danger.base` | fixed red hue (25), chroma/lightness matched to your brand |
-| `success.base` / `warning.base` / `info.base` | fixed hue anchors (150 / 85 / 230) — hue is conventional, temperature follows the brand |
-| `neutral.base` | neutral gray carrying your brand's hue cast |
-| `<role>.hover` / `<role>.active` | lightness deltas from base; **direction flips in dark mode** (darken on light, lighten on dark) |
-| `<role>.subtle` | base mixed 92% toward `surface` in cartesian OKLab — the tinted-background family (shadcn's muted/secondary/accent surfaces); hue follows the surface as chroma collapses, so heavy tints sit ambiently instead of glowing |
-| `<role>.contrast` | the role re-anchored at your text lightness — its hue/chroma pushed to text-level contrast (Bootstrap's `$dark`/`$light`, emphasis text) |
-| `text-on-<role>.base` | contrast-pick white vs. near-black against the role base; **hard rule: below 4.5:1 emits a warning, never silence** |
-| `text-on-<role>.subtle` | on-brand walk: starts at the role's active shade and steps lightness away from the tinted background until AA clears; falls back to the max-contrast neutral only if the ramp runs out |
-| `surface-raised` / `overlay` | surface raised toward white (light) or lightened (dark); overlay = floating layers |
+| `accent.solid` | alias of `primary.solid` |
+| `secondary.solid` | desaturated primary (chroma × 0.35, lightness toward mid) |
+| `danger.solid` | fixed red hue (25), chroma/lightness matched to your brand |
+| `success.solid` / `warning.solid` / `info.solid` | fixed hue anchors (150 / 85 / 230) — hue is conventional, temperature follows the brand |
+| `neutral.solid` | neutral gray carrying your brand's hue cast |
+| `<role>.solid-hover` / `<role>.solid-active` | lightness deltas from `solid`; **direction flips in dark mode** (darken on light, lighten on dark) |
+| `<role>.tint` / `-hover` / `-active` | `solid` mixed 92%/88%/84% toward `elevation.1.surface` in cartesian OKLab — the tinted-background family (shadcn's muted/secondary/accent surfaces); hue follows the surface as chroma collapses, so heavy tints sit ambiently instead of glowing |
+| `<role>.outline` / `-hover` | `solid` mixed 70%/55% toward `elevation.1.surface` — the border-subtle family (was a private Bootstrap-only formula; now a first-class grid cell) |
+| `<role>.text-strong` | the role re-anchored at your text lightness — its hue/chroma pushed to text-level contrast (Bootstrap's `$dark`/`$light`, emphasis text) |
+| `<role>.on-solid` | contrast-pick white vs. near-black against `solid`; **hard rule: below 4.5:1 emits a warning, never silence** |
+| `<role>.on-tint` | on-brand walk: starts at `solid-active` and steps lightness away from `tint` until AA clears; falls back to the max-contrast neutral only if the ramp runs out |
+| `<role>.text` / `-hover` / `-active` | the same on-brand walk against `elevation.0.surface` (the page) — a role-colored, AA-safe text/link color |
+| `elevation.1..5.surface` | each level raised from the one below: toward white in light mode, lightened in dark mode |
+| `elevation.1..4.shadow` | composed from `scrim` at fixed geometry/alpha ramps, one per level |
+| `text.muted` / `text.subtle` / `text.disabled` | `text.base` mixed toward `elevation.1.surface`, or given reduced alpha |
+| `text.strong` | alias of `neutral.text-strong` — the neutral role's own grid, reused for content emphasis |
+| `text.inverse` | `text.base` of the *other* color-scheme mode — the one legitimate cross-mode read |
+| `link.base` / `-hover` / `-visited` | `primary.text` and its state cells, hue-shifted for visited |
 | `scrim` | near-black veil at fixed alpha |
-| `ring.base` | primary, lightened in dark mode for visibility |
+| `ring` | primary, lightened in dark mode for visibility |
+| `space.*`, `size.control.*`, `border-width.*`, `breakpoint.*`, `z.*`, `type.*`, `duration.*`, `easing.*` | catalog-default constants (`defaulted`) unless you author them — the same values every exporter that needs a spacing/type/motion scale now shares |
 | `palette.categorical.1–8` | data-viz palette: hues rotated from your brand anchor, lightness/chroma banded for adjacent distinguishability; feeds shadcn's `--chart-1…5` (first five, frozen) and [ECharts' `color[]`](/docs/exporter-echarts/) (all eight) |
 
 Approximate OKLCH values in this table are produced by real color math in `packages/core/src/color.js` — including proper OKLab↔sRGB conversion and WCAG 2.1 contrast ratios.

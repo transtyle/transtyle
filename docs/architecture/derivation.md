@@ -14,7 +14,7 @@ Rule sources, by precedence: user-defined rules in config → rule-pack override
 
 ## The standard rule pack (foundations)
 
-**Status: this table describes the revised catalog** — the role grid, elevation ladder, and content hierarchy from [proposal 0001](../proposals/0001-universal-token-ir.md) / [ADR-0010](../adr/0010-pre-release-breaking-changes.md), specified for implementation in [docs/plan/catalog-revision.md](../plan/catalog-revision.md) task T2. **The engine does not implement this table yet** — until T2 lands, the shipped `derive.js` implements the previous (pre-revision) rule set. Illustrative, not exhaustive; the full table ships as a generated reference doc once implemented.
+**Status: implemented 2026-07-20** — this table describes the revised catalog (the role grid, elevation ladder, and content hierarchy from [proposal 0001](../proposals/0001-universal-token-ir.md) / [ADR-0010](../adr/0010-pre-release-breaking-changes.md)), and `packages/core/src/derive.js` now implements it exactly ([docs/plan/catalog-revision.md](../plan/catalog-revision.md) task T2, verified by `scripts/check-grid.mjs`). Illustrative, not exhaustive; the full table ships as a generated reference doc in a later pass.
 
 Every color role is a **grid**: prominence (`solid`, `tint`, `outline`, `text`) × interaction state (rest, `-hover`, `-active`, `-selected`) + on-colors (`on-solid`, `on-tint`). The *rest* state is the bare prominence name; the role's authored anchor is `<role>.solid`.
 

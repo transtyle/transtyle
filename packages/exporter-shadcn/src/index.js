@@ -9,43 +9,45 @@
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
 
-/** Declarative mapping table, shared by both era profiles. */
+/** Declarative mapping table, shared by both era profiles. Grid cells per
+ * docs/architecture/ir.md#color-the-role-grid: solid = principal fill,
+ * tint = wash, on-* = the paired foreground. */
 const MAPPING = [
-  { css: '--background', slot: `${S}background.base`, cls: 'native' },
+  { css: '--background', slot: `${S}elevation.0.surface`, cls: 'native' },
   { css: '--foreground', slot: `${S}text.base`, cls: 'native' },
-  { css: '--card', slot: `${S}surface.base`, cls: 'native' },
+  { css: '--card', slot: `${S}elevation.1.surface`, cls: 'native' },
   { css: '--card-foreground', slot: `${S}text.base`, cls: 'native' },
-  { css: '--popover', slot: `${S}overlay.base`, cls: 'native' },
+  { css: '--popover', slot: `${S}elevation.3.surface`, cls: 'native' },
   { css: '--popover-foreground', slot: `${S}text.base`, cls: 'native' },
-  { css: '--primary', slot: `${S}primary.base`, cls: 'native' },
-  { css: '--primary-foreground', slot: `${S}text-on-primary.base`, cls: 'native' },
+  { css: '--primary', slot: `${S}primary.solid`, cls: 'native' },
+  { css: '--primary-foreground', slot: `${S}primary.on-solid`, cls: 'native' },
   // shadcn "secondary"/"accent"/"muted" are subtle surfaces, not brand roles (exercise F1 note)
-  { css: '--secondary', slot: `${S}neutral.subtle`, cls: 'native' },
-  { css: '--secondary-foreground', slot: `${S}text-on-neutral.subtle`, cls: 'native' },
-  { css: '--muted', slot: `${S}neutral.subtle`, cls: 'native' },
-  { css: '--muted-foreground', slot: `${S}text-muted.base`, cls: 'native' },
-  { css: '--accent', slot: `${S}accent.subtle`, cls: 'native' },
-  { css: '--accent-foreground', slot: `${S}text-on-accent.subtle`, cls: 'native' },
-  { css: '--destructive', slot: `${S}danger.base`, cls: 'native' },
-  { css: '--destructive-foreground', slot: `${S}text-on-danger.base`, cls: 'native' },
-  { css: '--border', slot: `${S}border.base`, cls: 'native' },
+  { css: '--secondary', slot: `${S}neutral.tint`, cls: 'native' },
+  { css: '--secondary-foreground', slot: `${S}neutral.on-tint`, cls: 'native' },
+  { css: '--muted', slot: `${S}neutral.tint`, cls: 'native' },
+  { css: '--muted-foreground', slot: `${S}text.muted`, cls: 'native' },
+  { css: '--accent', slot: `${S}accent.tint`, cls: 'native' },
+  { css: '--accent-foreground', slot: `${S}accent.on-tint`, cls: 'native' },
+  { css: '--destructive', slot: `${S}danger.solid`, cls: 'native' },
+  { css: '--destructive-foreground', slot: `${S}danger.on-solid`, cls: 'native' },
+  { css: '--border', slot: `${S}border`, cls: 'native' },
   // shadcn distinguishes input borders; the IR does not (exercise F4)
-  { css: '--input', slot: `${S}border.base`, cls: 'approximated' },
-  { css: '--ring', slot: `${S}ring.base`, cls: 'native' },
+  { css: '--input', slot: `${S}border`, cls: 'approximated' },
+  { css: '--ring', slot: `${S}ring`, cls: 'native' },
   { css: '--chart-1', slot: `${P}1`, cls: 'native' },
   { css: '--chart-2', slot: `${P}2`, cls: 'native' },
   { css: '--chart-3', slot: `${P}3`, cls: 'native' },
   { css: '--chart-4', slot: `${P}4`, cls: 'native' },
   { css: '--chart-5', slot: `${P}5`, cls: 'native' },
   // sidebar family: component-tier concern mapped by exporter convention (exercise F6)
-  { css: '--sidebar', slot: `${S}surface.base`, cls: 'native', note: 'exporter convention' },
+  { css: '--sidebar', slot: `${S}elevation.1.surface`, cls: 'native', note: 'exporter convention' },
   { css: '--sidebar-foreground', slot: `${S}text.base`, cls: 'native', note: 'exporter convention' },
-  { css: '--sidebar-primary', slot: `${S}primary.base`, cls: 'native', note: 'exporter convention' },
-  { css: '--sidebar-primary-foreground', slot: `${S}text-on-primary.base`, cls: 'native', note: 'exporter convention' },
-  { css: '--sidebar-accent', slot: `${S}accent.subtle`, cls: 'native', note: 'exporter convention' },
-  { css: '--sidebar-accent-foreground', slot: `${S}text-on-accent.subtle`, cls: 'native', note: 'exporter convention' },
-  { css: '--sidebar-border', slot: `${S}border.base`, cls: 'native', note: 'exporter convention' },
-  { css: '--sidebar-ring', slot: `${S}ring.base`, cls: 'native', note: 'exporter convention' },
+  { css: '--sidebar-primary', slot: `${S}primary.solid`, cls: 'native', note: 'exporter convention' },
+  { css: '--sidebar-primary-foreground', slot: `${S}primary.on-solid`, cls: 'native', note: 'exporter convention' },
+  { css: '--sidebar-accent', slot: `${S}accent.tint`, cls: 'native', note: 'exporter convention' },
+  { css: '--sidebar-accent-foreground', slot: `${S}accent.on-tint`, cls: 'native', note: 'exporter convention' },
+  { css: '--sidebar-border', slot: `${S}border`, cls: 'native', note: 'exporter convention' },
+  { css: '--sidebar-ring', slot: `${S}ring`, cls: 'native', note: 'exporter convention' },
 ];
 
 const ERAS = ['tailwind-v4', 'tailwind-v3'];

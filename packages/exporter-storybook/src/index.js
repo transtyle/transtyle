@@ -60,8 +60,6 @@ export default {
 
 function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
   const map = normalized.modes[mode];
-  const otherMode = mode === 'dark' ? 'light' : 'dark';
-  const other = normalized.modes[otherMode];
   const first = coverage.length === 0; // record coverage once (identical across modes)
 
   const val = (p) => map.get(S + p)?.value;
@@ -87,28 +85,28 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
     return e ? e.value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ') : undefined;
   };
 
-  cov('colorPrimary', 'primary.base');
-  cov('colorSecondary', 'accent.base', undefined, "SB's actual highlight color (F14)");
-  cov('appBg', 'surface.base');
-  cov('appContentBg', 'background.base');
-  cov('appPreviewBg', 'background.base', undefined, 'the canvas is the DS canvas, not chrome (F18)');
-  cov('appBorderColor', 'border.base');
+  cov('colorPrimary', 'primary.solid');
+  cov('colorSecondary', 'accent.solid', undefined, "SB's actual highlight color (F14)");
+  cov('appBg', 'elevation.1.surface');
+  cov('appContentBg', 'elevation.0.surface');
+  cov('appPreviewBg', 'elevation.0.surface', undefined, 'the canvas is the DS canvas, not chrome (F18)');
+  cov('appBorderColor', 'border');
   cov('appBorderRadius', 'semantic.radius.md', 'approximated', `rem → px via remBase ${remBase} (F16)`);
   cov('fontBase', 'semantic.font.sans');
   cov('fontCode', 'semantic.font.mono');
   cov('textColor', 'text.base');
-  cov('textInverseColor', 'text.base', 'native', `cross-mode read: text.base[${otherMode}] (F15)`);
-  cov('textMutedColor', 'text-muted.base');
-  cov('barBg', 'surface.base');
-  cov('barTextColor', 'text-muted.base');
-  cov('barHoverColor', 'primary.hover');
-  cov('barSelectedColor', 'ring.base', undefined, 'ring ← primary (F3); lightened in dark for visibility');
-  cov('buttonBg', 'neutral.subtle');
-  cov('buttonBorder', 'border.base');
-  cov('booleanBg', 'neutral.subtle');
-  cov('booleanSelectedBg', 'surface-raised.base');
-  cov('inputBg', 'background.base');
-  cov('inputBorder', 'border.base');
+  cov('textInverseColor', 'text.inverse', 'native', 'engine-owned cross-mode read (F15)');
+  cov('textMutedColor', 'text.muted');
+  cov('barBg', 'elevation.1.surface');
+  cov('barTextColor', 'text.muted');
+  cov('barHoverColor', 'primary.solid-hover');
+  cov('barSelectedColor', 'ring', undefined, 'ring ← primary (F3); lightened in dark for visibility');
+  cov('buttonBg', 'neutral.tint');
+  cov('buttonBorder', 'border');
+  cov('booleanBg', 'neutral.tint');
+  cov('booleanSelectedBg', 'elevation.2.surface');
+  cov('inputBg', 'elevation.0.surface');
+  cov('inputBorder', 'border');
   cov('inputTextColor', 'text.base');
   cov('inputBorderRadius', 'semantic.radius.sm', 'approximated', `rem → px via remBase ${remBase} (F16)`);
   if (first) {
@@ -117,33 +115,32 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
   }
 
   const brand = ctx.targetConfig.options?.brand ?? {};
-  const otherText = other?.get(`${S}text.base`)?.value;
   return {
     mode,
     vars: {
       base: mode,
-      colorPrimary: hx('primary.base'),
-      colorSecondary: hx('accent.base'),
-      appBg: hx('surface.base'),
-      appContentBg: hx('background.base'),
-      appPreviewBg: hx('background.base'),
-      appBorderColor: hx('border.base'),
+      colorPrimary: hx('primary.solid'),
+      colorSecondary: hx('accent.solid'),
+      appBg: hx('elevation.1.surface'),
+      appContentBg: hx('elevation.0.surface'),
+      appPreviewBg: hx('elevation.0.surface'),
+      appBorderColor: hx('border'),
       appBorderRadius: px('md'),
       fontBase: fontList('sans'),
       fontCode: fontList('mono'),
       textColor: hx('text.base'),
-      textInverseColor: otherText ? ctx.formatHex(otherText).text : hx('text.base'),
-      textMutedColor: hx('text-muted.base'),
-      barBg: hx('surface.base'),
-      barTextColor: hx('text-muted.base'),
-      barHoverColor: hx('primary.hover'),
-      barSelectedColor: hx('ring.base'),
-      buttonBg: hx('neutral.subtle'),
-      buttonBorder: hx('border.base'),
-      booleanBg: hx('neutral.subtle'),
-      booleanSelectedBg: hx('surface-raised.base'),
-      inputBg: hx('background.base'),
-      inputBorder: hx('border.base'),
+      textInverseColor: hx('text.inverse') ?? hx('text.base'),
+      textMutedColor: hx('text.muted'),
+      barBg: hx('elevation.1.surface'),
+      barTextColor: hx('text.muted'),
+      barHoverColor: hx('primary.solid-hover'),
+      barSelectedColor: hx('ring'),
+      buttonBg: hx('neutral.tint'),
+      buttonBorder: hx('border'),
+      booleanBg: hx('neutral.tint'),
+      booleanSelectedBg: hx('elevation.2.surface'),
+      inputBg: hx('elevation.0.surface'),
+      inputBorder: hx('border'),
       inputTextColor: hx('text.base'),
       inputBorderRadius: px('sm'),
       brandTitle: brand.title ?? ctx.projectName,
@@ -220,11 +217,11 @@ function renderPreview(normalized, ctx, coverage) {
   }
 
   const bg = (mode) => {
-    const v = normalized.modes[mode]?.get(`${S}background.base`)?.value;
+    const v = normalized.modes[mode]?.get(`${S}elevation.0.surface`)?.value;
     return v ? ctx.formatHex(v).text : undefined;
   };
   coverage.push({ variable: 'globalTypes.colorScheme', slot: 'modes.color-scheme', class: 'native', note: 'mode dimension → SB global toolbar' });
-  coverage.push({ variable: 'backgrounds.options', slot: `${S}background.base`, class: 'native' });
+  coverage.push({ variable: 'backgrounds.options', slot: `${S}elevation.0.surface`, class: 'native' });
   coverage.push({ variable: 'backgrounds.grid.cellSize', slot: '—', class: 'approximated', note: 'space.4 → px (defaulted scale); cellAmount/opacity are exporter defaults' });
 
   return [

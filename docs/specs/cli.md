@@ -36,10 +36,10 @@ Phase 2+: `transtyle preview` (local themed preview server), `transtyle doc <tar
 The feature that makes derivation acceptable. Example output shape:
 
 ```
-$ transtyle explain semantic.color.text-on-primary.base --target bootstrap
-semantic.color.text-on-primary.base = oklch(1 0 0)  [#ffffff]
+$ transtyle explain semantic.color.primary.on-solid --target bootstrap
+semantic.color.primary.on-solid = oklch(1 0 0)  [#ffffff]
  └─ derived by rule contrast-pick@standard@1
-    inputs: semantic.color.primary.base = oklch(0.55 0.18 255)   ← authored tokens/brand.tokens.json:6
+    inputs: semantic.color.primary.solid = oklch(0.55 0.18 255)   ← authored tokens/brand.tokens.json:6
     candidates: #fff (5.9:1 ✓), #000 (3.5:1 ✗) — selected #fff (WCAG AA)
  └─ bootstrap@5.3 profile → $btn-color, --bs-btn-color   [class: native]
 ```

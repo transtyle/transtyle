@@ -17,9 +17,9 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 
 ## Mapping strategy (highlights)
 
-- `background/surface/overlay` → `--background`, `--card`, `--popover`: `native`. `text`/`text-muted` → `--foreground`, `--muted-foreground`: `native`.
-- `primary` + `text-on-primary` → `--primary`/`--primary-foreground`: `native` — shadcn's paired `-foreground` convention maps exactly to our `text-on-<role>` derivation; when the user authored no on-colors, the whole pairing arrives `derived` (with contrast diagnostics already run — a notable win over hand-built shadcn themes, which routinely ship failing contrast).
-- `danger` → `--destructive`: `native` (name translation only). `neutral.subtle` → `--muted`, `accent` → `--accent`, `border/ring` → `--border`/`--input`/`--ring`: `native`.
+- `elevation.{0,1,3}.surface` → `--background`, `--card`, `--popover`: `native` (the [role-grid/elevation-ladder catalog](../../architecture/ir.md#color-the-role-grid)). `text`/`text.muted` → `--foreground`, `--muted-foreground`: `native`.
+- `primary.solid` + `primary.on-solid` → `--primary`/`--primary-foreground`: `native` — shadcn's paired `-foreground` convention maps exactly to our `<role>.on-solid` grid cell; when the user authored no on-colors, the whole pairing arrives `derived` (with contrast diagnostics already run — a notable win over hand-built shadcn themes, which routinely ship failing contrast).
+- `danger.solid` → `--destructive`: `native` (name translation only). `neutral.tint` → `--muted`, `accent.tint` → `--accent`, `border/ring` → `--border`/`--input`/`--ring`: `native`.
 - `radius.md` → `--radius` (shadcn derives sm/lg from it): `native`; if the user's radius scale isn't expressible via shadcn's single-var derivation, additional radius vars are emitted and classified `approximated`.
 - `color-scheme` mode → `.dark` class block: `native`. Density: `dropped` (no concept).
 - Sidebar/chart variable families (`--sidebar-*`, `--chart-1…5`): mapped when present; `--chart-*` uses the same categorical-palette derivation as the [ECharts exporter](echarts.md) — deliberate cross-exporter consistency (same rule, same palette).

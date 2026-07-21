@@ -29,9 +29,11 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
   derive(normalized, config, diagnostics);
   runChecks(normalized, config, diagnostics);
 
-  // derivation.require: listed slots must be authored, not derived
+  // derivation.require: listed slots must be authored, not derived. Color
+  // roles require their `.solid` anchor cell (the role grid's authored anchor,
+  // was `.base` pre-revision); other requires (e.g. radius.md) are bare paths.
   for (const req of config.derivation?.require ?? []) {
-    const kind = normalized.modes[normalized.defaultMode].get(`${req}.base`)?.provenance.kind
+    const kind = normalized.modes[normalized.defaultMode].get(`${req}.solid`)?.provenance.kind
       ?? normalized.modes[normalized.defaultMode].get(req)?.provenance.kind;
     if (kind === 'derived' || kind === undefined) {
       diagnostics.error('TST1202', `Required token is not authored: ${req}`);

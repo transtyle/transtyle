@@ -5,14 +5,34 @@
 
 export const IR_SPEC = 'v0-draft';
 
-/** Semantic color roles (each a scale: base, hover, active, subtle, contrast). */
+/**
+ * Semantic color roles. Each carries the full role grid (docs/architecture/ir.md
+ * #color-the-role-grid, proposal 0001): prominence (solid/tint/outline/text) x
+ * interaction state (rest/hover/active/selected) + on-colors.
+ */
 export const COLOR_ROLES = [
   'primary', 'secondary', 'accent',
   'success', 'warning', 'danger', 'info', 'neutral',
 ];
 
-/** Surface slots (F2: overlay = floating layers; scrim = dimming veil). */
-export const SURFACES = ['background', 'surface', 'surface-raised', 'overlay', 'scrim'];
+/** Grid cell suffixes appended to `semantic.color.<role>.`, in derivation order. */
+export const GRID_CELLS = [
+  'solid', 'solid-hover', 'solid-active', 'solid-selected',
+  'tint', 'tint-hover', 'tint-active', 'tint-selected',
+  'outline', 'outline-hover',
+  'on-solid', 'on-tint',
+  'text', 'text-hover', 'text-active', 'text-strong',
+];
+
+/** Content hierarchy rungs under `semantic.color.text.<rung>` (docs/architecture/ir.md). */
+export const TEXT_RUNGS = ['strong', 'base', 'muted', 'subtle', 'disabled', 'inverse'];
+
+/** Elevation ladder: surfaces at levels 0-5, shadows at levels 1-4 (F2: scrim stays separate). */
+export const ELEVATION_LEVELS = [0, 1, 2, 3, 4, 5];
+export const SHADOW_LEVELS = [1, 2, 3, 4];
+
+/** z-index ladder — key order is the contract; values are catalog defaults unless authored. */
+export const Z_LADDER = ['hide', 'base', 'dropdown', 'sticky', 'banner', 'overlay', 'modal', 'popover', 'toast', 'tooltip'];
 
 /** Provenance kinds. */
 export const PROVENANCE = {

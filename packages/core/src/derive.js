@@ -1,119 +1,180 @@
 /**
- * DERIVE stage — the subset of the standard@1 rule pack needed for the
- * foundations catalog (docs/architecture/derivation.md). Deterministic, pure,
- * provenance-recording. Rules only fill holes; authored values always win.
+ * DERIVE stage — the standard@1 rule pack for the revised (role-grid) semantic
+ * catalog (docs/architecture/derivation.md, docs/plan/catalog-revision.md T2).
+ * Deterministic, pure, provenance-recording. Rules only fill holes; authored
+ * values always win.
+ *
+ * Every color role is a grid: prominence (solid/tint/outline/text) x
+ * interaction state (rest/hover/active/selected) + on-colors. Surfaces are an
+ * elevation ladder (0-5); content is a ladder too (strong/base/muted/subtle/
+ * disabled/inverse). See docs/architecture/ir.md#the-semantic-contract.
  */
 
 import { COLOR_ROLES, PROVENANCE } from '@transtyle/ir';
 import { mix, contrastRatio, contrastPick } from './color.js';
 
 const S = 'semantic.color.';
+const WHITE = { l: 1, c: 0, h: 0, alpha: 1 };
+const NEARBLACK = { l: 0.145, c: 0, h: 0, alpha: 1 };
+const DARK_CANVAS = { l: 0.145, c: 0, h: 0, alpha: 1 };
 
 export function derive(normalized, config, diagnostics) {
   for (const mode of normalized.modeValues) {
     const map = normalized.modes[mode];
     const isDark = mode === 'dark';
     const ctx = { map, isDark, mode, diagnostics };
+    const dl = isDark ? 1 : -1;
 
-    const primary = get(map, `${S}primary.base`);
+    const primary = get(map, `${S}primary.solid`);
     if (!primary) {
-      diagnostics.error('TST1201', 'semantic.color.primary.base is required (config derivation.require).');
+      diagnostics.error('TST1201', 'semantic.color.primary.solid is required (config derivation.require).');
       return;
     }
-    const surface = get(map, `${S}surface.base`) ?? get(map, `${S}background.base`);
-    const text = get(map, `${S}text.base`);
+    const textBase = get(map, `${S}text.base`);
 
-    // --- Role base anchors (rule: hue-anchor / desaturate / alias) ---
-    fill(ctx, `${S}accent.base`, { ...primary }, 'alias-primary', ['primary.base']);
-    fill(ctx, `${S}secondary.base`, { l: 0.58, c: r3(primary.c * 0.35), h: primary.h, alpha: 1 },
-      'desaturate-primary', ['primary.base']);
-    fill(ctx, `${S}danger.base`, { l: primary.l, c: Math.min(primary.c + 0.01, 0.2), h: 25, alpha: 1 },
-      'hue-anchor(25)', ['primary.base']);
-    fill(ctx, `${S}success.base`, { l: 0.6, c: 0.14, h: 150, alpha: 1 }, 'hue-anchor(150)', ['primary.base']);
-    fill(ctx, `${S}warning.base`, { l: 0.76, c: 0.14, h: 85, alpha: 1 }, 'hue-anchor(85)', ['primary.base']);
-    fill(ctx, `${S}info.base`, { l: 0.58, c: 0.15, h: 230, alpha: 1 }, 'hue-anchor(230)', ['primary.base']);
-    fill(ctx, `${S}neutral.base`, { l: 0.55, c: 0.012, h: primary.h, alpha: 1 }, 'neutral-from-primary-hue', ['primary.base']);
-
-    // --- Surfaces (F2): raise(surface); overlay aliases surface-raised; scrim veil ---
-    if (surface) {
-      const raised = isDark
-        ? { l: surface.l + 0.04, c: surface.c, h: surface.h, alpha: 1 }
-        : { l: Math.min(1, surface.l + 0.05), c: surface.c * 0.3, h: surface.h, alpha: 1 };
-      fill(ctx, `${S}surface-raised.base`, raised, 'raise(surface)', ['surface.base']);
-      fill(ctx, `${S}overlay.base`, { ...get(map, `${S}surface-raised.base`) }, 'alias-surface-raised', ['surface-raised.base']);
+    // --- Elevation ladder (E1): surfaces 0-5, shadows 1-4; scrim stays its own veil (F2) ---
+    const elev = [];
+    elev[0] = rc(ctx, `${S}elevation.0.surface`, () => (isDark ? DARK_CANVAS : WHITE), 'default-canvas', [], PROVENANCE.DEFAULTED);
+    elev[1] = rc(ctx, `${S}elevation.1.surface`, () => ({ ...elev[0] }), 'alias(elevation.0.surface)', ['elevation.0.surface']);
+    for (let n = 2; n <= 5; n++) {
+      elev[n] = rc(ctx, `${S}elevation.${n}.surface`, () => raise(elev[n - 1], isDark), `raise(elevation.${n - 1}.surface)`, [`elevation.${n - 1}.surface`]);
     }
-    fill(ctx, `${S}scrim.base`, { l: 0.1, c: 0, h: 0, alpha: 0.5 }, 'scrim-veil', []);
+    const surface = (n) => elev[n];
 
-    // --- Per-role scales: hover/active/subtle + on-colors (F1) ---
+    const scrim = rc(ctx, `${S}scrim`, () => ({ l: 0.1, c: 0, h: 0, alpha: 0.5 }), 'scrim-veil', []);
+    for (const spec of SHADOW_LEVELS) {
+      const alpha = isDark ? spec.dark : spec.light;
+      resolve(ctx, `${S}elevation.${spec.n}.shadow`, 'shadow',
+        () => ({ offsetX: '0', offsetY: spec.y, blur: spec.blur, spread: '0', color: { ...scrim, alpha } }),
+        `shadow-ramp(${spec.n})`, ['scrim']);
+    }
+
+    // --- Role grid (C1): solid/tint/outline/text x rest/hover/active/selected + on-colors ---
     for (const role of COLOR_ROLES) {
-      const base = get(map, `${S}${role}.base`);
-      if (!base) continue;
-      const dl = isDark ? 1 : -1;
-      fill(ctx, `${S}${role}.hover`, { ...base, l: clamp01(base.l + 0.05 * dl) }, 'state-delta(hover)', [`${role}.base`]);
-      fill(ctx, `${S}${role}.active`, { ...base, l: clamp01(base.l + 0.07 * dl), c: base.c * 0.9 }, 'state-delta(active)', [`${role}.base`]);
-      if (surface) {
-        fill(ctx, `${S}${role}.subtle`, mix(base, surface, 0.92), 'mix-toward-surface(0.92)', [`${role}.base`, 'surface.base']);
+      const rp = `${S}${role}.`;
+      const solid = resolveRoleSolid(ctx, role, rp, primary);
+      if (!solid) continue; // only reachable if primary itself were missing, already handled above
+
+      const solidHover = rc(ctx, rp + 'solid-hover', () => ({ ...solid, l: clamp01(solid.l + 0.05 * dl) }), 'state-delta(hover)', [`${role}.solid`]);
+      const solidActive = rc(ctx, rp + 'solid-active', () => ({ ...solid, l: clamp01(solid.l + 0.07 * dl), c: solid.c * 0.9 }), 'state-delta(active)', [`${role}.solid`]);
+      rc(ctx, rp + 'solid-selected', () => ({ ...solidActive }), 'alias(solid-active)', [`${role}.solid-active`]);
+
+      const s1 = surface(1);
+      rc(ctx, rp + 'tint', () => mix(solid, s1, 0.92), 'mix-toward-surface(0.92)', [`${role}.solid`, 'elevation.1.surface']);
+      rc(ctx, rp + 'tint-hover', () => mix(solid, s1, 0.88), 'mix-toward-surface(0.88)', [`${role}.solid`, 'elevation.1.surface']);
+      const tintActive = rc(ctx, rp + 'tint-active', () => mix(solid, s1, 0.84), 'mix-toward-surface(0.84)', [`${role}.solid`, 'elevation.1.surface']);
+      rc(ctx, rp + 'tint-selected', () => ({ ...tintActive }), 'alias(tint-active)', [`${role}.tint-active`]);
+
+      rc(ctx, rp + 'outline', () => mix(solid, s1, 0.70), 'mix-toward-surface(0.70)', [`${role}.solid`, 'elevation.1.surface']);
+      rc(ctx, rp + 'outline-hover', () => mix(solid, s1, 0.55), 'mix-toward-surface(0.55)', [`${role}.solid`, 'elevation.1.surface']);
+
+      // on-solid: contrast-pick white/near-black (AA hard rule)
+      const onSolidPick = contrastPick(solid, [WHITE, NEARBLACK]);
+      rc(ctx, rp + 'on-solid', () => ({ ...onSolidPick.color }), 'contrast-pick', [`${role}.solid`]);
+      if (onSolidPick.ratio < 4.5) {
+        diagnostics.warn('TST2101', `${role}.on-solid is ${onSolidPick.ratio.toFixed(1)}:1 against ${role}.solid in ${mode} mode (< 4.5:1 AA)`);
       }
 
-      // text-on-<role>.base: contrast-pick white vs near-black (AA hard rule)
-      const onBase = contrastPick(base, [WHITE, NEARBLACK]);
-      fill(ctx, `${S}text-on-${role}.base`, { ...onBase.color }, 'contrast-pick', [`${role}.base`]);
-      if (onBase.ratio < 4.5) {
-        diagnostics.warn('TST2101',
-          `text-on-${role}.base is ${onBase.ratio.toFixed(1)}:1 against ${role}.base in ${mode} mode (< 4.5:1 AA)`);
+      // on-tint: on-brand walk (F19) — start at solid-active, step away from tint until AA clears
+      const tint = get(map, rp + 'tint');
+      const fallbacks = [textBase, WHITE, NEARBLACK].filter(Boolean);
+      const onTint = onBrandWalk(tint, solidActive, fallbacks);
+      rc(ctx, rp + 'on-tint', () => ({ ...onTint }), 'contrast-pick(subtle)', [`${role}.tint`]);
+      const onTintRatio = contrastRatio(tint, get(map, rp + 'on-tint'));
+      if (onTintRatio < 4.5) {
+        diagnostics.warn('TST2101', `${role}.on-tint is ${onTintRatio.toFixed(1)}:1 against ${role}.tint in ${mode} mode (< 4.5:1 AA)`);
       }
 
-      // text-on-<role>.subtle (F1, ratified by F19): on-brand walk — start at
-      // <role>.active (the state-consistent on-brand candidate) and step
-      // lightness away from the subtle background in 0.01 increments until the
-      // pair clears AA; if the lightness clamp is reached first, fall back to
-      // the max-contrast pick among text/white/near-black. Same AA hard rule.
-      const subtle = get(map, `${S}${role}.subtle`);
-      if (subtle) {
-        const active = get(map, `${S}${role}.active`);
-        const dir = subtle.l >= 0.5 ? -1 : 1;
-        let chosen = null;
-        for (let i = 0; ; i++) {
-          const l = r3(active.l + dir * i * 0.01);
-          if (l < 0 || l > 1) break;
-          const cand = { ...active, l };
-          if (contrastRatio(subtle, cand) >= 4.5) { chosen = cand; break; }
-        }
-        chosen ??= contrastPick(subtle, [text, WHITE, NEARBLACK].filter(Boolean)).color;
-        fill(ctx, `${S}text-on-${role}.subtle`, { ...chosen }, 'contrast-pick(subtle)', [`${role}.subtle`]);
-        const ratio = contrastRatio(subtle, get(map, `${S}text-on-${role}.subtle`));
-        if (ratio < 4.5) {
-          diagnostics.warn('TST2101',
-            `text-on-${role}.subtle is ${ratio.toFixed(1)}:1 against ${role}.subtle in ${mode} mode (< 4.5:1 AA)`);
-        }
-      }
+      // text: on-brand walk of solid against the page background (elevation.0.surface)
+      const s0 = surface(0);
+      const roleText = onBrandWalk(s0, solidActive, fallbacks);
+      rc(ctx, rp + 'text', () => ({ ...roleText }), 'contrast-pick(text)', [`${role}.solid`, 'elevation.0.surface']);
+      const textResolved = get(map, rp + 'text');
+      rc(ctx, rp + 'text-hover', () => ({ ...textResolved, l: clamp01(textResolved.l + 0.05 * dl) }), 'state-delta(hover)', [`${role}.text`]);
+      rc(ctx, rp + 'text-active', () => ({ ...textResolved, l: clamp01(textResolved.l + 0.07 * dl) }), 'state-delta(active)', [`${role}.text`]);
 
-      // <role>.contrast (F20): the role re-anchored at text lightness — its
-      // hue/chroma pushed to text-level contrast against the mode's surfaces.
-      if (text) {
-        fill(ctx, `${S}${role}.contrast`, { l: text.l, c: base.c, h: base.h, alpha: 1 },
-          'contrast-anchor(text)', [`${role}.base`, 'text.base']);
+      // text-strong (F20): the role re-anchored at the content text ladder's lightness
+      if (textBase) {
+        rc(ctx, rp + 'text-strong', () => ({ l: textBase.l, c: solid.c, h: solid.h, alpha: 1 }), 'contrast-anchor(text)', [`${role}.solid`, 'text.base']);
       }
+    }
+
+    // --- Content hierarchy (X1): text.{strong,muted,subtle,disabled}; inverse is a cross-mode pass below ---
+    if (textBase) {
+      rc(ctx, `${S}text.muted`, () => mix(textBase, surface(1), 0.35), 'mix-toward-surface(0.35)', ['text.base', 'elevation.1.surface']);
+      rc(ctx, `${S}text.subtle`, () => mix(textBase, surface(1), 0.55), 'mix-toward-surface(0.55)', ['text.base', 'elevation.1.surface']);
+      rc(ctx, `${S}text.disabled`, () => ({ ...textBase, alpha: 0.38 }), 'alpha(0.38)', ['text.base']);
+    }
+    const neutralTextStrong = get(map, `${S}neutral.text-strong`);
+    if (neutralTextStrong) {
+      rc(ctx, `${S}text.strong`, () => ({ ...neutralTextStrong }), 'alias(neutral.text-strong)', ['neutral.text-strong']);
+    }
+
+    // --- Links: alias of primary's text cells (F3-adjacent: link is a role-text consumer) ---
+    const primaryText = get(map, `${S}primary.text`);
+    if (primaryText) {
+      rc(ctx, `${S}link.base`, () => ({ ...primaryText }), 'alias(primary.text)', ['primary.text']);
+    }
+    const primaryTextHover = get(map, `${S}primary.text-hover`);
+    if (primaryTextHover) {
+      rc(ctx, `${S}link.hover`, () => ({ ...primaryTextHover }), 'alias(primary.text-hover)', ['primary.text-hover']);
+    }
+    const linkBase = get(map, `${S}link.base`);
+    if (linkBase) {
+      rc(ctx, `${S}link.visited`, () => ({ ...linkBase, h: (linkBase.h + 40 + 360) % 360 }), 'hue-shift(40)', ['link.base']);
     }
 
     // --- Ring (F3): primary, lightened in dark for visibility ---
-    fill(ctx, `${S}ring.base`,
-      isDark ? { ...primary, l: clamp01(primary.l + 0.07), c: Math.max(0, primary.c - 0.01) } : { ...primary },
-      'ring-from-primary', ['primary.base']);
+    rc(ctx, `${S}ring`,
+      () => (isDark ? { ...primary, l: clamp01(primary.l + 0.07), c: Math.max(0, primary.c - 0.01) } : { ...primary }),
+      'ring-from-primary', ['primary.solid']);
 
-    // --- Radius scale (F8): sm/lg/xl derived from authored md by fixed ratios;
-    // full is the pill idiom. First implemented for the Bootstrap exporter
-    // (Phase 0 fixtures carried these values hand-derived; now engine-owned). ---
+    // --- Radius scale (F8) + family aliases ---
     const radiusMd = map.get('semantic.radius.md');
     if (radiusMd?.value !== undefined) {
       const dim = /^([\d.]+)([a-z%]+)$/.exec(String(radiusMd.value));
       if (dim) {
         const [, n, unit] = dim;
         const scale = (f) => `${trimNum(parseFloat(n) * f)}${unit}`;
-        fillDim(ctx, 'semantic.radius.sm', scale(0.5), 'radius-scale(0.5)', ['radius.md']);
-        fillDim(ctx, 'semantic.radius.lg', scale(1.5), 'radius-scale(1.5)', ['radius.md']);
-        fillDim(ctx, 'semantic.radius.xl', scale(2), 'radius-scale(2)', ['radius.md']);
-        fillDim(ctx, 'semantic.radius.full', '9999px', 'radius-scale(full)', ['radius.md']);
+        rd(ctx, 'semantic.radius.sm', () => scale(0.5), 'radius-scale(0.5)', ['radius.md']);
+        rd(ctx, 'semantic.radius.lg', () => scale(1.5), 'radius-scale(1.5)', ['radius.md']);
+        rd(ctx, 'semantic.radius.xl', () => scale(2), 'radius-scale(2)', ['radius.md']);
+        rd(ctx, 'semantic.radius.full', () => '9999px', 'radius-scale(full)', ['radius.md']);
+      }
+      const mdVal = radiusMd.value;
+      for (const fam of ['control', 'field', 'container']) {
+        rd(ctx, `semantic.radius.${fam}`, () => mdVal, 'alias(radius.md)', ['radius.md']);
+      }
+    }
+
+    // --- New defaulted scales (S1/TY1/M1): catalog-default constants, authored always wins ---
+    for (const k of SPACE_KEYS) {
+      rd(ctx, `semantic.space.${k}`, () => `${trimNum(k * 0.25)}rem`, 'linear-scale(0.25rem)', [], PROVENANCE.DEFAULTED);
+    }
+    for (const [k, v] of Object.entries(SIZE_CONTROL)) rd(ctx, `semantic.size.control.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(BORDER_WIDTH)) rd(ctx, `semantic.border-width.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(BREAKPOINT)) rd(ctx, `semantic.breakpoint.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(Z_INDEX)) resolve(ctx, `semantic.z.${k}`, 'number', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(TYPE_SIZE)) rd(ctx, `semantic.type.size.${k}`, () => v, 'modular-scale(1rem,1.25)', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(TYPE_WEIGHT)) resolve(ctx, `semantic.type.weight.${k}`, 'number', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(TYPE_LEADING)) resolve(ctx, `semantic.type.leading.${k}`, 'number', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(TYPE_TRACKING)) rd(ctx, `semantic.type.tracking.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(DURATION)) resolve(ctx, `semantic.duration.${k}`, 'duration', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(EASING)) resolve(ctx, `semantic.easing.${k}`, 'cubicBezier', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+
+    // Type role composites: project the primitive scales onto display/heading/title/body/label/code x sm/md/lg
+    for (const role of Object.keys(TYPE_ROLE_SIZE)) {
+      const familyPath = role === 'code'
+        ? 'semantic.font.mono'
+        : (role === 'display' && get(map, 'semantic.font.display')) ? 'semantic.font.display' : 'semantic.font.sans';
+      for (const size of ['sm', 'md', 'lg']) {
+        const sizeKey = TYPE_ROLE_SIZE[role][size];
+        resolve(ctx, `semantic.type.role.${role}.${size}`, 'typography', () => ({
+          fontFamily: get(map, familyPath),
+          fontSize: get(map, `semantic.type.size.${sizeKey}`),
+          fontWeight: get(map, `semantic.type.weight.${TYPE_ROLE_WEIGHT[role]}`),
+          lineHeight: get(map, `semantic.type.leading.${TYPE_ROLE_LEADING[role]}`),
+        }), `type-role-composite(${role}.${size})`, [`type.size.${sizeKey}`], PROVENANCE.DEFAULTED);
       }
     }
 
@@ -125,41 +186,116 @@ export function derive(normalized, config, diagnostics) {
     const CHROMA = [primary.c, 0.15, 0.14, 0.13, 0.16, 0.13, 0.14, 0.13];
     const DARK_DL = [0.07, 0.06, 0.06, 0.03, 0.06, 0.05, 0.04, 0.06];
     for (let i = 0; i < 8; i++) {
-      fill(ctx, `semantic.palette.categorical.${i + 1}`, {
+      rc(ctx, `semantic.palette.categorical.${i + 1}`, () => ({
         l: clamp01(LIGHT_L[i] + (isDark ? DARK_DL[i] : 0)),
         c: CHROMA[i],
         h: (primary.h + HUE_OFFSETS[i] + 360) % 360,
         alpha: 1,
-      }, 'categorical-palette', ['primary.base']);
+      }), 'categorical-palette', ['primary.solid']);
     }
+  }
+
+  // --- Cross-mode pass: text.inverse (F15) — needs both modes' per-mode work done first ---
+  for (const mode of normalized.modeValues) {
+    const otherMode = mode === 'dark' ? 'light' : mode === 'light' ? 'dark' : null;
+    if (!otherMode || !normalized.modes[otherMode]) continue;
+    const map = normalized.modes[mode];
+    const otherTextBase = get(normalized.modes[otherMode], `${S}text.base`);
+    if (!otherTextBase) continue;
+    const ctx = { map, isDark: mode === 'dark', mode, diagnostics };
+    rc(ctx, `${S}text.inverse`, () => ({ ...otherTextBase }), 'cross-mode(text.base)', ['text.base']);
   }
 }
 
-const WHITE = { l: 1, c: 0, h: 0, alpha: 1 };
-const NEARBLACK = { l: 0.145, c: 0, h: 0, alpha: 1 };
+// ---------- role-solid anchors ----------
+
+function resolveRoleSolid(ctx, role, rp, primary) {
+  if (role === 'primary') return get(ctx.map, rp + 'solid'); // required, authored — checked by caller
+  if (role === 'accent') return rc(ctx, rp + 'solid', () => ({ ...primary }), 'alias(primary.solid)', ['primary.solid']);
+  if (role === 'secondary') return rc(ctx, rp + 'solid', () => ({ l: 0.58, c: r3(primary.c * 0.35), h: primary.h, alpha: 1 }), 'desaturate-primary', ['primary.solid']);
+  if (role === 'danger') return rc(ctx, rp + 'solid', () => ({ l: primary.l, c: Math.min(primary.c + 0.01, 0.2), h: 25, alpha: 1 }), 'hue-anchor(25)', ['primary.solid']);
+  if (role === 'success') return rc(ctx, rp + 'solid', () => ({ l: 0.6, c: 0.14, h: 150, alpha: 1 }), 'hue-anchor(150)', ['primary.solid']);
+  if (role === 'warning') return rc(ctx, rp + 'solid', () => ({ l: 0.76, c: 0.14, h: 85, alpha: 1 }), 'hue-anchor(85)', ['primary.solid']);
+  if (role === 'info') return rc(ctx, rp + 'solid', () => ({ l: 0.58, c: 0.15, h: 230, alpha: 1 }), 'hue-anchor(230)', ['primary.solid']);
+  if (role === 'neutral') return rc(ctx, rp + 'solid', () => ({ l: 0.55, c: 0.012, h: primary.h, alpha: 1 }), 'neutral-from-primary-hue', ['primary.solid']);
+  return get(ctx.map, rp + 'solid');
+}
+
+// ---------- shared math ----------
+
+/** raise(): one elevation step — toward white in light mode, lighter+neutral-flattening in dark. */
+function raise(c, isDark) {
+  return isDark
+    ? { l: clamp01(c.l + 0.04), c: c.c, h: c.h, alpha: 1 }
+    : { l: clamp01(Math.min(1, c.l + 0.05)), c: c.c * 0.3, h: c.h, alpha: 1 };
+}
+
+/**
+ * on-brand walk (F19): start at `active`, step lightness away from `bg` in
+ * 0.01 increments until the pair clears AA 4.5:1; fall back to the
+ * max-contrast pick among `fallbacks` if the lightness clamp is reached first.
+ */
+function onBrandWalk(bg, active, fallbacks) {
+  const dir = bg.l >= 0.5 ? -1 : 1;
+  for (let i = 0; ; i++) {
+    const l = r3(active.l + dir * i * 0.01);
+    if (l < 0 || l > 1) break;
+    const cand = { ...active, l };
+    if (contrastRatio(bg, cand) >= 4.5) return cand;
+  }
+  return contrastPick(bg, fallbacks).color;
+}
+
+// ---------- catalog-default tables ----------
+
+const SHADOW_LEVELS = [
+  { n: 1, y: '1px', blur: '2px', light: 0.06, dark: 0.3 },
+  { n: 2, y: '4px', blur: '12px', light: 0.10, dark: 0.4 },
+  { n: 3, y: '12px', blur: '32px', light: 0.16, dark: 0.5 },
+  { n: 4, y: '24px', blur: '48px', light: 0.20, dark: 0.55 },
+];
+const SPACE_KEYS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
+const SIZE_CONTROL = { sm: '2rem', md: '2.25rem', lg: '2.5rem' };
+const BORDER_WIDTH = { thin: '1px', medium: '2px', thick: '4px' };
+const BREAKPOINT = { xs: '480px', sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1536px' };
+const Z_INDEX = { hide: -1, base: 0, dropdown: 1000, sticky: 1020, banner: 1030, overlay: 1040, modal: 1050, popover: 1060, toast: 1080, tooltip: 1090 };
+const TYPE_SIZE = { xs: '0.64rem', sm: '0.8rem', md: '1rem', lg: '1.25rem', xl: '1.563rem', '2xl': '1.953rem', '3xl': '2.441rem', '4xl': '3.052rem' };
+const TYPE_WEIGHT = { regular: 400, medium: 500, semibold: 600, bold: 700 };
+const TYPE_LEADING = { tight: 1.25, normal: 1.5, loose: 1.75 };
+const TYPE_TRACKING = { tight: '-0.01em', normal: '0', wide: '0.02em' };
+const DURATION = { instant: '0ms', fast: '150ms', normal: '250ms', slow: '400ms', slower: '600ms' };
+const EASING = {
+  standard: 'cubic-bezier(0.2, 0, 0, 1)',
+  enter: 'cubic-bezier(0, 0, 0, 1)',
+  exit: 'cubic-bezier(0.3, 0, 1, 1)',
+  emphasized: 'cubic-bezier(0.2, 0, 0, 1)',
+  spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+};
+const TYPE_ROLE_SIZE = {
+  display: { sm: '2xl', md: '3xl', lg: '4xl' },
+  heading: { sm: 'lg', md: 'xl', lg: '2xl' },
+  title: { sm: 'md', md: 'lg', lg: 'xl' },
+  body: { sm: 'sm', md: 'md', lg: 'lg' },
+  label: { sm: 'xs', md: 'sm', lg: 'md' },
+  code: { sm: 'xs', md: 'sm', lg: 'md' },
+};
+const TYPE_ROLE_WEIGHT = { display: 'bold', heading: 'semibold', title: 'semibold', body: 'regular', label: 'medium', code: 'regular' };
+const TYPE_ROLE_LEADING = { display: 'tight', heading: 'tight', title: 'normal', body: 'normal', label: 'normal', code: 'normal' };
+
+// ---------- helpers ----------
 
 function get(map, path) { return map.get(path)?.value; }
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const r3 = (n) => Math.round(n * 1000) / 1000;
-
-function fill(ctx, path, value, rule, inputs) {
-  const existing = ctx.map.get(path);
-  if (existing?.value !== undefined) return; // authored/aliased always wins
-  ctx.map.set(path, {
-    type: 'color',
-    value,
-    provenance: { kind: PROVENANCE.DERIVED, rule: `${rule}@standard@1`, inputs, mode: ctx.mode },
-  });
-}
-
-function fillDim(ctx, path, value, rule, inputs) {
-  const existing = ctx.map.get(path);
-  if (existing?.value !== undefined) return;
-  ctx.map.set(path, {
-    type: 'dimension',
-    value,
-    provenance: { kind: PROVENANCE.DERIVED, rule: `${rule}@standard@1`, inputs, mode: ctx.mode },
-  });
-}
-
 const trimNum = (n) => String(Math.round(n * 1000) / 1000);
+
+/** Resolve-or-fill: returns the existing (authored/aliased) value, or computes, stores, and returns it. */
+function resolve(ctx, path, type, compute, rule, inputs, kind = PROVENANCE.DERIVED) {
+  const existing = ctx.map.get(path);
+  if (existing?.value !== undefined) return existing.value;
+  const value = compute();
+  ctx.map.set(path, { type, value, provenance: { kind, rule: `${rule}@standard@1`, inputs, mode: ctx.mode } });
+  return value;
+}
+const rc = (ctx, path, compute, rule, inputs, kind) => resolve(ctx, path, 'color', compute, rule, inputs, kind);
+const rd = (ctx, path, compute, rule, inputs, kind) => resolve(ctx, path, 'dimension', compute, rule, inputs, kind);

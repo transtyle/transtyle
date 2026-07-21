@@ -15,7 +15,7 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | Compiler pipeline (load → normalize → derive → resolve → emit → report) | ✅ end-to-end, byte-deterministic |
 | DTCG-superset token loading, aliases, cycle detection, tiers | ✅ |
 | Modes: one dimension, inline `$extensions` **and** mode-scoped layer files | ✅ equivalent by construction |
-| Derivation: standard@1 color subset (roles, states, subtles, on-colors, surfaces, ring, chart palette) + radius scale (F8) | ✅ with provenance |
+| Derivation: standard@1, the [role grid](/docs/language/#color-roles-the-role-grid) (prominence × state per color role), the elevation ladder, content hierarchy, and full foundations scales (space/size/border-width/breakpoint/z/type/motion) + radius family aliases | ✅ with provenance |
 | OKLCH color engine, WCAG 2.1 contrast checks | ✅ zero-dep, in-house |
 | shadcn/ui exporter, tailwind-v4 + tailwind-v3 era profiles | ✅ |
 | Apache ECharts exporter: per-mode theme JSON + self-registering scripts, 8-color derived palette | ✅ |
@@ -28,22 +28,23 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | CLI: `build`, `check`, `--cwd` | ✅ |
 | Examples: Acme (minimal), Cathode (hostile) | ✅ |
 
+**2026-07-20 — the catalog revision:** the semantic catalog was rebuilt around the [role grid](/docs/language/#color-roles-the-role-grid) — the finding, from a 14-ecosystem comparative study (`docs/proposals/0001-universal-token-ir.md`), that every mature design system samples the same prominence × state grid per color role. Landed as a pre-release **breaking** revision — Transtyle is unreleased, so old slot names were removed outright rather than aliased, and no version number moved (still IR spec v0; see `docs/adr/0010-pre-release-breaking-changes.md`). All six exporters, both examples, and their fixtures were migrated in the same change; color *values* are unchanged except one documented, intentional refinement (`overlay`/popover is now a genuinely deeper elevation level, not an alias of the raised-card level). Sequenced in `docs/plan/catalog-revision.md`.
+
 ## Specced, not yet implemented
 
 Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their turn:
 
 | Feature | Where the design lives |
 |---|---|
-| Exporters: css-variables (plugin-API conformance fixture) | `docs/specs/exporters/` |
+| Exporters: css-variables (plugin-API conformance fixture), Radix Themes (the role grid's acceptance test) | `docs/specs/exporters/`, `docs/plan/catalog-revision.md` |
 | CLI: `init`, `add`, `explain`, `diff`, `import`, `preview`, `migrate` | `docs/specs/cli.md` |
-| Full semantic catalog: spacing, shadows/elevation, motion, z-index, typography scales | `docs/architecture/ir.md` |
+| Role archetypes (custom color roles that derive the full grid) | `docs/architecture/ir.md`, `docs/plan/catalog-revision.md` |
 | Derivation `overrides`, user rule expressions, `autoDark` audit flow | `docs/architecture/derivation.md` |
 | Importers (Figma variables, Tailwind config, Bootstrap Sass) | ADR-0008 |
 | Plugin packaging, conformance kit, third-party exporters | `docs/architecture/plugins.md` |
 | Lockfile (`transtyle.lock`), `--frozen` CI mode | `docs/architecture/versioning.md` |
-| Multi-dimension modes (density, brand variants) | `docs/architecture/ir.md` |
+| Multi-dimension modes (density, brand variants) | `docs/architecture/ir.md`, `docs/plan/catalog-revision.md` |
 | Component theming layer (v2) | `docs/specs/component-layer.md`, ADR-0003 |
-| **Revised semantic catalog — the role grid** (prominence × state per color role, an elevation ladder, a content hierarchy, reserved mode dimensions) | [proposal 0001](/docs/language/#coming-the-role-grid), `docs/architecture/ir.md`, `docs/plan/catalog-revision.md`. Accepted; lands as a pre-release breaking revision (no version bump — still IR spec v0, see ADR-0010), sequenced in eleven tasks. |
 
 ## Sequencing (from the project ROADMAP)
 

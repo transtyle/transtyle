@@ -37,16 +37,14 @@ Tiers are structural — the top-level group name (`option`, `semantic`, `compon
 
 ## 3. The semantic catalog
 
-The catalog is the fixed set of semantic slots that exporters can rely on existing after derivation — the "instruction set" of the compiler:
+The catalog is the fixed set of semantic slots that exporters can rely on existing after derivation — the "instruction set" of the compiler. Every color role is a **grid**: prominence (`solid` fill, `tint` wash, `outline`, `text`) × interaction state (rest, `-hover`, `-active`, `-selected`), plus the paired foregrounds (`on-solid`, `on-tint`) — see [the language reference](/docs/language/#color-roles-the-role-grid) for the full shape and why a grid instead of a flat list.
 
-- **Color roles** — `primary`, `secondary`, `accent`, `success`, `warning`, `danger`, `info`, `neutral`. Each is a scale: `base`, `hover`, `active`, `subtle`, `contrast`.
-- **Surfaces** — `background`, `surface`, `surface-raised`, `overlay` (floating layers: popovers, menus), `scrim` (the dimming veil behind modals).
-- **Content** — `text`, `text-muted`, and per-role `text-on-<role>.base` / `text-on-<role>.subtle` (tinted backgrounds get their own readable foreground).
-- **Also** — `border`, `ring`, `radius.*`, `font.*`, spacing/shadow/motion scales (specced; the skeleton implements the color catalog plus radius and fonts).
+- **Color roles** — `primary`, `secondary`, `accent`, `success`, `warning`, `danger`, `info`, `neutral`. Each carries the full grid: `<role>.solid`, `<role>.solid-hover`, `<role>.tint`, `<role>.outline`, `<role>.on-solid`, `<role>.text`, `<role>.text-strong`, and so on.
+- **Elevation** — `elevation.0.surface` through `elevation.5.surface` (the page, cards, raised panels, popovers…), each with a paired `elevation.N.shadow` for levels 1–4; `scrim` is the separate dimming veil behind modals.
+- **Content** — `text.{strong, base, muted, subtle, disabled, inverse}`, `link.{base, hover, visited}`; `border`, `ring` as single-value slots.
+- **Also** — `radius.*` (+ `control`/`field`/`container` family aliases), `font.*`, and defaulted scales for `space.*`, `size.control.*`, `border-width.*`, `breakpoint.*`, `z.*`, `type.*` (primitives and composite `type.role.*`), `duration.*`, `easing.*`.
 
 You may add **custom semantic tokens** beyond the catalog — they're carried with full provenance and can be aliased by catalog slots. That's how a design system keeps its own vocabulary: see [the Cathode walkthrough](/docs/examples/#cathode-the-hostile-example).
-
-<span class="badge spec">specced</span> A revised catalog — the role grid — is accepted and in progress: every color role becomes a full prominence-×-state grid instead of the five-position scale above. See [the language reference](/docs/language/#coming-the-role-grid) and the [roadmap](/docs/roadmap/) for what's compiled today versus what's landing.
 
 ## 4. Modes
 

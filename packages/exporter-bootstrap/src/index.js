@@ -11,15 +11,21 @@
  *    baked into component rules (`.btn-primary` backgrounds, hovers) are out
  *    of reach (exercise finding F13).
  *
- * Exporter conventions validated engine-exact against the Phase 0 fixtures
- * (docs/exercises/phase0-bootstrap-rerun.md):
- *  - $light/$dark pseudo-roles (F12): neutral.subtle / neutral.contrast, with
- *    bg-subtle mix(·, surface, 0.6)/(0.85) and border-subtle
- *    mix(neutral.base, surface, 0.7) / mix(neutral.contrast, surface, 0.55).
- *  - border-subtle(role) = mix(role.base, surface, 0.70) (F10 watch item).
+ * Exporter conventions, now engine-owned via the role grid
+ * (docs/architecture/ir.md#color-the-role-grid; docs/plan/catalog-revision.md T3):
+ *  - $light/$dark pseudo-roles (F12): neutral.tint / neutral.text-strong.
+ *  - border-subtle(role) = role.outline directly (was a private mix; F10 is
+ *    now a first-class grid cell — no exporter-side formula left).
+ *  - $light/$dark's own bg-subtle stay Bootstrap-private (no grid equivalent
+ *    for "a tint of a tint"); $light's border-subtle = neutral.outline
+ *    (same 0.70 ratio as every other role, so no private formula needed there
+ *    either); $dark's border-subtle keeps its private 0.55 mix.
  *  - link ← primary; dark link ← ring[dark] (F13 asymmetry), hover = one
- *    lightness step (+0.05 in dark, primary.hover in light).
+ *    lightness step (+0.05 in dark, primary.solid-hover in light).
  *  - shadows composed from scrim at fixed alpha ramps (F2).
+ *  - type/space scales: consumed from the engine's always-present
+ *    catalog-default scales (semantic.type.*, semantic.space.*) instead of a
+ *    private exporter fallback table.
  */
 
 const S = 'semantic.color.';
@@ -31,13 +37,8 @@ const SHADOWS = [
   { name: '', geometry: '0 4px 12px', light: 0.1, dark: 0.4 },
   { name: 'lg', geometry: '0 12px 32px', light: 0.16, dark: 0.5 },
 ];
-/** Defaulted modular type scale (base 1rem, ratio 1.25) when the DS authors no type tokens. */
-const TYPE_SCALE = [
-  ['h1', '3.052rem', 'size.4xl'], ['h2', '2.441rem', 'size.3xl'], ['h3', '1.953rem', 'size.2xl'],
-  ['h4', '1.563rem', 'size.xl'], ['h5', '1.25rem', 'size.lg'], ['h6', '1rem', 'size.md'],
-];
-/** Bootstrap's $spacers keys ← linear space scale (base 0.25rem). */
-const SPACERS = [['0', '0', 'space.0'], ['1', '.25rem', 'space.1'], ['2', '.5rem', 'space.2'], ['3', '1rem', 'space.4'], ['4', '1.5rem', 'space.6'], ['5', '3rem', 'space.12']];
+/** Bootstrap's $spacers keys ← the engine's linear space scale (0.25rem base). */
+const SPACE_MAP = [['0', '0'], ['1', '1'], ['2', '2'], ['3', '4'], ['4', '6'], ['5', '12']];
 
 export default {
   name: 'bootstrap',
@@ -65,6 +66,7 @@ function resolve(light, dark, ctx) {
   const coverage = [];
   const hx = (c) => (c ? ctx.formatHex(c).text : undefined);
   const val = (map, p) => map?.get(S + p)?.value;
+  const raw = (map, p) => map?.get(`semantic.${p}`)?.value;
   const provKind = (map, p) => map?.get(S + p)?.provenance.kind;
   const cls = (p, mappedCls = 'native') =>
     mappedCls !== 'native' ? mappedCls : provKind(light, p) === 'derived' ? 'derived' : 'native';
@@ -73,69 +75,69 @@ function resolve(light, dark, ctx) {
 
   const perMode = (map) => {
     if (!map) return null;
-    const surface = val(map, 'surface.base') ?? val(map, 'background.base');
+    const surface = val(map, 'elevation.1.surface');
     const role = (name) => {
       if (name === 'light') {
         return {
-          base: val(map, 'neutral.subtle'),
-          text: val(map, 'text-on-neutral.subtle'),
-          bgSubtle: ctx.mix(val(map, 'neutral.subtle'), surface, 0.6),
-          borderSubtle: ctx.mix(val(map, 'neutral.base'), surface, 0.7),
+          base: val(map, 'neutral.tint'),
+          text: val(map, 'neutral.on-tint'),
+          bgSubtle: ctx.mix(val(map, 'neutral.tint'), surface, 0.6),
+          borderSubtle: val(map, 'neutral.outline'),
         };
       }
       if (name === 'dark') {
         return {
-          base: val(map, 'neutral.contrast'),
-          text: val(map, 'neutral.contrast'),
-          bgSubtle: ctx.mix(val(map, 'neutral.contrast'), surface, 0.85),
-          borderSubtle: ctx.mix(val(map, 'neutral.contrast'), surface, 0.55),
+          base: val(map, 'neutral.text-strong'),
+          text: val(map, 'neutral.text-strong'),
+          bgSubtle: ctx.mix(val(map, 'neutral.text-strong'), surface, 0.85),
+          borderSubtle: ctx.mix(val(map, 'neutral.text-strong'), surface, 0.55),
         };
       }
       return {
-        base: val(map, `${name}.base`),
-        text: val(map, `text-on-${name}.subtle`),
-        bgSubtle: val(map, `${name}.subtle`),
-        borderSubtle: ctx.mix(val(map, `${name}.base`), surface, 0.7),
+        base: val(map, `${name}.solid`),
+        text: val(map, `${name}.on-tint`),
+        bgSubtle: val(map, `${name}.tint`),
+        borderSubtle: val(map, `${name}.outline`),
       };
     };
-    const ring = val(map, 'ring.base');
+    const ring = val(map, 'ring');
     return {
       roles: Object.fromEntries([...ROLES, 'light', 'dark'].map((n) => [n, role(n)])),
-      bodyBg: val(map, 'background.base'),
+      bodyBg: val(map, 'elevation.0.surface'),
       bodyColor: val(map, 'text.base'),
-      emphasis: val(map, 'neutral.contrast'),
-      secondaryColor: val(map, 'text-muted.base'),
-      secondaryBg: val(map, 'neutral.subtle'),
-      tertiaryBg: val(map, 'surface.base'),
-      border: val(map, 'border.base'),
-      primary: val(map, 'primary.base'),
-      primaryHover: val(map, 'primary.hover'),
+      emphasis: val(map, 'neutral.text-strong'),
+      secondaryColor: val(map, 'text.muted'),
+      secondaryBg: val(map, 'neutral.tint'),
+      tertiaryBg: val(map, 'elevation.1.surface'),
+      border: val(map, 'border'),
+      primary: val(map, 'primary.solid'),
+      primaryHover: val(map, 'primary.solid-hover'),
       ring,
       ringHover: ring && { ...ring, l: Math.min(1, ring.l + 0.05) },
-      scrim: val(map, 'scrim.base'),
+      scrim: val(map, 'scrim'),
     };
   };
 
   // theme-color coverage (once, from the light map)
   for (const name of ROLES) {
-    cov(`$${name}`, `${S}${name}.base`, cls(`${name}.base`));
-    cov(`$theme-colors-text.${name}`, `${S}text-on-${name}.subtle`, cls(`text-on-${name}.subtle`));
-    cov(`$theme-colors-bg-subtle.${name}`, `${S}${name}.subtle`, cls(`${name}.subtle`));
-    cov(`$theme-colors-border-subtle.${name}`, `${S}${name}.base`, 'approximated', 'exporter convention: mix(role.base, surface, 0.70) — no IR per-role border slot (F10)');
+    cov(`$${name}`, `${S}${name}.solid`, cls(`${name}.solid`));
+    cov(`$theme-colors-text.${name}`, `${S}${name}.on-tint`, cls(`${name}.on-tint`));
+    cov(`$theme-colors-bg-subtle.${name}`, `${S}${name}.tint`, cls(`${name}.tint`));
+    cov(`$theme-colors-border-subtle.${name}`, `${S}${name}.outline`, cls(`${name}.outline`), 'promoted from a private mix to a first-class grid cell (F10)');
   }
-  cov('$light', `${S}neutral.subtle`, 'approximated', 'exporter convention: Bootstrap $light has no IR role (F12)');
-  cov('$dark', `${S}neutral.contrast`, 'approximated', 'exporter convention (F12)');
-  cov('$body-bg', `${S}background.base`, cls('background.base'));
+  cov('$light', `${S}neutral.tint`, cls('neutral.tint'), 'exporter convention: $light/$dark map from the neutral role (F12)');
+  cov('$dark', `${S}neutral.text-strong`, cls('neutral.text-strong'), 'exporter convention (F12)');
+  cov('$body-bg', `${S}elevation.0.surface`, cls('elevation.0.surface'));
   cov('$body-color', `${S}text.base`, cls('text.base'));
-  cov('$body-emphasis-color', `${S}neutral.contrast`, cls('neutral.contrast'));
-  cov('$body-secondary-color', `${S}text-muted.base`, cls('text-muted.base'));
-  cov('$body-secondary-bg', `${S}neutral.subtle`, cls('neutral.subtle'));
-  cov('$body-tertiary-bg', `${S}surface.base`, cls('surface.base'));
-  cov('$border-color', `${S}border.base`, cls('border.base'));
-  cov('$link-color', `${S}primary.base`, cls('primary.base'), 'exporter convention: link ← primary (matches Bootstrap default)');
-  cov('$link-hover-color', `${S}primary.hover`, cls('primary.hover'), 'replaces Bootstrap sRGB shade-color(20%)');
-  cov('$focus-ring-color', `${S}ring.base`, cls('ring.base'), 'ring ← primary (F3) at Bootstrap conventional alpha .25');
-  for (const s of SHADOWS) cov(`$box-shadow${s.name && '-' + s.name}`, `${S}scrim.base`, 'derived', 'composed from scrim alpha ramp (F2)');
+  cov('$body-emphasis-color', `${S}neutral.text-strong`, cls('neutral.text-strong'));
+  cov('$body-secondary-color', `${S}text.muted`, cls('text.muted'));
+  cov('$body-secondary-bg', `${S}neutral.tint`, cls('neutral.tint'));
+  cov('$body-tertiary-bg', `${S}elevation.1.surface`, cls('elevation.1.surface'));
+  cov('$border-color', `${S}border`, cls('border'));
+  cov('$link-color', `${S}primary.solid`, cls('primary.solid'), 'exporter convention: link ← primary.solid (matches Bootstrap default)');
+  cov('$link-hover-color', `${S}primary.solid-hover`, cls('primary.solid-hover'), 'replaces Bootstrap sRGB shade-color(20%)');
+  cov('$focus-ring-color', `${S}ring`, cls('ring'), 'ring ← primary (F3) at Bootstrap conventional alpha .25');
+  for (const s of SHADOWS) cov(`$box-shadow${s.name && '-' + s.name}`, `${S}scrim`, 'derived', 'composed from scrim alpha ramp (F2)');
   cov('$box-shadow-inset', '—', 'unsupported', 'no IR inset-shadow concept; Bootstrap default kept');
 
   const radius = (k) => light.get(`semantic.radius.${k}`);
@@ -149,14 +151,29 @@ function resolve(light, dark, ctx) {
   const font = (k) => light.get(`semantic.font.${k}`);
   if (font('sans')) cov('$font-family-sans-serif', 'semantic.font.sans', 'native');
   if (font('mono')) cov('$font-family-monospace', 'semantic.font.mono', 'native');
-  const hasTypeScale = [...light.keys()].some((k) => k.startsWith('semantic.type.'));
-  cov('$font-size-base…$h1-font-size', hasTypeScale ? 'semantic.type.*' : '—', 'derived', hasTypeScale ? undefined : 'defaulted modular scale (base 1rem, ratio 1.25) — no authored type tokens');
+
+  const typeProv = light.get('semantic.type.size.md')?.provenance.kind;
+  cov('$font-size-base…$h1-font-size', 'semantic.type.*', (typeProv === 'authored' || typeProv === 'aliased') ? 'native' : 'derived',
+    typeProv === 'defaulted' ? 'defaulted modular scale (base 1rem, ratio 1.25) — no authored type tokens' : undefined);
   cov('$display-font-sizes', '—', 'unsupported', 'no IR concept of display sizes; Bootstrap defaults kept');
-  const hasSpace = [...light.keys()].some((k) => k.startsWith('semantic.space.'));
-  cov('$spacer/$spacers', hasSpace ? 'semantic.space.*' : '—', hasSpace ? 'native' : 'derived', hasSpace ? undefined : 'defaulted linear scale (base 0.25rem)');
+
+  const spaceProv = light.get('semantic.space.4')?.provenance.kind;
+  cov('$spacer/$spacers', 'semantic.space.*', (spaceProv === 'authored' || spaceProv === 'aliased') ? 'native' : 'derived',
+    spaceProv === 'defaulted' ? 'defaulted linear scale (base 0.25rem)' : undefined);
   cov('$grid-breakpoints/$container-max-widths', '—', 'unsupported', 'breakpoints are a known IR catalog candidate');
   cov('$btn-*/component tier', '—', 'unsupported', 'component-tier variables reserved for the v2 component layer (ADR-0003)');
   cov('motion ($transition-*)', '—', 'dropped', 'Bootstrap themes almost none of it');
+
+  const typeScale = {
+    base: raw(light, 'type.size.md'),
+    leading: raw(light, 'type.leading.normal'),
+    h1: raw(light, 'type.size.4xl'), h2: raw(light, 'type.size.3xl'), h3: raw(light, 'type.size.2xl'),
+    h4: raw(light, 'type.size.xl'), h5: raw(light, 'type.size.lg'), h6: raw(light, 'type.size.md'),
+  };
+  const spaceScale = SPACE_MAP.map(([bsKey, catKey]) => {
+    const v = raw(light, `space.${catKey}`);
+    return [bsKey, parseFloat(v) === 0 ? '0' : v, `space.${catKey}`];
+  });
 
   return {
     light: perMode(light),
@@ -164,8 +181,8 @@ function resolve(light, dark, ctx) {
     radiusEntries: Object.fromEntries(['md', 'sm', 'lg', 'xl', 'full'].map((k) => [k, radius(k)])),
     fontSans: font('sans'),
     fontMono: font('mono'),
-    hasTypeScale,
-    hasSpace,
+    typeScale,
+    spaceScale,
     hx,
     coverage,
   };
@@ -207,12 +224,12 @@ function renderVariables(r, ctx) {
   }
   lines.push('');
   lines.push('// -------------------------------------------------------------- body / surfaces');
-  lines.push(`$body-bg:              ${hx(L.bodyBg)};  // background.base`);
+  lines.push(`$body-bg:              ${hx(L.bodyBg)};  // elevation.0.surface`);
   lines.push(`$body-color:           ${hx(L.bodyColor)};  // text.base`);
-  lines.push(`$body-emphasis-color:  ${hx(L.emphasis)};  // neutral.contrast (F20)`);
-  lines.push(`$body-secondary-color: ${hx(L.secondaryColor)};  // text-muted.base`);
-  lines.push(`$body-tertiary-bg:     ${hx(L.tertiaryBg)};  // surface.base (F11)`);
-  lines.push(`$body-secondary-bg:    ${hx(L.secondaryBg)};  // neutral.subtle (F11)`);
+  lines.push(`$body-emphasis-color:  ${hx(L.emphasis)};  // neutral.text-strong (F20)`);
+  lines.push(`$body-secondary-color: ${hx(L.secondaryColor)};  // text.muted`);
+  lines.push(`$body-tertiary-bg:     ${hx(L.tertiaryBg)};  // elevation.1.surface (F11)`);
+  lines.push(`$body-secondary-bg:    ${hx(L.secondaryBg)};  // neutral.tint (F11)`);
   if (D) {
     lines.push('');
     lines.push('// dark mode (data-bs-theme="dark") — Bootstrap 5.3 *-dark variables');
@@ -226,27 +243,29 @@ function renderVariables(r, ctx) {
   }
   lines.push('');
   lines.push('// -------------------------------------------------------------- links / focus');
-  lines.push('$link-color:       $primary;  // exporter convention: link ← primary.base');
-  lines.push(`$link-hover-color: ${hx(L.primaryHover)};  // primary.hover — replaces Bootstrap's sRGB shade-color(20%)`);
+  lines.push('$link-color:       $primary;  // exporter convention: link ← primary.solid');
+  lines.push(`$link-hover-color: ${hx(L.primaryHover)};  // primary.solid-hover — replaces Bootstrap's sRGB shade-color(20%)`);
   lines.push('// $link-color-dark intentionally NOT emitted: Bootstrap derives it from $primary (F13)');
-  lines.push('$focus-ring-color: rgba($primary, .25);  // ring.base ← primary (F3)');
+  lines.push('$focus-ring-color: rgba($primary, .25);  // ring ← primary (F3)');
   lines.push('');
   lines.push('// ---------------------------------------------------------------- typography');
   if (r.fontSans) lines.push(`$font-family-sans-serif: ${fontList(r.fontSans.value)};  // font.sans`);
   if (r.fontMono) lines.push(`$font-family-monospace:  ${fontList(r.fontMono.value)};  // font.mono`);
-  if (!r.hasTypeScale) {
-    lines.push('$font-size-base:   1rem;  // size.md · defaulted (no authored type scale — base 1rem, ratio 1.25)');
-    lines.push('$line-height-base: 1.5;   // leading.normal · defaulted');
-    for (const [h, size, slot] of TYPE_SCALE) lines.push(`$${h}-font-size: ${size};  // ${slot} · defaulted`);
-  }
+  const ts = r.typeScale;
+  lines.push(`$font-size-base:   ${ts.base};  // type.size.md`);
+  lines.push(`$line-height-base: ${ts.leading};   // type.leading.normal`);
+  lines.push(`$h1-font-size: ${ts.h1};  // type.size.4xl`);
+  lines.push(`$h2-font-size: ${ts.h2};  // type.size.3xl`);
+  lines.push(`$h3-font-size: ${ts.h3};  // type.size.2xl`);
+  lines.push(`$h4-font-size: ${ts.h4};  // type.size.xl`);
+  lines.push(`$h5-font-size: ${ts.h5};  // type.size.lg`);
+  lines.push(`$h6-font-size: ${ts.h6};  // type.size.md`);
   lines.push('');
   lines.push('// ------------------------------------------------------------------- spacing');
-  if (!r.hasSpace) {
-    lines.push('$spacer: 1rem;  // space.4 · defaulted linear scale (base 0.25rem)');
-    lines.push('$spacers: (');
-    lines.push(SPACERS.map(([k, v, slot]) => `  ${k}: ${v}${k === '5' ? '' : ','}   // ${slot}`).join('\n'));
-    lines.push(');');
-  }
+  lines.push(`$spacer: ${r.spaceScale[3][1]};  // space.4`);
+  lines.push('$spacers: (');
+  lines.push(r.spaceScale.map(([k, v, slot]) => `  ${k}: ${v}${k === '5' ? '' : ','}   // ${slot}`).join('\n'));
+  lines.push(');');
   lines.push('');
   lines.push('// ------------------------------------------------------------- radius / borders');
   const rad = r.radiusEntries;
@@ -256,7 +275,7 @@ function renderVariables(r, ctx) {
   if (rad.xl) lines.push(`$border-radius-xl:   ${rad.xl.value};  // radius.xl · derived (F8: md × 2)`);
   if (rad.md) lines.push(`$border-radius-xxl:  ${xxl(rad.md.value)};  // exporter convention: xl × 2 (F8 watch item)`);
   lines.push('$border-radius-pill: 50rem;  // radius.full, in Bootstrap\'s own idiom');
-  lines.push(`$border-color:       ${hx(L.border)};  // border.base`);
+  lines.push(`$border-color:       ${hx(L.border)};  // border`);
   lines.push('');
   lines.push('// ------------------------------------------------------------------- shadows');
   lines.push('// Composed from scrim at fixed alpha ramps (F2)');
@@ -285,15 +304,15 @@ function renderMaps(r, ctx) {
     '//',
     '// These maps REPLACE Bootstrap\'s own tint-color()/shade-color() derivations',
     '// with OKLCH-derived values (perceptually consistent across roles) — the',
-    '// mechanism that makes text-on-<role>.subtle → -text-emphasis NATIVE (F9).',
+    '// mechanism that makes role.on-tint → -text-emphasis NATIVE (F9).',
     '',
-    '// text-on-<role>.subtle (on-brand walk, F1/F19)',
+    '// <role>.on-tint (on-brand walk, F1/F19)',
     mapBlock('theme-colors-text', (x) => x.text, 'light'),
     '',
-    '// <role>.subtle (mix toward surface — cartesian OKLab, F21)',
+    '// <role>.tint (mix toward surface — cartesian OKLab, F21)',
     mapBlock('theme-colors-bg-subtle', (x) => x.bgSubtle, 'light'),
     '',
-    '// exporter convention: mix(role.base, surface, 0.70) (F10 watch item)',
+    '// <role>.outline (F10, now a first-class grid cell)',
     mapBlock('theme-colors-border-subtle', (x) => x.borderSubtle, 'light'),
   ];
   if (r.dark) {
@@ -330,10 +349,10 @@ function renderCss(r, ctx) {
     lines.push(`  --bs-body-bg: ${bg};  --bs-body-bg-rgb: ${rgbTriplet(bg)};`);
     lines.push(`  --bs-body-color: ${color};  --bs-body-color-rgb: ${rgbTriplet(color)};`);
     lines.push(`  --bs-emphasis-color: ${emph};  --bs-emphasis-color-rgb: ${rgbTriplet(emph)};`);
-    lines.push(`  --bs-secondary-color: ${hx(M.secondaryColor)};  /* text-muted.base */`);
-    lines.push(`  --bs-secondary-bg: ${hx(M.secondaryBg)};  /* neutral.subtle */`);
-    lines.push(`  --bs-tertiary-bg: ${hx(M.tertiaryBg)};  /* surface.base */`);
-    lines.push(`  --bs-border-color: ${hx(M.border)};  /* border.base */`);
+    lines.push(`  --bs-secondary-color: ${hx(M.secondaryColor)};  /* text.muted */`);
+    lines.push(`  --bs-secondary-bg: ${hx(M.secondaryBg)};  /* neutral.tint */`);
+    lines.push(`  --bs-tertiary-bg: ${hx(M.tertiaryBg)};  /* elevation.1.surface */`);
+    lines.push(`  --bs-border-color: ${hx(M.border)};  /* border */`);
     lines.push('');
     // Link asymmetry (F13): light links ← primary; dark links ← ring[dark]
     // because CDN users have Bootstrap's stock literals baked in.

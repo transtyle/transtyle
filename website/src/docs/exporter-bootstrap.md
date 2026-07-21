@@ -30,20 +30,20 @@ Emits a **Bootstrap ≥5.3** theme along both consumption paths the Bootstrap co
 
 ## The interesting part: we out-derive Bootstrap on its own turf
 
-Bootstrap generates `-bg-subtle` / `-border-subtle` / `-text-emphasis` per theme color by sRGB tinting. This exporter overrides those maps with the engine's OKLCH derivations — `text-on-<role>.subtle` is the AA-checked "on-brand walk", `<role>.subtle` a perceptual mix toward your surface — so alerts and subtle badges stay perceptually consistent across all roles and both modes.
+Bootstrap generates `-bg-subtle` / `-border-subtle` / `-text-emphasis` per theme color by sRGB tinting. This exporter overrides those maps with the engine's OKLCH derivations — `<role>.on-tint` is the AA-checked "on-brand walk", `<role>.tint` a perceptual mix toward your surface, and `<role>.outline` (the border-subtle source) is now a first-class [role-grid](/docs/language/#color-roles-the-role-grid) cell rather than a private exporter formula — so alerts and subtle badges stay perceptually consistent across all roles and both modes.
 
 ## Mapping highlights
 
 | Bootstrap variable | Comes from | Note |
 |---|---|---|
-| `$primary…$danger` | the same-named roles' `.base` | `secondary…danger` usually `derived` on minimal systems |
-| `$light` / `$dark` | `neutral.subtle` / `neutral.contrast` | exporter convention — Bootstrap's grayscale pseudo-roles have no IR slot |
-| `$theme-colors-text` | `text-on-<role>.subtle` | the native binding the Phase 0 exercise predicted |
-| `$theme-colors-bg-subtle` / `-border-subtle` | `<role>.subtle` / `mix(role, surface, 0.70)` | cartesian-OKLab mixes |
-| `$body-*`, `$border-color` (+ `-dark` variants) | `background/text/text-muted/surface/neutral.subtle/border` | |
+| `$primary…$danger` | the same-named roles' `.solid` | `secondary…danger` usually `derived` on minimal systems |
+| `$light` / `$dark` | `neutral.tint` / `neutral.text-strong` | exporter convention — Bootstrap's grayscale pseudo-roles have no IR slot |
+| `$theme-colors-text` | `<role>.on-tint` | the native binding the Phase 0 exercise predicted |
+| `$theme-colors-bg-subtle` / `-border-subtle` | `<role>.tint` / `<role>.outline` | cartesian-OKLab mixes, both engine-owned grid cells |
+| `$body-*`, `$border-color` (+ `-dark` variants) | `elevation.{0,1}.surface` / `text.base` / `text.muted` / `neutral.tint` / `border` | |
 | `$link-color`, `$focus-ring-color` | `primary`, `ring` | dark-mode links ← `ring[dark]` (visibility-lightened) |
 | `$border-radius{,-sm,-lg,-xl,-pill}` | the `radius.*` scale | `sm/lg/xl` derived from your `md` |
-| `$font-family-*`, type scale, `$spacers`, `$box-shadow*` | fonts, defaulted modular/linear scales, scrim alpha ramps | scales report `derived` until you author them |
+| `$font-family-*`, type scale, `$spacers`, `$box-shadow*` | fonts, the engine's `type.*`/`space.*` scales, scrim alpha ramps | scales report `derived` until you author them |
 | `$grid-breakpoints`, `$btn-*` component tier, `$box-shadow-inset` | — | `unsupported`, reported honestly |
 
 Dark mode follows Bootstrap's own mechanism (`data-bs-theme="dark"`) on both paths. One Sass-path caveat inherited from Bootstrap itself: `$primary` is a single value, so brand colors don't flip per mode — exactly how Bootstrap's own dark mode behaves.

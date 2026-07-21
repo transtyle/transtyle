@@ -22,7 +22,7 @@ Transtyle prefers surprising you *loudly* over failing silently. This page colle
 | `TST1108` | warning | A mode value was overridden by a later layer | Confirm the layer order is intentional |
 | `TST1109` | error | Mode-scoped layer targets a mode not declared in `modes` | Declare it, or fix the typo |
 | `TST1110` | error | Mode-scoped layer targets more than one dimension | One dimension per layer |
-| `TST1201` | error | `semantic.color.primary.base` missing | Author your brand color — it's the one non-negotiable input |
+| `TST1201` | error | `semantic.color.primary.solid` missing | Author your brand color — it's the one non-negotiable input |
 | `TST1202` | error | A token in `derivation.require` was derived, not authored | Author it, or remove it from `require` |
 | `TST1301` | error | Requested target instance isn't in the config | Check instance names in `targets` |
 | `TST2101` | warning | Contrast below the configured standard (measured ratio printed) | Adjust the color, or accept the warning knowingly |
@@ -35,11 +35,11 @@ Transtyle prefers surprising you *loudly* over failing silently. This page colle
 
 ### My brand color is identical in dark mode
 
-`autoDark` is off by default and you didn't author a dark value — so the value falls back, by design. Transtyle does not invent brand decisions. Author `primary.base` a dark-mode value (one line) or opt into `autoDark: true` and audit the result in the report.
+`autoDark` is off by default and you didn't author a dark value — so the value falls back, by design. Transtyle does not invent brand decisions. Author `primary.solid` a dark-mode value (one line) or opt into `autoDark: true` and audit the result in the report.
 
 ### `--secondary` doesn't look like my secondary color
 
-shadcn's `--secondary` is a *subtle surface* (think: secondary button background), not a brand-secondary. The exporter maps it from `neutral.subtle` on purpose. Your brand `secondary` role exists in the IR and will map to targets that actually mean "second brand color".
+shadcn's `--secondary` is a *subtle surface* (think: secondary button background), not a brand-secondary. The exporter maps it from `neutral.tint` on purpose. Your brand `secondary` role exists in the IR and will map to targets that actually mean "second brand color".
 
 ### A variable is classified `approximated`
 

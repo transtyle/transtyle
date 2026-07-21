@@ -32,16 +32,16 @@ The full 33-variable set is emitted; highlights worth understanding:
 
 | shadcn variable | Comes from | Note |
 |---|---|---|
-| `--background` / `--foreground` | `background.base` / `text.base` | |
-| `--card` / `--popover` | `surface.base` / `overlay.base` | overlay = floating-layer surface, derived by raising `surface` |
-| `--primary` + `--primary-foreground` | `primary.base` + `text-on-primary.base` | the foreground is contrast-picked and AA-checked |
-| `--secondary`, `--muted` | `neutral.subtle` | **shadcn's "secondary" is a subtle surface, not your brand secondary** — a deliberate mapping decision |
-| `--accent` + `--accent-foreground` | `accent.subtle` + `text-on-accent.subtle` | derived accent is brand-tinted — visibly nicer than stock shadcn's flat gray |
-| `--destructive` | `danger.base` | name translation only |
-| `--input` | `border.base` | classified `approximated`: shadcn distinguishes input borders, the catalog doesn't (yet) |
-| `--ring` | `ring.base` | derived from primary, lightened in dark mode |
+| `--background` / `--foreground` | `elevation.0.surface` / `text.base` | |
+| `--card` / `--popover` | `elevation.1.surface` / `elevation.3.surface` | the role-grid elevation ladder: card is one step up from the page, popover another two — see the [language reference](/docs/language/#color-roles-the-role-grid) |
+| `--primary` + `--primary-foreground` | `primary.solid` + `primary.on-solid` | the foreground is contrast-picked and AA-checked |
+| `--secondary`, `--muted` | `neutral.tint` | **shadcn's "secondary" is a subtle surface, not your brand secondary** — a deliberate mapping decision |
+| `--accent` + `--accent-foreground` | `accent.tint` + `accent.on-tint` | derived accent is brand-tinted — visibly nicer than stock shadcn's flat gray |
+| `--destructive` | `danger.solid` | name translation only |
+| `--input` | `border` | classified `approximated`: shadcn distinguishes input borders, the catalog doesn't (yet) |
+| `--ring` | `ring` | derived from primary, lightened in dark mode |
 | `--chart-1…5` | `palette.categorical.1–5` | derived data-viz palette anchored on your brand hue |
-| `--sidebar-*` | surface/text/primary/accent | exporter convention; properly a component-tier concern (v2) |
+| `--sidebar-*` | elevation/text/primary/accent grid cells | exporter convention; properly a component-tier concern (v2) |
 | `--radius` | `radius.md` | shadcn derives sm/md/lg/xl from it via `calc()` |
 | `--font-sans` / `--font-mono` | `font.sans` / `font.mono` | v4: `@theme`; v3: `fontFamily` in the config snippet |
 

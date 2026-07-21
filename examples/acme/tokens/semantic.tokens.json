@@ -3,21 +3,23 @@
     "color": {
       "$type": "color",
       "primary": {
-        "base": { "$value": "{option.color.blue.600}" }
+        "solid": { "$value": "{option.color.blue.600}" }
       },
-      "background": {
-        "base": {
-          "$value": "{option.color.white}",
-          "$extensions": {
-            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.950}" } }
+      "elevation": {
+        "0": {
+          "surface": {
+            "$value": "{option.color.white}",
+            "$extensions": {
+              "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.950}" } }
+            }
           }
-        }
-      },
-      "surface": {
-        "base": {
-          "$value": "{option.color.gray.50}",
-          "$extensions": {
-            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } }
+        },
+        "1": {
+          "surface": {
+            "$value": "{option.color.gray.50}",
+            "$extensions": {
+              "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } }
+            }
           }
         }
       },
@@ -27,10 +29,8 @@
           "$extensions": {
             "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.50}" } }
           }
-        }
-      },
-      "text-muted": {
-        "base": {
+        },
+        "muted": {
           "$value": "{option.color.gray.500}",
           "$extensions": {
             "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.400}" } }
@@ -38,11 +38,9 @@
         }
       },
       "border": {
-        "base": {
-          "$value": "{option.color.gray.200}",
-          "$extensions": {
-            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.800}" } }
-          }
+        "$value": "{option.color.gray.200}",
+        "$extensions": {
+          "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.800}" } }
         }
       }
     },

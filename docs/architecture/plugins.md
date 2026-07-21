@@ -36,9 +36,9 @@ Small on purpose. Two layers:
 
 ```jsonc
 // mappings/5.x.json (excerpt)
-{ "$primary":        { "from": "semantic.color.primary.base", "class": "native" },
+{ "$primary":        { "from": "semantic.color.primary.solid", "class": "native" },
   "$border-radius":  { "from": "semantic.radius.md", "unit": "rem", "class": "native" },
-  "$success-bg-subtle": { "from": "semantic.color.success.subtle", "class": "native" } }
+  "$success-bg-subtle": { "from": "semantic.color.success.tint", "class": "native" } }
 ```
 
 **2. Programmatic hooks (the escape hatch), all pure functions over the resolved IR:**

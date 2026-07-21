@@ -10,7 +10,7 @@
 
 ## Mapping highlights
 
-Base ramp `base-100/200/300` ← `background`/`surface`/`border` (base-300 `approximated`: daisyUI wants a third background step the IR doesn't define — catalog watch item alongside shadcn's `--input`). All role+`-content` pairs ← role base + `text-on-<role>.base` (contrast-checked by derivation). `danger` → `error` (name translation). One authored radius feeds `--radius-{selector,field,box}` (`approximated`). `--depth`/`--noise`/`--size-*`: `dropped` — stylistic effects with no token semantics; daisyUI defaults apply.
+Base ramp `base-100/200/300` ← `elevation.0.surface`/`elevation.1.surface`/`border` (base-300 `approximated`: daisyUI wants a third background step the IR doesn't define — catalog watch item alongside shadcn's `--input`). All role+`-content` pairs ← `<role>.solid` + `<role>.on-solid` (contrast-checked by derivation). `danger` → `error` (name translation). One authored radius feeds `--radius-{selector,field,box}` (`approximated`). `--depth`/`--noise`/`--size-*`: `dropped` — stylistic effects with no token semantics; daisyUI defaults apply.
 
 ## Ground-truth testing (pending)
 

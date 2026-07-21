@@ -109,7 +109,7 @@ text   text-hover   text-active   text-strong
 
 ## T3 — Migrate exporters, examples, fixtures, demos to the revised names
 
-**Depends:** T2. **Files:** all six `packages/exporter-*/src/index.js`, `examples/*/tokens/*.json`, `examples/*/transtyle.config.json` (`derivation.require` unchanged — roles), `examples/acme/expected/*` (headers + any slot-name comments; **values must not change**), demo projects only if they reference slot names (they don't — they consume dist), `scripts/check-sync.mjs`.
+**Depends:** T2. **Files:** all five shipped `packages/exporter-*/src/index.js` (css-variables doesn't exist yet — that's T4), `examples/*/tokens/*.json`, `examples/*/transtyle.config.json` (`derivation.require` unchanged — roles), `examples/acme/expected/*` (headers + any slot-name comments; **values must not change**), demo projects only if they reference slot names (they don't — they consume dist), `scripts/check-sync.mjs`.
 
 **Exact renames to apply (old → new), everywhere:**
 

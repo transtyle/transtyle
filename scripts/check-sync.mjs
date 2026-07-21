@@ -109,9 +109,52 @@ for (const name of exporters) {
   }
 }
 
+// 6. Dead-vocabulary guard (docs/plan/catalog-revision.md T3): the pre-revision
+// catalog's slot names must not survive in code, example tokens/configs, or
+// website docs — one vocabulary, no aliases (ADR-0010). Docs that *describe*
+// the migration (historical record, before/after mapping) are excluded by
+// name, not by pattern — keep this list tiny and reviewed.
+const DEAD_VOCAB = [
+  { name: 'text-on-<role> foreground slots', re: /text-on-/ },
+  // (?<!text): text.subtle is a legitimate new content-hierarchy rung, not the old grid cell
+  { name: '.subtle color scale slot', re: /(?<!text)\.subtle\b/ },
+  { name: 'surface-raised slot', re: /surface-raised/ },
+  { name: '<role>.base / .hover / .active / .contrast (old grid, qualified path)', re: /semantic\.color\.[a-z][\w-]*\.(base|hover|active|contrast)\b/ },
+  { name: 'background.base / surface.base / overlay.base (old surface slots, qualified path)', re: /semantic\.color\.(background|surface|overlay)\.base\b/ },
+  { name: 'text-muted.base (old content slot, qualified path)', re: /semantic\.color\.text-muted\.base\b/ },
+];
+const DEAD_VOCAB_EXCLUDE_FILES = [
+  // Explains the old->new mapping by name; excluded from the pattern guard,
+  // reviewed by hand instead. Keep this list tiny.
+  'website/src/docs/language.md',
+];
+function scanDeadVocab(relPath, text) {
+  if (DEAD_VOCAB_EXCLUDE_FILES.includes(relPath)) return;
+  for (const { name, re } of DEAD_VOCAB) {
+    const m = re.exec(text);
+    if (m) fail(`${relPath}: dead vocabulary "${name}" found (matched "${m[0]}") — the catalog was revised, see ADR-0010`);
+  }
+}
+function walkFiles(dir, filter) {
+  const out = [];
+  for (const d of readdirSync(join(root, dir), { withFileTypes: true })) {
+    const rel = join(dir, d.name);
+    if (d.isDirectory()) { if (d.name !== 'node_modules' && d.name !== 'dist') out.push(...walkFiles(rel, filter)); }
+    else if (filter(d.name)) out.push(rel);
+  }
+  return out;
+}
+for (const rel of walkFiles('packages', (n) => n.endsWith('.js'))) scanDeadVocab(rel, read(rel));
+for (const ex of examples) {
+  for (const rel of walkFiles(`examples/${ex}/tokens`, (n) => n.endsWith('.json'))) scanDeadVocab(rel, read(rel));
+  const configRel = `examples/${ex}/transtyle.config.json`;
+  scanDeadVocab(configRel, read(configRel));
+}
+for (const rel of walkFiles('website/src/docs', (n) => n.endsWith('.md'))) scanDeadVocab(rel, read(rel));
+
 if (errors.length) {
   console.error(`✖ sync check failed — ${errors.length} violation(s) of the CONTRIBUTING sync rule:\n`);
   for (const e of errors) console.error('  - ' + e);
   process.exit(1);
 }
-console.log(`✔ sync check: ${exporters.length} exporters (${exporters.join(', ')}) present on all five surfaces across ${examples.length} examples`);
+console.log(`✔ sync check: ${exporters.length} exporters (${exporters.join(', ')}) present on all five surfaces across ${examples.length} examples; no dead catalog vocabulary found`);

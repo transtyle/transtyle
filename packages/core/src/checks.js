@@ -7,10 +7,10 @@ const S = 'semantic.color.';
 export function runChecks(normalized, config, diagnostics) {
   const min = 4.5; // WCAG 2.1 AA normal text
   const pairs = [
-    ['text.base', 'background.base'],
-    ['text.base', 'surface.base'],
-    ['text-muted.base', 'background.base'],
-    ['text-muted.base', 'surface.base'],
+    ['text.base', 'elevation.0.surface'],
+    ['text.base', 'elevation.1.surface'],
+    ['text.muted', 'elevation.0.surface'],
+    ['text.muted', 'elevation.1.surface'],
   ];
   for (const mode of normalized.modeValues) {
     const map = normalized.modes[mode];

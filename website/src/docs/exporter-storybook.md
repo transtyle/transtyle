@@ -38,12 +38,12 @@ export * from '../dist/storybook/preview.transtyle';
 
 | ThemeVars | Comes from | Note |
 |---|---|---|
-| `colorPrimary` / `colorSecondary` | `primary.base` / `accent.base` | `colorSecondary` is SB's actual highlight color |
-| `appBg`, `barBg` / `appContentBg`, `appPreviewBg` | `surface.base` / `background.base` | the canvas is *your* canvas, not chrome |
-| `textColor`, `textMutedColor`, `textInverseColor` | `text.base`, `text-muted.base`, `text.base` of the *other* mode | the one legitimate cross-mode read |
-| `barHoverColor`, `barSelectedColor` | `primary.hover`, `ring.base` | first chrome consumers of role states |
-| `buttonBg`, `booleanBg` / `booleanSelectedBg` | `neutral.subtle` / `surface-raised.base` | |
-| `input*` | `background`, `border`, `text`, `radius.sm` | radii `approximated` (rem→px) |
+| `colorPrimary` / `colorSecondary` | `primary.solid` / `accent.solid` | `colorSecondary` is SB's actual highlight color |
+| `appBg`, `barBg` / `appContentBg`, `appPreviewBg` | `elevation.1.surface` / `elevation.0.surface` | the canvas is *your* canvas, not chrome |
+| `textColor`, `textMutedColor`, `textInverseColor` | `text.base`, `text.muted`, `text.inverse` | `text.inverse` is the content ladder's own cross-mode rung — the engine's job now, not the exporter's |
+| `barHoverColor`, `barSelectedColor` | `primary.solid-hover`, `ring` | first chrome consumers of role states |
+| `buttonBg`, `booleanBg` / `booleanSelectedBg` | `neutral.tint` / `elevation.2.surface` | |
+| `input*` | `elevation.0.surface`, `border`, `text.base`, `radius.sm` | radii `approximated` (rem→px) |
 | `brandTitle` | config `name` (override via `options.brand`) | not a token |
 | everything chrome can't express | — | `dropped (chrome)`, delivered through preview composition instead |
 
