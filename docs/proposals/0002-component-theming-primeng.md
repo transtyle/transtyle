@@ -6,6 +6,8 @@
 
 **Standing constraint, restated:** Transtyle's catalog exists to be the *best agnostic representation of the whole ecosystem* — design systems and component libraries, as both import and export targets — never a translation of one target's internals wearing a neutral-sounding name. Proposal 0001 (the role grid) only shipped after a ~14-ecosystem comparative study specifically to avoid "a shape reverse-engineered from shadcn or Bootstrap"; that same discipline applies here. §2.8 does a first cross-check against a second ecosystem (Adobe Spectrum) and it already changes §3/§6's conclusions — this document is **not** yet at proposal-0001's evidentiary bar, and says so explicitly where that matters.
 
+**The resolution mechanism, not just the check:** PrimeNG groups shared component tokens into a handful of named objects (`formField`, `list`); Spectrum instead defines a large flat vocabulary of precisely-named per-context tokens. Transtyle's catalog does not need to mirror *either* shape — it's a **meta-language**, and each exporter's job is *meaning-based* translation from that meta-language to its target's actual shape, exactly the "bind by meaning, never names" rule already core to the project (`website/src/docs/language.md`), now applied to the export direction: the same meta-token (e.g. `space.2`) can legitimately feed one PrimeNG object field *and* several differently-named flat Spectrum tokens, reused as many times and in as many places as the target's own shape requires. This reframes §2.3/§4 below: the question is never "does Transtyle's catalog have a `formField` concept," it's "can an exporter derive PrimeNG's `formField` shape *and* Spectrum's flat shape from the same underlying meta-tokens" — and per §5.1's F10 precedent, that derivation belongs in the exporter until a second exporter needs the identical thing.
+
 ## 1. Why PrimeNG, and why now
 
 Every reference exporter shipped so far (shadcn, Bootstrap, daisyUI, ECharts, Storybook, css-variables, Radix) binds **at the semantic tier only** — the "exporters bind to the semantic tier" rule in [ir.md](../architecture/ir.md#the-three-tier-token-model). That rule has held because none of those targets *require* per-component tokens to look correct: Bootstrap's `$btn-*` variables are a handful of conventions layered informally on top of `$primary` etc.; shadcn's components read CSS variables that are themselves semantic-tier.
@@ -69,8 +71,9 @@ Proposal 0001 studied 14 ecosystems for the *color role grid* and explicitly **d
 
 **What this changes:**
 - The `field`/`list`/`navigation`/`overlay` groups (§2.3, §4) are **not confirmed as universal vocabulary** — they may be PrimeNG's (and plausibly Chakra/Panda's "recipe" style) particular architectural choice, not a convergent industry pattern the way the color role grid was. Downgrade their status in §3 accordingly: proposed, single-source, pending real cross-ecosystem study.
-- This does **not** invalidate the strategy, because Transtyle's internal catalog shape was never required to mirror any one target's internal shape — only to be mappable to and from it. The five groups can ship as **default-providing aliases** (`component.<name>.<part>` still resolves from them when unauthored, per `component-layer.md`'s existing "component tokens default from semantic tokens" rule) while the **real per-component `component.*` tier** — not the archetype groups — is what accommodates an ecosystem like Spectrum that wants finer, per-context tokens the shared groups don't capture. The archetype groups are a convenience default for ecosystems that converge on them; they are not load-bearing for ecosystems that don't.
-- The honest scope statement: this document has PrimeNG-depth evidence and a Spectrum spot-check, not proposal-0001-depth (14-ecosystem) evidence. §6 now sequences a real comparative pass (Material 3, Chakra/Panda recipes, Fluent 2, Ant Design v5 — all already enumerated in proposal 0001's ecosystem list, just not yet studied at component-tier depth) before any new semantic vocabulary is committed, not after.
+- **Resolution: don't add them to Transtyle's catalog yet.** Implement `field`/`list`/`navigation`/`overlay` as **`@transtyle/exporter-primeng`-private derivation helpers** — small functions reading straight from *existing* catalog cells (`space.*`, `radius.*`, `border`, `text.*`, `elevation.*`) and shaping the result into whatever PrimeNG's `formField`/`list`/etc. objects want. This is exactly how Bootstrap's border-subtle mix started (a private exporter convention, F10) before being promoted into an engine-owned grid cell once the comparative study showed it was a real cross-ecosystem pattern, not a Bootstrap idiosyncrasy — same discipline, applied here before the fact instead of after. Promote any of the four into the shared semantic catalog only once a **second, independent** exporter needs the identical grouping — the same "two consecutive clean attempts" bar ADR-0010 already uses for catalog-freeze readiness, applied here to when new vocabulary is *added* at all.
+- This is also what correctly handles Spectrum's flat shape without inventing a second mechanism: whichever exporter eventually targets Spectrum reads the *same* underlying meta-tokens (`space.*`, `radius.*`, …) and emits its own large flat vocabulary from them — no shared "archetype group" needed on either side, because the meta-language, not a shared grouping convention, is what's actually agnostic.
+- The honest scope statement: this document has PrimeNG-depth evidence and a Spectrum spot-check, not proposal-0001-depth (14-ecosystem) evidence. §6 now sequences a real comparative pass (Material 3, Chakra/Panda recipes, Fluent 2, Ant Design v5 — all already enumerated in proposal 0001's ecosystem list, just not yet studied at component-tier depth) before any grouping *even becomes a promotion candidate*, not before it ships exporter-private (which needs no gate at all).
 
 ## 3. Gap analysis — what Transtyle's language actually needs
 
@@ -82,46 +85,37 @@ Ranked by how novel each requirement is, cheapest first:
 | 2 | `help` severity (and any DS-specific extra severity) | **Solved already, by T7 + PrimeNG's own `extend` mechanism (§2.7).** No engine change needed — this was literally built for this kind of case. |
 | 3 | `contrast` severity | **No new tokens**, a mapping decision: PrimeNG's `contrast` is the near-black/near-white extreme (`surface.950` light / `surface.0` dark) — maps cleanly onto `neutral.text-strong` (light) / the dark-mode neutral extreme, both of which already exist. |
 | 4 | `primary`/`surface` 11-step numeric ramps | **No new tokens, reused engineering.** Project the grid onto 11 steps the same way `exporter-radix` already projects it onto 12 — see §2.6. |
-| 5 | Component-archetype groups (`formField`, `list`, `navigation`, `overlay`, `content`) | **New, small, derivation-only aliases — but single-source pending confirmation (§2.8).** Verified against PrimeNG only; a Spectrum spot-check shows a materially different (flatter, more granular) strategy for the same problem. Ship as *default-providing* aliases, not as claimed-universal vocabulary, until a proper multi-ecosystem pass (§6) either confirms or reshapes them. |
+| 5 | Component-archetype groups (`formField`, `list`, `navigation`, `overlay`, `content`) | **Not a catalog addition — exporter-private derivation (§2.8, §4).** Single-source (PrimeNG); a Spectrum spot-check shows a materially different, flatter strategy for the same problem. Build these as helpers inside `@transtyle/exporter-primeng` reading existing catalog cells; promote to the shared semantic catalog only if a second exporter independently converges on the identical grouping. |
 | 6 | Hover variants of `text.base`/`text.muted` | **New, tiny.** One more `state-delta` derivation call each, the exact pattern already used for `primary.text-hover` etc. |
 | 7 | Size variants (`sm`/`lg`) per component | **Reuse an existing pattern, don't invent one.** The catalog already has exactly this shape for typography: `semantic.type.role.<role>.<size>` (`docs/architecture/ir.md`). Component tokens should follow the identical `component.<name>.<size>.<part>` convention rather than a new mechanism. |
 | 8 | `focusRing` as a 5-field composite (width/style/color/offset/shadow) vs. Transtyle's flat `ring` color | **Defer — don't add a DTCG composite yet.** Transtyle already has precedent for composite types when a real need forces it (`shadow` for `elevation.N.shadow`). But a single exporter needing 4 more scalar fields around one existing color doesn't clear that bar alone — bind `ring` for the color, let the PrimeNG exporter hardcode `width`/`style`/`offset` as its own reasonable constants (same trade-off Bootstrap's exporter already makes for `$focus-ring-color` at "conventional alpha .25"). Revisit if a *second* component-heavy exporter (MUI, Chakra) independently needs the same 5 fields — that's the actual bar this project already uses elsewhere ("two consecutive... before the catalog is declared frozen," ADR-0010). |
 | 9 | Primitive radius scale (`none`/`xs`/`sm`/`md`/`lg`/`xl`) | **No new tokens.** Maps onto the existing `radius.{control,field,container}` family plus the catalog-default `radius.md`; the exporter just needs a translation table (`none→0`, `xs→border-width-ish`, …), same as Bootstrap's `xxl = xl × 2` convention already does for a mismatched scale. |
 | 10 | The `component.*` tier itself | **Build it.** It's specced (`component-layer.md`) and reserved in the schema, but nothing resolves, validates, or derives it today. This is the real engineering lift — see §5. |
 
-## 4. Proposed new semantic vocabulary (the actually-new part)
+## 4. Exporter-private derivation, not new catalog vocabulary (per §2.8's resolution)
 
-Five groups, all derivation-only (an empty override compiles today and forever, per `component-layer.md`'s existing principle) — every value below is an *alias* of something already in the catalog, not a new primitive:
+Per the meta-language principle above, `field`/`list`/`navigation`/`overlay` ship as **helpers inside `@transtyle/exporter-primeng`**, not as new `semantic.*` catalog groups. Sketched here in token-alias shorthand for readability, but the actual implementation is exporter-side JS functions (mirroring how e.g. Bootstrap's exporter already computes its own `$light`/`$dark` pseudo-roles internally, not as catalog tokens) — every value is read directly from *existing* catalog cells, nothing new is added to the IR:
 
-```jsonc
-"semantic": {
-  "field": {                          // NEW — every form-adjacent component (button, input, select, checkbox, ...)
-    "padding-x": { "$value": "{space.4}" },  "padding-y": { "$value": "{space.2}" },
-    "radius":    { "$value": "{radius.field}" },
-    "border":       { "$value": "{border}" },        "border-hover": { "$value": "{neutral.outline-hover}" },
-    "border-focus": { "$value": "{primary.solid}" },  "border-invalid": { "$value": "{danger.solid}" },
-    "text": { "$value": "{text.base}" },  "text-disabled": { "$value": "{text.disabled}" },
-    "placeholder": { "$value": "{text.muted}" },
-    "sm": { "padding-x": {...}, "padding-y": {...} }, "lg": { "padding-x": {...}, "padding-y": {...} }
-  },
-  "list": {                           // NEW — option-picker components (listbox, select-panel, autocomplete)
-    "padding": { "$value": "{space.1}" },  "gap": { "$value": "{space.0}" },
-    "option-padding": { "$value": "{space.2} {space.3}" },  "option-radius": { "$value": "{radius.control}" }
-    // hover/selected backgrounds are NOT new — alias primary.tint / primary.tint-hover, already in the grid
-  },
-  "navigation": {                     // NEW — menu-shaped components (menu, menubar, tiered-menu, breadcrumb)
-    "item-padding": { "$value": "{space.2} {space.3}" },  "item-radius": { "$value": "{radius.control}" },
-    "item-gap": { "$value": "{space.2}" }
-  },
-  "overlay": {                        // NEW — floating surfaces, one elevation level per kind
-    "popover":  { "surface": { "$value": "{elevation.2.surface}" }, "shadow": { "$value": "{elevation.2.shadow}" } },
-    "modal":    { "surface": { "$value": "{elevation.3.surface}" }, "shadow": { "$value": "{elevation.3.shadow}" } }
-  }
-  // "content" (Card/Panel) needs no new group — elevation.1.surface + border + text.base already cover it.
-}
+```js
+// packages/exporter-primeng/src/archetypes.js (sketch — exporter-private, not a catalog addition)
+const field = (map) => ({
+  paddingX: get(map, 'space.4'), paddingY: get(map, 'space.2'),
+  borderRadius: get(map, 'radius.field'),
+  borderColor: get(map, 'border'), hoverBorderColor: get(map, 'neutral.outline-hover'),
+  focusBorderColor: get(map, 'primary.solid'), invalidBorderColor: get(map, 'danger.solid'),
+  color: get(map, 'text.base'), disabledColor: get(map, 'text.disabled'), placeholderColor: get(map, 'text.muted'),
+  sm: { paddingX: ..., paddingY: ... }, lg: { paddingX: ..., paddingY: ... },
+});
+const list = (map) => ({ padding: get(map, 'space.1'), gap: get(map, 'space.0'), /* option.* from primary.tint/tint-hover */ });
+const navigation = (map) => ({ itemPadding: ..., itemRadius: get(map, 'radius.control'), itemGap: get(map, 'space.2') });
+const overlay = (map) => ({
+  popover: { surface: get(map, 'elevation.2.surface'), shadow: get(map, 'elevation.2.shadow') },
+  modal:   { surface: get(map, 'elevation.3.surface'), shadow: get(map, 'elevation.3.shadow') },
+});
+// "content" (Card/Panel) needs no helper — elevation.1.surface + border + text.base inline directly.
 ```
 
-That's the whole new-vocabulary surface. Everything else PrimeNG's semantic tier wants (`primary`/`surface` ramps, `mask`, `highlight`, `focusRing`) already exists in the catalog or is a ramp-projection problem (§2.6), not a new-token problem.
+If the eventual cross-ecosystem study (§6) finds that, say, `field` genuinely converges across 2+ independently-designed systems, *that's* the trigger to promote it into `semantic.field.*` — at which point every exporter reads the shared version instead of each re-deriving it privately. Until then, this is plumbing inside one exporter, exactly the same status Bootstrap's now-promoted border-subtle mix had before F10.
 
 ## 5. How the exporter makes ~90 components tractable (the direct answer to "we must support this complexity")
 
@@ -146,7 +140,7 @@ The output artifact is a **preset**, generated as a `definePreset(Base, override
 1. **Do the real cross-ecosystem study before committing new semantic vocabulary** — a proposal-0001-style pass, scoped to component-tier architecture specifically, across systems that proposal 0001 already enumerated but didn't study at this depth: Material 3 (`comp` tier), Fluent 2 (per-control tier), Ant Design v5 (component tier), Chakra v3/Panda (recipes), plus the Spectrum spot-check already done here (§2.8). Output: which grouping concepts are genuinely convergent (candidates: something `field`-shaped keeps appearing across ecosystems with form controls — worth confirming), which are PrimeNG- or Spectrum-specific, and the actual shared vocabulary the catalog should adopt — not the four groups §4 guessed from one source.
 2. **The color-grid finding (§2.4, §2.6) is on much firmer ground and doesn't block on step 1** — `variant × severity × state × part ≅ prominence × role × state × cell` rests on the same 14-ecosystem role-grid study already accepted in proposal 0001, not on PrimeNG alone. The generic severity-grid mapper (§5.2) and the ramp projector (§2.6, reusing `exporter-radix`'s technique) can be built and proven against Button now, independent of the archetype-group question.
 3. **Extend the mapper across the ~25–35 severity-colored components via shape descriptors** once step 2 is proven on Button — the step that stress-tests the *generic* mapper against real shape variance and produces the "hand-written component-theming prototype" evidence ADR-0003's precondition list asks for.
-4. **Only then finalize the archetype-group semantic additions from step 1's findings** and handle the structural residue (DataTable, Galleria, Tree, …), leaving genuinely bespoke parts `dropped`/`unsupported` with an honest coverage note.
+4. **Ship `field`/`list`/`navigation`/`overlay` as exporter-private helpers regardless of step 1's outcome** (§4) — they need no gate, since nothing is added to the shared catalog. If step 1 finds real convergence, promote the converged ones to `semantic.*`; if not, they stay exporter-private indefinitely, which is a fine permanent state, not a temporary one. Handle the structural residue (DataTable, Galleria, Tree, …) the same way, leaving genuinely bespoke parts `dropped`/`unsupported` with an honest coverage note.
 5. **Write the actual RFC/plan doc** (`docs/plan/component-tier.md`, mirroring `catalog-revision.md`'s task-by-task rigor) from what steps 1–4 actually found, not from this analysis alone.
 
 ## Open questions for you
