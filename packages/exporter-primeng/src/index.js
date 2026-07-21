@@ -14,6 +14,13 @@
  * archetypes.js). `components.*` holds the per-component color/structural
  * overrides — built by descriptors.js, which itself calls the one generic
  * `mapSeverityGrid` (severity-grid.js) for every severity-colored component.
+ *
+ * Verified directly by compiling the emitted preset against PrimeNG's own
+ * DesignTokens TypeScript types (docs/worklog/2026-07-21-component-tier-c3-c5.md):
+ * every color-ish group in real PrimeNG splits into a mode-invariant top-level
+ * object (padding/gap/radius/shadow-shape) and a SEPARATE `colorScheme.{light,
+ * dark}.<group>` object — never a single flat object with both. This file
+ * builds both per-mode maps and assembles that split throughout.
  */
 
 import { droppedDimensions } from '@transtyle/ir';
@@ -31,72 +38,107 @@ export default {
   name: 'primeng',
 
   emit(normalized, ctx) {
-    const map = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
+    const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
+    const dark = normalized.modes.dark ?? light;
     const coverage = [];
 
     // A custom archetype role (T7) lands in `extend` per component, per
     // PrimeNG's own documented escape hatch (proposal 0002 §2.7) — proven
-    // here on Button only (the one place the sketch specified).
+    // here on Button only (the one place the sketch specified). `extend` is
+    // unconstrained by PrimeNG's own types, so no mode-split is required here.
     const archetypeRoles = [...normalized.roleArchetypes.keys()];
     const roleArchetypeExtend = archetypeRoles.length
       ? Object.fromEntries(archetypeRoles.map((r) => [r, {
-          color: get(map, `color.${r}.solid`),
-          contrastColor: get(map, `color.${r}.on-solid`),
-          hoverColor: get(map, `color.${r}.solid-hover`),
+          color: get(light, `color.${r}.solid`),
+          contrastColor: get(light, `color.${r}.on-solid`),
+          hoverColor: get(light, `color.${r}.solid-hover`),
         }]))
       : undefined;
 
-    const primaryRamp = projectRamp(map, 'primary', ctx);
-    const surfaceRamp = projectRamp(map, 'neutral', ctx, { includeZero: true });
+    // primary.{50..950}: PrimeNG's own type has this as a single, mode-invariant
+    // ramp (verified: appears once in aura/base, never under colorScheme) — we
+    // derive it from the light map only, an honest, documented simplification
+    // (our own per-mode grid legitimately shifts these values slightly by mode,
+    // but PrimeNG's architecture has no slot to express that at this position).
+    const primaryRamp = projectRamp(light, 'primary', ctx);
     coverage.push(...primaryRamp.coverage.map((c) => ({ field: `semantic.primary.${c.step}`, slot: c.slot, class: c.class })));
-    coverage.push(...surfaceRamp.coverage.map((c) => ({ field: `semantic.surface.${c.step}`, slot: c.slot, class: c.class })));
 
-    const f = field(map);
-    const l = list(map);
-    const n = navigation(map);
+    // surface.{0,50..950}: mode-scoped in real PrimeNG (verified: aura/base
+    // defines a DIFFERENT ramp — slate family light, zinc family dark — under
+    // colorScheme.light/dark.surface) — computed per mode, unlike primary above.
+    const surfaceRampLight = projectRamp(light, 'neutral', ctx, { includeZero: true });
+    const surfaceRampDark = projectRamp(dark, 'neutral', ctx, { includeZero: true });
+    coverage.push(...surfaceRampLight.coverage.map((c) => ({ field: `semantic.colorScheme.light.surface.${c.step}`, slot: c.slot, class: c.class })));
+
+    const fLight = field(light), fDark = field(dark);
+    const lLight = list(light), lDark = list(dark);
+    const nLight = navigation(light), nDark = navigation(dark);
+    const cLight = content(light), cDark = content(dark);
+    const oSelectLight = overlay(light, 'select', ctx), oSelectDark = overlay(dark, 'select', ctx);
+    const oPopoverLight = overlay(light, 'popover', ctx), oPopoverDark = overlay(dark, 'popover', ctx);
+    const oModalLight = overlay(light, 'modal', ctx), oModalDark = overlay(dark, 'modal', ctx);
+    const oNavLight = overlay(light, 'navigation', ctx);
     coverage.push({ field: 'semantic.formField.*', slot: 'exporter-private: field()', class: 'derived' });
     coverage.push({ field: 'semantic.list.*', slot: 'exporter-private: list()', class: 'derived' });
     coverage.push({ field: 'semantic.navigation.*', slot: 'exporter-private: navigation()', class: 'derived' });
-
-    const semantic = {
-      transitionDuration: get(map, 'duration.fast'),
-      disabledOpacity: '0.6', // PrimeNG's own convention constant — no Transtyle equivalent to derive from
-      iconSize: '1rem',
-      focusRing: { width: '1px', style: 'solid', color: get(map, 'color.ring'), offset: '2px', shadow: 'none' },
-      primary: {
-        color: get(map, 'color.primary.solid'), contrastColor: get(map, 'color.primary.on-solid'),
-        hoverColor: get(map, 'color.primary.solid-hover'), activeColor: get(map, 'color.primary.solid-active'),
-        ...primaryRamp.ramp,
-      },
-      surface: surfaceRamp.ramp,
-      highlight: { background: get(map, 'color.primary.tint'), focusBackground: get(map, 'color.primary.tint-hover'), color: get(map, 'color.primary.on-tint'), focusColor: get(map, 'color.primary.on-tint') },
-      mask: { background: get(map, 'color.scrim'), color: get(map, 'color.neutral.tint') },
-      formField: f,
-      list: l,
-      navigation: n,
-      overlay: {
-        select: overlay(map, 'select', ctx),
-        popover: overlay(map, 'popover', ctx),
-        modal: overlay(map, 'modal', ctx),
-        navigation: overlay(map, 'navigation', ctx),
-      },
-      content: content(map),
-    };
     coverage.push({ field: 'semantic.overlay.*', slot: 'semantic.color.elevation.N.{surface,shadow} + radius.*', class: 'native' });
     coverage.push({ field: 'semantic.content.*', slot: 'semantic.color.elevation.1.surface + border + text.base', class: 'native' });
-    coverage.push({ field: 'semantic.mask.background', slot: 'semantic.color.scrim', class: 'native' });
+    coverage.push({ field: 'semantic.colorScheme.*.mask.background', slot: 'semantic.color.scrim', class: 'native' });
 
-    const button = buildButton(map, { ...ctx, roleArchetypeExtend });
-    const tag = buildTag(map);
-    const badge = buildBadge(map);
-    const message = buildMessage(map);
-    const inlinemessage = buildInlineMessage(map, ctx);
-    const progressbar = buildProgressBar(map);
-    const rating = buildRating(map);
-    const listbox = buildListbox(map);
-    const menu = buildMenu(map, ctx);
-    const popover = buildPopover(map, ctx);
-    const dialog = buildDialog(map, ctx);
+    const semantic = {
+      transitionDuration: get(light, 'duration.fast'),
+      disabledOpacity: '0.6', // PrimeNG's own convention constant — no Transtyle equivalent to derive from
+      iconSize: '1rem',
+      // width/style/offset are PrimeNG conventions we deliberately don't have a composite
+      // for yet (proposal 0002 gap #8) — `color` reuses PrimeNG's own alias mechanism
+      // (`{primary.color}`) rather than a resolved value, exactly like Rating/ProgressBar.
+      focusRing: { width: '1px', style: 'solid', color: '{primary.color}', offset: '2px', shadow: 'none' },
+      primary: primaryRamp.ramp,
+      formField: fLight.structural,
+      list: lLight.structural,
+      navigation: nLight.structural,
+      content: cLight.structural,
+      overlay: { select: oSelectLight.structural, popover: oPopoverLight.structural, modal: oModalLight.structural, navigation: oNavLight.structural },
+      mask: { transitionDuration: '0.3s' },
+      colorScheme: {
+        light: {
+          surface: surfaceRampLight.ramp,
+          primary: { color: get(light, 'color.primary.solid'), contrastColor: get(light, 'color.primary.on-solid'), hoverColor: get(light, 'color.primary.solid-hover'), activeColor: get(light, 'color.primary.solid-active') },
+          highlight: { background: get(light, 'color.primary.tint'), focusBackground: get(light, 'color.primary.tint-hover'), color: get(light, 'color.primary.on-tint'), focusColor: get(light, 'color.primary.on-tint') },
+          mask: { background: get(light, 'color.scrim'), color: get(light, 'color.neutral.tint') },
+          formField: fLight.colorScheme,
+          text: { color: get(light, 'color.text.base'), hoverColor: get(light, 'color.text.base'), mutedColor: get(light, 'color.text.muted'), hoverMutedColor: get(light, 'color.text.muted') },
+          content: cLight.colorScheme,
+          overlay: { select: oSelectLight.colorScheme, popover: oPopoverLight.colorScheme, modal: oModalLight.colorScheme },
+          list: { option: lLight.colorScheme.option, optionGroup: lLight.colorScheme.optionGroup },
+          navigation: nLight.colorScheme,
+        },
+        dark: {
+          surface: surfaceRampDark.ramp,
+          primary: { color: get(dark, 'color.primary.solid'), contrastColor: get(dark, 'color.primary.on-solid'), hoverColor: get(dark, 'color.primary.solid-hover'), activeColor: get(dark, 'color.primary.solid-active') },
+          highlight: { background: get(dark, 'color.primary.tint'), focusBackground: get(dark, 'color.primary.tint-hover'), color: get(dark, 'color.primary.on-tint'), focusColor: get(dark, 'color.primary.on-tint') },
+          mask: { background: get(dark, 'color.scrim'), color: get(dark, 'color.neutral.tint') },
+          formField: fDark.colorScheme,
+          text: { color: get(dark, 'color.text.base'), hoverColor: get(dark, 'color.text.base'), mutedColor: get(dark, 'color.text.muted'), hoverMutedColor: get(dark, 'color.text.muted') },
+          content: cDark.colorScheme,
+          overlay: { select: oSelectDark.colorScheme, popover: oPopoverDark.colorScheme, modal: oModalDark.colorScheme },
+          list: { option: lDark.colorScheme.option, optionGroup: lDark.colorScheme.optionGroup },
+          navigation: nDark.colorScheme,
+        },
+      },
+    };
+
+    const button = buildButton(light, dark, { ...ctx, roleArchetypeExtend });
+    const tag = buildTag(light, dark);
+    const badge = buildBadge(light, dark);
+    const message = buildMessage(light, dark);
+    const inlinemessage = buildInlineMessage(light, dark, ctx);
+    const progressbar = buildProgressBar();
+    const rating = buildRating();
+    const listbox = buildListbox(light, dark);
+    const menu = buildMenu(light, dark, ctx);
+    const popover = buildPopover(light, dark, ctx);
+    const dialog = buildDialog(light, dark, ctx);
     coverage.push(
       ...button.coverage, ...tag.coverage, ...badge.coverage, ...message.coverage, ...inlinemessage.coverage,
       ...progressbar.coverage, ...rating.coverage, ...listbox.coverage, ...menu.coverage, ...popover.coverage, ...dialog.coverage,
@@ -141,7 +183,7 @@ function serialize(value, ctx, indent = 2) {
       .map(([k, v]) => [k, serialize(v, ctx, indent + 4)])
       .filter(([, v]) => v !== undefined);
     if (!entries.length) return '{}';
-    const key = (k) => (/^[0-9]/.test(k) ? JSON.stringify(k) : k);
+    const key = (k) => (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k) ? k : JSON.stringify(k));
     return `{\n${entries.map(([k, v]) => `${padIn}${key(k)}: ${v}`).join(',\n')}\n${pad}}`;
   }
   return undefined;
@@ -182,7 +224,7 @@ Generated from the **${ctx.projectName}** design system by transtyle: a \`define
 import { providePrimeNG } from 'primeng/config';
 import preset from './preset.transtyle';
 
-providePrimeNG({ theme: { preset } });
+providePrimeNG({ theme: { preset, options: { darkModeSelector: '.dark', cssLayer: false } } });
 \`\`\`
 
 ## What's covered in this pass
@@ -193,6 +235,6 @@ Structural components with no severity-colored surface (DataTable, Galleria, Tre
 
 ## Regenerating
 
-Never edit this file — change the design system tokens and run \`transtyle build primeng\` (once C6 registers it; for now, this exporter is invoked directly, not via the CLI). See \`report.json\` for the full coverage/provenance breakdown.
+Never edit this file — change the design system tokens and run \`transtyle build primeng\`. See \`report.json\` for the full coverage/provenance breakdown.
 `;
 }

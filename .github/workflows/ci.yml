@@ -22,6 +22,7 @@ jobs:
       - run: npm run check:fixtures
       - run: npm run check:determinism
       - run: npm run check:cli
+      - run: npm run check:component-tier
       - run: npm run site:build
 
   demo-projects:
@@ -38,6 +39,7 @@ jobs:
           - acme-demo-storybook
           - acme-demo-css-variables
           - acme-demo-radix
+          - acme-demo-primeng
           - cathode-demo-bootstrap
           - cathode-demo-shadcn
           - cathode-demo-daisyui
@@ -45,6 +47,7 @@ jobs:
           - cathode-demo-storybook
           - cathode-demo-css-variables
           - cathode-demo-radix
+          - cathode-demo-primeng
           - govuk-demo-bootstrap
           - govuk-demo-shadcn
           - govuk-demo-daisyui
@@ -52,6 +55,7 @@ jobs:
           - govuk-demo-storybook
           - govuk-demo-css-variables
           - govuk-demo-radix
+          - govuk-demo-primeng
           - carbon-demo-bootstrap
           - carbon-demo-shadcn
           - carbon-demo-daisyui
@@ -59,6 +63,7 @@ jobs:
           - carbon-demo-storybook
           - carbon-demo-css-variables
           - carbon-demo-radix
+          - carbon-demo-primeng
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

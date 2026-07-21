@@ -17,6 +17,7 @@ const OFFICIAL_EXPORTERS = {
   storybook: '@transtyle/exporter-storybook',
   'css-variables': '@transtyle/exporter-css-variables',
   radix: '@transtyle/exporter-radix',
+  primeng: '@transtyle/exporter-primeng',
 };
 
 async function loadExporter(name) {

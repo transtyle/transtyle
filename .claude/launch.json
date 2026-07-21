@@ -8,6 +8,7 @@
     { "name": "acme-storybook", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-storybook"], "port": 6101 },
     { "name": "acme-css-variables", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-css-variables"], "port": 4105 },
     { "name": "acme-radix", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-radix"], "port": 4106 },
+    { "name": "acme-primeng", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-primeng"], "port": 4107 },
     { "name": "cathode-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-bootstrap"], "port": 4201 },
     { "name": "cathode-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-daisyui"], "port": 4202 },
     { "name": "cathode-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-shadcn"], "port": 4203 },
@@ -15,6 +16,7 @@
     { "name": "cathode-storybook", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-storybook"], "port": 6201 },
     { "name": "cathode-css-variables", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-css-variables"], "port": 4205 },
     { "name": "cathode-radix", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-radix"], "port": 4206 },
+    { "name": "cathode-primeng", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-primeng"], "port": 4207 },
     { "name": "govuk-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-bootstrap"], "port": 4301 },
     { "name": "govuk-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-daisyui"], "port": 4302 },
     { "name": "govuk-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-shadcn"], "port": 4303 },
@@ -22,12 +24,14 @@
     { "name": "govuk-storybook", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-storybook"], "port": 6301 },
     { "name": "govuk-css-variables", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-css-variables"], "port": 4305 },
     { "name": "govuk-radix", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-radix"], "port": 4306 },
+    { "name": "govuk-primeng", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-primeng"], "port": 4307 },
     { "name": "carbon-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-bootstrap"], "port": 4401 },
     { "name": "carbon-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-daisyui"], "port": 4402 },
     { "name": "carbon-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-shadcn"], "port": 4403 },
     { "name": "carbon-echarts", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-echarts"], "port": 4404 },
     { "name": "carbon-storybook", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-storybook"], "port": 6401 },
     { "name": "carbon-css-variables", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-css-variables"], "port": 4405 },
-    { "name": "carbon-radix", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-radix"], "port": 4406 }
+    { "name": "carbon-radix", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-radix"], "port": 4406 },
+    { "name": "carbon-primeng", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-primeng"], "port": 4407 }
   ]
 }

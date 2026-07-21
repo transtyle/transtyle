@@ -1,6 +1,7 @@
 node_modules/
 dist/
 examples/*/dist/
+.angular/
 *.log
 .DS_Store
 

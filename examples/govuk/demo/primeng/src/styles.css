@@ -1,0 +1,10 @@
+/* Nimbus Console — PrimeNG. Theming comes entirely from the compiled preset
+ * (app.config.ts's providePrimeNG); this file only carries page-shell layout,
+ * same as every other demo's minimal global stylesheet. */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--p-content-background);
+  color: var(--p-content-color);
+}
+a { color: var(--p-primary-color); }

@@ -24,7 +24,8 @@
     "bootstrap": { "output": "dist/bootstrap" },
     "storybook": { "output": "dist/storybook", "options": { "previewTargets": ["shadcn", "daisyui"] } },
     "css-variables": { "output": "dist/css-variables" },
-    "radix": { "output": "dist/radix" }
+    "radix": { "output": "dist/radix" },
+    "primeng": { "output": "dist/primeng" }
   },
   "check": {
     "failOn": "error",

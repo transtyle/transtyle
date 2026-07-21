@@ -1,0 +1,36 @@
+# Exporter spec: PrimeNG
+
+> **Status: implemented** (`@transtyle/exporter-primeng`). See [proposal 0002](../../proposals/0002-component-theming-primeng.md) and [docs/plan/component-tier.md](../../plan/component-tier.md) (C3–C6) for the full architecture analysis and build log.
+
+**Why this exporter is different in kind, not just degree:** every other reference exporter binds at the semantic tier only. PrimeNG ships an explicit, first-party three-tier design-token system (`primitive` → `semantic` → `components`) and its own docs tell integrators to use component tokens "when customizing a specific component." This exporter is the first real proof that Transtyle's catalog — a flat meta-language, never grouped to match one target's shape (`CONTRIBUTING.md`) — can still drive a target with a genuinely richer component-token architecture, via a `definePreset(Aura, overrides)` override rather than a from-scratch preset.
+
+## Emitted artifacts
+
+| File | Purpose |
+|---|---|
+| `preset.transtyle.ts` | A `definePreset(Aura, { semantic, components })` TypeScript module — override an existing PrimeNG preset, don't author one from zero |
+| `usage.md` | Setup snippet (`providePrimeNG`) + coverage summary |
+
+## Strategy: one generic mapper, not ~90 hand-written tables
+
+PrimeNG's per-component color grid (`variant × severity × state × part`) is isomorphic to the catalog's role grid (`prominence × role × state × cell`) — verified against Button's real source. `severity-grid.js` exports one function, `mapSeverityGrid`, applied against a small per-component shape descriptor (`descriptors.js`). `ramp.js` adapts `exporter-radix`'s ramp-projection technique (pin named grid cells to numbered steps, fresh-mix the one gap) to PrimeNG's 11-step `primary`/`surface` ramps.
+
+**A real, corrective finding from verifying source rather than estimating:** far fewer PrimeNG components are severity-colored than first assumed. Only **Button**, **Tag**, **Badge**, **Message**, and **InlineMessage** carry the `severity × part` shape this pass covers. Components that looked like candidates from a distance — Checkbox, RadioButton, ToggleSwitch, SelectButton, ToggleButton, SplitButton — are actually **field-shaped** (single primary + neutral surfaces, no severity axis); ProgressBar, Slider, Knob, and Rating are **primary-anchored only**, with no `colorScheme` block in real PrimeNG at all — their own Aura default writes a bare token-reference string (e.g. `'{primary.color}'`) rather than a resolved color, and this exporter reuses that exact convention rather than resolving a mode-wrong literal.
+
+## Archetype helpers (exporter-private, not new catalog vocabulary)
+
+`field`/`list`/`navigation`/`overlay`/`content` (`archetypes.js`) read directly from existing `semantic.*` cells (`space.*`, `radius.*`, `text.*`, `elevation.*`). Per the [C1 cross-ecosystem study](../../findings/component-tier-study.md), none of these groupings is convergent across ecosystems — they live here **permanently**, not as a placeholder pending catalog promotion. Verified against real PrimeNG source (Checkbox/RadioButton/ToggleSwitch/Listbox/SelectButton for `field`; Listbox for `list`; Menu for `navigation`; Popover/Dialog for `overlay`).
+
+**A real PrimeNG type-shape finding:** every one of these groups splits into a **mode-invariant top-level object** (padding/gap/radius/shadow-shape) and a **separate `colorScheme.{light,dark}.<group>` object** for anything color-ish — confirmed by compiling the emitted preset directly against PrimeNG's own `DesignTokens` TypeScript types, which reject a flat, unsplit object. This exporter computes both per-mode maps and assembles that split throughout.
+
+## Custom archetype roles (T7) → PrimeNG's `extend`
+
+A custom `semantic.color.<name>` role (declared via `$extensions.transtyle.role`) lands in Button's `extend.<name>.*` block — PrimeNG's own documented escape hatch for tokens outside its fixed severity schema (proposal 0002 §2.7). Proven on Cathode's `crt-amber` role archetype.
+
+## Structural residue
+
+Components with no severity-colored surface and no builder yet (DataTable, Galleria, Tree, Splitter, Timeline, and 13 others) are left on Aura's own defaults — each gets an honest `unsupported` coverage entry, matching every other exporter's convention. Not silently dropped.
+
+## Ground-truth testing
+
+`examples/*/demo/primeng/` — real, standalone Angular applications (`providePrimeNG({ theme: { preset } })`), the first non-Vite/React demo profile in the repo (`docs/specs/demo-app.md`'s Angular profile). Every emitted preset is type-checked against PrimeNG's own `DesignTokens` types as part of `ng build` — a stronger verification path than any prior exporter gets from its own demo, since Vite doesn't type-check on build the way Angular's compiler does.

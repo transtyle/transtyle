@@ -54,6 +54,9 @@
     },
     "radix": {
       "output": "dist/radix"
+    },
+    "primeng": {
+      "output": "dist/primeng"
     }
   },
   "check": {

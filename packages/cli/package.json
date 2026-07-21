@@ -12,7 +12,8 @@
     "@transtyle/exporter-bootstrap": "*",
     "@transtyle/exporter-storybook": "*",
     "@transtyle/exporter-css-variables": "*",
-    "@transtyle/exporter-radix": "*"
+    "@transtyle/exporter-radix": "*",
+    "@transtyle/exporter-primeng": "*"
   },
   "license": "MIT"
 }

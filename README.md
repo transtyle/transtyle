@@ -2,7 +2,7 @@
 
 > A design system compiler. Describe your design system once; compile it to every ecosystem.
 
-**Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a working implementation: the core pipeline and seven exporters (shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, css-variables — the plugin-API reference implementation — and Radix Colors/Themes), exercised end-to-end by four examples and their runnable demo projects — two invented ([Acme](examples/acme/), [Cathode](examples/cathode/)) and two real, independently-designed systems adopted via the binding-layer pattern ([GOV.UK](examples/govuk/), [Carbon](examples/carbon/)). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
+**Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a working implementation: the core pipeline and eight exporters (shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, css-variables — the plugin-API reference implementation — Radix Colors/Themes, and PrimeNG), exercised end-to-end by four examples and their runnable demo projects — two invented ([Acme](examples/acme/), [Cathode](examples/cathode/)) and two real, independently-designed systems adopted via the binding-layer pattern ([GOV.UK](examples/govuk/), [Carbon](examples/carbon/)). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
 
 ## What it is
 
@@ -67,7 +67,7 @@ Engineering documentation (architecture, specs, ADRs) lives in [docs/](docs/) �
 | Why / what | [VISION.md](VISION.md), [docs/prior-art.md](docs/prior-art.md), [docs/naming.md](docs/naming.md) |
 | Architecture | [overview](docs/architecture/overview.md), [pipeline](docs/architecture/pipeline.md), [IR](docs/architecture/ir.md), [derivation](docs/architecture/derivation.md), [plugins](docs/architecture/plugins.md), [versioning](docs/architecture/versioning.md) |
 | Specifications | [configuration](docs/specs/configuration.md), [CLI](docs/specs/cli.md), [validation & coverage](docs/specs/validation-and-coverage.md), [doc generation](docs/specs/doc-generation.md), [component layer (v2)](docs/specs/component-layer.md) |
-| Reference exporters | [Bootstrap](docs/specs/exporters/bootstrap.md), [shadcn/ui](docs/specs/exporters/shadcn.md), [ECharts](docs/specs/exporters/echarts.md), [Storybook](docs/specs/exporters/storybook.md), [daisyUI](docs/specs/exporters/daisyui.md), [css-variables](docs/specs/exporters/css-variables.md), [Radix Colors/Themes](docs/specs/exporters/radix.md) |
+| Reference exporters | [Bootstrap](docs/specs/exporters/bootstrap.md), [shadcn/ui](docs/specs/exporters/shadcn.md), [ECharts](docs/specs/exporters/echarts.md), [Storybook](docs/specs/exporters/storybook.md), [daisyUI](docs/specs/exporters/daisyui.md), [css-variables](docs/specs/exporters/css-variables.md), [Radix Colors/Themes](docs/specs/exporters/radix.md), [PrimeNG](docs/specs/exporters/primeng.md) |
 | Decisions | [docs/adr/](docs/adr/) |
 | Plan | [ROADMAP.md](ROADMAP.md) |
 
