@@ -1,0 +1,20 @@
+{
+  "semantic": {
+    "space": {
+      "$type": "dimension",
+      "0": { "$value": "0rem" },
+      "1": { "$value": "0.219rem" },
+      "2": { "$value": "0.438rem" },
+      "3": { "$value": "0.656rem" },
+      "4": { "$value": "0.875rem" },
+      "5": { "$value": "1.094rem" },
+      "6": { "$value": "1.313rem" },
+      "8": { "$value": "1.75rem" },
+      "10": { "$value": "2.188rem" },
+      "12": { "$value": "2.625rem" },
+      "16": { "$value": "3.5rem" },
+      "20": { "$value": "4.375rem" },
+      "24": { "$value": "5.25rem" }
+    }
+  }
+}

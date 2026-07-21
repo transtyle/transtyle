@@ -8,6 +8,8 @@
  * Colors are hex (canvas rendering); OKLCH → hex may gamut-clamp (→ approximated).
  */
 
+import { droppedDimensions } from '@transtyle/ir';
+
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
 const PALETTE_SIZE = 8;
@@ -36,6 +38,10 @@ export default {
         kind: 'script',
       });
     }
+
+    // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
+    // no-op unless the compile actually declares one, e.g. `density`.
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     files.push({ path: 'usage.md', contents: renderUsage(ctx, themeNames, coverage), kind: 'doc' });
     return { files, coverage };

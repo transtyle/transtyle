@@ -3,18 +3,29 @@
  * (docs/architecture/pipeline.md#2-normalize).
  */
 
-import { collectTokens, collectRoleArchetypes, mergeTrees, aliasTarget, PROVENANCE } from '@transtyle/ir';
+import { collectTokens, collectRoleArchetypes, mergeTrees, aliasTarget, comboKey, expandModeMatrix, PROVENANCE } from '@transtyle/ir';
 import { parseColor } from './color.js';
 
 /**
  * @returns {{ modes: Record<string, Map<string, Entry>>, modeDimension: string }}
  * Entry = { type, value, provenance }
  * Color values are parsed to { l, c, h, alpha }; other types kept as authored.
+ *
+ * Multi-dimension modes (T8, docs/architecture/ir.md#modes): every configured
+ * dimension is resolved independently, then combos are the cross-product,
+ * keyed `dim1val+dim2val+...` (dimension-declaration order). Most exporters
+ * only know about the *first* declared dimension (conventionally
+ * `color-scheme`) — they've always read `normalized.modes.light`/`.dark`, so
+ * those single-dimension-value keys stay as aliases into the combo whose
+ * every OTHER dimension sits at its own default. This is the whole back-compat
+ * story: a single-dimension config (today's Acme/Cathode) degenerates to
+ * exactly the old behavior (combo keys equal old mode names 1:1).
  */
 export function normalize(tokenTrees, config, diagnostics) {
-  const modeDims = Object.entries(config.modes ?? {});
-  if (modeDims.length > 1) throw new Error('Skeleton supports a single mode dimension.');
-  const [dimName, dim] = modeDims[0] ?? ['color-scheme', { values: ['light'], default: 'light' }];
+  const dimEntries = Object.entries(config.modes ?? {});
+  if (dimEntries.length === 0) dimEntries.push(['color-scheme', { values: ['light'], default: 'light' }]);
+  const dimDefaults = new Map(dimEntries);
+  const primaryDimName = dimEntries[0][0];
 
   // Base layers merge into the token forest; mode-scoped layers inject values
   // into the same modeValues structure that inline $extensions produce — the
@@ -51,22 +62,56 @@ export function normalize(tokenTrees, config, diagnostics) {
     }
   }
 
+  const combos = expandModeMatrix(dimEntries);
   const modes = {};
-  for (const mode of dim.values) {
+  const comboDims = {};
+  for (const { key, values } of combos) {
     const map = new Map();
     for (const [tokenPath, tok] of raw) {
-      const modeOverride = mode === dim.default ? undefined : tok.modeValues?.[dimName]?.[mode];
+      // Per-dimension resolution, applied independently and left-to-right
+      // (docs/architecture/ir.md#modes "resolved per-dimension independently"):
+      // a token overriding on more than one non-default dimension at once is
+      // the rare pathological pair the spec defers; last dimension wins there.
+      let value = tok.value;
+      let overriddenMode = null;
+      for (const [dimName] of dimEntries) {
+        const v = values[dimName];
+        if (v === dimDefaults.get(dimName).default) continue;
+        const override = tok.modeValues?.[dimName]?.[v];
+        if (override !== undefined) { value = override; overriddenMode = `${dimName}=${v}`; }
+      }
       map.set(tokenPath, {
         type: tok.type,
-        rawValue: modeOverride ?? tok.value,
-        provenance: { kind: PROVENANCE.AUTHORED, mode: modeOverride !== undefined ? mode : dim.default },
+        rawValue: value,
+        provenance: { kind: PROVENANCE.AUTHORED, mode: overriddenMode ?? key },
       });
     }
     // Resolve aliases with cycle detection, then parse values.
     for (const tokenPath of map.keys()) resolveEntry(map, tokenPath, [], diagnostics);
-    modes[mode] = map;
+    modes[key] = map;
+    comboDims[key] = values;
   }
-  return { modes, modeDimension: dimName, defaultMode: dim.default, modeValues: dim.values, roleArchetypes };
+
+  // Back-compat aliases: `modes.light` / `modes.dark` (or whatever the first
+  // dimension's values are) point at the combo where every OTHER dimension
+  // sits at ITS OWN default — exactly what every pre-T8 exporter means.
+  const otherDefaults = Object.fromEntries(dimEntries.slice(1).map(([n, d]) => [n, d.default]));
+  const dimNames = dimEntries.map(([n]) => n);
+  for (const v of dimDefaults.get(primaryDimName).values) {
+    modes[v] = modes[comboKey(dimNames, { [primaryDimName]: v, ...otherDefaults })];
+  }
+
+  return {
+    modes,
+    modeDimension: primaryDimName,
+    defaultMode: dimDefaults.get(primaryDimName).default,
+    modeValues: dimDefaults.get(primaryDimName).values,
+    dimensions: Object.fromEntries(dimEntries),
+    dimensionNames: dimNames,
+    comboDims,
+    allCombos: combos.map((c) => c.key),
+    roleArchetypes,
+  };
 }
 
 function resolveEntry(map, tokenPath, stack, diagnostics) {

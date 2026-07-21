@@ -14,7 +14,7 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 |---|---|
 | Compiler pipeline (load → normalize → derive → resolve → emit → report) | ✅ end-to-end, byte-deterministic |
 | DTCG-superset token loading, aliases, cycle detection, tiers | ✅ |
-| Modes: one dimension, inline `$extensions` **and** mode-scoped layer files | ✅ equivalent by construction |
+| Modes: any number of independent dimensions (e.g. `color-scheme` + `density`), inline `$extensions` **and** mode-scoped layer files | ✅ equivalent by construction; single-dimension configs unaffected |
 | Derivation: standard@1, the [role grid](/docs/language/#color-roles-the-role-grid) (prominence × state per color role), the elevation ladder, content hierarchy, and full foundations scales (space/size/border-width/breakpoint/z/type/motion) + radius family aliases | ✅ with provenance |
 | OKLCH color engine, WCAG 2.1 contrast checks | ✅ zero-dep, in-house |
 | shadcn/ui exporter, tailwind-v4 + tailwind-v3 era profiles | ✅ |
@@ -25,6 +25,7 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | css-variables exporter: the plugin-API reference implementation, full catalog as `--custom-properties` | ✅ 450+ variables on Acme, 100% native |
 | Radix Colors/Themes exporter: 12-step scales + alpha + contrast per role — the role grid's own acceptance test | ✅ only 2 of 12 steps needed a fresh mix; surfaced (and fixed) a gamut-clamp gap in `text-strong` |
 | Role archetypes: custom `semantic.color.<name>` roles declaring `$extensions.transtyle.role` derive the full grid like a built-in and export to open-role targets (daisyUI, css-variables) | ✅ Cathode's `crt-amber` as showcase |
+| Multi-dimension modes: a second independent mode dimension (e.g. `density`) alongside `color-scheme`; css-variables emits a `[data-<dim>="<value>"]` block per non-default value; targets that don't express it report `dropped(mode:<dim>)` | ✅ Acme's `density: comfortable\|compact` (`space.*` × 0.875) as the worked example |
 | Per-example demo projects (`examples/*/demo/*`): the same fake app per target, npm-run-dev-able | ✅ consume `dist/` only |
 | Target instances (one exporter, many configs) | ✅ |
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
@@ -46,7 +47,6 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 | Importers (Figma variables, Tailwind config, Bootstrap Sass) | ADR-0008 |
 | Plugin packaging, conformance kit, third-party exporters | `docs/architecture/plugins.md` |
 | Lockfile (`transtyle.lock`), `--frozen` CI mode | `docs/architecture/versioning.md` |
-| Multi-dimension modes (density, brand variants) | `docs/architecture/ir.md`, `docs/plan/catalog-revision.md` |
 | Component theming layer (v2) | `docs/specs/component-layer.md`, ADR-0003 |
 
 ## Sequencing (from the project ROADMAP)

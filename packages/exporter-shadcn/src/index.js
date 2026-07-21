@@ -6,6 +6,8 @@
  * options.era in transtyle.config.json — never via CLI flags.
  */
 
+import { droppedDimensions } from '@transtyle/ir';
+
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
 
@@ -96,6 +98,9 @@ export default {
     for (const [v, e, slot] of [['--font-sans', fontSans, 'semantic.font.sans'], ['--font-mono', fontMono, 'semantic.font.mono']]) {
       if (e) coverage.push({ variable: v, slot, class: 'native', provenance: e.provenance.kind });
     }
+    // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
+    // no-op unless the compile actually declares one, e.g. `density`.
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     // EMIT: era profile decides artifacts
     const shared = { vars, radius, fontSans, fontMono, ctx };

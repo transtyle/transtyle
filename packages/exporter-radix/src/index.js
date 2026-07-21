@@ -19,7 +19,7 @@
  * paired-gray name, alongside `--neutral-*`.
  */
 
-import { COLOR_ROLES } from '@transtyle/ir';
+import { COLOR_ROLES, droppedDimensions } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const ALPHA_RAMP = [0.05, 0.1, 0.15, 0.22, 0.3, 0.4, 0.5, 0.6, 0.75, 0.85, 0.92, 0.97];
@@ -97,6 +97,9 @@ export default {
     const darkLines = dark ? buildMode(dark, false) : [];
 
     coverage.push({ variable: '(P3/wide-gamut variants)', slot: '—', class: 'dropped', note: 'Radix ships a P3 pair per scale for wide-gamut displays; the engine has one OKLCH value per slot, not a gamut-mapped pair' });
+    // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
+    // no-op unless the compile actually declares one, e.g. `density`.
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     const css = [
       '/*',

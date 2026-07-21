@@ -38,6 +38,10 @@ Composite values expand: a typography role (`type.role.body.md`) becomes four lo
 
 Every variable is `native` — there's no target framework to lose fidelity translating into. This *is* the IR, rendered as CSS. On Acme it's 450+ variables from 11 authored tokens.
 
+## Extra mode dimensions
+
+Most targets only know about `color-scheme`. This one expresses **every** dimension a design system declares: a second dimension like `density` gets one selector block per non-default value — `[data-density="compact"]` by default (override the attribute via `options.dimensionSelectors`) — containing only the variables that actually differ from the defaults, not a full re-dump. [Acme's demo](/docs/examples/#acme-the-minimal-example) declares `density: comfortable|compact`, scaling `space.*` by 0.875 in compact; every other target reports it `dropped(mode:density)` in coverage since they don't touch it.
+
 ## Custom roles (role archetypes)
 
 Nothing target-specific to add: a custom role that declares `$extensions.transtyle.role` gets its full grid derived under `semantic.color.<name>.*` just like a built-in role, and this exporter already walks every `semantic.*` slot it finds — the archetyped role's cells show up automatically. See Cathode's `crt-amber` role in its `dist/css-variables/` output.

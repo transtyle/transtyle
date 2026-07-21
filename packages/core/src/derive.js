@@ -10,7 +10,7 @@
  * disabled/inverse). See docs/architecture/ir.md#the-semantic-contract.
  */
 
-import { COLOR_ROLES, PROVENANCE } from '@transtyle/ir';
+import { COLOR_ROLES, PROVENANCE, comboKey } from '@transtyle/ir';
 import { mix, contrastRatio, contrastPick, clampChromaToGamut } from './color.js';
 
 const S = 'semantic.color.';
@@ -19,10 +19,17 @@ const NEARBLACK = { l: 0.145, c: 0, h: 0, alpha: 1 };
 const DARK_CANVAS = { l: 0.145, c: 0, h: 0, alpha: 1 };
 
 export function derive(normalized, config, diagnostics) {
-  for (const mode of normalized.modeValues) {
-    const map = normalized.modes[mode];
-    const isDark = mode === 'dark';
-    const ctx = { map, isDark, mode, diagnostics };
+  // Every combo in the expanded mode matrix (T8) gets a full pass — not just
+  // the primary dimension's values — so a slot that only the *other*
+  // dimension varies (e.g. `space.*` under `density`) still gets every
+  // catalog-default scale/role/ladder filled in for that combo. `isDark`
+  // reads the primary dimension's component of the combo, not the whole
+  // compound key: "dark+compact" is still dark mode.
+  for (const combo of normalized.allCombos ?? normalized.modeValues) {
+    const map = normalized.modes[combo];
+    const isDark = (normalized.comboDims?.[combo]?.[normalized.modeDimension] ?? combo) === 'dark';
+    const ctx = { map, isDark, mode: combo, diagnostics };
+    const mode = combo; // kept for diagnostic messages below — the full combo key, more informative than just the primary dimension's value
     const dl = isDark ? 1 : -1;
 
     const primary = get(map, `${S}primary.solid`);
@@ -209,13 +216,23 @@ export function derive(normalized, config, diagnostics) {
   }
 
   // --- Cross-mode pass: text.inverse (F15) — needs both modes' per-mode work done first ---
-  for (const mode of normalized.modeValues) {
-    const otherMode = mode === 'dark' ? 'light' : mode === 'light' ? 'dark' : null;
-    if (!otherMode || !normalized.modes[otherMode]) continue;
-    const map = normalized.modes[mode];
-    const otherTextBase = get(normalized.modes[otherMode], `${S}text.base`);
+  // Runs per combo (T8), flipping only the primary (color-scheme) dimension's
+  // component and holding every other dimension fixed: "dark+compact"'s
+  // inverse is "light+compact", not the unrelated "light+comfortable".
+  const primaryDim = normalized.modeDimension;
+  for (const combo of normalized.allCombos ?? normalized.modeValues) {
+    const values = normalized.comboDims?.[combo];
+    const here = values?.[primaryDim] ?? combo;
+    const flipped = here === 'dark' ? 'light' : here === 'light' ? 'dark' : null;
+    if (!flipped) continue;
+    const otherCombo = values && normalized.dimensionNames
+      ? comboKey(normalized.dimensionNames, { ...values, [primaryDim]: flipped })
+      : flipped;
+    if (!normalized.modes[otherCombo]) continue;
+    const map = normalized.modes[combo];
+    const otherTextBase = get(normalized.modes[otherCombo], `${S}text.base`);
     if (!otherTextBase) continue;
-    const ctx = { map, isDark: mode === 'dark', mode, diagnostics };
+    const ctx = { map, isDark: here === 'dark', mode: combo, diagnostics };
     rc(ctx, `${S}text.inverse`, () => ({ ...otherTextBase }), 'cross-mode(text.base)', ['text.base']);
   }
 }

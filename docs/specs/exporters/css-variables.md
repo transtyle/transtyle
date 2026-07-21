@@ -28,6 +28,10 @@ Mode polarity rule applies: `:root` always carries the **light** map, `[data-col
 
 Every slot is `native` — there is no target-specific translation to lose fidelity over; this is the IR itself, rendered as CSS.
 
+## Multi-dimension modes (T8)
+
+This is the one exporter that expresses every configured mode dimension, not just `color-scheme`. For every dimension beyond the primary one (e.g. `density`), each non-default value that changes at least one slot gets its own selector block — `[data-density="compact"]` by default, or `options.dimensionSelectors.<dim>` (a template string containing `{value}`, e.g. `".density-{value}"`). The block contains only the slots whose rendered value actually differs from the all-defaults combo — a diff, not a re-dump, so `density: compact` on Acme (which only touches `space.*`) produces exactly 12 lines, not the full catalog again. Every other exporter only knows about the primary dimension and reports the rest `dropped(mode:<dim>)` (`droppedDimensions()`, `@transtyle/ir`).
+
 ## Role archetypes (T7)
 
 No special-casing needed: custom roles declaring `$extensions.transtyle.role` (docs/architecture/ir.md §archetypes) get their full grid derived under `semantic.color.<name>.*` exactly like a built-in role, and this exporter already dumps every `semantic.*` slot it finds — an archetyped role's cells appear automatically, `native`, with no code change. See Cathode's `crt-amber` in `dist/css-variables/`.

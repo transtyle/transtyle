@@ -8,6 +8,8 @@
  * (docs/language.md "false friends").
  */
 
+import { droppedDimensions } from '@transtyle/ir';
+
 const S = 'semantic.color.';
 
 /** slot → daisyUI variable; content = paired foreground slot. */
@@ -102,6 +104,9 @@ export default {
       coverage.push({ variable: '--radius-{selector,field,box}', slot: 'semantic.radius.md', class: 'approximated', provenance: radius.provenance.kind, note: 'one radius feeds three component families' });
     }
     coverage.push({ variable: '--depth / --noise / --size-*', slot: '—', class: 'dropped', note: 'daisyUI stylistic effects with no token semantics; theme uses daisyUI defaults' });
+    // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
+    // no-op unless the compile actually declares one, e.g. `density`.
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     const css = [
       '/*',

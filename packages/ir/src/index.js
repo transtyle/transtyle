@@ -48,6 +48,50 @@ export const PROVENANCE = {
 /** Coverage classes (docs/specs/validation-and-coverage.md). */
 export const COVERAGE = ['native', 'derived', 'approximated', 'dropped', 'unsupported'];
 
+/**
+ * One `dropped` coverage entry per configured mode dimension an exporter
+ * doesn't express (docs/architecture/ir.md#modes: "Exporters declare which
+ * mode dimensions they can express; inexpressible dimensions surface in the
+ * coverage report"). No-op (empty array) when the compile only has the
+ * dimensions the exporter already expresses — e.g. a color-scheme-only
+ * compile never gets a spurious "density dropped" line.
+ */
+export function droppedDimensions(dimensionNames, expressed) {
+  return (dimensionNames ?? [])
+    .filter((d) => !expressed.includes(d))
+    .map((d) => ({ variable: `(mode:${d})`, slot: '—', class: 'dropped', note: `${d} mode dimension not expressed by this target` }));
+}
+
+/** Reserved mode dimension names (docs/architecture/ir.md §reserved-mode-dimensions) — names only, every dimension stays optional. */
+export const RESERVED_MODE_DIMENSIONS = ['color-scheme', 'density', 'contrast', 'motion', 'platform'];
+
+/**
+ * Combine one value per mode dimension into the compound key used to address
+ * a compiled mode combo (docs/plan/catalog-revision.md T8) — `["color-scheme",
+ * "density"], {"color-scheme":"dark","density":"compact"}` -> `"dark+compact"`.
+ * Order is `dimNames`, not object insertion, so both directions of the
+ * key<->values mapping are deterministic across the compile.
+ */
+export function comboKey(dimNames, values) {
+  return dimNames.map((d) => values[d]).join('+');
+}
+
+/**
+ * The full cross-product of every configured mode dimension's values, in
+ * dimension-declaration order. `dimEntries` is `Object.entries(config.modes)`.
+ * Returns `[{ key, values: {dimName: value} }, ...]`.
+ */
+export function expandModeMatrix(dimEntries) {
+  const dimNames = dimEntries.map(([name]) => name);
+  let combos = [{}];
+  for (const [name, def] of dimEntries) {
+    const next = [];
+    for (const combo of combos) for (const v of def.values) next.push({ ...combo, [name]: v });
+    combos = next;
+  }
+  return combos.map((values) => ({ key: comboKey(dimNames, values), values }));
+}
+
 const ALIAS_RE = /^\{([^}]+)\}$/;
 
 /** If `value` is a DTCG alias like "{option.color.blue.600}", return the path; else null. */

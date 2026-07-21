@@ -2,7 +2,12 @@
   "$schema": "https://transtyle.dev/schemas/config/v0.json",
   "name": "acme-design-system",
   "tokens": [
-    "tokens/*.tokens.json"
+    "tokens/option.tokens.json",
+    "tokens/semantic.tokens.json",
+    {
+      "files": "tokens/acme.density-compact.tokens.json",
+      "mode": { "density": "compact" }
+    }
   ],
   "modes": {
     "color-scheme": {
@@ -11,6 +16,13 @@
         "dark"
       ],
       "default": "light"
+    },
+    "density": {
+      "values": [
+        "comfortable",
+        "compact"
+      ],
+      "default": "comfortable"
     }
   },
   "derivation": {

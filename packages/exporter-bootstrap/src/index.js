@@ -28,6 +28,8 @@
  *    private exporter fallback table.
  */
 
+import { droppedDimensions } from '@transtyle/ir';
+
 const S = 'semantic.color.';
 
 /** Bootstrap's theme-color order; light/dark are exporter pseudo-roles (F12). */
@@ -49,6 +51,9 @@ export default {
     const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
     const dark = normalized.modes.dark;
     const r = resolve(light, dark, ctx);
+    // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
+    // no-op unless the compile actually declares one, e.g. `density`.
+    r.coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     const files = [
       { path: '_variables.transtyle.scss', contents: renderVariables(r, ctx), kind: 'stylesheet' },

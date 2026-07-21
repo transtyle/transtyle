@@ -12,6 +12,8 @@
  * parse oklch() — the per-target output-syntax choice ir.md provides for.
  */
 
+import { droppedDimensions } from '@transtyle/ir';
+
 const S = 'semantic.color.';
 
 /** Per-exporter composition knowledge: main stylesheet + mode encoding. */
@@ -45,6 +47,9 @@ export default {
     const coverage = [];
 
     const variants = modes.map((mode) => buildThemeVars(normalized, mode, ctx, remBase, coverage));
+    // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
+    // no-op unless the compile actually declares one, e.g. `density`.
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     const files = [
       { path: 'theme.transtyle.ts', contents: renderTheme(variants, ctx), kind: 'config' },
