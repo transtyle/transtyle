@@ -28,6 +28,8 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
 | CLI: `build`, `check`, `--cwd` | ✅ |
 | Examples: Acme (minimal), Cathode (hostile) | ✅ |
+| Ground-truth checks: catalog completeness + frozen fixture values (`check:grid`), Phase 0 fixture diffing (`check:fixtures`), byte-for-byte determinism (`check:determinism`) — chained as `check:all` | ✅ |
+| CI (GitHub Actions): every check above + site build + a matrix build of all 12 demo projects, on every push/PR | ✅ |
 
 **2026-07-20 — the catalog revision:** the semantic catalog was rebuilt around the [role grid](/docs/language/#color-roles-the-role-grid) — the finding, from a 14-ecosystem comparative study (`docs/proposals/0001-universal-token-ir.md`), that every mature design system samples the same prominence × state grid per color role. Landed as a pre-release **breaking** revision — Transtyle is unreleased, so old slot names were removed outright rather than aliased, and no version number moved (still IR spec v0; see `docs/adr/0010-pre-release-breaking-changes.md`). All five shipped exporters, both examples, and their fixtures were migrated in the same change (css-variables, added after, was built fresh against the new catalog); color *values* are unchanged except one documented, intentional refinement (`overlay`/popover is now a genuinely deeper elevation level, not an alias of the raised-card level). Sequenced in `docs/plan/catalog-revision.md`.
 

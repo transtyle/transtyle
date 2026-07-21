@@ -16,6 +16,8 @@ Review checklist for any PR: does `npx transtyle build` still produce byte-ident
 
 **The rule is mechanized where it can be:** `npm run check:sync` ([scripts/check-sync.mjs](scripts/check-sync.mjs)) walks the CLI's exporter registry and fails if any shipped exporter is missing from any surface — package, spec, website page + nav + roadmap table, README, example configs, demo projects — or is still called "specced" in website prose. It runs automatically before `site:build`. Run it before declaring any feature done, and **extend it whenever a new class of drift is discovered** (it exists because a shipped exporter once had no website page).
 
+**`npm run check:all`** chains every ground-truth check: `check:sync` (the rule above) + `check:grid` ([scripts/check-grid.mjs](scripts/check-grid.mjs), catalog completeness and frozen fixture values) + `check:fixtures` ([scripts/check-fixtures.mjs](scripts/check-fixtures.mjs), a fresh build diffed key-by-key against the Phase 0 acceptance fixtures) + `check:determinism` ([scripts/check-determinism.mjs](scripts/check-determinism.mjs), two builds byte-compared). CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs all of it plus a site build and a matrix build of every demo project on every push/PR to `main`.
+
 **Implemented-only editorial policy:** user-facing docs (website, README) may name an unimplemented capability only inside an explicit status construct — the roadmap ledger, a "specced" label, or a "not yet implemented" sentence — never in feature prose. Engineering specs in `docs/` are exempt; they are the plan and say so.
 
 ## Principles that constrain changes
