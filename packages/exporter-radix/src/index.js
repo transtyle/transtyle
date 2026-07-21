@@ -65,7 +65,7 @@ export default {
             const clamped = ctx.formatHex(value).clamped;
             const notes = [
               ...(mixed ? ['no direct grid cell — mixed toward the surface at a ratio filling the gap between tint and outline'] : []),
-              ...(clamped ? ['out of sRGB gamut at this lightness/chroma combination — browsers gamut-map oklch(), which may render noticeably differently than intended (see the text-strong follow-up in the worklog)'] : []),
+              ...(clamped ? ['out of sRGB gamut at this lightness/chroma combination — browsers gamut-map oklch(), which may render noticeably differently than intended'] : []),
             ];
             coverage.push({ variable: name, slot: `${S}${role}.*`, class: (mixed || clamped) ? 'approximated' : 'native', ...(notes.length && { note: notes.join('; ') }) });
           }

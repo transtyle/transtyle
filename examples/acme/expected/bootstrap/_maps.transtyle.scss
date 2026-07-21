@@ -57,7 +57,7 @@ $theme-colors-text-dark: (
   "warning":   #edc15f,
   "danger":    #e55c57,
   "light":     #858a90,
-  "dark":      #f5fbff   // neutral.contrast[dark] · [derived: F20]
+  "dark":      #f7faff   // neutral.contrast[dark] · [derived: F20, gamut-clamped]
 );
 
 // <role>.subtle[dark] · [derived: cartesian mix toward the dark surface — F21]
@@ -69,7 +69,7 @@ $theme-colors-bg-subtle-dark: (
   "warning":   #252525,
   "danger":    #251f23,
   "light":     #191d23,
-  "dark":      #33373d
+  "dark":      #33373c
 );
 
 $theme-colors-border-subtle-dark: (
@@ -80,5 +80,5 @@ $theme-colors-border-subtle-dark: (
   "warning":   #4b422e,  // dark olive — the F21 fix; the polar mix produced cyan here
   "danger":    #4a2728,
   "light":     #2f3339,
-  "dark":      #71767d
+  "dark":      #72767c
 );

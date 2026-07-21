@@ -25,7 +25,7 @@
 | `contrast` | `on-solid` | `native` |
 | `a1`–`a12` | the same 12 colors, alpha from a fixed ramp | `approximated` — not a colorimetric derivation of Radix's real per-color alpha |
 
-Any step whose OKLCH value falls outside the sRGB gamut (`ctx.formatHex(...).clamped`) is additionally marked `approximated` with a note — browsers gamut-map `oklch()` on render, which can look noticeably different from the intended color. This surfaced a real, pre-existing gap in the `text-strong` derivation rule (F20): it re-anchors a role at the *content* text lightness while keeping the role's *full* chroma, which can leave the sRGB gamut for vivid brand colors in dark mode (a very light, fully saturated color has very little gamut headroom). Not fixed here — flagged as a follow-up; see the worklog.
+Any step whose OKLCH value falls outside the sRGB gamut (`ctx.formatHex(...).clamped`) is additionally marked `approximated` with a note — browsers gamut-map `oklch()` on render, which can look noticeably different from the intended color. Building this exporter surfaced exactly this gap in the `text-strong` derivation rule (F20): it re-anchors a role at the *content* text lightness while keeping the role's *full* chroma, which could leave the sRGB gamut for vivid brand colors in dark mode (a very light, fully saturated color has very little gamut headroom). Fixed at the source: F20 now runs the result through `clampChromaToGamut` (`packages/core/src/color.js`), which reduces chroma at the same lightness/hue until the color is representable, rather than letting per-channel clipping distort it downstream. See the worklog for the fix and its one (expected, corrected) fixture-value change.
 
 ## `@radix-ui/themes` integration
 

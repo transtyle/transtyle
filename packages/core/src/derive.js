@@ -11,7 +11,7 @@
  */
 
 import { COLOR_ROLES, PROVENANCE } from '@transtyle/ir';
-import { mix, contrastRatio, contrastPick } from './color.js';
+import { mix, contrastRatio, contrastPick, clampChromaToGamut } from './color.js';
 
 const S = 'semantic.color.';
 const WHITE = { l: 1, c: 0, h: 0, alpha: 1 };
@@ -93,9 +93,12 @@ export function derive(normalized, config, diagnostics) {
       rc(ctx, rp + 'text-hover', () => ({ ...textResolved, l: clamp01(textResolved.l + 0.05 * dl) }), 'state-delta(hover)', [`${role}.text`]);
       rc(ctx, rp + 'text-active', () => ({ ...textResolved, l: clamp01(textResolved.l + 0.07 * dl) }), 'state-delta(active)', [`${role}.text`]);
 
-      // text-strong (F20): the role re-anchored at the content text ladder's lightness
+      // text-strong (F20): the role re-anchored at the content text ladder's lightness.
+      // Full solid chroma at that lightness can fall outside sRGB (a vivid hue has
+      // little gamut headroom near white/black) — reduce chroma at the same l/h
+      // rather than let it clip unevenly per-channel downstream.
       if (textBase) {
-        rc(ctx, rp + 'text-strong', () => ({ l: textBase.l, c: solid.c, h: solid.h, alpha: 1 }), 'contrast-anchor(text)', [`${role}.solid`, 'text.base']);
+        rc(ctx, rp + 'text-strong', () => clampChromaToGamut({ l: textBase.l, c: solid.c, h: solid.h, alpha: 1 }), 'contrast-anchor(text)', [`${role}.solid`, 'text.base']);
       }
     }
 

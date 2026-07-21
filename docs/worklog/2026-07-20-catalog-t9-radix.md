@@ -27,4 +27,12 @@ Scope decision: fixed the *reporting* only — the Radix exporter checks `ctx.fo
 
 ## Scope not touched
 
-T7 (role archetypes) remains open and was not a blocker here (see above). The `text-strong` gamut-gap fix is intentionally deferred as a separate follow-up.
+T7 (role archetypes) remains open and was not a blocker here (see above). The `text-strong` gamut-gap fix was intentionally deferred as a separate follow-up — **completed same-day, see addendum below.**
+
+## Addendum — the gamut gap is fixed at the source
+
+The follow-up flagged above was picked up immediately after this task closed. Fix: `clampChromaToGamut(l, c, h)` (new, `packages/core/src/color.js`) binary-searches the maximum chroma at a fixed lightness/hue that stays inside sRGB, and `derive.js`'s F20 rule now runs its result through it instead of returning the raw `{ l: textBase.l, c: solid.c, h: solid.h }` triple unchecked. This fixes the *value*, not just the reporting: `--primary-12` in the Radix output for both example brands moved from `approximated` (gamut-clamped) to `native`.
+
+This is a **derivation-engine change**, so it can move any consumer of `<role>.text-strong` for a chromatic role. The only checked-in consumer that hits this path is Bootstrap's `neutral.text-strong` (`$dark`/`$body-emphasis-color` and their two subtle-mix derivatives) in **dark mode** — `neutral`'s chroma is tiny (0.012) but even that clips at the extreme lightness `text-strong` targets in dark mode. Five hex values in `examples/acme/expected/bootstrap/{_variables,_maps}.transtyle.scss` and `bootstrap-theme.css` moved by one hex step each (e.g. `#f5fbff` → `#f7faff`) — updated to match, since the new value is the corrected one (the old value was an accidental artifact of per-channel clipping in `formatHex`, not a deliberately chosen color). Per ADR-0010, this is a value fix pre-release, not a breaking change requiring a version bump. `check-grid.mjs`'s 5 frozen values are unaffected (none of them is a dark-mode `text-strong`-derived cell).
+
+Verified: `npm run check:all` clean after updating the fixtures; both examples rebuilt (Radix coverage: Acme 39%→41% native, Cathode similarly improved, `--primary-12` now `native` with no gamut note in either); Acme's `radix` demo re-verified in-browser (no console errors, renders correctly).

@@ -74,11 +74,11 @@
   --bs-warning-text-emphasis: #edc15f;   --bs-warning-bg-subtle: #252525;   --bs-warning-border-subtle: #4b422e;
   --bs-danger-text-emphasis: #e55c57;    --bs-danger-bg-subtle: #251f23;    --bs-danger-border-subtle: #4a2728;
   --bs-light-text-emphasis: #858a90;     --bs-light-bg-subtle: #191d23;     --bs-light-border-subtle: #2f3339;
-  --bs-dark-text-emphasis: #f5fbff;      --bs-dark-bg-subtle: #33373d;      --bs-dark-border-subtle: #71767d;
+  --bs-dark-text-emphasis: #f7faff;      --bs-dark-bg-subtle: #33373c;      --bs-dark-border-subtle: #72767c;
 
   --bs-body-bg: #080b0f;            --bs-body-bg-rgb: 8, 11, 15;       /* background.base[dark] · authored */
   --bs-body-color: #f9fafc;         --bs-body-color-rgb: 249, 250, 252; /* text.base[dark] · authored */
-  --bs-emphasis-color: #f5fbff;     --bs-emphasis-color-rgb: 245, 251, 255; /* neutral.contrast[dark] · [derived: F20] */
+  --bs-emphasis-color: #f7faff;     --bs-emphasis-color-rgb: 247, 250, 255; /* neutral.contrast[dark] · [derived: F20, gamut-clamped] */
   --bs-secondary-color: #9a9fa5;    /* text-muted.base[dark] · authored */
   --bs-secondary-bg: #1d2127;       /* neutral.subtle[dark] · [derived] */
   --bs-tertiary-bg: #171b20;        /* surface.base[dark] · authored */

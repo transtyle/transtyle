@@ -28,9 +28,9 @@ Radix's 12-step-per-color model is, cell for cell, [the role grid](/docs/languag
 
 `neutral` also ships as `--gray-*`, Radix's conventional paired-gray name.
 
-## An honest gap, found by building this
+## An honest gap, found by building this — and fixed
 
-Any step that falls outside the sRGB gamut gets flagged `approximated` too — browsers gamut-map `oklch()` on render, which can look different from what was intended. Building this exporter surfaced a real one: `text-strong` (step 12) re-anchors a role at the *content* text lightness while keeping the role's *full* chroma — for a vivid brand color in dark mode, that combination can leave the gamut (very light + very saturated has little headroom). Not fixed yet; tracked as a follow-up on the [role grid](/docs/language/#color-roles-the-role-grid) derivation.
+Any step that falls outside the sRGB gamut gets flagged `approximated` too — browsers gamut-map `oklch()` on render, which can look different from what was intended. Building this exporter surfaced a real one: `text-strong` (step 12) re-anchors a role at the *content* text lightness while keeping the role's *full* chroma — for a vivid brand color in dark mode, that combination could leave the gamut (very light + very saturated has little headroom). Fixed at the derivation source (`clampChromaToGamut`, [role grid](/docs/language/#color-roles-the-role-grid) F20) rather than only flagged downstream — it now reduces chroma at the same lightness/hue until the color is representable, instead of leaving it to be clipped per-channel on render.
 
 ## Using it with `@radix-ui/themes`
 

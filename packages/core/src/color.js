@@ -83,6 +83,27 @@ function srgbToOklch({ r, g, b }) {
 
 const linearToSrgb = (v) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
 
+const inSrgbGamut = ({ r, g, b }) => r >= -0.0005 && r <= 1.0005 && g >= -0.0005 && g <= 1.0005 && b >= -0.0005 && b <= 1.0005;
+
+/**
+ * Reduce chroma at a fixed lightness/hue until the color lands inside the
+ * sRGB gamut (binary search; ~20 steps is well under float precision).
+ * Keeps `l` and `h` exactly as given — only `c` moves — because rules like
+ * F20 (contrast-anchor) pick `l`/`h` for a reason (contrast, brand hue) and
+ * should not have those silently perturbed by channel-clipping downstream.
+ * A no-op when the color is already in gamut.
+ */
+export function clampChromaToGamut({ l, c, h, alpha = 1 }) {
+  if (c <= 0 || inSrgbGamut(oklchToLinearSrgb({ l, c, h }))) return { l, c, h, alpha };
+  let lo = 0, hi = c;
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    if (inSrgbGamut(oklchToLinearSrgb({ l, c: mid, h }))) lo = mid;
+    else hi = mid;
+  }
+  return { l, c: lo, h, alpha };
+}
+
 /**
  * OKLCH → gamma-encoded sRGB. `clamped` is true when the color was outside the
  * sRGB gamut and had to be clamped (coverage class: approximated).
