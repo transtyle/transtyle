@@ -54,7 +54,7 @@ Every mapping decision is recorded per-variable in `report.json` with its covera
 ## Out of scope, honestly
 
 - `components.json` with `cssVariables: false` (utility-class theming): without variables there's no theme artifact — theming would mean rewriting your component files, which Transtyle will never do.
-- Non-Tailwind projects: shadcn itself requires Tailwind. The `:root`/`.dark` blocks are self-contained CSS if you want just the variables; a dedicated framework-free `css-variables` exporter is specced.
+- Non-Tailwind projects: shadcn itself requires Tailwind. The `:root`/`.dark` blocks are self-contained CSS if you want just the variables; the dedicated framework-free [css-variables exporter](/docs/exporter-css-variables/) covers this properly.
 
 ## Using the output
 

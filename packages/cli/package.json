@@ -10,7 +10,8 @@
     "@transtyle/exporter-echarts": "*",
     "@transtyle/exporter-daisyui": "*",
     "@transtyle/exporter-bootstrap": "*",
-    "@transtyle/exporter-storybook": "*"
+    "@transtyle/exporter-storybook": "*",
+    "@transtyle/exporter-css-variables": "*"
   },
   "license": "MIT"
 }

@@ -48,6 +48,9 @@
       "options": {
         "previewTargets": ["shadcn", "daisyui"]
       }
+    },
+    "css-variables": {
+      "output": "dist/css-variables"
     }
   },
   "check": {

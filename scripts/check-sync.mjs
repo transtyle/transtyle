@@ -37,7 +37,7 @@ const EXCEPTIONS = {
 // 1. code: the CLI registry is the source of truth
 const cliSrc = read('packages/cli/src/main.js');
 const registry = cliSrc.match(/OFFICIAL_EXPORTERS\s*=\s*\{([\s\S]*?)\}/)?.[1] ?? '';
-const exporters = [...registry.matchAll(/^\s*(\w[\w-]*):/gm)].map((m) => m[1]);
+const exporters = [...registry.matchAll(/^\s*['"]?([\w-]+)['"]?:/gm)].map((m) => m[1]);
 if (exporters.length === 0) fail('could not parse OFFICIAL_EXPORTERS from packages/cli/src/main.js');
 
 const examples = readdirSync(join(root, 'examples'), { withFileTypes: true })
@@ -56,6 +56,7 @@ const NAMES = {
   echarts: ['echarts', 'ECharts'],
   bootstrap: ['bootstrap', 'Bootstrap'],
   storybook: ['storybook', 'Storybook'],
+  'css-variables': ['css-variables'],
 };
 const mentions = (text, name) => (NAMES[name] ?? [name]).some((n) => text.includes(n));
 

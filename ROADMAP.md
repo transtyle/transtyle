@@ -37,7 +37,7 @@ Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir
 - [x] **T1** — Rewrite the IR spec to the revised catalog (grid cells, elevation ladder, content hierarchy, scales, reserved modes; ir.md + derivation.md + website mirror).
 - [x] **T2** — Engine: the revised rule pack, still `standard@1` (grid derivation with pinned formulas, elevation/shadow/z ladders, type & space scales, motion; `scripts/check-grid.mjs` proves promoted conventions reproduce the Bootstrap fixture values byte-for-byte).
 - [x] **T3** — Migrate all five exporters, examples, demos to the revised names; dead-vocabulary guard added to `check-sync` (no old slot name survives anywhere). Landed together with T2 (see worklog: they can't be verified independently — the engine and the token files/exporters that speak its vocabulary have to change in the same buildable commit).
-- [ ] **T4** — css-variables exporter: the grid-complete conformance dump (+ demo projects, all five surfaces).
+- [x] **T4** — css-variables exporter: the grid-complete conformance dump (+ demo projects, all five surfaces).
 - [ ] **T5** — Permanent ground-truth scripts (`check-fixtures`, `check-determinism`, `check:all`) + GitHub Actions CI.
 - [ ] **T6** — CLI `explain` / `init` / `add` (+ `check-cli` golden tests).
 - [ ] **T7** — Role archetypes: custom roles derive the full grid and export to open-role targets (Cathode's `crt-amber` as showcase).

@@ -1,0 +1,80 @@
+/*
+ * Demo chrome + a tiny sample built from raw catalog variables — nothing
+ * framework-specific, on purpose (this exporter's whole point).
+ */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--type-role-body-md-family, system-ui, sans-serif);
+  background: var(--color-elevation-0-surface, #fff);
+  color: var(--color-text-base, #111);
+}
+.demo-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 13px;
+  background: color-mix(in srgb, var(--color-text-base) 6%, transparent);
+  border-bottom: 1px solid var(--color-border);
+}
+.demo-chrome span { opacity: 0.65; }
+.demo-chrome button {
+  margin-left: auto;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: var(--border-width-thin, 1px) solid var(--color-border);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+}
+.page { max-width: 900px; margin: 0 auto; padding: var(--space-6, 1.5rem); }
+.page-head h1 { margin: 0; }
+.page-head p { color: var(--color-text-muted); }
+code {
+  font-family: var(--type-role-code-sm-family, monospace);
+  background: var(--color-elevation-1-surface);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0.1em 0.4em;
+}
+
+.sample { margin: var(--space-6, 1.5rem) 0; }
+.sample-card {
+  background: var(--color-elevation-1-surface);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-2-shadow);
+  padding: var(--space-6, 1.5rem);
+  max-width: 26rem;
+}
+.sample-card h2 { margin: 0 0 0.25rem; }
+.muted { color: var(--color-text-muted); margin: 0 0 0.75rem; }
+.sample-actions { display: flex; gap: var(--space-2, 0.5rem); margin-top: var(--space-4, 1rem); }
+.btn {
+  font: inherit;
+  border-radius: var(--radius-md);
+  padding: 0.4em 1em;
+  cursor: pointer;
+  border: var(--border-width-thin) solid transparent;
+}
+.btn-solid {
+  background: var(--color-primary-solid);
+  color: var(--color-primary-on-solid);
+}
+.btn-solid:hover { background: var(--color-primary-solid-hover); }
+.btn-outline {
+  background: transparent;
+  border-color: var(--color-primary-outline);
+  color: var(--color-primary-text);
+}
+
+#families { display: grid; gap: var(--space-4, 1rem); }
+.family { border: var(--border-width-thin) solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); }
+.family h3 { margin: 0 0 var(--space-2, 0.5rem); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; color: var(--color-text-muted); }
+.swatches { display: flex; flex-wrap: wrap; gap: var(--space-2, 0.5rem); }
+.swatch { display: flex; flex-direction: column; align-items: center; font-size: 11px; gap: 0.25rem; width: 5.5rem; }
+.swatch .chip { width: 100%; height: 2.5rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); }
+.swatch code { font-size: 10px; word-break: break-all; text-align: center; background: none; padding: 0; }
+.values { font-size: 12px; }
+.values div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; border-bottom: 1px dotted var(--color-border); }

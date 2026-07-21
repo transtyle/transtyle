@@ -14,6 +14,7 @@ const OFFICIAL_EXPORTERS = {
   daisyui: '@transtyle/exporter-daisyui',
   bootstrap: '@transtyle/exporter-bootstrap',
   storybook: '@transtyle/exporter-storybook',
+  'css-variables': '@transtyle/exporter-css-variables',
 };
 
 async function loadExporter(name) {

@@ -11,5 +11,6 @@ Run from the **repo root** (after `npm install`):
 | [shadcn/](shadcn/) | `npm run dev -w acme-demo-shadcn` | 4103 | The same page in real shadcn/ui registry components (React + Radix + Tailwind v4) |
 | [echarts/](echarts/) | `npm run dev -w acme-demo-echarts` | 4104 | *Nimbus Analytics* — a chart dashboard; page shell colors come from the theme JSON itself |
 | [storybook/](storybook/) | `npm run dev -w acme-demo-storybook` | 6101 | The simplest Storybook — the exhibit is Storybook's **own chrome** (sidebar, toolbar, Controls panel, fonts) wearing the theme; stories are just one explanatory text page |
+| [css-variables/](css-variables/) | `npm run dev -w acme-demo-css-variables` | 4105 | The plugin-API reference exporter — every catalog slot as a plain `--custom-property`, browsed by family, no framework in between |
 
 Every page has a mode toggle wired to the target's own mechanism. Differences in *structure* between projects are framework idiom; **color, radius, and typography** must track the token source everywhere — a disagreement is a bug worth filing.

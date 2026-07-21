@@ -11,3 +11,4 @@ All projects boot **terminal-dark** (Cathode's native mode; light is the paper p
 | [shadcn/](shadcn/) | `npm run dev -w cathode-demo-shadcn` | 4203 | The same page in real shadcn/ui components — zero radius, IBM Plex Mono, glowing green |
 | [echarts/](echarts/) | `npm run dev -w cathode-demo-echarts` | 4204 | *Nimbus Analytics* with the green-anchored derived palette ("a dashboard from 1983") |
 | [storybook/](storybook/) | `npm run dev -w cathode-demo-storybook` | 6201 | A Storybook whose **own chrome** boots terminal-dark (DS-native mode) — sidebar, toolbar, and Controls panel in phosphor green; stories are just one explanatory text page |
+| [css-variables/](css-variables/) | `npm run dev -w cathode-demo-css-variables` | 4205 | Every catalog slot as a plain `--custom-property`, boots terminal-dark, browsed by family |

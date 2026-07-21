@@ -22,13 +22,14 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | daisyUI exporter (v5 era): light+dark theme blocks, brand-direct role mapping | ✅ |
 | Bootstrap exporter (≥5.3): Sass path (`_variables` + `_maps`) **and** CSS-variable path | ✅ engine-exact vs the Phase 0 fixtures |
 | Storybook exporter (SB 8–9): chrome ThemeVars + sibling preview composition | ✅ |
+| css-variables exporter: the plugin-API reference implementation, full catalog as `--custom-properties` | ✅ 450+ variables on Acme, 100% native |
 | Per-example demo projects (`examples/*/demo/*`): the same fake app per target, npm-run-dev-able | ✅ consume `dist/` only |
 | Target instances (one exporter, many configs) | ✅ |
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
 | CLI: `build`, `check`, `--cwd` | ✅ |
 | Examples: Acme (minimal), Cathode (hostile) | ✅ |
 
-**2026-07-20 — the catalog revision:** the semantic catalog was rebuilt around the [role grid](/docs/language/#color-roles-the-role-grid) — the finding, from a 14-ecosystem comparative study (`docs/proposals/0001-universal-token-ir.md`), that every mature design system samples the same prominence × state grid per color role. Landed as a pre-release **breaking** revision — Transtyle is unreleased, so old slot names were removed outright rather than aliased, and no version number moved (still IR spec v0; see `docs/adr/0010-pre-release-breaking-changes.md`). All six exporters, both examples, and their fixtures were migrated in the same change; color *values* are unchanged except one documented, intentional refinement (`overlay`/popover is now a genuinely deeper elevation level, not an alias of the raised-card level). Sequenced in `docs/plan/catalog-revision.md`.
+**2026-07-20 — the catalog revision:** the semantic catalog was rebuilt around the [role grid](/docs/language/#color-roles-the-role-grid) — the finding, from a 14-ecosystem comparative study (`docs/proposals/0001-universal-token-ir.md`), that every mature design system samples the same prominence × state grid per color role. Landed as a pre-release **breaking** revision — Transtyle is unreleased, so old slot names were removed outright rather than aliased, and no version number moved (still IR spec v0; see `docs/adr/0010-pre-release-breaking-changes.md`). All five shipped exporters, both examples, and their fixtures were migrated in the same change (css-variables, added after, was built fresh against the new catalog); color *values* are unchanged except one documented, intentional refinement (`overlay`/popover is now a genuinely deeper elevation level, not an alias of the raised-card level). Sequenced in `docs/plan/catalog-revision.md`.
 
 ## Specced, not yet implemented
 
@@ -36,7 +37,7 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 
 | Feature | Where the design lives |
 |---|---|
-| Exporters: css-variables (plugin-API conformance fixture), Radix Themes (the role grid's acceptance test) | `docs/specs/exporters/`, `docs/plan/catalog-revision.md` |
+| Exporters: Radix Themes (the role grid's acceptance test) | `docs/specs/exporters/`, `docs/plan/catalog-revision.md` |
 | CLI: `init`, `add`, `explain`, `diff`, `import`, `preview`, `migrate` | `docs/specs/cli.md` |
 | Role archetypes (custom color roles that derive the full grid) | `docs/architecture/ir.md`, `docs/plan/catalog-revision.md` |
 | Derivation `overrides`, user rule expressions, `autoDark` audit flow | `docs/architecture/derivation.md` |
