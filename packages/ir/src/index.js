@@ -62,6 +62,24 @@ export function droppedDimensions(dimensionNames, expressed) {
     .map((d) => ({ variable: `(mode:${d})`, slot: '—', class: 'dropped', note: `${d} mode dimension not expressed by this target` }));
 }
 
+/**
+ * Component tier (docs/plan/component-tier.md C2; docs/specs/component-layer.md).
+ * Per component, per token: `defaultFrom` is a bare `semantic.*` path (no
+ * `semantic.` prefix) the token aliases when unauthored — component tokens
+ * default from semantic tokens, so an empty `component.*` tier still
+ * compiles, exactly like every other resolve-or-fill slot in the catalog.
+ * Scoped to `button` only for now (C2); extended per component as C4 proves
+ * each one's real shape against source — this is deliberately not the full
+ * `component-layer.md` 15-component sketch yet.
+ */
+export const COMPONENT_CATALOG = {
+  button: {
+    radius: { type: 'dimension', defaultFrom: 'radius.control' },
+    'padding-x': { type: 'dimension', defaultFrom: 'space.4' },
+    'padding-y': { type: 'dimension', defaultFrom: 'space.2' },
+  },
+};
+
 /** Reserved mode dimension names (docs/architecture/ir.md §reserved-mode-dimensions) — names only, every dimension stays optional. */
 export const RESERVED_MODE_DIMENSIONS = ['color-scheme', 'density', 'contrast', 'motion', 'platform'];
 

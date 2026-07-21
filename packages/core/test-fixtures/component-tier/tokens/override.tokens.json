@@ -1,0 +1,7 @@
+{
+  "component": {
+    "button": {
+      "radius": { "$type": "dimension", "$value": "2px" }
+    }
+  }
+}

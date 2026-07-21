@@ -10,7 +10,7 @@
  * disabled/inverse). See docs/architecture/ir.md#the-semantic-contract.
  */
 
-import { COLOR_ROLES, PROVENANCE, comboKey } from '@transtyle/ir';
+import { COLOR_ROLES, PROVENANCE, comboKey, COMPONENT_CATALOG } from '@transtyle/ir';
 import { mix, contrastRatio, contrastPick, clampChromaToGamut } from './color.js';
 
 const S = 'semantic.color.';
@@ -212,6 +212,19 @@ export function derive(normalized, config, diagnostics) {
         h: (primary.h + HUE_OFFSETS[i] + 360) % 360,
         alpha: 1,
       }), 'categorical-palette', ['primary.solid']);
+    }
+
+    // --- Component tier (C2, docs/plan/component-tier.md): resolve-or-fill
+    // from COMPONENT_CATALOG. Component tokens default from semantic tokens
+    // — an empty `component.*` tier still compiles, the same guarantee every
+    // other resolve-or-fill slot in the catalog already gives. An authored
+    // `component.<name>.<token>` always wins: the generic collectTokens walk
+    // (packages/ir) already carries it through untouched before DERIVE runs,
+    // same as any other tier — nothing tier-specific needed for that half.
+    for (const [name, tokens] of Object.entries(COMPONENT_CATALOG)) {
+      for (const [tokenName, { type, defaultFrom }] of Object.entries(tokens)) {
+        resolve(ctx, `component.${name}.${tokenName}`, type, () => get(map, `semantic.${defaultFrom}`), `alias(${defaultFrom})`, [defaultFrom]);
+      }
     }
   }
 
