@@ -39,7 +39,7 @@ Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir
 - [x] **T3** — Migrate all five exporters, examples, demos to the revised names; dead-vocabulary guard added to `check-sync` (no old slot name survives anywhere). Landed together with T2 (see worklog: they can't be verified independently — the engine and the token files/exporters that speak its vocabulary have to change in the same buildable commit).
 - [x] **T4** — css-variables exporter: the grid-complete conformance dump (+ demo projects, all five surfaces).
 - [x] **T5** — Permanent ground-truth scripts (`check-fixtures`, `check-determinism`, `check:all`) + GitHub Actions CI.
-- [ ] **T6** — CLI `explain` / `init` / `add` (+ `check-cli` golden tests).
+- [x] **T6** — CLI `explain` / `init` / `add` (+ `check-cli` golden tests).
 - [ ] **T7** — Role archetypes: custom roles derive the full grid and export to open-role targets (Cathode's `crt-amber` as showcase).
 - [ ] **T8** — Multi-dimension modes + reserved dimensions (`density` worked example on Acme).
 - [ ] **T9** — **Radix Themes exporter** — the grid's designated acceptance test (its 12 steps consume every grid column); clean attempt №1 toward re-freezing the catalog.

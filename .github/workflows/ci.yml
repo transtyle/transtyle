@@ -21,6 +21,7 @@ jobs:
       - run: npm run check:grid
       - run: npm run check:fixtures
       - run: npm run check:determinism
+      - run: npm run check:cli
       - run: npm run site:build
 
   demo-projects:

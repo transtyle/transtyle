@@ -1,5 +1,7 @@
 # CLI specification
 
+> **Status:** `build`, `check`, `explain`, `init`, `add` are implemented (`packages/cli/src/main.js`; golden-tested by `scripts/check-cli.mjs`) — a real subset of the full surface below, not yet the whole vision. Implemented `init` scaffolds a config + `tokens/brand.tokens.json` non-interactively (no `--yes` flag needed, there's no interactive mode yet); `add <target>` validates against the CLI's own exporter registry and read-modify-writes the config; `explain <slot> [--mode <name>]` prints the resolved value, provenance, and rule inputs recursively (see the corrected example below — no `--target` filtering or WCAG candidate list yet, and there's no per-token file:line tracking in provenance). `--out`, `--frozen`, `--dry-run`, `--json`, `import`, `diff`, `migrate` remain specced, not implemented.
+
 ## Design corrections from the original vision
 
 The pitched invocation was `npx @transtyle/translate bootstrap 5.3.8`. Three changes, each deliberate:
@@ -33,16 +35,21 @@ Phase 2+: `transtyle preview` (local themed preview server), `transtyle doc <tar
 
 ## `explain` — the trust command
 
-The feature that makes derivation acceptable. Example output shape:
+The feature that makes derivation acceptable. Real output, implemented today (accepts the slot with or without the `semantic.`/`semantic.color.` prefix; `--mode` selects a mode other than the DS's default):
 
 ```
-$ transtyle explain semantic.color.primary.on-solid --target bootstrap
-semantic.color.primary.on-solid = oklch(1 0 0)  [#ffffff]
- └─ derived by rule contrast-pick@standard@1
-    inputs: semantic.color.primary.solid = oklch(0.55 0.18 255)   ← authored tokens/brand.tokens.json:6
-    candidates: #fff (5.9:1 ✓), #000 (3.5:1 ✗) — selected #fff (WCAG AA)
- └─ bootstrap@5.3 profile → $btn-color, --bs-btn-color   [class: native]
+$ transtyle explain primary.on-tint
+semantic.color.primary.on-tint = oklch(0.48 0.162 255)  [#005bb6]
+ └─ derived by rule contrast-pick(subtle)@standard@1
+    inputs: semantic.color.primary.tint = oklch(0.95 0.017 255)  [#e7effa]
+     └─ derived by rule mix-toward-surface(0.92)@standard@1
+        inputs: semantic.color.primary.solid = oklch(0.55 0.18 255)  [#026fd7]
+         └─ aliased → option.color.blue.600
+        inputs: semantic.color.elevation.1.surface = oklch(0.985 0.003 255)  [#f9fafc]
+         └─ aliased → option.color.gray.50
 ```
+
+An unknown slot exits 2 and lists the 5 closest catalog names (Levenshtein distance) instead of a bare error — e.g. asking for the pre-revision `primary.subtle` surfaces `primary.tint`, `primary.outline`, `primary.on-tint`. `--target` filtering, per-token file:line provenance, and the WCAG candidate list shown in the original mockup above remain specced.
 
 ## Behavioral contracts
 

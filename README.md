@@ -50,7 +50,7 @@ npm run dev -w cathode-demo-storybook  # a phosphor-green Storybook, port 6201
 
 A second, deliberately hostile example lives in [examples/cathode/](examples/cathode/): a dark-native CRT terminal DS with its own vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`) bound to the semantic catalog through one-line aliases — the pattern for compiling *uncommon* design systems.
 
-Full design-target CLI (`init`, `add`, `explain`, `diff`, version pinning) is specced in [docs/specs/cli.md](docs/specs/cli.md); the skeleton implements `build` and `check`.
+The full design-target CLI is specced in [docs/specs/cli.md](docs/specs/cli.md); `build`, `check`, `explain`, `init`, and `add` are implemented today (`npx transtyle init` scaffolds a project, `npx transtyle explain <slot>` prints its provenance chain) — `diff`, `import`, `preview`, version pinning remain specced.
 
 ## Documentation
 

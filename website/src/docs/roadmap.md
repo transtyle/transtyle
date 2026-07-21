@@ -26,7 +26,7 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | Per-example demo projects (`examples/*/demo/*`): the same fake app per target, npm-run-dev-able | ✅ consume `dist/` only |
 | Target instances (one exporter, many configs) | ✅ |
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
-| CLI: `build`, `check`, `--cwd` | ✅ |
+| CLI: `build`, `check`, `explain`, `init`, `add`, `--cwd` | ✅ golden-tested (`check:cli`) |
 | Examples: Acme (minimal), Cathode (hostile) | ✅ |
 | Ground-truth checks: catalog completeness + frozen fixture values (`check:grid`), Phase 0 fixture diffing (`check:fixtures`), byte-for-byte determinism (`check:determinism`) — chained as `check:all` | ✅ |
 | CI (GitHub Actions): every check above + site build + a matrix build of all 12 demo projects, on every push/PR | ✅ |
@@ -40,7 +40,7 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 | Feature | Where the design lives |
 |---|---|
 | Exporters: Radix Themes (the role grid's acceptance test) | `docs/specs/exporters/`, `docs/plan/catalog-revision.md` |
-| CLI: `init`, `add`, `explain`, `diff`, `import`, `preview`, `migrate` | `docs/specs/cli.md` |
+| CLI: `diff`, `import`, `preview`, `migrate`; richer `init` (interactive) and `explain` (`--target`) | `docs/specs/cli.md` |
 | Role archetypes (custom color roles that derive the full grid) | `docs/architecture/ir.md`, `docs/plan/catalog-revision.md` |
 | Derivation `overrides`, user rule expressions, `autoDark` audit flow | `docs/architecture/derivation.md` |
 | Importers (Figma variables, Tailwind config, Bootstrap Sass) | ADR-0008 |
