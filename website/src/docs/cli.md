@@ -31,6 +31,16 @@ Per instance, emits the exporter's artifacts plus `report.json` (schema-versione
 
 The pipeline minus EMIT — same code path, guaranteed to agree with real builds. Runs schema validation, alias/cycle detection, mode validation, WCAG contrast checks, and coverage computation, writing nothing.
 
+### `--json`
+
+`check` only. Prints the full diagnostics array and per-target coverage to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
+
+```bash
+npx transtyle check --json
+# { "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "..." }, ... ],
+#   "targets": [ { "target": "shadcn", "coverage": [ ... ] }, ... ] }
+```
+
 ### `--cwd <dir>`
 
 Run against a project directory from anywhere: `transtyle build --cwd examples/cathode`.

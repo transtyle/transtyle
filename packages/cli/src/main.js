@@ -34,6 +34,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--cwd') args.cwd = path.resolve(argv[++i] ?? '.');
     else if (a === '--mode') args.mode = argv[++i];
+    else if (a === '--json') args.json = true;
     else if (a === '--help' || a === '-h') args.help = true;
     else if (a.startsWith('--')) { console.error(`Unknown flag: ${a}`); process.exit(2); }
     else if (!args.command) args.command = a;
@@ -53,6 +54,7 @@ Usage:
 Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
   --mode <name>                   mode to resolve for (explain only; default: the DS's default mode)
+  --json                          check only: also print a machine-readable report to stdout
 `;
 
 const ICONS = { error: '✖', warning: '⚠', info: 'ℹ' };
@@ -98,6 +100,15 @@ async function cmdBuildOrCheck(args) {
     const bar = ['native', 'derived', 'approximated', 'dropped', 'unsupported'].map(pct).filter(Boolean).join(' · ');
     console.error(`\n${r.target}  ${bar}`);
     if (emit) for (const f of r.files) console.error(`  ↳ ${f}`);
+  }
+
+  // Human logs → stderr (above); requested data → stdout (docs/specs/cli.md
+  // "Behavioral contracts"). `check --json` is the only current consumer.
+  if (!emit && args.json) {
+    console.log(JSON.stringify({
+      diagnostics: diagnostics.items,
+      targets: results.map((r) => ({ target: r.target, coverage: r.coverage })),
+    }, null, 2));
   }
 
   const failOn = config.check?.failOn ?? 'error';

@@ -43,7 +43,7 @@ Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir
 - [x] **T7** — Role archetypes: custom roles derive the full grid and export to open-role targets (Cathode's `crt-amber` as showcase).
 - [x] **T8** — Multi-dimension modes + reserved dimensions (`density` worked example on Acme).
 - [x] **T9** — **Radix Themes exporter** — the grid's designated acceptance test (its 12 steps consume every grid column); shipped with zero catalog amendments, validating the grid as a real universal projection.
-- [ ] **T10** — DTCG validation UX (new stable diagnostic codes + `check --json`).
+- [x] **T10** — DTCG validation UX (new stable diagnostic codes + `check --json`).
 - [ ] **T11** — The real-DS run: adopt an external open design system via the binding-layer playbook; practitioner review; Phase 1 exit.
 
 **Exit:** a real design system compiles to all reference targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — *Progress 2026-07-20: both example DSs compile to all five shipped targets and render in the demo projects; the sequence above carries the rest.*

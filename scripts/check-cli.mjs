@@ -20,7 +20,7 @@ const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-cli-'));
 let failures = 0;
 function run(args) {
   const r = spawnSync('node', [cli, ...args], { encoding: 'utf8' });
-  return { code: r.status ?? 1, out: (r.stdout ?? '') + (r.stderr ?? '') };
+  return { code: r.status ?? 1, out: (r.stdout ?? '') + (r.stderr ?? ''), stdout: r.stdout ?? '' };
 }
 function expect(label, cond, detail) {
   if (!cond) { console.error(`✖ ${label}${detail ? ` — ${detail}` : ''}`); failures++; }
@@ -64,6 +64,19 @@ try {
   expect('explain: unknown slot suggests alternatives', r.out.includes('Closest matches:'));
 } finally {
   rmSync(dir, { recursive: true, force: true });
+}
+
+// ---------- T10: DTCG validation diagnostics, --json ----------
+{
+  const fixture = join(root, 'packages/core/test-fixtures/dtcg-validation');
+  const r = run(['check', '--cwd', fixture, '--json']);
+  expect('check --json: fails on the fixture\'s deliberate errors (exit 1)', r.code === 1, `exit ${r.code}`);
+  for (const code of ['TST1305', 'TST1302', 'TST1306', 'TST1304', 'TST1105']) {
+    expect(`check --json: reports ${code}`, r.out.includes(`"${code}"`), r.out);
+  }
+  expect('check --json: prints a parseable JSON report', (() => {
+    try { return Array.isArray(JSON.parse(r.stdout).diagnostics); } catch { return false; }
+  })());
 }
 
 if (failures) {

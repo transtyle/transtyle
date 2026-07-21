@@ -29,7 +29,8 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | Per-example demo projects (`examples/*/demo/*`): the same fake app per target, npm-run-dev-able | ✅ consume `dist/` only |
 | Target instances (one exporter, many configs) | ✅ |
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
-| CLI: `build`, `check`, `explain`, `init`, `add`, `--cwd` | ✅ golden-tested (`check:cli`) |
+| CLI: `build`, `check`, `explain`, `init`, `add`, `--cwd`, `check --json` | ✅ golden-tested (`check:cli`) |
+| DTCG structural validation: unrecognized `$type`, missing `$value`, tier violations, foreign `$extensions` namespaces | ✅ new stable codes (`docs/specs/validation-and-coverage.md`), fixture-tested |
 | Examples: Acme (minimal), Cathode (hostile) | ✅ |
 | Ground-truth checks: catalog completeness + frozen fixture values (`check:grid`), Phase 0 fixture diffing (`check:fixtures`), byte-for-byte determinism (`check:determinism`) — chained as `check:all` | ✅ |
 | CI (GitHub Actions): every check above + site build + a matrix build of all 12 demo projects, on every push/PR | ✅ |

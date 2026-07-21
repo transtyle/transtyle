@@ -1,0 +1,19 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "dtcg-validation-fixture",
+  "tokens": [
+    "tokens/valid.tokens.json",
+    "tokens/violations.tokens.json"
+  ],
+  "modes": {
+    "color-scheme": { "values": ["light"], "default": "light" }
+  },
+  "derivation": {
+    "rules": "standard@1",
+    "autoDark": false,
+    "require": ["semantic.color.primary"]
+  },
+  "targets": {
+    "css-variables": { "output": "dist/css-variables" }
+  }
+}

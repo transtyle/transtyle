@@ -1,0 +1,18 @@
+{
+  "weird-tier": {
+    "$type": "color",
+    "oops": { "$value": "oklch(0.5 0.1 200)" }
+  },
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "empty-leaf": { "$type": "dimension" },
+      "custom-typed": { "$value": "42vw", "$type": "custom-vendor-unit" },
+      "with-foreign-ext": {
+        "$value": "oklch(0.6 0.1 100)",
+        "$extensions": { "com.example.thing": { "note": "not a transtyle namespace" } }
+      },
+      "dangling-alias": { "$value": "{semantic.color.does.not.exist}" }
+    }
+  }
+}

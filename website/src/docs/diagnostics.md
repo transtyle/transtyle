@@ -22,10 +22,18 @@ Transtyle prefers surprising you *loudly* over failing silently. This page colle
 | `TST1108` | warning | A mode value was overridden by a later layer | Confirm the layer order is intentional |
 | `TST1109` | error | Mode-scoped layer targets a mode not declared in `modes` | Declare it, or fix the typo |
 | `TST1110` | error | Mode-scoped layer targets more than one dimension | One dimension per layer |
+| `TST1111` | warning | `$extensions.transtyle.role.archetype` isn't `brand`/`status`/`neutral` | The role still joins the grid regardless — fix the value, or ignore if intentional |
 | `TST1201` | error | `semantic.color.primary.solid` missing | Author your brand color — it's the one non-negotiable input |
 | `TST1202` | error | A token in `derivation.require` was derived, not authored | Author it, or remove it from `require` |
+| `TST1203` | warning | A role archetype has no authored `.solid` in a given mode | Author `<name>.solid` for that mode, or drop the archetype extension |
 | `TST1301` | error | Requested target instance isn't in the config | Check instance names in `targets` |
+| `TST1302` | error | A token declares `$type` but has neither `$value` nor child tokens | Add the missing `$value`, or remove the leftover node |
+| `TST1304` | info | An `$extensions` namespace outside `transtyle.*` | Nothing to fix — carried through untouched, informational only |
+| `TST1305` | warning | A top-level group isn't `option`/`semantic`/`component` | Move the tokens under the right tier, or fix the typo |
+| `TST1306` | warning | A token's `$value` has an unrecognized `$type` | Use a DTCG type the IR understands, or accept it's carried opaque |
 | `TST2101` | warning | Contrast below the configured standard (measured ratio printed) | Adjust the color, or accept the warning knowingly |
+
+`TST1303` isn't a separate code — an alias to a non-existent path is `TST1105` above; it's part of the same "authoring mistake" family the DTCG validation pass (T10) documents together.
 
 ## Surprising-but-correct behaviors
 
