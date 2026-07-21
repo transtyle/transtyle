@@ -73,9 +73,9 @@ Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); delib
 
 - [x] **C1** — Cross-ecosystem component-tier study ([docs/findings/component-tier-study.md](docs/findings/component-tier-study.md), 6 systems) — **verdict: not convergent.** Only PrimeNG groups shared component tokens into named objects; Material 3/Fluent/Chakra use per-component namespaces, Spectrum/Ant use flat shared vocabularies. All of `field`/`list`/`navigation`/`overlay`/`content` stay exporter-private; **C7 is skipped.** The one convergent pattern (component tokens alias a lower semantic tier) is exactly what C2 built.
 - [x] **C2** — Component-tier engine resolution: `component.*` actually resolves (empty tier still compiles; authored always wins), independent of C1.
-- [ ] **C3** — `exporter-primeng`: generic severity-grid mapper + ramp projector, proven on Button.
-- [ ] **C4** — Extend the mapper across ~25–35 severity-colored PrimeNG components via shape descriptors.
-- [ ] **C5** — Exporter-private archetype helpers (`field`/`list`/`navigation`/`overlay`) + structural residue components.
+- [x] **C3** — `exporter-primeng`: generic severity-grid mapper (`mapSeverityGrid`) + 11-step ramp projector, proven on Button (`packages/exporter-primeng`). Not registered in the CLI yet (C6).
+- [x] **C4** — Extended the mapper to Tag/Badge/Message/InlineMessage — verified against real source, not the ~25-35 estimate: most originally-assumed severity-colored components (Checkbox/RadioButton/ToggleSwitch/SelectButton/ToggleButton/SplitButton/ProgressBar/Slider/Knob/Rating/Chip) turned out to be field-shaped or primary-anchored-only instead. See [component-tier-study.md](docs/findings/component-tier-study.md)-adjacent worklog for the corrected shape breakdown.
+- [x] **C5** — Exporter-private archetype helpers (`field`/`list`/`navigation`/`overlay`/`content`) shipped, each used by ≥1 real component (Button/Listbox/Menu/Popover/Dialog); structural residue (DataTable, Galleria, Tree, ...) marked `unsupported` with an honest coverage note.
 - [ ] **C6** — Official launch: CLI registry, docs, demo projects for all four examples (first Angular demo profile in the repo).
 - [x] ~~**C7** — Promote confirmed archetype groups into the shared semantic catalog~~ — **skipped: C1 found no convergence.** Exporter-private is the permanent, correct end state for all five groups. Reopens only if a second component-heavy exporter independently needs the identical grouping.
 

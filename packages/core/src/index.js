@@ -12,7 +12,7 @@ import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 
-export { formatColor, formatHslTriplet, formatHex, contrastRatio } from './color.js';
+export { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 export { Diagnostics } from './diagnostics.js';
 
 /**
