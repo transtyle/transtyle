@@ -8,7 +8,7 @@ Transtyle treats documentation drift as a defect. **A feature is not done until 
 2. **The specs** — `docs/` (architecture, specs, ADRs). If the change alters a design decision, that's a new ADR or an amendment to the affected spec, not a silent divergence. Findings made during implementation flow *back* into the specs, credited.
 3. **The website** — `website/src/docs/`. User-facing behavior changes update the relevant pages, including `roadmap.md`'s implemented/specced ledger and, when machine-visible surfaces change (codes, report schema, CLI), `ai-agents.md`.
 4. **The README** — the repo front door must never overpromise or underreport what works.
-5. **The examples** — `examples/acme` (minimal) and `examples/cathode` (hostile) must build cleanly and exercise the new behavior where it applies; their READMEs updated.
+5. **The examples** — `examples/acme` (minimal), `examples/cathode` (hostile), and the two real-DS adoptions `examples/govuk` and `examples/carbon` must build cleanly and exercise the new behavior where it applies; their READMEs updated.
 
 Review checklist for any PR: does `npx transtyle build` still produce byte-identical output on double-build? Do all internal doc links resolve? Does the roadmap ledger still tell the truth?
 

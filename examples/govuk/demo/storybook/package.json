@@ -1,0 +1,18 @@
+{
+  "name": "govuk-demo-storybook",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "transtyle build --cwd ../..",
+    "dev": "storybook dev -p 6101",
+    "prebuild": "transtyle build --cwd ../..",
+    "build": "storybook build"
+  },
+  "devDependencies": {
+    "@storybook/html-vite": "^9.0.0",
+    "@transtyle/cli": "*",
+    "storybook": "^9.0.0",
+    "vite": "^6.0.0"
+  }
+}

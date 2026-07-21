@@ -1,0 +1,62 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "solid": {
+          "$value": "{semantic.color.carbon.link-primary}",
+          "$description": "Carbon's $link-primary / $interactive / $button-primary all share Blue 60 (#0f62fe) — the one color that unambiguously anchors the brand across every Carbon core token group."
+        }
+      },
+      "secondary": {
+        "solid": {
+          "$value": "{semantic.color.carbon.button-secondary}",
+          "$description": "Carbon's own $button-secondary (Gray 80, #393939) — a real, named secondary role, unlike GOV.UK. Light mode only: the G100 theme's own $button-secondary value wasn't independently confirmed against the live source for this adoption, so dark mode falls back to this same value rather than guessing (see the findings ledger)."
+        }
+      },
+      "danger": {
+        "solid": { "$value": "{semantic.color.carbon.support-error}" }
+      },
+      "success": {
+        "solid": { "$value": "{semantic.color.carbon.support-success}" }
+      },
+      "warning": {
+        "solid": { "$value": "{semantic.color.carbon.support-warning}" }
+      },
+      "info": {
+        "solid": { "$value": "{semantic.color.carbon.support-info}" }
+      },
+      "neutral": {
+        "solid": {
+          "$value": "{option.color.gray.60}",
+          "$description": "Carbon's core tokens don't name a 'neutral brand' role either; Gray 60 (#6f6f6f, Carbon's $text-helper/$icon-secondary gray) is the closest authored anchor."
+        }
+      },
+      "text": {
+        "base": { "$value": "{semantic.color.carbon.text-primary}" },
+        "muted": { "$value": "{semantic.color.carbon.text-secondary}" }
+      },
+      "elevation": {
+        "0": { "surface": { "$value": "{semantic.color.carbon.background}" } },
+        "1": { "surface": { "$value": "{semantic.color.carbon.layer-01}" } }
+      },
+      "border": { "$value": "{semantic.color.carbon.border-subtle-00}" },
+      "ring": {
+        "$value": "{semantic.color.carbon.focus}",
+        "$description": "Carbon's own $focus token — another clean 1:1 mapping, and mode-aware out of the box (blue on White, white on G100)."
+      },
+      "link": {
+        "base": { "$value": "{semantic.color.carbon.link-primary}" },
+        "hover": { "$value": "{semantic.color.carbon.link-primary-hover}" },
+        "visited": { "$value": "{semantic.color.carbon.link-visited}" }
+      }
+    },
+    "radius": {
+      "md": {
+        "$type": "dimension",
+        "$value": "0rem",
+        "$description": "Carbon's core structural components (buttons, inputs, tiles) render square by default — a handful of components (tags, tooltips) use a small radius, but there's no single catalog-level radius.md that captures both, so this binds the dominant structural value."
+      }
+    }
+  }
+}

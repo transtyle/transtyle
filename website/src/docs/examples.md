@@ -1,12 +1,12 @@
 ---
 title: "Example walkthroughs"
-description: "Acme (minimal input) and Cathode (maximal weirdness)."
+description: "Acme (minimal input), Cathode (maximal weirdness), and two real, independently-designed systems: GOV.UK and Carbon."
 order: 10
 ---
 
 # Example walkthroughs
 
-Two example design systems live in the repo, chosen as opposites: Acme shows the **minimal-input** promise; Cathode shows the **maximal-weirdness** tolerance. Between them they exercise every implemented feature.
+Four example design systems live in the repo. Acme and Cathode are invented, chosen as opposites — minimal input vs. maximal weirdness. [GOV.UK](#gov-uk-a-real-design-system) and [Carbon](#carbon-a-real-design-system) are real, published, independently-designed systems adopted through the same [binding-layer playbook](/docs/adopt-existing/) — the project's **T11 "real-DS run"**, proof the catalog holds up against systems nobody on this project designed.
 
 ## Acme — the minimal example
 
@@ -14,7 +14,7 @@ Two example design systems live in the repo, chosen as opposites: Acme shows the
 
 ```bash
 cd examples/acme
-npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook
+npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook, css-variables, radix
 ```
 
 What to study:
@@ -38,7 +38,7 @@ Acme is also the conformance fixture from the Phase 0 design exercise; `examples
 
 ```bash
 cd examples/cathode
-npx transtyle build          # same targets as Acme, radically different values
+npx transtyle build          # same seven targets as Acme, radically different values
 ```
 
 What to study:
@@ -49,10 +49,47 @@ What to study:
 - **The honest limitation.** Derived `info` is conventionally blue — coherent, wrong for the aesthetic, and fixed by one authored line. Derivation has no taste; that's your job.
 - **A CSS curiosity.** `--radius: 0rem` makes shadcn's `calc(var(--radius) - 4px)` negative; browsers reject negative radii and render 0 — the correct brutalist result by accident of CSS.
 
+## GOV.UK — a real design system
+
+`examples/govuk` adopts the [GOV.UK Design System](https://design-system.service.gov.uk/styles/colour/) — the UK government's public-service design system — via the binding-layer pattern: its published colors live verbatim in `option.*`, its own "functional colour" names (`govuk.brand`, `govuk.error`, `govuk.focus`, …) are custom semantic tokens, and `transtyle.bindings.tokens.json` maps catalog slots onto them.
+
+```bash
+cd examples/govuk
+npx transtyle build          # same seven targets as Acme/Cathode
+```
+
+What to study:
+
+- **A clean 1:1 mapping, found by accident.** GOV.UK's iconic yellow keyboard-focus color maps directly onto the catalog's `ring` slot — no judgment call needed.
+- **Honest gaps.** GOV.UK's functional-colour set has no distinct `secondary`, `accent`, `warning`, or `info` role — those four are left unbound and derive from `primary` via the standard rule pack, exactly the "don't translate everything on day one" guidance in the [adoption playbook](/docs/adopt-existing/).
+- **A single-mode config, on purpose.** GOV.UK's public system has no published dark theme, so `modes.color-scheme` declares only `"light"` — legal, and proof a mode dimension is optional infrastructure, not a requirement.
+- **A licensing limitation, not a compiler one.** GOV.UK's real typeface (GDS Transport) is licensed to crown services only; the demo projects render in GOV.UK's own documented `arial` fallback instead.
+- **Radius 0 is authentic here too** — but for a different reason than Cathode: it's GOV.UK's actual, deliberate flat aesthetic, not an invented quirk.
+
+Full reasoning for every binding decision: [`docs/findings/govuk-adoption.md`](https://github.com/julien-deramond/transtyle/blob/main/docs/findings/govuk-adoption.md).
+
+## Carbon — a real design system
+
+`examples/carbon` adopts [IBM's Carbon Design System](https://carbondesignsystem.com/elements/color/tokens/) the same way, alongside GOV.UK on purpose: one government system with no dark theme, one enterprise system with a real one.
+
+```bash
+cd examples/carbon
+npx transtyle build          # same seven targets
+```
+
+What to study:
+
+- **Better native role coverage than GOV.UK.** Carbon has real, named tokens for `danger`/`success`/`warning`/`info` (its "Support" group) *and* a real `secondary` (`$button-secondary`) — bound directly, not derived.
+- **Real per-mode tokens, not synthetic dark mode.** Carbon ships four themes (White, G10, G90, G100); this example binds White → light, G100 → dark, with every color's actual documented value in both modes via `$extensions.transtyle.modes` — `$focus`, `$link-primary`, and the four Support colors all have real, distinct light/dark values.
+- **A genuinely open type system.** IBM Plex Sans/Mono are open-source and load for real in the demo projects — unlike GOV.UK's licensed font.
+- **A flagged, not guessed, gap.** `secondary`'s dark-mode value falls back to its light value because Carbon's G100 `$button-secondary` wasn't independently re-verified against the live source for this pass — the honest alternative to inventing a plausible-looking hex.
+
+Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/julien-deramond/transtyle/blob/main/docs/findings/carbon-adoption.md).
+
 ## See the themes on real frameworks
 
-Each example ships five npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, and [daisyUI](/docs/exporter-daisyui/); an [ECharts](/docs/exporter-echarts/) dashboard; and a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme. Every project consumes only the compiled `dist/` artifacts. From the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4104, 6101; Cathode: 4201–4204, 6201).
+Each example ships seven npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), and [`@radix-ui/themes`](/docs/exporter-radix/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. Every project consumes only the compiled `dist/` artifacts. From the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4106, 6101; Cathode: 4201–4206, 6201; GOV.UK: 4301–4306, 6301; Carbon: 4401–4406, 6401).
 
 ## Using them as templates
 
-Copy either example's structure for your own system: Acme's two-file shape for solo/hand-maintained systems, Cathode's three-layer shape for teams with generated tokens or split ownership. Then follow the [authoring workflow](/docs/derivation/#practical-workflow): author your opinions, build, read the report, override selectively.
+Copy any example's structure for your own system: Acme's two-file shape for solo/hand-maintained systems, Cathode's three-layer shape for teams with generated tokens or split ownership, GOV.UK/Carbon's binding-layer shape for adopting an existing published system without renaming it. Then follow the [authoring workflow](/docs/derivation/#practical-workflow): author your opinions, build, read the report, override selectively.

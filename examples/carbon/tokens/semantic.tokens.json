@@ -1,0 +1,63 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "carbon": {
+        "background": {
+          "$value": "{option.color.white}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.100}" } } }
+        },
+        "layer-01": {
+          "$value": "{option.color.gray.10}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.90}" } } }
+        },
+        "text-primary": {
+          "$value": "{option.color.gray.100}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.10}" } } }
+        },
+        "text-secondary": {
+          "$value": "{option.color.gray.70}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.30}" } } }
+        },
+        "border-subtle-00": {
+          "$value": "{option.color.gray.20}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.80}" } } }
+        },
+        "focus": {
+          "$value": "{option.color.blue.60}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.white}" } } }
+        },
+        "link-primary": {
+          "$value": "{option.color.blue.60}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.blue.40}" } } }
+        },
+        "link-primary-hover": {
+          "$value": "{option.color.blue.70}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.blue.30}" } } }
+        },
+        "link-visited": {
+          "$value": "{option.color.purple.60}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.purple.40}" } } }
+        },
+        "button-secondary": { "$value": "{option.color.gray.80}" },
+        "support-error": {
+          "$value": "{option.color.red.60}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.red.50}" } } }
+        },
+        "support-success": {
+          "$value": "{option.color.green.50}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.green.40}" } } }
+        },
+        "support-warning": { "$value": "{option.color.yellow.30}" },
+        "support-info": {
+          "$value": "{option.color.blue.70}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.blue.50}" } } }
+        }
+      }
+    },
+    "font": {
+      "sans": { "$value": "{option.font.sans}" },
+      "mono": { "$value": "{option.font.mono}" }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "govuk-demo-echarts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "transtyle build --cwd ../..",
+    "dev": "vite --port 4304",
+    "prebuild": "transtyle build --cwd ../..",
+    "build": "vite build",
+    "preview": "vite preview --port 4304"
+  },
+  "dependencies": {
+    "echarts": "^5.5.0"
+  },
+  "devDependencies": {
+    "@transtyle/cli": "*",
+    "vite": "^6.0.0"
+  }
+}

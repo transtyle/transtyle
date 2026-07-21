@@ -1,0 +1,48 @@
+/*
+ * Page shell for the ECharts demo. The shell's colors are set at runtime from
+ * the generated theme JSON itself (backgroundColor / textStyle) — the page
+ * literally wears the chart theme; no hand-copied values.
+ */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--demo-font, system-ui, sans-serif);
+  background: var(--demo-bg, #fff);
+  color: var(--demo-text, #111);
+  transition: background-color 0.2s, color 0.2s;
+}
+.demo-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 13px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  opacity: 0.9;
+}
+.demo-chrome span { opacity: 0.65; }
+.demo-chrome button {
+  margin-left: auto;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 6px;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+}
+.page { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+.page-head h1 { margin: 0; font-size: 1.4rem; }
+.page-head p { margin: 0.25rem 0 1.5rem; opacity: 0.65; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 1.25rem;
+}
+.panel {
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-radius: 10px;
+  padding: 1rem;
+}
+.panel h2 { margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 600; opacity: 0.85; }
+.chart { width: 100%; height: 300px; }

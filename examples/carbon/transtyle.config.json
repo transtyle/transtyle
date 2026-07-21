@@ -1,0 +1,33 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "carbon-design-system",
+  "tokens": [
+    "tokens/option.tokens.json",
+    "tokens/semantic.tokens.json",
+    "tokens/transtyle.bindings.tokens.json"
+  ],
+  "modes": {
+    "color-scheme": {
+      "values": ["light", "dark"],
+      "default": "light"
+    }
+  },
+  "derivation": {
+    "rules": "standard@1",
+    "autoDark": false,
+    "require": ["semantic.color.primary"]
+  },
+  "targets": {
+    "shadcn": { "output": "dist/shadcn", "options": { "era": "tailwind-v4" } },
+    "echarts": { "output": "dist/echarts" },
+    "daisyui": { "output": "dist/daisyui" },
+    "bootstrap": { "output": "dist/bootstrap" },
+    "storybook": { "output": "dist/storybook", "options": { "previewTargets": ["shadcn", "daisyui"] } },
+    "css-variables": { "output": "dist/css-variables" },
+    "radix": { "output": "dist/radix" }
+  },
+  "check": {
+    "failOn": "error",
+    "contrast": { "standard": "wcag21-aa" }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "blue": {
+        "primary": { "$value": "#1d70b8" },
+        "tint-25": { "$value": "#5694ca" },
+        "tint-50": { "$value": "#8eb8dc" },
+        "tint-80": { "$value": "#d2e2f1" },
+        "tint-95": { "$value": "#f4f8fb" },
+        "shade-25": { "$value": "#16548a" },
+        "shade-50": { "$value": "#0f385c" }
+      },
+      "green": {
+        "primary": { "$value": "#0f7a52" },
+        "tint-80": { "$value": "#cfe4dc" },
+        "shade-25": { "$value": "#0b5c3e" }
+      },
+      "red": {
+        "primary": { "$value": "#ca3535" },
+        "tint-80": { "$value": "#f4d7d7" },
+        "shade-25": { "$value": "#982828" }
+      },
+      "yellow": {
+        "primary": { "$value": "#ffdd00" }
+      },
+      "purple": {
+        "primary": { "$value": "#54319f" }
+      },
+      "black": {
+        "primary": { "$value": "#0b0c0c" },
+        "tint-25": { "$value": "#484949" },
+        "tint-50": { "$value": "#858686" },
+        "tint-80": { "$value": "#cecece" },
+        "tint-95": { "$value": "#f3f3f3" }
+      },
+      "white": {
+        "primary": { "$value": "#ffffff" }
+      }
+    },
+    "font": {
+      "transport": {
+        "$type": "fontFamily",
+        "$value": ["GDS Transport", "arial", "sans-serif"]
+      }
+    }
+  }
+}

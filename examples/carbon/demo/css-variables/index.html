@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nimbus Tokens — css-variables · transtyle demo</title>
+  </head>
+  <body>
+    <!-- demo chrome (not part of the fake app) -->
+    <div class="demo-chrome">
+      <strong id="demo-brand">transtyle demo</strong>
+      <span>css-variables — the plugin-API reference exporter: every catalog slot, no framework in between</span>
+      <button id="demo-mode"></button>
+    </div>
+
+    <main class="page">
+      <header class="page-head">
+        <h1>Nimbus Tokens</h1>
+        <p>The complete resolved semantic catalog, rendered from <code>variables.transtyle.css</code> alone.</p>
+      </header>
+
+      <!-- a small sample built from raw vars, nothing framework-specific -->
+      <section class="sample">
+        <div class="sample-card">
+          <h2>Q2 growth report</h2>
+          <p class="muted">Generated 3 minutes ago</p>
+          <p>A card built entirely from <code>var(--color-*)</code> and <code>var(--radius-*)</code>.</p>
+          <div class="sample-actions">
+            <button class="btn btn-solid">Share</button>
+            <button class="btn btn-outline">Export</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Catalog, by family</h2>
+        <div id="families"></div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

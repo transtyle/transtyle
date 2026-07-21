@@ -1,0 +1,25 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "govuk": {
+        "text": { "$value": "{option.color.black.primary}" },
+        "secondary-text": { "$value": "{option.color.black.tint-25}" },
+        "link": { "$value": "{option.color.blue.tint-25}" },
+        "link-hover": { "$value": "{option.color.blue.shade-50}" },
+        "link-visited": { "$value": "{option.color.purple.primary}" },
+        "border": { "$value": "{option.color.black.tint-80}" },
+        "focus": { "$value": "{option.color.yellow.primary}" },
+        "focus-text": { "$value": "{option.color.black.primary}" },
+        "error": { "$value": "{option.color.red.primary}" },
+        "success": { "$value": "{option.color.green.primary}" },
+        "brand": { "$value": "{option.color.blue.primary}" },
+        "body-background": { "$value": "{option.color.white.primary}" },
+        "template-background": { "$value": "{option.color.blue.tint-95}" }
+      }
+    },
+    "font": {
+      "transport": { "$value": "{option.font.transport}" }
+    }
+  }
+}

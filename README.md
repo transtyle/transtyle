@@ -2,7 +2,7 @@
 
 > A design system compiler. Describe your design system once; compile it to every ecosystem.
 
-**Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a working implementation: the core pipeline and seven exporters (shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, css-variables — the plugin-API reference implementation — and Radix Colors/Themes), exercised end-to-end by the [Acme](examples/acme/) and [Cathode](examples/cathode/) examples and their runnable [demo projects](examples/acme/demo/). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
+**Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a working implementation: the core pipeline and seven exporters (shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, css-variables — the plugin-API reference implementation — and Radix Colors/Themes), exercised end-to-end by four examples and their runnable demo projects — two invented ([Acme](examples/acme/), [Cathode](examples/cathode/)) and two real, independently-designed systems adopted via the binding-layer pattern ([GOV.UK](examples/govuk/), [Carbon](examples/carbon/)). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
 
 ## What it is
 
@@ -49,6 +49,8 @@ npm run dev -w cathode-demo-storybook  # a phosphor-green Storybook, port 6201
 ```
 
 A second, deliberately hostile example lives in [examples/cathode/](examples/cathode/): a dark-native CRT terminal DS with its own vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`) bound to the semantic catalog through one-line aliases — the pattern for compiling *uncommon* design systems.
+
+Two more examples adopt **real, published design systems** nobody on this project designed — [examples/govuk/](examples/govuk/) (the UK government's [GOV.UK Design System](https://design-system.service.gov.uk/styles/colour/)) and [examples/carbon/](examples/carbon/) (IBM's [Carbon Design System](https://carbondesignsystem.com/elements/color/tokens/)) — the same binding-layer pattern as Cathode, this time against systems with real published token values and real accessibility/branding constraints. See each example's README and [`docs/findings/`](docs/findings/) for what mapped cleanly and what needed a judgment call.
 
 The full design-target CLI is specced in [docs/specs/cli.md](docs/specs/cli.md); `build`, `check`, `explain`, `init`, and `add` are implemented today (`npx transtyle init` scaffolds a project, `npx transtyle explain <slot>` prints its provenance chain) — `diff`, `import`, `preview`, version pinning remain specced.
 

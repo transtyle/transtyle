@@ -1,0 +1,52 @@
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "blue": {
+        "30": { "$value": "#a6c8ff" },
+        "40": { "$value": "#78a9ff" },
+        "50": { "$value": "#4589ff" },
+        "60": { "$value": "#0f62fe" },
+        "70": { "$value": "#0043ce" }
+      },
+      "red": {
+        "50": { "$value": "#fa4d56" },
+        "60": { "$value": "#da1e28" }
+      },
+      "green": {
+        "40": { "$value": "#42be65" },
+        "50": { "$value": "#24a148" }
+      },
+      "yellow": {
+        "30": { "$value": "#f1c21b" }
+      },
+      "purple": {
+        "40": { "$value": "#be95ff" },
+        "60": { "$value": "#8a3ffc" }
+      },
+      "gray": {
+        "10": { "$value": "#f4f4f4" },
+        "20": { "$value": "#e0e0e0" },
+        "30": { "$value": "#c6c6c6" },
+        "40": { "$value": "#a8a8a8" },
+        "50": { "$value": "#8d8d8d" },
+        "60": { "$value": "#6f6f6f" },
+        "70": { "$value": "#525252" },
+        "80": { "$value": "#393939" },
+        "90": { "$value": "#262626" },
+        "100": { "$value": "#161616" }
+      },
+      "white": { "$value": "#ffffff" }
+    },
+    "font": {
+      "sans": {
+        "$type": "fontFamily",
+        "$value": ["IBM Plex Sans", "system-ui", "sans-serif"]
+      },
+      "mono": {
+        "$type": "fontFamily",
+        "$value": ["IBM Plex Mono", "monospace"]
+      }
+    }
+  }
+}

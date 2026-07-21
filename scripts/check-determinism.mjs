@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'packages/cli/src/main.js');
-const examples = ['acme', 'cathode'];
+const examples = ['acme', 'cathode', 'govuk', 'carbon'];
 
 let failed = false;
 for (const name of examples) {

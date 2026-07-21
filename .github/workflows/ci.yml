@@ -37,12 +37,28 @@ jobs:
           - acme-demo-echarts
           - acme-demo-storybook
           - acme-demo-css-variables
+          - acme-demo-radix
           - cathode-demo-bootstrap
           - cathode-demo-shadcn
           - cathode-demo-daisyui
           - cathode-demo-echarts
           - cathode-demo-storybook
           - cathode-demo-css-variables
+          - cathode-demo-radix
+          - govuk-demo-bootstrap
+          - govuk-demo-shadcn
+          - govuk-demo-daisyui
+          - govuk-demo-echarts
+          - govuk-demo-storybook
+          - govuk-demo-css-variables
+          - govuk-demo-radix
+          - carbon-demo-bootstrap
+          - carbon-demo-shadcn
+          - carbon-demo-daisyui
+          - carbon-demo-echarts
+          - carbon-demo-storybook
+          - carbon-demo-css-variables
+          - carbon-demo-radix
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

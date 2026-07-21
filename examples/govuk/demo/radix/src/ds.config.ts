@@ -1,0 +1,9 @@
+// The only per-example file in this demo project (docs/specs/demo-app.md).
+export default {
+  label: 'GOV.UK',
+  defaultMode: 'light' as 'light' | 'dark',
+  // The Radix Themes preset this brand's `primary` role overrides (docs/specs/exporters/radix.md).
+  accentPreset: 'blue' as const,
+  // GDS Transport is a licensed, crown-service-only font — not publicly
+  // hosted, so no fontsHref here; GOV.UK's own fallback stack (arial) applies.
+};

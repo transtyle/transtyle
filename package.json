@@ -13,7 +13,7 @@
     "examples/*/demo/*"
   ],
   "scripts": {
-    "example:build": "transtyle build --cwd examples/acme && transtyle build --cwd examples/cathode",
+    "example:build": "transtyle build --cwd examples/acme && transtyle build --cwd examples/cathode && transtyle build --cwd examples/govuk && transtyle build --cwd examples/carbon",
     "example:shadcn": "transtyle build shadcn --cwd examples/acme",
     "example:check": "transtyle check --cwd examples/acme",
     "check:sync": "node scripts/check-sync.mjs",

@@ -1,0 +1,41 @@
+/*
+ * Nimbus Console — @radix-ui/themes, themed by the compiled brand.
+ * `<Theme accentColor="blue">` can only select one of Radix's own preset
+ * names (docs/specs/exporters/radix.md), so we override that preset's own
+ * custom properties with the compiled `primary` scale. `--gray-*` needs no
+ * override: the transtyle radix exporter already aliases `neutral` under
+ * that exact name, and importing it after Radix's own tokens is enough.
+ */
+@import '../../../dist/radix/radix-colors.transtyle.css';
+
+:root,
+.light,
+.light-theme,
+.dark,
+.dark-theme {
+  --blue-1: var(--primary-1);
+  --blue-2: var(--primary-2);
+  --blue-3: var(--primary-3);
+  --blue-4: var(--primary-4);
+  --blue-5: var(--primary-5);
+  --blue-6: var(--primary-6);
+  --blue-7: var(--primary-7);
+  --blue-8: var(--primary-8);
+  --blue-9: var(--primary-9);
+  --blue-10: var(--primary-10);
+  --blue-11: var(--primary-11);
+  --blue-12: var(--primary-12);
+  --blue-a1: var(--primary-a1);
+  --blue-a2: var(--primary-a2);
+  --blue-a3: var(--primary-a3);
+  --blue-a4: var(--primary-a4);
+  --blue-a5: var(--primary-a5);
+  --blue-a6: var(--primary-a6);
+  --blue-a7: var(--primary-a7);
+  --blue-a8: var(--primary-a8);
+  --blue-a9: var(--primary-a9);
+  --blue-a10: var(--primary-a10);
+  --blue-a11: var(--primary-a11);
+  --blue-a12: var(--primary-a12);
+  --blue-contrast: var(--primary-contrast);
+}

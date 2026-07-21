@@ -1,0 +1,62 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "solid": {
+          "$value": "{semantic.color.govuk.brand}",
+          "$description": "GOV.UK's govuk-functional-colour(\"brand\") — #1d70b8."
+        }
+      },
+      "danger": {
+        "solid": {
+          "$value": "{semantic.color.govuk.error}",
+          "$description": "GOV.UK's govuk-functional-colour(\"error\") — #ca3535."
+        }
+      },
+      "success": {
+        "solid": {
+          "$value": "{semantic.color.govuk.success}",
+          "$description": "GOV.UK's govuk-functional-colour(\"success\") — #0f7a52."
+        }
+      },
+      "neutral": {
+        "solid": {
+          "$value": "{option.color.black.tint-50}",
+          "$description": "GOV.UK's web-palette Black tint-50 (#858686) — no distinct 'neutral brand' functional colour exists, so this is the closest authored gray anchor."
+        }
+      },
+      "text": {
+        "base": { "$value": "{semantic.color.govuk.text}" },
+        "muted": { "$value": "{semantic.color.govuk.secondary-text}" }
+      },
+      "elevation": {
+        "0": { "surface": { "$value": "{semantic.color.govuk.body-background}" } },
+        "1": { "surface": { "$value": "{semantic.color.govuk.template-background}" } }
+      },
+      "border": { "$value": "{semantic.color.govuk.border}" },
+      "ring": {
+        "$value": "{semantic.color.govuk.focus}",
+        "$description": "GOV.UK's iconic yellow keyboard-focus state (#ffdd00) maps directly onto the catalog's ring slot — one of the cleanest 1:1 mappings found in this adoption."
+      },
+      "link": {
+        "base": { "$value": "{semantic.color.govuk.link}" },
+        "hover": { "$value": "{semantic.color.govuk.link-hover}" },
+        "visited": {
+          "$value": "{semantic.color.govuk.link-visited}",
+          "$description": "GOV.UK's functional-colour set doesn't define a distinct visited-link color; bound to the web palette's purple, matching the classic browser convention GOV.UK's own frontend historically used."
+        }
+      }
+    },
+    "font": {
+      "sans": { "$value": "{semantic.font.transport}" }
+    },
+    "radius": {
+      "md": {
+        "$type": "dimension",
+        "$value": "0rem",
+        "$description": "GOV.UK Design System components (buttons, inputs, panels) render with no border-radius — a deliberate, flat visual language, not a gap in the catalog."
+      }
+    }
+  }
+}

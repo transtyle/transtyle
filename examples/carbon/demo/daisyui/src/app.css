@@ -1,0 +1,8 @@
+/*
+ * Nimbus Console — daisyUI, themed ONLY by transtyle-built output.
+ * The generated file IS the Tailwind-native consumption path: its
+ * `@plugin "daisyui/theme"` blocks register both mode themes with daisyUI.
+ */
+@import "tailwindcss";
+@plugin "daisyui";
+@import "../../../dist/daisyui/daisyui.transtyle.css";
