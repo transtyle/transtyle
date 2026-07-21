@@ -13,6 +13,20 @@
 
 **Task states are tracked in the ROADMAP ledger** (a new "Component tier (prototype)" section, added in C1). Execute strictly in order unless a dependency note says otherwise — C2 explicitly does not block on C1.
 
+**Suggested model per task** (a judgment call, not a hard rule — re-evaluate if a task turns out harder or easier than it reads here):
+
+| Task | Suggested | Why |
+|---|---|---|
+| C1 — cross-ecosystem study | **Opus** | Open-ended synthesis across several documentation sources plus a genuine judgment call ("is this convergent or coincidental?") with long-term consequences (it gates C7). The highest-ambiguity, lowest-specification task in this plan — exactly where the strongest reasoning model earns its cost. |
+| C2 — engine resolution | **Sonnet** | Well-specified, mirrors an existing pattern (`rc`/`rd` resolve-or-fill) in a codebase already deeply understood this session. Design decisions are made in this doc; the work is careful, correct implementation, not judgment. |
+| C3 — severity-grid mapper + ramp projector | **Sonnet** | Adapts two already-proven techniques (the Radix ramp projection, the role-grid cell-name translation) to a new but structurally analogous target. Precedented, not novel. |
+| C4 — extend mapper across components | **Sonnet** (Haiku *not* recommended) | High-volume but low-complexity-per-item — writing ~25–35 small descriptors and verifying each against real source. Keep it at Sonnet rather than delegating to a faster/cheaper model: accuracy against real upstream data matters more than speed here, and shape variance between components ("Tag has no hover state") needs real reading comprehension per component, not just pattern repetition. |
+| C5 — archetype helpers + structural residue | **Sonnet** | Same category as C3/C4 — implementing an already-sketched design (proposal 0002 §4) for real. |
+| C6 — official launch (incl. first Angular demo) | **Sonnet**, with **Opus** as a fallback specifically for Angular-idiom debugging | The five-surface-sync mechanics are pure repetition of a pattern executed 8 times already this session. The one real unknown is Angular tooling conventions (new to this repo) — if that surfaces genuine framework-specific difficulty, escalate just that sub-problem, not the whole task. |
+| C7 — conditional promotion | **Sonnet** to implement, but treat the *decision* ("was the convergence bar really met?") as worth a second look — optionally by **Opus** — before committing, since it's catalog-shape-adjacent and harder to walk back once exporters depend on it | Mirrors T7/T8's difficulty level, which Sonnet already handled well this session; the promotion judgment itself is the one higher-stakes call in an otherwise mechanical task. |
+
+**On Fable:** I don't have solid, verified documentation of what Claude Fable is specifically tuned for — my system prompt lists it as a peer of Opus/Sonnet/Haiku in the current model family, without capability detail I can respond on confidently. Rather than guess, I'd check Anthropic's current model documentation for Fable's stated strengths before assigning it a task here; I'm not comfortable recommending it for anything specific in this plan without that grounding.
+
 ---
 
 ## C1 — The cross-ecosystem component-tier study

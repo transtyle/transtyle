@@ -10,6 +10,8 @@
 
 **Task states are tracked in the ROADMAP ledger** (checkboxes). Execute strictly in order unless the dependency notes say otherwise.
 
+**Retrospective note:** all tasks (T1–T11) were executed by Claude Sonnet 5, end to end, in-session — no task in this plan needed escalation to a stronger model. `docs/plan/component-tier.md` (the next plan, C1–C7) introduces a per-task "suggested model" convention going forward; nothing here was annotated retroactively since the work is already complete.
+
 ---
 
 ## T1 — Rewrite the IR spec to the revised catalog
