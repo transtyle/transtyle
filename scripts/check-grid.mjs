@@ -10,6 +10,9 @@
  *      fixture byte-for-byte, and that the migration changed vocabulary,
  *      not values, everywhere except the documented elevation-ladder
  *      refinement (see docs/worklog for the overlay/popover level change).
+ *  (c) role archetypes (T7): Cathode's `crt-amber` custom role (declared via
+ *      `$extensions.transtyle.role`) gets the full grid derived, exactly like
+ *      a built-in role — checked by compiling Cathode too.
  */
 import { compile } from '@transtyle/core';
 import { formatHex } from '@transtyle/core';
@@ -72,12 +75,29 @@ async function main() {
     if (got !== expected) errors.push(`frozen check: ${slot} expected ${expected}, got ${got}`);
   }
 
+  // (c) role archetypes (T7) — Cathode's crt-amber joins the grid like a built-in role.
+  const cathode = await compile({ cwd: 'examples/cathode', targets: [], emit: false, loadExporter });
+  if (cathode.diagnostics.errors.length) errors.push(`cathode compile errors: ${cathode.diagnostics.errors.map((e) => e.message).join('; ')}`);
+  if (!cathode.normalized.roleArchetypes.has('crt-amber')) {
+    errors.push('cathode: expected semantic.color.crt-amber to carry a role archetype extension');
+  }
+  const ARCHETYPE_CELLS = ['solid', 'solid-hover', 'solid-active', 'tint', 'tint-hover', 'outline', 'outline-hover', 'on-solid', 'on-tint', 'text', 'text-strong'];
+  for (const mode of ['light', 'dark']) {
+    const map = cathode.normalized.modes[mode];
+    if (!map) { errors.push(`cathode: mode "${mode}" missing`); continue; }
+    for (const cell of ARCHETYPE_CELLS) {
+      if (map.get(`semantic.color.crt-amber.${cell}`)?.value === undefined) {
+        errors.push(`cathode ${mode}: missing archetyped-role slot semantic.color.crt-amber.${cell}`);
+      }
+    }
+  }
+
   if (errors.length) {
     console.error(`✖ check-grid failed — ${errors.length} issue(s):\n`);
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log(`✔ check-grid: ${REQUIRED_SLOTS.length} catalog slots present in both modes; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly`);
+  console.log(`✔ check-grid: ${REQUIRED_SLOTS.length} catalog slots present in both modes; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes`);
 }
 
 main();

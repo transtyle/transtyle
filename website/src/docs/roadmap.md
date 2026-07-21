@@ -23,7 +23,8 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 | Bootstrap exporter (≥5.3): Sass path (`_variables` + `_maps`) **and** CSS-variable path | ✅ engine-exact vs the Phase 0 fixtures |
 | Storybook exporter (SB 8–9): chrome ThemeVars + sibling preview composition | ✅ |
 | css-variables exporter: the plugin-API reference implementation, full catalog as `--custom-properties` | ✅ 450+ variables on Acme, 100% native |
-| Radix Colors/Themes exporter: 12-step scales + alpha + contrast per role — the role grid's own acceptance test | ✅ only 2 of 12 steps needed a fresh mix; surfaced one honest gamut gap in `text-strong` (tracked, not yet fixed) |
+| Radix Colors/Themes exporter: 12-step scales + alpha + contrast per role — the role grid's own acceptance test | ✅ only 2 of 12 steps needed a fresh mix; surfaced (and fixed) a gamut-clamp gap in `text-strong` |
+| Role archetypes: custom `semantic.color.<name>` roles declaring `$extensions.transtyle.role` derive the full grid like a built-in and export to open-role targets (daisyUI, css-variables) | ✅ Cathode's `crt-amber` as showcase |
 | Per-example demo projects (`examples/*/demo/*`): the same fake app per target, npm-run-dev-able | ✅ consume `dist/` only |
 | Target instances (one exporter, many configs) | ✅ |
 | Coverage report (`report.json`) + diagnostics with stable codes | ✅ |
@@ -41,7 +42,6 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 | Feature | Where the design lives |
 |---|---|
 | CLI: `diff`, `import`, `preview`, `migrate`; richer `init` (interactive) and `explain` (`--target`) | `docs/specs/cli.md` |
-| Role archetypes (custom color roles that derive the full grid) | `docs/architecture/ir.md`, `docs/plan/catalog-revision.md` |
 | Derivation `overrides`, user rule expressions, `autoDark` audit flow | `docs/architecture/derivation.md` |
 | Importers (Figma variables, Tailwind config, Bootstrap Sass) | ADR-0008 |
 | Plugin packaging, conformance kit, third-party exporters | `docs/architecture/plugins.md` |

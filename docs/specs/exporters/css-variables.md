@@ -28,6 +28,10 @@ Mode polarity rule applies: `:root` always carries the **light** map, `[data-col
 
 Every slot is `native` — there is no target-specific translation to lose fidelity over; this is the IR itself, rendered as CSS.
 
+## Role archetypes (T7)
+
+No special-casing needed: custom roles declaring `$extensions.transtyle.role` (docs/architecture/ir.md §archetypes) get their full grid derived under `semantic.color.<name>.*` exactly like a built-in role, and this exporter already dumps every `semantic.*` slot it finds — an archetyped role's cells appear automatically, `native`, with no code change. See Cathode's `crt-amber` in `dist/css-variables/`.
+
 ## Ground-truth testing
 
 None needed beyond the compiler's own determinism guarantee: the output is a direct, lossless projection of the resolved token graph, verified by `scripts/check-grid.mjs` (catalog completeness) and the demo projects (a plain HTML page consuming the file directly, no framework in between).

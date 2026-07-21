@@ -13,7 +13,11 @@
       },
       "border": { "$value": "{semantic.color.crt.scanline}" },
       "warning": { "solid": { "$value": "{semantic.color.crt.amber}" } },
-      "danger": { "solid": { "$value": "{semantic.color.crt.meltdown}" } }
+      "danger": { "solid": { "$value": "{semantic.color.crt.meltdown}" } },
+      "crt-amber": {
+        "solid": { "$value": "{semantic.color.crt.amber}" },
+        "$extensions": { "transtyle.role": { "archetype": "status" } }
+      }
     },
     "radius": {
       "md": { "$type": "dimension", "$value": "0rem" }

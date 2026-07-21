@@ -3,7 +3,7 @@
  * (docs/architecture/pipeline.md#2-normalize).
  */
 
-import { collectTokens, mergeTrees, aliasTarget, PROVENANCE } from '@transtyle/ir';
+import { collectTokens, collectRoleArchetypes, mergeTrees, aliasTarget, PROVENANCE } from '@transtyle/ir';
 import { parseColor } from './color.js';
 
 /**
@@ -24,6 +24,7 @@ export function normalize(tokenTrees, config, diagnostics) {
     (p) => diagnostics.warn('TST1103', `Token defined more than once (last wins): ${p}`),
   );
   const raw = collectTokens(merged);
+  const roleArchetypes = collectRoleArchetypes(merged, diagnostics);
 
   for (const layer of tokenTrees.filter((t) => t.modeScope)) {
     const scopeEntries = Object.entries(layer.modeScope);
@@ -65,7 +66,7 @@ export function normalize(tokenTrees, config, diagnostics) {
     for (const tokenPath of map.keys()) resolveEntry(map, tokenPath, [], diagnostics);
     modes[mode] = map;
   }
-  return { modes, modeDimension: dimName, defaultMode: dim.default, modeValues: dim.values };
+  return { modes, modeDimension: dimName, defaultMode: dim.default, modeValues: dim.values, roleArchetypes };
 }
 
 function resolveEntry(map, tokenPath, stack, diagnostics) {

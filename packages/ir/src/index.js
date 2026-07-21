@@ -15,6 +15,9 @@ export const COLOR_ROLES = [
   'success', 'warning', 'danger', 'info', 'neutral',
 ];
 
+/** Valid values for `$extensions.transtyle.role.archetype` (docs/architecture/ir.md §archetypes). */
+export const ROLE_ARCHETYPES = ['brand', 'status', 'neutral'];
+
 /** Grid cell suffixes appended to `semantic.color.<role>.`, in derivation order. */
 export const GRID_CELLS = [
   'solid', 'solid-hover', 'solid-active', 'solid-selected',
@@ -75,6 +78,29 @@ export function collectTokens(tree) {
     }
   };
   walk(tree, [], undefined);
+  return out;
+}
+
+/**
+ * Custom color roles opting into the full grid via `$extensions.transtyle.role`
+ * on a `semantic.color.<name>` group (docs/architecture/ir.md §archetypes,
+ * plan task T7) — e.g. `{ "solid": {...}, "$extensions": { "transtyle.role":
+ * { "archetype": "status" } } }`. Built-in roles are excluded (they don't need
+ * the extension). Returns Map<roleName, archetype>.
+ */
+export function collectRoleArchetypes(tree, diagnostics) {
+  const out = new Map();
+  const colorRoot = tree?.semantic?.color;
+  if (!colorRoot || typeof colorRoot !== 'object') return out;
+  for (const [name, node] of Object.entries(colorRoot)) {
+    if (name.startsWith('$') || COLOR_ROLES.includes(name)) continue;
+    const archetype = node?.$extensions?.['transtyle.role']?.archetype;
+    if (!archetype) continue;
+    if (!ROLE_ARCHETYPES.includes(archetype)) {
+      diagnostics?.warn('TST1111', `semantic.color.${name}: unknown role archetype "${archetype}" (expected one of ${ROLE_ARCHETYPES.join(', ')}) — role still joins the grid`);
+    }
+    out.set(name, archetype);
+  }
   return out;
 }
 

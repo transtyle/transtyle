@@ -32,6 +32,11 @@ export function derive(normalized, config, diagnostics) {
     }
     const textBase = get(map, `${S}text.base`);
 
+    // Custom archetyped roles (T7, docs/architecture/ir.md §archetypes) join the
+    // grid loop below exactly like a built-in role: resolveRoleSolid()'s fallback
+    // branch requires their `.solid` authored, same as `primary`.
+    const roles = [...COLOR_ROLES, ...normalized.roleArchetypes.keys()];
+
     // --- Elevation ladder (E1): surfaces 0-5, shadows 1-4; scrim stays its own veil (F2) ---
     const elev = [];
     elev[0] = rc(ctx, `${S}elevation.0.surface`, () => (isDark ? DARK_CANVAS : WHITE), 'default-canvas', [], PROVENANCE.DEFAULTED);
@@ -50,10 +55,15 @@ export function derive(normalized, config, diagnostics) {
     }
 
     // --- Role grid (C1): solid/tint/outline/text x rest/hover/active/selected + on-colors ---
-    for (const role of COLOR_ROLES) {
+    for (const role of roles) {
       const rp = `${S}${role}.`;
       const solid = resolveRoleSolid(ctx, role, rp, primary);
-      if (!solid) continue; // only reachable if primary itself were missing, already handled above
+      if (!solid) {
+        if (normalized.roleArchetypes.has(role)) {
+          diagnostics.warn('TST1203', `${role}: has a role archetype but no authored ${role}.solid in ${mode} mode — grid not derived`);
+        }
+        continue; // built-ins: only reachable if primary itself were missing, already handled above
+      }
 
       const solidHover = rc(ctx, rp + 'solid-hover', () => ({ ...solid, l: clamp01(solid.l + 0.05 * dl) }), 'state-delta(hover)', [`${role}.solid`]);
       const solidActive = rc(ctx, rp + 'solid-active', () => ({ ...solid, l: clamp01(solid.l + 0.07 * dl), c: solid.c * 0.9 }), 'state-delta(active)', [`${role}.solid`]);

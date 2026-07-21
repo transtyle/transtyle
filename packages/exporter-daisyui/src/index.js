@@ -70,6 +70,21 @@ export default {
         }
         lines.push(`  ${m.css}: ${ctx.formatColor(entry.value)}; /* ${m.slot.replace('semantic.', '')} */`);
       }
+      // Custom archetyped roles (T7): daisyUI has an open color set — any
+      // `--color-<name>` custom property becomes a usable utility color.
+      for (const name of normalized.roleArchetypes.keys()) {
+        const solid = map.get(`${S}${name}.solid`);
+        if (!solid?.value) continue;
+        const onSolid = map.get(`${S}${name}.on-solid`);
+        if (mode === 'light') {
+          coverage.push({ variable: `--color-${name}`, slot: `${S}${name}.solid`, class: 'native', note: 'custom role archetype (open role set)' });
+        }
+        lines.push(`  --color-${name}: ${ctx.formatColor(solid.value)}; /* ${name}.solid */`);
+        if (onSolid?.value) {
+          if (mode === 'light') coverage.push({ variable: `--color-${name}-content`, slot: `${S}${name}.on-solid`, class: 'native' });
+          lines.push(`  --color-${name}-content: ${ctx.formatColor(onSolid.value)}; /* ${name}.on-solid */`);
+        }
+      }
       if (radius) {
         // daisyUI splits radius by component family; one authored radius feeds all three
         lines.push(`  --radius-selector: ${radius.value};`);

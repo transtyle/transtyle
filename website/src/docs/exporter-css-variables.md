@@ -37,3 +37,7 @@ Composite values expand: a typography role (`type.role.body.md`) becomes four lo
 ## Coverage
 
 Every variable is `native` — there's no target framework to lose fidelity translating into. This *is* the IR, rendered as CSS. On Acme it's 450+ variables from 11 authored tokens.
+
+## Custom roles (role archetypes)
+
+Nothing target-specific to add: a custom role that declares `$extensions.transtyle.role` gets its full grid derived under `semantic.color.<name>.*` just like a built-in role, and this exporter already walks every `semantic.*` slot it finds — the archetyped role's cells show up automatically. See Cathode's `crt-amber` role in its `dist/css-variables/` output.

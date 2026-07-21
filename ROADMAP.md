@@ -40,7 +40,7 @@ Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir
 - [x] **T4** — css-variables exporter: the grid-complete conformance dump (+ demo projects, all five surfaces).
 - [x] **T5** — Permanent ground-truth scripts (`check-fixtures`, `check-determinism`, `check:all`) + GitHub Actions CI.
 - [x] **T6** — CLI `explain` / `init` / `add` (+ `check-cli` golden tests).
-- [ ] **T7** — Role archetypes: custom roles derive the full grid and export to open-role targets (Cathode's `crt-amber` as showcase).
+- [x] **T7** — Role archetypes: custom roles derive the full grid and export to open-role targets (Cathode's `crt-amber` as showcase).
 - [ ] **T8** — Multi-dimension modes + reserved dimensions (`density` worked example on Acme).
 - [x] **T9** — **Radix Themes exporter** — the grid's designated acceptance test (its 12 steps consume every grid column); shipped with zero catalog amendments, validating the grid as a real universal projection.
 - [ ] **T10** — DTCG validation UX (new stable diagnostic codes + `check --json`).
