@@ -69,6 +69,16 @@ Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir
 
 Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); deliberately deferred ([ADR-0003](docs/adr/0003-tokens-first.md)). Begins only after ≥3 community exporters exist and the token IR has survived a year of real use.
 
+**Evidence-gathering in progress, not Phase 4 itself:** [docs/plan/component-tier.md](docs/plan/component-tier.md) (tasks C1–C7) builds one real, working PrimeNG exporter — the "hand-written component-theming prototype" ADR-0003's precondition list calls for — using PrimeNG's own three-tier design-token system (`primitive`/`semantic`/`components`) as the forcing function. See [proposal 0002](docs/proposals/0002-component-theming-primeng.md) for the architecture analysis. This does **not** flip ADR-0003's gate or start Phase 4 early; a second independent component-heavy prototype is still the actual trigger for that conversation.
+
+- [ ] **C1** — Cross-ecosystem component-tier study (Material 3, Fluent 2, Ant Design, Chakra/Panda recipes) — confirms or rejects the `field`/`list`/`navigation`/`overlay` archetype grouping as genuinely convergent vocabulary, vs. PrimeNG-specific.
+- [ ] **C2** — Component-tier engine resolution: `component.*` actually resolves (empty tier still compiles; authored always wins), independent of C1.
+- [ ] **C3** — `exporter-primeng`: generic severity-grid mapper + ramp projector, proven on Button.
+- [ ] **C4** — Extend the mapper across ~25–35 severity-colored PrimeNG components via shape descriptors.
+- [ ] **C5** — Exporter-private archetype helpers (`field`/`list`/`navigation`/`overlay`) + structural residue components.
+- [ ] **C6** — Official launch: CLI registry, docs, demo projects for all four examples (first Angular demo profile in the repo).
+- [ ] **C7** — Promote confirmed archetype groups into the shared semantic catalog — conditional on C1's verdict; skipped entirely if nothing converged.
+
 ## Backlog
 
 Captured-but-unscheduled ideas live in [docs/backlog.md](docs/backlog.md) — currently: implemented-only editorial policy (adopted), starter theme-kit template (its demo-app half shipped 2026-07-20 as the real npm demo projects; the `create-transtyle` packaging stays gated on npm publication), target priority order (daisyUI, Bootstrap, and Storybook now shipped; **Radix Themes** is next on the B3 list), the "adopt an existing design system" guide (written — it becomes Phase 1's "real DS" run), and "the Transtyle language" reference page (written).
