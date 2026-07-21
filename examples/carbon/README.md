@@ -29,6 +29,8 @@ npx transtyle build
 
 All seven targets are configured — `shadcn`, `echarts`, `daisyui`, `bootstrap`, `storybook`, `css-variables`, `radix`. `npx transtyle check --json` prints diagnostics + coverage as JSON.
 
+From the **repo root**, without `cd`-ing in: `npm run example:build:carbon` / `npm run example:check:carbon`.
+
 **See it rendered:** [demo/](demo/) — the same seven demo projects as Acme/Cathode/GOV.UK, themed with Carbon's real colors and real IBM Plex fonts. From the repo root:
 
 ```bash

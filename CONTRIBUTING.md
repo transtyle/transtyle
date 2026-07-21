@@ -33,7 +33,12 @@ Review checklist for any PR: does `npx transtyle build` still produce byte-ident
 ```bash
 npm install                    # links workspaces; installs website deps
 npm run example:shadcn         # compile the Acme example
-npm run example:check          # validate without emitting
+npm run example:check          # validate without emitting (Acme)
+npm run example:check:cathode  # same, for Cathode / GOV.UK / Carbon
+npm run example:check:govuk
+npm run example:check:carbon
+npm run example:build          # build all four examples
+npm run example:build:govuk    # or just one (also: :acme, :cathode, :carbon)
 npm run site:dev               # docs site dev server
 npm run site:build             # build the static site
 ```

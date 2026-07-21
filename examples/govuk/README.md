@@ -29,6 +29,8 @@ npx transtyle build
 
 All seven targets are configured — `shadcn`, `echarts`, `daisyui`, `bootstrap`, `storybook`, `css-variables`, `radix`. `npx transtyle check --json` prints diagnostics + coverage as JSON.
 
+From the **repo root**, without `cd`-ing in: `npm run example:build:govuk` / `npm run example:check:govuk`.
+
 **See it rendered:** [demo/](demo/) — the same seven demo projects as Acme/Cathode, themed with GOV.UK's real colors instead of a fictional brand. From the repo root:
 
 ```bash
