@@ -51,6 +51,9 @@
     },
     "css-variables": {
       "output": "dist/css-variables"
+    },
+    "radix": {
+      "output": "dist/radix"
     }
   },
   "check": {

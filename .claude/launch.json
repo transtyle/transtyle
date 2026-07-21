@@ -7,11 +7,13 @@
     { "name": "acme-echarts", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-echarts"], "port": 4104 },
     { "name": "acme-storybook", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-storybook"], "port": 6101 },
     { "name": "acme-css-variables", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-css-variables"], "port": 4105 },
+    { "name": "acme-radix", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-radix"], "port": 4106 },
     { "name": "cathode-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-bootstrap"], "port": 4201 },
     { "name": "cathode-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-daisyui"], "port": 4202 },
     { "name": "cathode-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-shadcn"], "port": 4203 },
     { "name": "cathode-echarts", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-echarts"], "port": 4204 },
     { "name": "cathode-storybook", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-storybook"], "port": 6201 },
-    { "name": "cathode-css-variables", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-css-variables"], "port": 4205 }
+    { "name": "cathode-css-variables", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-css-variables"], "port": 4205 },
+    { "name": "cathode-radix", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-radix"], "port": 4206 }
   ]
 }

@@ -2,7 +2,7 @@
 export const sections = [
   { title: 'Start here', slugs: ['index', 'getting-started', 'adopt-existing'] },
   { title: 'Guide', slugs: ['concepts', 'language', 'authoring-tokens', 'configuration', 'derivation', 'cli'] },
-  { title: 'Targets', slugs: ['exporter-shadcn', 'exporter-daisyui', 'exporter-echarts', 'exporter-bootstrap', 'exporter-storybook', 'exporter-css-variables'] },
+  { title: 'Targets', slugs: ['exporter-shadcn', 'exporter-daisyui', 'exporter-echarts', 'exporter-bootstrap', 'exporter-storybook', 'exporter-css-variables', 'exporter-radix'] },
   { title: 'AI', slugs: ['ai-agents'] },
   { title: 'Deep dives', slugs: ['examples', 'diagnostics', 'roadmap', 'internals'] },
 ];

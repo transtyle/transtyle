@@ -57,6 +57,7 @@ const NAMES = {
   bootstrap: ['bootstrap', 'Bootstrap'],
   storybook: ['storybook', 'Storybook'],
   'css-variables': ['css-variables'],
+  radix: ['radix', 'Radix'],
 };
 const mentions = (text, name) => (NAMES[name] ?? [name]).some((n) => text.includes(n));
 

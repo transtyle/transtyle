@@ -11,7 +11,8 @@
     "@transtyle/exporter-daisyui": "*",
     "@transtyle/exporter-bootstrap": "*",
     "@transtyle/exporter-storybook": "*",
-    "@transtyle/exporter-css-variables": "*"
+    "@transtyle/exporter-css-variables": "*",
+    "@transtyle/exporter-radix": "*"
   },
   "license": "MIT"
 }
