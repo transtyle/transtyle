@@ -29,6 +29,8 @@ Tier is structural (top-level group name: `option.*`, `semantic.*`, `component.*
 
 **Exporters bind to the semantic tier.** This is the load-bearing rule of the whole system: option tokens are private vocabulary that users can restructure freely; the semantic tier is the stable surface. An exporter referencing `color.blue.500` directly would break on every palette rename.
 
+**The semantic tier is a meta-language, not a mirror of any one target.** A target's own internal organization — PrimeNG's shared `formField`/`list` token groups, Adobe Spectrum's large flat vocabulary of precisely-named per-context tokens, Bootstrap's `$btn-*` conventions — is that target's business, reconstructed by its exporter from the meta-language, never copied into the catalog as-is. Two consequences: (1) an exporter may read the *same* semantic token into several differently-shaped or differently-named places in its target, translating by *meaning*, never by name (`website/src/docs/language.md#false-friends`); (2) new shared derivation logic a target needs starts **exporter-private** and is promoted into shared catalog vocabulary only once a second, independent exporter converges on the identical thing — see `CONTRIBUTING.md`'s principles and the F10 precedent (a private Bootstrap convention, later promoted into an engine-owned grid cell once the comparative study showed it wasn't Bootstrap-specific).
+
 ## The semantic contract
 
 A fixed, versioned catalog of semantic slots that exporters may rely on existing after DERIVE. **The catalog — the role grid**, derived from a comparative study of ~14 design-system ecosystems ([proposal 0001](../proposals/0001-universal-token-ir.md)) to be the smallest set of concepts capable of representing all of them:

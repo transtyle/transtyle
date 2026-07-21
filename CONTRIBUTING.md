@@ -27,6 +27,7 @@ Review checklist for any PR: does `npx transtyle build` still produce byte-ident
 - **Authored always wins.** No derivation rule may overwrite an authored token.
 - **Diagnostics have stable codes.** New codes are appended, never renumbered; every code is documented in `website/src/docs/diagnostics.md`.
 - **Config is data.** No executable config.
+- **The catalog is a meta-language, not a translation of any one target.** New semantic-tier (or component-tier) vocabulary must be validated against multiple independent ecosystems before being added — never derived from a single library's own naming or grouping shape (`docs/proposals/0001-universal-token-ir.md`'s 14-ecosystem study is the model to match, not a one-time exception). Concretely: (1) exporters translate by *meaning*, not name — the same catalog token may legitimately feed several differently-shaped or differently-named places in one target's own structure; (2) new shared derivation logic starts **exporter-private** (a helper inside that one exporter, reading existing catalog cells) and is promoted into the shared catalog only once a **second, independent** exporter needs the identical thing — the path Bootstrap's border-subtle mix took before it was promoted into an engine-owned grid cell ([exercise F10](docs/exercises/phase0-bootstrap.md)), not a one-off.
 
 ## Working locally
 
