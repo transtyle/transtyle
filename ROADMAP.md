@@ -66,7 +66,10 @@ The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited th
 - [ ] **I1** — Tailwind config importer
 - [ ] **I2** — Figma variables importer
 - [ ] **I3** — Watch mode + CI recipe
-- [ ] **D1** — Docs information-architecture pass · **D2** — beginner path · **D3** — reference clarity rewrite (after R2) · **D4** — visuals + GOV.UK showcase
+- [x] **D1** — Docs information-architecture pass — done 2026-07-22 (six labeled nav sections, prev/next pager, on-page TOC with scrollspy; plus the `check:docs` docs-precision guard, which found and fixed 12 broken anchors)
+- [ ] **D2** — Beginner path (three progressive pages)
+- [ ] **D3** — Reference clarity rewrite (after R2)
+- [ ] **D4** — Visuals + GOV.UK end-to-end showcase
 
 Explicitly not scheduled this half: new exporters beyond the pilot's, catalog growth, MUI/Ant (after the object-emitter pattern is proven by the pilot).
 
