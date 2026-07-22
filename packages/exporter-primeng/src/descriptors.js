@@ -56,7 +56,7 @@ function buildButtonColorScheme(map) {
     scheme.outlined[severity] = { hoverBackground: g.get('outlined', severity, 'hoverBackground'), activeBackground: g.get('outlined', severity, 'activeBackground'), borderColor: g.get('outlined', severity, 'borderColor'), color: g.get('outlined', severity, 'color') };
     scheme.text[severity] = { hoverBackground: g.get('text', severity, 'hoverBackground'), activeBackground: g.get('text', severity, 'activeBackground'), color: g.get('text', severity, 'color') };
   }
-  return { scheme, coverage: g.coverage.map((c) => ({ ...c, field: `button.colorScheme.${c.field}` })) };
+  return { scheme, coverage: g.coverage.map((c) => ({ ...c, variable: `button.colorScheme.${c.variable}` })) };
 }
 
 export function buildButton(light, dark, ctx) {
@@ -80,7 +80,7 @@ function buildFlatSeverity(map, { variants, severities, path }) {
     scheme[severity] = {};
     for (const field of Object.keys(variants[0].parts)) scheme[severity][field] = g.get(variants[0].name, severity, field);
   }
-  return { scheme, coverage: g.coverage.map((c) => ({ ...c, field: `${path}.colorScheme.${c.field}` })) };
+  return { scheme, coverage: g.coverage.map((c) => ({ ...c, variable: `${path}.colorScheme.${c.variable}` })) };
 }
 
 export function buildTag(light, dark) {
@@ -116,7 +116,7 @@ function buildMessageColorScheme(map) {
       simple: { color: g.get('simple', severity, 'color') },
     };
   }
-  return { scheme, coverage: g.coverage.map((c) => ({ ...c, field: `message.colorScheme.${c.field}` })) };
+  return { scheme, coverage: g.coverage.map((c) => ({ ...c, variable: `message.colorScheme.${c.variable}` })) };
 }
 
 export function buildMessage(light, dark) {
@@ -141,9 +141,9 @@ function buildInlineMessageColorScheme(map, ctx) {
       background: g.get('root', severity, 'background'), borderColor: g.get('root', severity, 'borderColor'), color: g.get('root', severity, 'color'),
       shadow: solid ? `0px 4px 8px 0px ${ctx.formatColor({ ...solid, alpha: 0.04 })}` : undefined,
     };
-    if (solid) coverage.push({ field: `inlinemessage.colorScheme.${severity}.shadow`, slot: '—', class: 'approximated', note: 'fixed low-alpha tint of the role solid color, matching PrimeNG\'s own color-mix(..., transparent 96%) convention — not a colorimetric shadow derivation' });
+    if (solid) coverage.push({ variable: `inlinemessage.colorScheme.${severity}.shadow`, slot: '—', class: 'approximated', note: 'fixed low-alpha tint of the role solid color, matching PrimeNG\'s own color-mix(..., transparent 96%) convention — not a colorimetric shadow derivation' });
   }
-  return { scheme, coverage: coverage.map((c) => (c.field?.startsWith('inlinemessage') ? c : { ...c, field: `inlinemessage.colorScheme.${c.field}` })) };
+  return { scheme, coverage: coverage.map((c) => (c.variable?.startsWith('inlinemessage') ? c : { ...c, variable: `inlinemessage.colorScheme.${c.variable}` })) };
 }
 
 export function buildInlineMessage(light, dark, ctx) {
@@ -161,14 +161,14 @@ export function buildInlineMessage(light, dark, ctx) {
 export function buildProgressBar() {
   return {
     tokens: { value: { background: '{primary.color}' }, label: { color: '{primary.contrastColor}' } },
-    coverage: [{ field: 'progressbar.value.background', slot: 'semantic.primary.color (alias)', class: 'native' }],
+    coverage: [{ variable: 'progressbar.value.background', slot: 'semantic.primary.color (alias)', class: 'native' }],
   };
 }
 
 export function buildRating() {
   return {
     tokens: { icon: { color: '{text.mutedColor}', hoverColor: '{primary.color}', activeColor: '{primary.color}' } },
-    coverage: [{ field: 'rating.icon.hoverColor', slot: 'semantic.primary.color (alias)', class: 'native' }],
+    coverage: [{ variable: 'rating.icon.hoverColor', slot: 'semantic.primary.color (alias)', class: 'native' }],
   };
 }
 
@@ -189,8 +189,8 @@ export function buildListbox(light, dark) {
       optionGroup: ll.structural.optionGroup,
     },
     coverage: [
-      { field: 'listbox.root.*', slot: 'exporter-private: field()', class: 'derived' },
-      { field: 'listbox.option.*', slot: 'exporter-private: list()', class: 'derived' },
+      { variable: 'listbox.root.*', slot: 'exporter-private: field()', class: 'derived' },
+      { variable: 'listbox.option.*', slot: 'exporter-private: list()', class: 'derived' },
     ],
   };
 }
@@ -213,7 +213,7 @@ export function buildMenu(light, dark, ctx) {
       item: nl.structural.item,
       submenuLabel: nl.structural.submenuLabel,
     },
-    coverage: [{ field: 'menu.item.*', slot: 'exporter-private: navigation()', class: 'derived' }],
+    coverage: [{ variable: 'menu.item.*', slot: 'exporter-private: navigation()', class: 'derived' }],
   };
 }
 
@@ -225,7 +225,7 @@ export function buildPopover(light, dark, ctx) {
       colorScheme: { light: { root: ol.colorScheme }, dark: { root: od.colorScheme } },
       content: { padding: ol.padding },
     },
-    coverage: [{ field: 'popover.root.*', slot: 'exporter-private: overlay(popover)', class: 'derived' }],
+    coverage: [{ variable: 'popover.root.*', slot: 'exporter-private: overlay(popover)', class: 'derived' }],
   };
 }
 
@@ -239,7 +239,7 @@ export function buildDialog(light, dark, ctx) {
       content: { padding: ol.padding },
       footer: { padding: ol.padding },
     },
-    coverage: [{ field: 'dialog.root.*', slot: 'exporter-private: overlay(modal)', class: 'derived' }],
+    coverage: [{ variable: 'dialog.root.*', slot: 'exporter-private: overlay(modal)', class: 'derived' }],
   };
 }
 

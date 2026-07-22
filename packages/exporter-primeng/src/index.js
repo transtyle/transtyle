@@ -61,14 +61,14 @@ export default {
     // (our own per-mode grid legitimately shifts these values slightly by mode,
     // but PrimeNG's architecture has no slot to express that at this position).
     const primaryRamp = projectRamp(light, 'primary', ctx);
-    coverage.push(...primaryRamp.coverage.map((c) => ({ field: `semantic.primary.${c.step}`, slot: c.slot, class: c.class })));
+    coverage.push(...primaryRamp.coverage.map((c) => ({ variable: `semantic.primary.${c.step}`, slot: c.slot, class: c.class })));
 
     // surface.{0,50..950}: mode-scoped in real PrimeNG (verified: aura/base
     // defines a DIFFERENT ramp — slate family light, zinc family dark — under
     // colorScheme.light/dark.surface) — computed per mode, unlike primary above.
     const surfaceRampLight = projectRamp(light, 'neutral', ctx, { includeZero: true });
     const surfaceRampDark = projectRamp(dark, 'neutral', ctx, { includeZero: true });
-    coverage.push(...surfaceRampLight.coverage.map((c) => ({ field: `semantic.colorScheme.light.surface.${c.step}`, slot: c.slot, class: c.class })));
+    coverage.push(...surfaceRampLight.coverage.map((c) => ({ variable: `semantic.colorScheme.light.surface.${c.step}`, slot: c.slot, class: c.class })));
 
     const fLight = field(light), fDark = field(dark);
     const lLight = list(light), lDark = list(dark);
@@ -78,12 +78,12 @@ export default {
     const oPopoverLight = overlay(light, 'popover', ctx), oPopoverDark = overlay(dark, 'popover', ctx);
     const oModalLight = overlay(light, 'modal', ctx), oModalDark = overlay(dark, 'modal', ctx);
     const oNavLight = overlay(light, 'navigation', ctx);
-    coverage.push({ field: 'semantic.formField.*', slot: 'exporter-private: field()', class: 'derived' });
-    coverage.push({ field: 'semantic.list.*', slot: 'exporter-private: list()', class: 'derived' });
-    coverage.push({ field: 'semantic.navigation.*', slot: 'exporter-private: navigation()', class: 'derived' });
-    coverage.push({ field: 'semantic.overlay.*', slot: 'semantic.color.elevation.N.{surface,shadow} + radius.*', class: 'native' });
-    coverage.push({ field: 'semantic.content.*', slot: 'semantic.color.elevation.1.surface + border + text.base', class: 'native' });
-    coverage.push({ field: 'semantic.colorScheme.*.mask.background', slot: 'semantic.color.scrim', class: 'native' });
+    coverage.push({ variable: 'semantic.formField.*', slot: 'exporter-private: field()', class: 'derived' });
+    coverage.push({ variable: 'semantic.list.*', slot: 'exporter-private: list()', class: 'derived' });
+    coverage.push({ variable: 'semantic.navigation.*', slot: 'exporter-private: navigation()', class: 'derived' });
+    coverage.push({ variable: 'semantic.overlay.*', slot: 'semantic.color.elevation.N.{surface,shadow} + radius.*', class: 'native' });
+    coverage.push({ variable: 'semantic.content.*', slot: 'semantic.color.elevation.1.surface + border + text.base', class: 'native' });
+    coverage.push({ variable: 'semantic.colorScheme.*.mask.background', slot: 'semantic.color.scrim', class: 'native' });
 
     const semantic = {
       transitionDuration: get(light, 'duration.fast'),
@@ -145,7 +145,7 @@ export default {
     );
 
     for (const name of STRUCTURAL_RESIDUE) {
-      coverage.push({ field: `components.${name}`, slot: '—', class: 'unsupported', note: 'structural component with no severity-colored surface and no builder yet — inherits Aura\'s own default untouched (definePreset deep-merge)' });
+      coverage.push({ variable: `components.${name}`, slot: '—', class: 'unsupported', note: 'structural component with no severity-colored surface and no builder yet — inherits Aura\'s own default untouched (definePreset deep-merge)' });
     }
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 

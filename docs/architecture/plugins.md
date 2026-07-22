@@ -1,6 +1,6 @@
 # Plugin architecture
 
-> **Status: aspirational v0 — the implemented interface is narrower than this document.** The [ADR-0011 freeze-readiness audit](../adr/0011-v0-freeze-readiness.md) found this spec describes a richer contract than the shipped exporters implement. Today a plugin is `{ name, emit(normalizedIR, ctx) → { files, coverage } }` — one hook, receiving the resolved IR and returning both files and their coverage classification. The `resolve`/`doc` hooks, the declarative `mappings/*.json` layer, the semver-range manifest, and the `@transtyle/plugin-kit` conformance harness below are the **P1 target**, not current reality. Plugin API v0 is deliberately **not** part of the first freeze; it reconciles with reality when the conformance kit is built (P1). Build against the implemented interface (`packages/exporter-css-variables/` is the reference) until then.
+> **Status: reconciled with the implementation (P1, 2026-07-22).** [ADR-0011](../adr/0011-v0-freeze-readiness.md) found this document described a richer contract than any exporter implemented. Rather than build toward prose no one used, the spec was **dropped to what all eight shipped exporters actually do**, and that contract is now executable: `@transtyle/plugin-kit` enforces it, and every official exporter passes it in CI. Formal *freezing* of the plugin API still waits for first publication (R4, currently parked) — but the spec below is no longer aspirational.
 
 Plugins are the product's growth mechanism. The design optimizes for one metric: **a competent frontend engineer ships a working third-party exporter in a weekend, without reading core source.** ([ADR-0004](../adr/0004-plugin-packaging.md))
 
@@ -30,30 +30,28 @@ exporter-bootstrap/
 }
 ```
 
-## The exporter interface (conceptual v0)
+## The exporter interface (v0, as implemented)
 
-Small on purpose. Two layers:
-
-**1. Declarative mappings (the bulk of most exporters).** JSON tables from semantic slots to target variables, evaluated by core. Declarative mappings are introspectable — they power coverage classification, `explain --target`, and future tooling (e.g. a mapping-table docs generator) with zero exporter code.
-
-```jsonc
-// mappings/5.x.json (excerpt)
-{ "$primary":        { "from": "semantic.color.primary.solid", "class": "native" },
-  "$border-radius":  { "from": "semantic.radius.md", "unit": "rem", "class": "native" },
-  "$success-bg-subtle": { "from": "semantic.color.success.tint", "class": "native" } }
-```
-
-**2. Programmatic hooks (the escape hatch), all pure functions over the resolved IR:**
+**One hook.** A plugin's default export is an object with a name and a single `emit`, which receives the fully resolved IR and returns both the files to write and their coverage classification:
 
 ```ts
 interface Exporter {
-  resolve?(ir: ResolvedIR, ctx: TargetContext): ResolutionPatch;  // beyond-table logic (e.g. palette generation)
-  emit(resolution: Resolution, ctx: TargetContext): FileSpec[];   // → { path, contents, kind }[]
-  doc?(resolution: Resolution, ctx: DocContext): DocPlan;         // optional, capability-gated
+  name: string;
+  emit(ir: ResolvedIR, ctx: TargetContext): { files: FileSpec[]; coverage: CoverageItem[] };
+  optionsSchema?: JSONSchema;   // validated by core against `targets.<t>.options` (audit A8)
+  doc?(...): DocPlan;           // reserved, capability-gated; no exporter implements it yet
 }
+
+type FileSpec     = { path: string; contents: string; kind: string };
+type CoverageItem = { variable: string; slot: string; class: CoverageClass; provenance?: string; note?: string };
+type CoverageClass = 'native' | 'derived' | 'approximated' | 'dropped' | 'unsupported';
 ```
 
-Constraints enforced by core, not convention: exporters receive an **immutable** IR snapshot; they return file *descriptions* and never touch the filesystem; they have no access to other targets' resolutions; `emit` must be deterministic (the conformance kit double-runs it and diffs).
+Why one hook and not a `resolve`/`emit` split with core-evaluated JSON mapping tables (which earlier drafts of this document specified): eight exporters were written against the real interface and none needed the split. Mapping tables still exist — they're just **the exporter's own data structure**, declared in its source and applied by its own `emit`, which keeps the mapping and the emitting honest about each other. Coverage is returned by the exporter for the same reason: only the exporter knows whether a given mapping was lossless.
+
+Constraints, enforced executably by the conformance kit rather than by convention: exporters receive an IR they must **not mutate**; they return file *descriptions* and never touch the filesystem; they have no access to other targets' resolutions (only the `ctx.siblings` manifest of names and paths); and `emit` must be **deterministic** — the kit double-runs it and diffs.
+
+`ctx` carries the project config, this instance's `targetConfig` (with `options`), the color helpers (`formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`, `mix`), `projectName`, and `siblings`.
 
 **Version profiles:** an exporter supports version *ranges* of its framework, expressed as mapping profiles plus conditional logic via `ctx.targetVersion` ([ADR-0006](../adr/0006-version-ranges.md)). Core selects the profile; the exporter never parses version strings itself.
 
@@ -63,9 +61,33 @@ Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the *
 
 ## The plugin-kit and conformance
 
-`@transtyle/plugin-kit` ships: TypeScript types, a test harness (`conformance(plugin)`) that runs a canonical fixture design system through the plugin and asserts determinism, manifest validity, IR-range honesty, and snapshot stability; plus authoring docs. **The conformance suite is the real plugin spec** — prose drifts, executable fixtures don't. Passing it is required for the "official" label and listed in registry metadata for community plugins.
+`@transtyle/plugin-kit` (shipped, P1) exports `conformance(plugin, { manifest? })`. It runs the plugin against a canonical fixture design system bundled with the kit — a brand color, both `color-scheme` modes, elevation, text, border, radius, fonts — and asserts the contract above:
+
+| Check | Asserts |
+|---|---|
+| `interface-shape` | default export is `{ name: string, emit: function }` |
+| `emit-runs` | `emit` completes against a real resolved IR |
+| `emit-returns-files` | `files` are `{ path, contents, kind }` |
+| `emit-returns-coverage` | `coverage` items are `{ variable, slot, class }` |
+| `coverage-classes-valid` | every class is one of the five |
+| `deterministic` | two `emit` runs produce byte-identical files |
+| `ir-immutable` | `emit` did not mutate the IR it was given |
+| `manifest-valid` | the `transtyle` manifest has `kind`, `name`, `irSpec`, `pluginApi`, `capabilities[]` |
+| `options-schema-shape` | `optionsSchema`, if present, is a JSON-Schema object |
+
+Each check cites the spec line it enforces, so a failure points at the rule rather than at the kit. **The conformance suite is the real plugin spec** — prose drifts, executable fixtures don't. `npm run check:plugins` runs it over all eight official exporters in CI; passing is what "official" means, and community plugins can advertise it.
+
+Its value is not theoretical: on its first run the kit caught `exporter-primeng` emitting `field` where the contract requires `variable` — a divergence that had also been silently producing `report.json` files violating the published report schema.
 
 The built-in `css-variables` exporter is intentionally trivial and serves as the living reference implementation.
+
+```js
+import { conformance } from '@transtyle/plugin-kit';
+import plugin from './src/index.js';
+
+const { pass, checks } = await conformance(plugin, { manifest: pkg.transtyle });
+if (!pass) console.error(checks.filter((c) => !c.pass));
+```
 
 ## Trust model
 

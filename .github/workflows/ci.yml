@@ -18,9 +18,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check:sync
+      - run: npm run check:plugins
       - run: npm run check:grid
       - run: npm run check:fixtures
       - run: npm run check:determinism
+      - run: npm run check:schemas
       - run: npm run check:cli
       - run: npm run check:component-tier
       - run: npm run site:build

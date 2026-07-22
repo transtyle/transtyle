@@ -1,0 +1,12 @@
+{
+  "name": "@transtyle/plugin-kit",
+  "version": "0.1.0",
+  "description": "The executable specification of the Transtyle exporter interface: a conformance suite any exporter (official or third-party) runs against to prove it honors the plugin contract.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js" },
+  "dependencies": {
+    "@transtyle/core": "0.1.0"
+  },
+  "license": "MIT"
+}

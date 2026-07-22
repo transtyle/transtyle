@@ -15,7 +15,7 @@
  *
  * Run: node scripts/check-schemas.mjs (also: npm run check:schemas; part of check:all).
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validate } from '../packages/core/src/schema/validate.js';
@@ -55,18 +55,27 @@ for (const { why, cfg } of mustReject) {
   if (validate(cfg, configSchema).length === 0) fail(`config validator FAILED to reject: ${why}`);
 }
 
-// 4. a real emitted report validates against the report schema
-const reportPath = 'examples/acme/dist/shadcn/report.json';
-if (existsSync(join(root, reportPath))) {
-  const errs = validate(JSON.parse(read(reportPath)), reportSchema);
-  if (errs.length) fail(`${reportPath} does not match the published report schema: ${errs.map((e) => `${e.path} ${e.message}`).join('; ')}`);
-} else {
-  fail(`${reportPath} missing — build an example first so report-schema conformance can be checked`);
+// 4. EVERY emitted report validates against the report schema. Checking a single
+// report used to be enough "in principle" and wasn't: exporter-primeng emitted
+// `field` where the schema requires `variable`, and it hid because only the
+// shadcn report was validated (found by the P1 conformance kit). Scan them all.
+let reportsChecked = 0;
+for (const ex of examples) {
+  const distDir = join(root, `examples/${ex}/dist`);
+  if (!existsSync(distDir)) continue;
+  for (const target of readdirSync(distDir)) {
+    const rel = `examples/${ex}/dist/${target}/report.json`;
+    if (!existsSync(join(root, rel))) continue;
+    reportsChecked++;
+    const errs = validate(JSON.parse(read(rel)), reportSchema);
+    if (errs.length) fail(`${rel} does not match the published report schema: ${errs.slice(0, 3).map((e) => `${e.path} ${e.message}`).join('; ')}${errs.length > 3 ? ` (+${errs.length - 3} more)` : ''}`);
+  }
 }
+if (reportsChecked === 0) fail('no emitted report.json found — build an example first so report-schema conformance can be checked');
 
 if (errors.length) {
   console.error(`✖ schema check: ${errors.length} problem(s)\n`);
   for (const e of errors) console.error('  - ' + e);
   process.exit(1);
 }
-console.log(`✔ schema check: published schemas current; ${examples.length} example configs valid; ${mustReject.length} bad-config cases rejected; emitted report conforms`);
+console.log(`✔ schema check: published schemas current; ${examples.length} example configs valid; ${mustReject.length} bad-config cases rejected; ${reportsChecked} emitted reports conform`);

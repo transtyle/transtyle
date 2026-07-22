@@ -57,7 +57,7 @@ export function mapSeverityGrid(map, { variants, severities = SEVERITIES }) {
         const { value, slot } = resolveCell(map, severity, cellSuffix);
         if (value === undefined) continue;
         resolved.set(`${variant.name}|${severity}|${field}`, value);
-        coverage.push({ field: `${variant.name}.${severity}.${field}`, slot, class: 'native' });
+        coverage.push({ variable: `${variant.name}.${severity}.${field}`, slot, class: 'native' });
       }
     }
   }
