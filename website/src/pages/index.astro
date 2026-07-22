@@ -318,11 +318,11 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       .t-arrow { transform: rotate(90deg); padding: 0.2rem 0; }
     }
     /* Shiki's own background rule is !important and wins here by design — it
-       keeps homepage code identical to the docs pages. */
+       keeps homepage code identical to the docs pages. Radius, clipping, and
+       the ring live on `.code-wrap` (global.css) — one rounded box, not two. */
     .transform pre, .show-src pre {
       margin: 0; padding: 1rem 1.2rem; font-size: 0.8rem; line-height: 1.65;
-      overflow-x: auto; border-radius: 12px;
-      box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--text-muted) 22%, transparent);
+      overflow-x: auto;
     }
 
     .pipe-tag { display: block; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 500; text-transform: none; margin-top: 0.15rem; font-family: 'JetBrains Mono Variable', monospace; }
@@ -377,6 +377,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
        !important), so this is only a centring container — giving it a
        terminal background too would double up behind the highlighted block. */
     .band.final .start { max-width: 42rem; margin: 0 auto; text-align: left; }
-    .band.final .start pre { border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; margin: 0; }
+    /* Radius/clipping/ring come from `.code-wrap` (global.css) now, not a border here. */
+    .band.final .start pre { padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; margin: 0; }
   </style>
 </Base>

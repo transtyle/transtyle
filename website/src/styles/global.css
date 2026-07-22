@@ -87,23 +87,41 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* ---------- copy button (injected around every <pre> by Base.astro) ---------- */
 /* Icon-only, borderless, and out of the way until you reach for it — a labelled
-   pill in the corner reads as chrome and competes with the code itself. */
-.code-wrap { position: relative; }
+   pill in the corner reads as chrome and competes with the code itself.
+
+   `.code-wrap` is the SINGLE owner of the rounded shape: radius + overflow:hidden
+   here, nowhere else. Previously the radius lived on both the inner `pre` (per
+   context) and independently on the `::after` fade — two separately-rounded
+   boxes with nothing forcing them to agree, which is exactly how you get a
+   rounded corner floating against a square edge. With overflow:hidden on the
+   wrapper, `::after` can be a plain rectangle and still comes out perfectly
+   clipped to the wrapper's shape — there is no second radius left to drift. */
+.code-wrap {
+  position: relative; border-radius: 12px; overflow: hidden;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--text-muted) 22%, transparent);
+}
+/* The hero terminal already owns a rounded frame one level up (`.terminal`,
+   14px, overflow:hidden, around the title bar AND the code) — nesting a second
+   radius/ring here would double up right where they meet. This wrap is a plain
+   rectangle instead and inherits its shape from the ancestor's clip. */
+.terminal .code-wrap { border-radius: 0; overflow: visible; box-shadow: none; }
 
 /* Overflow affordance: a block wider than its column otherwise just hard-clips
-   at the rounded edge, which reads as a rendering bug rather than "scroll me".
-   The fade only appears when the block actually overflows, and clears once
-   you've reached the end so it never lies about hidden content. It fades to the
-   block's own background — the Shiki theme vars are copied onto the wrapper by
-   the script in Base.astro, so this tracks the highlighter, not a guess. */
+   with no sign it's scrollable. The fade appears only while there's genuinely
+   more to the right, and clears once you've scrolled to the end. It fades to
+   the block's own background — Shiki's theme vars are copied onto the wrapper
+   by the script in Base.astro, so this tracks the highlighter, not a guess.
+   The solid stop sits at 45%, not 95%: a sliver of "almost transparent" right
+   at the edge still reads as legible text, so the tail needs real width — about
+   1.6rem of flat, fully-opaque background — to actually hide a character. */
 .code-wrap::after {
-  content: ''; position: absolute; top: 1px; right: 1px; bottom: 1px; width: 3rem;
-  pointer-events: none; border-radius: 0 12px 12px 0;
-  background: linear-gradient(to right, transparent, var(--shiki-light-bg, var(--code-bg)) 85%);
+  content: ''; position: absolute; inset: 0; left: auto; width: 3rem;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--shiki-light-bg, var(--code-bg)) 45%, var(--shiki-light-bg, var(--code-bg)));
   opacity: 0; transition: opacity 0.15s ease;
 }
 [data-theme='dark'] .code-wrap::after {
-  background: linear-gradient(to right, transparent, var(--shiki-dark-bg, var(--code-bg)) 85%);
+  background: linear-gradient(to right, transparent, var(--shiki-dark-bg, var(--code-bg)) 45%, var(--shiki-dark-bg, var(--code-bg)));
 }
 .code-wrap.overflowing::after { opacity: 1; }
 .code-wrap.overflowing.at-end::after { opacity: 0; }
