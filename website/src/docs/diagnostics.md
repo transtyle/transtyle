@@ -14,6 +14,8 @@ Transtyle prefers surprising you *loudly* over failing silently. This page colle
 |---|---|---|---|
 | `TST1001` | warning | A token glob matched no files | Check the path in `tokens` |
 | `TST1002` | error | A token file failed to parse | Fix the JSON; the message includes the parser error |
+| `TST1010` | error | `transtyle.config.json` doesn't match its schema — unknown key, wrong type, missing `tokens`, or a bad `check.failOn`/`contrast.standard` value | Fix the flagged path; a typo'd key is an error, not silently ignored |
+| `TST1011` | error | A target's `options` are invalid for its exporter — unknown option, wrong type, or a value outside the allowed set (e.g. an unknown shadcn `era`) | Check the exporter's page for its options; an exporter that takes none rejects any |
 | `TST1103` | warning | Token defined more than once across base layers (last wins) | Make the override explicit or remove the duplicate |
 | `TST1104` | error | Alias cycle (full chain printed) | Break the cycle |
 | `TST1105` | error | Dangling alias — `{path}` points at nothing | Fix the path; check tier prefixes (`option.` vs `semantic.`) |

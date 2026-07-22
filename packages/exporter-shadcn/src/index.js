@@ -57,6 +57,13 @@ const ERAS = ['tailwind-v4', 'tailwind-v3'];
 export default {
   name: 'shadcn',
 
+  // Validated by core against the target's `options` at load time (audit A8).
+  optionsSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: { era: { type: 'string', enum: ['tailwind-v3', 'tailwind-v4'] } },
+  },
+
   emit(normalized, ctx) {
     const era = ctx.targetConfig.options?.era ?? 'tailwind-v4';
     if (!ERAS.includes(era)) {

@@ -54,7 +54,7 @@ The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited th
 
 - [ ] **R1** — T11 practitioner sign-off & Phase 1 exit *(human)*
 - [~] **R2** — Freeze-readiness audit ([ADR-0011](docs/adr/0011-v0-freeze-readiness.md), draft 2026-07-22): **IR spec v0 freeze-ready** (every guarantee cited against a CI script); **plugin API freeze deferred** to P1 (spec diverges from the implemented interface). Ratifies when R1 signs; the freeze discipline re-arms at R4 per ADR-0010.
-- [ ] **R3** — Real JSON schemas + strict options validation (audit A7+A8)
+- [x] **R3** — Real JSON schemas + strict options validation (audit A7 + A8's options half) — done 2026-07-22 (zero-dep validator + published `config/v0` & `report/v0` schemas from one source of truth; config keys and per-exporter options validated at load time, `TST1010`/`TST1011`; `check:schemas` in CI. A8's manifest-range half stays deferred to P1 per [ADR-0011](docs/adr/0011-v0-freeze-readiness.md).)
 - [ ] **R4** — npm publication of `@transtyle/*` *(publish step human-gated)*
 - [ ] **R5** — Website deployed on a real domain *(domain purchase human)*
 - [ ] **P1** — Plugin conformance kit

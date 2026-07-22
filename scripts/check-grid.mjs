@@ -17,7 +17,10 @@
 import { compile } from '@transtyle/core';
 import { formatHex } from '@transtyle/core';
 
-const loadExporter = async () => ({ name: 'noop', emit: () => ({ files: [], coverage: [] }) });
+// A derivation-only stand-in for any exporter — permissive optionsSchema so it
+// accepts whatever options the example configs carry (this test exercises the
+// engine, not option validation; that's scripts/check-schemas.mjs's job).
+const loadExporter = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
 
 const REQUIRED_SLOTS = [
   // role grid, spot-checked on primary (every role gets the same cell set)

@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transtyle.dev/schemas/report/v0.json",
+  "title": "Transtyle build report (report.json)",
+  "description": "Schema for a Transtyle per-target build report. See https://transtyle.dev/docs/diagnostics/.",
+  "type": "object",
+  "required": [
+    "target",
+    "generatedBy",
+    "coverage",
+    "diagnostics",
+    "files"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "options": {
+      "type": "object"
+    },
+    "generatedBy": {
+      "type": "string"
+    },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "counts",
+        "items"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "variable",
+              "slot",
+              "class"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "variable": {
+                "type": "string"
+              },
+              "slot": {
+                "type": "string"
+              },
+              "class": {
+                "type": "string",
+                "enum": [
+                  "native",
+                  "derived",
+                  "approximated",
+                  "dropped",
+                  "unsupported"
+                ]
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "aliased",
+                  "derived",
+                  "defaulted"
+                ]
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "severity",
+          "code",
+          "message"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

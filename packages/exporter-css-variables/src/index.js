@@ -33,6 +33,17 @@
 export default {
   name: 'css-variables',
 
+  // Validated by core against the target's `options` at load time (audit A8).
+  optionsSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      prefix: { type: 'string' },
+      darkSelector: { type: 'string' },
+      dimensionSelectors: { type: 'object', additionalProperties: { type: 'string' } },
+    },
+  },
+
   emit(normalized, ctx) {
     const prefix = ctx.targetConfig.options?.prefix ? `${ctx.targetConfig.options.prefix}-` : '';
     const darkSelector = ctx.targetConfig.options?.darkSelector ?? '[data-color-scheme="dark"]';

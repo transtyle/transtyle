@@ -40,6 +40,13 @@ const COLOR_MAPPING = [
 export default {
   name: 'daisyui',
 
+  // Validated by core against the target's `options` at load time (audit A8).
+  optionsSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: { era: { type: 'string', enum: ['v5'] } },
+  },
+
   emit(normalized, ctx) {
     const era = ctx.targetConfig.options?.era ?? 'v5';
     if (era !== 'v5') throw new Error(`exporter-daisyui skeleton supports era "v5" only (got "${era}")`);

@@ -6,6 +6,8 @@
 import path from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { loadConfig, loadTokenTrees } from './load.js';
+import { validate } from './schema/validate.js';
+import { configSchema } from './schema/config.schema.js';
 import { normalize } from './normalize.js';
 import { derive } from './derive.js';
 import { runChecks } from './checks.js';
@@ -22,6 +24,16 @@ export { Diagnostics } from './diagnostics.js';
 export async function compile({ cwd, targets, emit = true, loadExporter }) {
   const diagnostics = new Diagnostics();
   const { config } = await loadConfig(cwd);
+
+  // Config schema validation (audit A8): a typo'd or mis-typed config key is an
+  // error, not a silently-ignored field. Fail before touching tokens — a broken
+  // config shape would only produce misleading downstream diagnostics.
+  for (const { path: p, message } of validate(config, configSchema)) {
+    diagnostics.error('TST1010', `transtyle.config.json: ${p} ${message}`);
+  }
+  if (diagnostics.errors.length > 0) {
+    return { config, diagnostics, results: [], normalized: null };
+  }
 
   // LOAD + NORMALIZE + DERIVE (shared across targets)
   const trees = await loadTokenTrees(cwd, config.tokens, diagnostics);
@@ -55,6 +67,18 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
     // the plugin (defaults to the key), so one exporter can be configured twice
     // with different options (docs/specs/configuration.md#target-instances).
     const exporter = await loadExporter(targetConfig.exporter ?? name);
+
+    // Validate this instance's options against the exporter's own schema (audit
+    // A8): unknown or mis-typed options are errors. Exporters without options
+    // reject any options object; exporters with options declare `optionsSchema`.
+    if (targetConfig.options !== undefined) {
+      const schema = exporter.optionsSchema ?? { type: 'object', additionalProperties: false };
+      for (const { path: p, message } of validate(targetConfig.options, schema)) {
+        diagnostics.error('TST1011', `target "${name}" options: ${p === '(root)' ? '' : p + ' '}${message}`);
+      }
+    }
+    if (diagnostics.errors.length > 0) break; // don't emit with invalid options
+
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
     const ctx = {
       config, targetConfig, formatColor, formatHslTriplet, formatHex, contrastRatio, mix,

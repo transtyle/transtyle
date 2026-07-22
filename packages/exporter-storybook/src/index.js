@@ -40,6 +40,21 @@ const SIBLING_PROFILES = {
 export default {
   name: 'storybook',
 
+  // Validated by core against the target's `options` at load time (audit A8).
+  optionsSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      previewTargets: { type: 'array', items: { type: 'string' } },
+      remBase: { type: 'number' },
+      brand: {
+        type: 'object',
+        additionalProperties: false,
+        properties: { title: { type: 'string' }, url: { type: 'string' }, image: { type: 'string' } },
+      },
+    },
+  },
+
   emit(normalized, ctx) {
     const modes = normalized.modeValues.filter((m) => normalized.modes[m]);
     const native = normalized.defaultMode;

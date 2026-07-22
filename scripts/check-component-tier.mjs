@@ -9,7 +9,9 @@
  */
 import { compile } from '@transtyle/core';
 
-const loadExporter = async () => ({ name: 'noop', emit: () => ({ files: [], coverage: [] }) });
+// Permissive optionsSchema: this test exercises the engine, not option
+// validation (that's scripts/check-schemas.mjs). See check-grid.mjs.
+const loadExporter = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
 const errors = [];
 
 async function main() {
