@@ -1,5 +1,7 @@
 # Plugin architecture
 
+> **Status: aspirational v0 — the implemented interface is narrower than this document.** The [ADR-0011 freeze-readiness audit](../adr/0011-v0-freeze-readiness.md) found this spec describes a richer contract than the shipped exporters implement. Today a plugin is `{ name, emit(normalizedIR, ctx) → { files, coverage } }` — one hook, receiving the resolved IR and returning both files and their coverage classification. The `resolve`/`doc` hooks, the declarative `mappings/*.json` layer, the semver-range manifest, and the `@transtyle/plugin-kit` conformance harness below are the **P1 target**, not current reality. Plugin API v0 is deliberately **not** part of the first freeze; it reconciles with reality when the conformance kit is built (P1). Build against the implemented interface (`packages/exporter-css-variables/` is the reference) until then.
+
 Plugins are the product's growth mechanism. The design optimizes for one metric: **a competent frontend engineer ships a working third-party exporter in a weekend, without reading core source.** ([ADR-0004](../adr/0004-plugin-packaging.md))
 
 ## Packaging

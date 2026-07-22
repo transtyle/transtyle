@@ -33,11 +33,11 @@
 The maintainer runs the practitioner pass the T11 exit criterion requires — the checklist is ready; a model may only prepare (launch demos, collect screenshots), not sign.
 **Acceptance:** every checklist item checked with a dated signature line; ROADMAP T11 flipped to `[x]`; Phase 1 declared exited in ROADMAP prose.
 
-### R2 — Formal freeze declaration: IR spec v0 + plugin API v0
+### R2 — Freeze-readiness audit: IR spec v0 ready; plugin API deferred
 
-**Depends:** R1. **Files:** new `docs/adr/0011-v0-freeze.md`; stability sections of [docs/architecture/ir.md](../architecture/ir.md), [plugins.md](../architecture/plugins.md), [versioning.md](../architecture/versioning.md); ROADMAP Phase-0 tail; website mirror pages per the sync rule.
-A freeze is a promise audit: every guarantee in the two specs is either (a) verified against a named test/script/engine behavior — cite it in the ADR — or (b) explicitly excluded from the freeze. Per [ADR-0010](../adr/0010-pre-release-breaking-changes.md), the freeze re-arms at first npm publication, so R2 must land before R4.
-**Acceptance:** ADR-0011 merged with the verified-guarantee table; both specs carry a "Frozen v0 — date" banner; `npm run check:all` passes; no spec promise remains that lacks either a citation or an exclusion.
+**Draft landed 2026-07-22** ([ADR-0011](../adr/0011-v0-freeze-readiness.md), `proposed`); ratifies when R1 signs. **Depends:** R1 for ratification. **Files:** `docs/adr/0011-v0-freeze-readiness.md`; the drift banner on [plugins.md](../architecture/plugins.md); ADR index; this ledger.
+The audit found the two surfaces are **not equally ready**, correcting this task's original "freeze both together" framing: every IR-spec guarantee is verified against a named CI script (freeze-ready, locks at R4); the plugin API spec materially diverges from the implemented `emit(normalizedIR, ctx) → { files, coverage }` interface, so its freeze is **deferred and gated on P1** (the conformance kit reconciles spec with reality). Per [ADR-0010](../adr/0010-pre-release-breaking-changes.md), the freeze *discipline* re-arms mechanically at first npm publication (R4), so what R4 locks is exactly the audited IR surface — no more.
+**Acceptance (met for the draft):** ADR-0011 carries the verified-guarantee table with a CI-script citation per IR promise and an explicit exclusion + gate for every unready promise (plugin API → P1, schemas → R3, `transtyle.lock` → unimplemented); plugins.md carries the drift banner; `npm run check:all` passes. **Remaining for ratification:** R1 sign-off, then flip ADR-0011 to `accepted`.
 
 ### R3 — Real JSON schemas + strict options validation (audit A7 + A8)
 
@@ -62,7 +62,8 @@ Dry-run first, then publish all workspace packages with npm provenance attestati
 
 **Depends:** R2 (the kit executes the frozen contract). **Files:** new `packages/plugin-kit/`; CI workflow extended; [docs/architecture/plugins.md](../architecture/plugins.md) gains a "conformance" section.
 The kit is a runnable suite any exporter repo can point at its plugin: determinism (two runs byte-identical), coverage honesty (every emitted value traces to `native`/`derived`/`approximated`), mode handling (single- and multi-dimension fixtures), manifest range checking, unknown-option rejection (R3). Each rule cites the spec line it enforces.
-**Acceptance:** all 8 official exporters pass the kit in CI (`npm run check:all` includes it); the kit runs against an exporter *outside* the monorepo (prove with a scratch repo); every conformance rule carries a spec citation.
+**Reconciliation deliverable (from [ADR-0011](../adr/0011-v0-freeze-readiness.md) §2):** this task owns closing the gap ADR-0011 documented between plugins.md and the implemented interface. Either the spec drops to what's real (single `emit(normalizedIR, ctx) → { files, coverage }` hook, JS mappings, era-string manifest) or the implementation rises to the richer spec — decide per hook, and **remove the drift banner** from plugins.md once the spec and the kit agree. Only then is the plugin API a freezable surface (plugin API v1 is still declared at the Phase 2 exit, not here).
+**Acceptance:** all 8 official exporters pass the kit in CI (`npm run check:all` includes it); the kit runs against an exporter *outside* the monorepo (prove with a scratch repo); every conformance rule carries a spec citation; plugins.md and the kit describe the same interface (banner gone).
 
 ### P2 — "Write your own exporter" tutorial
 

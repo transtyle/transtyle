@@ -53,7 +53,7 @@ Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir
 The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited the project's assumptions (verdict: the at-risk assumptions W1–W3 are go-to-market, not engineering) and produced a six-month, model-assigned plan. Precise task specs — files, acceptance commands, dependencies — live in **[docs/plan/execution-2026-h2.md](docs/plan/execution-2026-h2.md)**; states are tracked here. Tasks close Phase 0's tail (R2), Phase 1's exit (R1), and advance Phase 2 (P/I) and the docs (D).
 
 - [ ] **R1** — T11 practitioner sign-off & Phase 1 exit *(human)*
-- [ ] **R2** — Formal freeze declaration: IR spec v0 + plugin API v0 (ADR-0011)
+- [~] **R2** — Freeze-readiness audit ([ADR-0011](docs/adr/0011-v0-freeze-readiness.md), draft 2026-07-22): **IR spec v0 freeze-ready** (every guarantee cited against a CI script); **plugin API freeze deferred** to P1 (spec diverges from the implemented interface). Ratifies when R1 signs; the freeze discipline re-arms at R4 per ADR-0010.
 - [ ] **R3** — Real JSON schemas + strict options validation (audit A7+A8)
 - [ ] **R4** — npm publication of `@transtyle/*` *(publish step human-gated)*
 - [ ] **R5** — Website deployed on a real domain *(domain purchase human)*

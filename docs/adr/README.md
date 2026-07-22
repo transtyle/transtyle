@@ -13,3 +13,5 @@ Format: [MADR](https://adr.github.io/madr/)-lite — Status / Context / Decision
 | [0007](0007-doc-generation-scope.md) | Own preview site first; upstream doc rebuild is experimental | accepted |
 | [0008](0008-importers-first-class.md) | Importers are first-class frontends symmetric to exporters | accepted |
 | [0009](0009-token-layering.md) | Token sources stay pure DTCG; modes and bindings may live in separate layers | accepted |
+| [0010](0010-pre-release-breaking-changes.md) | Pre-release breaking changes allowed; freeze re-arms at first publication | accepted |
+| [0011](0011-v0-freeze-readiness.md) | IR spec v0 freeze-ready; plugin API freeze deferred to the conformance kit (P1) | proposed |

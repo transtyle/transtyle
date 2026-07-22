@@ -4,6 +4,8 @@ Per `docs/plan/catalog-revision.md` T11: *"a review checklist per target filled 
 
 **How to use this**: run each demo (`npm run dev -w <example>-demo-<target>`, ports listed in each example's README), look at it, and mark PASS / CONCERNS for each row. This file isn't meant to gate anything mechanically — check it in once reviewed, with notes on anything that needs a follow-up.
 
+> **Engine-side evidence re-verified 2026-07-22 (R1 prep).** Fresh runs on the current tree: GOV.UK and Carbon both report **zero diagnostics** (`transtyle check --json`); all examples build **byte-identically across two runs** (`check:determinism`, 4/4); the full ground-truth suite passes (`check:all`, 35 ✔). PrimeNG (the 8th target, added after this checklist was first written) is now included below. Nothing engine-side blocks sign-off — what remains is the human judgment these tables ask for.
+
 ## GOV.UK (`examples/govuk/demo/`, ports 4301–4306, 6301)
 
 | Target | Port | What to look for | Result |
@@ -15,8 +17,9 @@ Per `docs/plan/catalog-revision.md` T11: *"a review checklist per target filled 
 | Storybook | 6301 | Chrome (sidebar/toolbar/Controls) themed correctly; single-mode config doesn't break the toolbar's mode switcher (it should just have nothing to switch to) | ☐ |
 | css-variables | 4305 | Full catalog browses cleanly by family; spot-check a few hex values against the live GOV.UK colour page | ☐ |
 | Radix | 4306 | `blue`/`gray` preset override renders GOV.UK blue in real `@radix-ui/themes` components | ☐ |
+| PrimeNG | 4307 | Aura preset override renders GOV.UK blue on real PrimeNG Angular components; flat (0-radius) aesthetic holds; `ng build` type-checks the emitted preset against PrimeNG's own `DesignTokens` | ☐ |
 
-## Carbon (`examples/carbon/demo/`, ports 4401–4406, 6401)
+## Carbon (`examples/carbon/demo/`, ports 4401–4407, 6401)
 
 | Target | Port | What to look for | Result |
 |---|---|---|---|
@@ -27,6 +30,7 @@ Per `docs/plan/catalog-revision.md` T11: *"a review checklist per target filled 
 | Storybook | 6401 | Chrome themes correctly in both modes via the toolbar switcher | ☐ |
 | css-variables | 4405 | Full catalog browses cleanly; spot-check `--color-*` dark values against Carbon's G100 token page | ☐ |
 | Radix | 4406 | `indigo`/`gray` preset override; dark mode shows real G100 background + Blue 40 primary (already screenshot-verified during engineering — worth a second look) | ☐ |
+| PrimeNG | 4407 | Aura preset in both modes on real PrimeNG Angular components; IBM Plex renders; `ng build` type-checks the emitted preset | ☐ |
 
 ## Open items from the findings ledger worth a maintainer opinion
 
