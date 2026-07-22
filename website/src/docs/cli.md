@@ -97,7 +97,7 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 |---|---|
 | `transtyle init` (interactive mode) | A brand-color prompt instead of the fixed placeholder scaffold shipped today |
 | `transtyle add <exporter>` (community plugins) | Install + register third-party exporter packages, printing their manifest first |
-| `transtyle explain <token> --target <t>` | Also show which target variable the value maps to and why (today's `explain` stops at provenance) |
+| `transtyle explain <token> --target <t>` (new flag) | Also show which target variable the value maps to and why (today's `explain` stops at provenance) |
 | `transtyle diff [ref]` | Semantic diff of the resolved token graph vs. a git ref, with per-target impact |
 | `transtyle import <source>` | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
 | `transtyle preview` | Local themed preview site across all targets |

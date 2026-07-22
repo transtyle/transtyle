@@ -32,7 +32,7 @@ Composite values expand: a typography role (`type.role.body.md`) becomes four lo
 
 ## Mode handling
 
-`:root` carries the light map, `[data-color-scheme="dark"]` the dark map — mode *names*, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode-the-hostile-example)) still emits this way. Only color slots vary by mode; scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
+`:root` carries the light map, `[data-color-scheme="dark"]` the dark map — mode *names*, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) still emits this way. Only color slots vary by mode; scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
 
 ## Coverage
 
@@ -40,7 +40,7 @@ Every variable is `native` — there's no target framework to lose fidelity tran
 
 ## Extra mode dimensions
 
-Most targets only know about `color-scheme`. This one expresses **every** dimension a design system declares: a second dimension like `density` gets one selector block per non-default value — `[data-density="compact"]` by default (override the attribute via `options.dimensionSelectors`) — containing only the variables that actually differ from the defaults, not a full re-dump. [Acme's demo](/docs/examples/#acme-the-minimal-example) declares `density: comfortable|compact`, scaling `space.*` by 0.875 in compact; every other target reports it `dropped(mode:density)` in coverage since they don't touch it.
+Most targets only know about `color-scheme`. This one expresses **every** dimension a design system declares: a second dimension like `density` gets one selector block per non-default value — `[data-density="compact"]` by default (override the attribute via `options.dimensionSelectors`) — containing only the variables that actually differ from the defaults, not a full re-dump. [Acme's demo](/docs/examples/#acme--the-minimal-example) declares `density: comfortable|compact`, scaling `space.*` by 0.875 in compact; every other target reports it `dropped(mode:density)` in coverage since they don't touch it.
 
 ## Custom roles (role archetypes)
 

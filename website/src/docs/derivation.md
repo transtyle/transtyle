@@ -54,7 +54,7 @@ Approximate OKLCH values in this table are produced by real color math in `packa
 ## What derivation refuses to do
 
 - **Invent your dark theme** (unless you opt in with `autoDark: true`, and even then everything is flagged `derived`). Dark brand adjustment is a design decision; the engine won't take it from you silently.
-- **Have taste.** Derivation guarantees *coherence*, not *art direction*. On the [Cathode terminal theme](/docs/examples/#cathode-the-hostile-example), derived `info` comes out conventionally blue — coherent, aesthetically wrong for a monochrome CRT, and fixed by one authored line. That boundary is by design.
+- **Have taste.** Derivation guarantees *coherence*, not *art direction*. On the [Cathode terminal theme](/docs/examples/#cathode--the-hostile-example), derived `info` comes out conventionally blue — coherent, aesthetically wrong for a monochrome CRT, and fixed by one authored line. That boundary is by design.
 - **Run your code.** Rules are declarative and shipped in versioned packs; there is deliberately no JS escape hatch in token processing. If the rule language is insufficient, that's a spec conversation, not a plugin.
 
 ## Practical workflow

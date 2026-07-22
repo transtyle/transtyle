@@ -65,7 +65,7 @@ Two equivalent forms. **Inline**, via the sanctioned `$extensions` mechanism —
 
 ## The layered layout (recommended for teams)
 
-The pattern the [Cathode example](/docs/examples/#cathode-the-hostile-example) demonstrates — three kinds of files, every one pure DTCG:
+The pattern the [Cathode example](/docs/examples/#cathode--the-hostile-example) demonstrates — three kinds of files, every one pure DTCG:
 
 | Layer | Contains | Typical owner |
 |---|---|---|

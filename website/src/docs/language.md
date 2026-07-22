@@ -71,7 +71,7 @@ Surfaces are an **elevation ladder**, not four separate named slots — each lev
 | `radius.md` (+ `control`/`field`/`container` aliases), `font.sans`, `font.mono` | Shape and type | author them |
 | `space.*`, `size.control.*`, `border-width.*`, `breakpoint.*`, `z.*`, `type.*` (+ composite `type.role.*`), `duration.*`, `easing.*` | Scales every target can share | catalog-default constants unless you author them |
 
-Anything else you define under `semantic.*` is a **custom semantic token** — legal, carried, mode-aware, and the recommended home for your own vocabulary ([adoption guide](/docs/adopt-existing/), step 2). A custom role can also declare an *archetype* (`brand`/`status`/`neutral`) via `$extensions.transtyle.role` to get the full grid derived like a built-in — <span class="badge live">compiled</span>. Roles with an open set (daisyUI, css-variables) emit it; closed-set targets (Bootstrap, shadcn, ECharts, Storybook, Radix) don't have a slot for it and skip it. [Cathode's `crt-amber`](/docs/examples/#cathode-the-hostile-example) demonstrates it end to end.
+Anything else you define under `semantic.*` is a **custom semantic token** — legal, carried, mode-aware, and the recommended home for your own vocabulary ([adoption guide](/docs/adopt-existing/), step 2). A custom role can also declare an *archetype* (`brand`/`status`/`neutral`) via `$extensions.transtyle.role` to get the full grid derived like a built-in — <span class="badge live">compiled</span>. Roles with an open set (daisyUI, css-variables) emit it; closed-set targets (Bootstrap, shadcn, ECharts, Storybook, Radix) don't have a slot for it and skip it. [Cathode's `crt-amber`](/docs/examples/#cathode--the-hostile-example) demonstrates it end to end.
 
 ## False friends
 

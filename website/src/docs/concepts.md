@@ -44,7 +44,7 @@ The catalog is the fixed set of semantic slots that exporters can rely on existi
 - **Content** — `text.{strong, base, muted, subtle, disabled, inverse}`, `link.{base, hover, visited}`; `border`, `ring` as single-value slots.
 - **Also** — `radius.*` (+ `control`/`field`/`container` family aliases), `font.*`, and defaulted scales for `space.*`, `size.control.*`, `border-width.*`, `breakpoint.*`, `z.*`, `type.*` (primitives and composite `type.role.*`), `duration.*`, `easing.*`.
 
-You may add **custom semantic tokens** beyond the catalog — they're carried with full provenance and can be aliased by catalog slots. That's how a design system keeps its own vocabulary: see [the Cathode walkthrough](/docs/examples/#cathode-the-hostile-example).
+You may add **custom semantic tokens** beyond the catalog — they're carried with full provenance and can be aliased by catalog slots. That's how a design system keeps its own vocabulary: see [the Cathode walkthrough](/docs/examples/#cathode--the-hostile-example).
 
 ## 4. Modes
 

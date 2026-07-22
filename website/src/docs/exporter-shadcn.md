@@ -49,7 +49,7 @@ Every mapping decision is recorded per-variable in `report.json` with its covera
 
 ## Mode handling
 
-`color-scheme` maps to shadcn's class strategy: `:root` gets **light** values, `.dark` gets dark. This binds mode *names* — a dark-native design system ([Cathode](/docs/examples/#cathode-the-hostile-example)) compiles correctly, its native look under `.dark`.
+`color-scheme` maps to shadcn's class strategy: `:root` gets **light** values, `.dark` gets dark. This binds mode *names* — a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) compiles correctly, its native look under `.dark`.
 
 ## Out of scope, honestly
 

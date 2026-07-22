@@ -40,7 +40,7 @@ Concrete recipes:
 
 - **"Make me a theme from this brand color"** — write an 11-token project like the [Acme example](/docs/examples/), run `build`, return `globals.transtyle.css`. Derivation does the heavy lifting; the agent's job is only the brand facts.
 - **"Fix the contrast warnings"** — run `check`, filter stderr for `TST2101` (each includes the measured ratio, the token pair, and the mode), adjust the named token's lightness in OKLCH, re-run until clean.
-- **"Port this design system's weird vocabulary"** — follow the [Cathode pattern](/docs/examples/#cathode-the-hostile-example): express the vocabulary as custom semantic tokens, then write one-line catalog bindings. The agent never needs to understand the whole system — only to map meanings.
+- **"Port this design system's weird vocabulary"** — follow the [Cathode pattern](/docs/examples/#cathode--the-hostile-example): express the vocabulary as custom semantic tokens, then write one-line catalog bindings. The agent never needs to understand the whole system — only to map meanings.
 
 ## Machine-readable documentation
 

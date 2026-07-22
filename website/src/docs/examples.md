@@ -6,7 +6,7 @@ order: 10
 
 # Example walkthroughs
 
-Four example design systems live in the repo. Acme and Cathode are invented, chosen as opposites — minimal input vs. maximal weirdness. [GOV.UK](#gov-uk-a-real-design-system) and [Carbon](#carbon-a-real-design-system) are real, published, independently-designed systems adopted through the same [binding-layer playbook](/docs/adopt-existing/) — the project's **T11 "real-DS run"**, proof the catalog holds up against systems nobody on this project designed.
+Four example design systems live in the repo. Acme and Cathode are invented, chosen as opposites — minimal input vs. maximal weirdness. [GOV.UK](#govuk--a-real-design-system) and [Carbon](#carbon--a-real-design-system) are real, published, independently-designed systems adopted through the same [binding-layer playbook](/docs/adopt-existing/) — the project's **T11 "real-DS run"**, proof the catalog holds up against systems nobody on this project designed.
 
 ## Acme — the minimal example
 

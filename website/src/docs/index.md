@@ -58,7 +58,7 @@ Every one of these is deterministic, provenance-tagged, contrast-checked where i
 
 The [Acme example](/docs/examples/) authors **11 tokens** — one brand color, neutrals, a radius, two fonts — and compiles to the complete 33-variable shadcn theme with hover states, subtle tints, contrast-checked on-colors, dark mode, and a brand-derived categorical chart palette — plus, from the same tokens, per-mode Apache ECharts themes. Every generated value knows where it came from.
 
-The [Cathode example](/docs/examples/#cathode-the-hostile-example) proves the opposite direction: a design system with completely alien vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`), dark-native, brand-color-as-text-color — compiled through the same catalog via one-line bindings.
+The [Cathode example](/docs/examples/#cathode--the-hostile-example) proves the opposite direction: a design system with completely alien vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`), dark-native, brand-color-as-text-color — compiled through the same catalog via one-line bindings.
 
 > **Status honesty:** Transtyle is a v0.1 walking skeleton. The pipeline, derivation engine, mode system, and shadcn exporter work end-to-end and deterministically. Many specced features (more exporters, `init`, `explain`, `diff`, importers) are design-complete but not implemented. The [roadmap](/docs/roadmap/) tells the truth about which is which.
 
