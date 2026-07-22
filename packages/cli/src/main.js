@@ -7,6 +7,8 @@
 import path from 'node:path';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
 import { compile, diffResolved, contrastRegressions, formatColor, formatHex } from '@transtyle/core';
@@ -22,13 +24,35 @@ const OFFICIAL_EXPORTERS = {
   primeng: '@transtyle/exporter-primeng',
 };
 
-async function loadExporter(name) {
-  const pkg = OFFICIAL_EXPORTERS[name] ?? name;
-  try {
-    return (await import(pkg)).default;
-  } catch (e) {
-    throw new Error(`Cannot load exporter for target "${name}" (tried "${pkg}"): ${e.message}`);
-  }
+/**
+ * Build a loader that resolves exporter packages **from the user's project
+ * first**, then from the CLI's own install.
+ *
+ * A bare `import(pkg)` resolves relative to this file, which works for the
+ * official exporters (they ship alongside the CLI) but makes third-party ones
+ * unloadable whenever the CLI isn't inside the project's own node_modules — a
+ * global install, a monorepo checkout, a hoisted binary. Project-first also lets
+ * a project deliberately pin its own fork of an official exporter.
+ */
+function makeLoadExporter(cwd) {
+  const requireFromProject = createRequire(path.join(cwd, 'noop.js'));
+  return async function loadExporter(name) {
+    const pkg = OFFICIAL_EXPORTERS[name] ?? name;
+    const tried = [];
+    try {
+      return (await import(pathToFileURL(requireFromProject.resolve(pkg)).href)).default;
+    } catch (e) {
+      tried.push(`from the project (${cwd}): ${e.code ?? e.message}`);
+    }
+    try {
+      return (await import(pkg)).default;
+    } catch (e) {
+      tried.push(`from the transtyle install: ${e.code ?? e.message}`);
+    }
+    throw new Error(
+      `Cannot load exporter for target "${name}" (package "${pkg}"):\n  - ${tried.join('\n  - ')}\n` +
+      `  Third-party exporters must be installed in this project: npm install ${pkg}`);
+  };
 }
 
 function parseArgs(argv) {
@@ -85,7 +109,7 @@ async function cmdBuildOrCheck(args) {
   const emit = args.command === 'build';
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter });
+    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter: makeLoadExporter(args.cwd) });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
@@ -132,7 +156,7 @@ async function cmdExplain(args) {
 
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter });
+    result = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd) });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
@@ -254,7 +278,7 @@ async function cmdDiff(args) {
   // "after" = the working tree as it is now.
   let after;
   try {
-    after = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter });
+    after = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd) });
   } catch (e) { console.error(`✖ ${e.message}`); process.exit(2); }
 
   // "before" = the project at `ref`, materialized into a temp dir via git archive.
@@ -280,7 +304,7 @@ async function cmdDiff(args) {
       rmSync(tmp, { recursive: true, force: true });
       process.exit(0);
     }
-    before = await compile({ cwd: beforeCwd, targets: [], emit: false, loadExporter });
+    before = await compile({ cwd: beforeCwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd) });
   } catch (e) {
     rmSync(tmp, { recursive: true, force: true });
     console.error(`✖ Could not resolve the project at ${ref}: ${e.message}`);

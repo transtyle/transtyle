@@ -230,7 +230,16 @@ export function formatHslTriplet(color) {
   return { text: `${r1(h)} ${r1(s * 100)}% ${r1(l * 100)}%`, clamped };
 }
 
-/** Format as #rrggbb hex (canvas-friendly: ECharts). `clamped` mirrors oklchToSrgb. */
+/**
+ * Format as #rrggbb hex (canvas-friendly: ECharts). `clamped` mirrors oklchToSrgb.
+ *
+ * Round-trip note (measured exhaustively, guarded by scripts/check-color.mjs):
+ * `formatHex(parseColor(hex))` returns the input for all but 1580 of the
+ * 16,777,216 sRGB values (0.0094%), which come back ±1/255. Those all sit in the
+ * near-black range, where sRGB's transfer curve is steepest relative to an 8-bit
+ * step; it is inherent to canonicalizing through OKLCH in float64. Determinism is
+ * unaffected — the same input always yields the same output.
+ */
 export function formatHex(color) {
   const input = color.c < 0.002 ? { ...color, c: 0 } : color;
   const { r, g, b, clamped } = oklchToSrgb(input);
