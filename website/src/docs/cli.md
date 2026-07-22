@@ -79,7 +79,16 @@ npx transtyle diff main         # what does this branch do to the compiled theme
 #   shadcn: 34 lines changed
 ```
 
-Exits `0` when the compiled themes are identical, `1` when there are changes (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling. Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
+It also flags **contrast regressions** — pairs that passed your configured WCAG standard before the change and fail after it:
+
+```
+⚠ Contrast regressions:
+  ✖ text.base on elevation.0.surface (light): 18.1:1 → 2.2:1 — now FAILS 4.5:1
+```
+
+That's the difference between `check` ("contrast is bad") and `diff` ("*this change* made it bad") — the second is what a green CI baseline can otherwise lose silently.
+
+Exits `0` when the compiled themes are identical, `1` when there are changes (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling, including a `contrastRegressions` array. Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
 
 ### `transtyle init [name]`
 

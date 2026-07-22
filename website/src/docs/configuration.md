@@ -76,4 +76,4 @@ Each key is a **target instance**. The optional `exporter` field selects the plu
 ## `check`
 
 - `failOn` — `error` (default) | `warning` | `approximation`: the diagnostic level that makes the build exit non-zero. CI teams typically tighten this over time.
-- `contrast.standard` — `wcag21-aa` today (APCA specced). Contrast checks run on text/background pairs and every derived on-color; failures are warnings (`TST2101`), never silent.
+- `contrast.standard` — `wcag21-aa` (4.5:1, the default) or `wcag21-aaa` (7:1); APCA is specced. Contrast checks run on text/background pairs and every derived on-color; failures are warnings (`TST2101`), never silent. The same threshold drives [`transtyle diff`](/docs/cli/)'s contrast-regression flag, so `check` and `diff` always agree on what "passing" means.

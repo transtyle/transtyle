@@ -9,7 +9,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, diffResolved, formatColor, formatHex } from '@transtyle/core';
+import { compile, diffResolved, contrastRegressions, formatColor, formatHex } from '@transtyle/core';
 
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -290,11 +290,12 @@ async function cmdDiff(args) {
 
   const diff = diffResolved(before.normalized, after.normalized);
   const impact = diffTargets(before.results, after.results);
+  const a11y = contrastRegressions(before.normalized, after.normalized, after.config);
 
   if (args.json) {
-    console.log(JSON.stringify(serializeDiff(ref, diff, impact), null, 2));
+    console.log(JSON.stringify(serializeDiff(ref, diff, impact, a11y), null, 2));
   } else {
-    printDiff(ref, diff, impact);
+    printDiff(ref, diff, impact, a11y);
   }
   // Set exitCode rather than process.exit(): the JSON report can be tens of KB,
   // and process.exit() truncates an async stdout write to a pipe mid-flush.
@@ -339,10 +340,14 @@ function lineChanges(before, after) {
   return out;
 }
 
-function serializeDiff(ref, diff, impact) {
+function serializeDiff(ref, diff, impact, a11y = []) {
   return {
     ref,
     hasChanges: diff.hasChanges,
+    contrastRegressions: a11y.map((r) => ({
+      mode: r.mode, pair: `${r.fg} on ${r.bg}`, status: r.status,
+      before: Number(r.before.toFixed(2)), after: Number(r.after.toFixed(2)), threshold: r.threshold,
+    })),
     semantic: diff.modes.map((m) => ({
       mode: m.mode,
       added: m.added,
@@ -358,7 +363,7 @@ function serializeDiff(ref, diff, impact) {
   };
 }
 
-function printDiff(ref, diff, impact) {
+function printDiff(ref, diff, impact, a11y = []) {
   if (!diff.hasChanges) {
     console.error(`No semantic changes vs ${ref} — compiled themes are identical.`);
     return;
@@ -382,6 +387,19 @@ function printDiff(ref, diff, impact) {
     if (!r.changedLines) { console.error(`  ${r.target}: no output change`); continue; }
     console.error(`  ${r.target}: ${r.changedLines} line${r.changedLines === 1 ? '' : 's'} changed`);
     for (const s of r.samples) console.error(`      ${s}`);
+  }
+
+  // Last, so it stays on screen: this change's accessibility cost.
+  if (a11y.length) {
+    const regressed = a11y.filter((r) => r.status === 'regressed');
+    console.error(`\n⚠ Contrast ${regressed.length ? 'regressions' : 'changes'}:`);
+    for (const r of a11y) {
+      const verb = r.status === 'regressed' ? 'now FAILS' : 'still fails';
+      console.error(`  ${r.status === 'regressed' ? '✖' : '⚠'} ${r.fg} on ${r.bg} (${r.mode}): ${r.before.toFixed(1)}:1 → ${r.after.toFixed(1)}:1 — ${verb} ${r.threshold}:1`);
+    }
+    if (regressed.length) {
+      console.error(`\n  ${regressed.length} pair${regressed.length === 1 ? '' : 's'} passed before this change and fail${regressed.length === 1 ? 's' : ''} after it.`);
+    }
   }
 }
 

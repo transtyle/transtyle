@@ -16,7 +16,7 @@ import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './
 
 export { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 export { Diagnostics } from './diagnostics.js';
-export { diffResolved } from './diff.js';
+export { diffResolved, contrastRegressions } from './diff.js';
 
 /**
  * Run the pipeline. `emit: false` = `transtyle check` (pipeline minus EMIT —

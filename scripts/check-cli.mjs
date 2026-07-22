@@ -115,6 +115,20 @@ try {
 
     r = runIn(['diff', 'no-such-ref']);
     expect('diff: unknown ref refused (exit 2)', r.code === 2, `exit ${r.code}`);
+
+    // Contrast regression: a brand-colour change must NOT flag one (no false
+    // positives), while lightening body text until it fails AA must.
+    expect('diff: brand-only change flags no contrast regression', !r.out.includes('Contrast regressions'));
+    writeFileSync(tp, readFileSync(tp, 'utf8').replace('oklch(0.2 0.01 255)', 'oklch(0.75 0.01 255)'));
+    r = runIn(['diff']);
+    expect('diff: flags a contrast regression', r.out.includes('Contrast regressions') && r.out.includes('now FAILS'), r.out.slice(-400));
+    r = runIn(['diff', '--json']);
+    expect('diff --json: reports regressed pairs', (() => {
+      try {
+        const cr = JSON.parse(r.stdout).contrastRegressions;
+        return Array.isArray(cr) && cr.length > 0 && cr.every((x) => x.status === 'regressed' && x.before > x.after);
+      } catch { return false; }
+    })());
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

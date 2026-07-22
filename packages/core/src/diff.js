@@ -10,6 +10,8 @@
  * graph rather than the source.
  */
 
+import { CONTRAST_PAIRS, contrastThreshold, pairRatio } from './checks.js';
+
 /** Canonical, stable string form of a resolved value, for equality only. */
 function canon(value) {
   if (value === null || value === undefined) return String(value);
@@ -55,4 +57,41 @@ export function diffResolved(before, after) {
 
   const hasChanges = modes.some((m) => m.added.length || m.removed.length || m.changed.length);
   return { modes, changedSlots, hasChanges };
+}
+
+/**
+ * Accessibility regressions introduced by the change (docs/specs/diff.md).
+ *
+ * `check` tells you the contrast is bad *now*; this tells you **this change made
+ * it bad** — which is the question a reviewer has, and the one a passing-CI
+ * baseline can regress on silently. Uses the same pairs and threshold as
+ * `runChecks`, so the two can never disagree about what "passing" means.
+ *
+ * Severities, worst first:
+ *   `regressed` — passed the standard before, fails now (the headline case)
+ *   `worsened`  — already failing, and the ratio dropped further
+ *
+ * A pair that improves, or that fails identically on both sides, is not reported.
+ *
+ * @returns {Array<{ mode, fg, bg, before: number, after: number, status, threshold }>}
+ */
+export function contrastRegressions(before, after, config) {
+  const threshold = contrastThreshold(config);
+  const out = [];
+  for (const mode of Object.keys(after.modes)) {
+    const bMap = before.modes[mode];
+    const aMap = after.modes[mode];
+    if (!bMap || !aMap) continue; // mode added or removed — not a regression
+    for (const [fg, bg] of CONTRAST_PAIRS) {
+      const b = pairRatio(bMap, fg, bg);
+      const a = pairRatio(aMap, fg, bg);
+      if (b === null || a === null) continue;
+      if (b >= threshold && a < threshold) {
+        out.push({ mode, fg, bg, before: b, after: a, status: 'regressed', threshold });
+      } else if (b < threshold && a < threshold && a < b - 0.05) {
+        out.push({ mode, fg, bg, before: b, after: a, status: 'worsened', threshold });
+      }
+    }
+  }
+  return out;
 }

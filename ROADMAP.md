@@ -62,7 +62,7 @@ The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited th
 - [ ] **P3** — Recruited third-party exporter pilot ← tests W1 (v1.0 exit criterion)
 - [ ] **P4** — Hostile-adoption experiment (real DS, no published tokens) ← tests W2; decides I1/I2 order
 - [ ] **P5** — Browser playground
-- [x] **P6** — `transtyle diff` — done 2026-07-22 (semantic diff of the *resolved* graph vs a git ref + per-target output impact; `--json`, `git diff`-style exit codes; [spec](docs/specs/diff.md), golden tests in `check:cli`). Built on the freeze-ready IR ([ADR-0011](docs/adr/0011-v0-freeze-readiness.md)); needs no publication, so unaffected by the R4/R5 parking.
+- [x] **P6** — `transtyle diff` — done 2026-07-22 (semantic diff of the *resolved* graph vs a git ref + **contrast-regression flagging** + per-target output impact; `--json`, `git diff`-style exit codes; [spec](docs/specs/diff.md), golden tests in `check:cli`). The a11y flag shares `runChecks`' pairs and threshold, and fixed a latent bug: `check.contrast.standard: wcag21-aaa` was accepted but silently compared against AA's 4.5:1. Built on the freeze-ready IR ([ADR-0011](docs/adr/0011-v0-freeze-readiness.md)); needs no publication, so unaffected by the R4/R5 parking.
 - [ ] **I1** — Tailwind config importer
 - [ ] **I2** — Figma variables importer
 - [ ] **I3** — Watch mode + CI recipe
