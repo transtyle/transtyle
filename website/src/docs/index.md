@@ -110,3 +110,5 @@ The [Acme example](/docs/examples/) authors **11 tokens** and compiles complete 
 > **Status honesty:** Transtyle is pre-publication (v0, not yet on npm — you run it from the repository). What's real today: the full pipeline, the derivation engine (role grids, elevation, scales, modes), `build` / `check` / `explain` / `init` / `add`, eight exporters, four examples with runnable demo projects for every target, and CI-verified deterministic builds. What's specced but not implemented: `diff`, `import`, `preview`, and the importers. The [roadmap](/docs/roadmap/) tells the truth about which is which.
 
 Start with the path card above that matches your situation — or read [Core concepts](/docs/concepts/) first if you want the mental model before touching files: three token tiers, [the catalog as pivot language](/docs/language/), modes, and the provenance/coverage trust system.
+
+New to design tokens entirely? Take the short course: [What is a design token?](/docs/what-is-a-design-token/) → [How Transtyle works](/docs/how-transtyle-works/) → [Your first build](/docs/your-first-build/) — the first two are code-free.

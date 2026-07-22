@@ -8,6 +8,7 @@
  */
 export const sections = [
   { title: 'Start here', slugs: ['index', 'getting-started', 'adopt-existing'] },
+  { title: 'Learn', slugs: ['what-is-a-design-token', 'how-transtyle-works', 'your-first-build'] },
   { title: 'Concepts', slugs: ['concepts', 'derivation', 'internals'] },
   { title: 'Guides', slugs: ['authoring-tokens', 'examples', 'ai-agents'] },
   { title: 'Reference', slugs: ['language', 'configuration', 'cli', 'diagnostics'] },
