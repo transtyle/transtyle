@@ -10,12 +10,24 @@ Transtyle takes a framework-agnostic description of your design system — token
 
 Describe your design system once. Change it in one place. Regenerate every target.
 
-<div class="flow" role="img" aria-label="Pipeline: DTCG token files flow into the intermediate representation (normalize, derive, validate), which flows out to eight target exporters">
-  <span class="fgroup"><span class="fnode">DTCG token files</span><span class="fnode dim">Figma · Tailwind (specced)</span></span>
-  <span class="farr">→</span>
-  <span class="fnode hi">IR: normalize · derive · validate</span>
-  <span class="farr">→</span>
-  <span class="fgroup"><span class="fnode">shadcn · daisyUI · ECharts · Bootstrap</span><span class="fnode">Storybook · Radix · PrimeNG · css-variables</span></span>
+<div class="schema" role="img" aria-label="You write design tokens; Transtyle normalizes, derives and validates them; you ship eight native themes plus a coverage report">
+  <div class="s-col">
+    <span class="s-kicker">You write</span>
+    <span class="s-main">Design tokens (DTCG)</span>
+    <span class="s-sub">your names, your values — one source of truth, plain JSON</span>
+  </div>
+  <div class="s-arrow" aria-hidden="true">→</div>
+  <div class="s-col hi">
+    <span class="s-kicker">Transtyle compiles</span>
+    <span class="s-main">normalize · derive · validate</span>
+    <span class="s-sub">fills every gap with deterministic rules, checks contrast, records where each value came from</span>
+  </div>
+  <div class="s-arrow" aria-hidden="true">→</div>
+  <div class="s-col">
+    <span class="s-kicker">You ship</span>
+    <span class="s-main">8 native themes</span>
+    <span class="s-sub">shadcn, Bootstrap, ECharts, daisyUI, Storybook, Radix, PrimeNG, CSS variables — each idiomatic, plus a coverage report</span>
+  </div>
 </div>
 
 ```bash
@@ -65,11 +77,29 @@ In your vocabulary: **option tokens** are your primitives, **semantic tokens** a
 
 Seeing is believing. From **one authored brand color** <span class="sw" style="--c:oklch(0.55 0.18 255)"></span> `oklch(0.55 0.18 255)`, the standard rules derive the full role set:
 
-<div class="pal"><span style="--c:oklch(0.55 0.18 255)" data-l="primary"></span><span style="--c:oklch(0.58 0.063 255)" data-l="secondary"></span><span style="--c:oklch(0.95 0.017 255)" data-l="accent·tint"></span><span style="--c:oklch(0.55 0.19 25)" data-l="danger"></span><span style="--c:oklch(0.76 0.14 85)" data-l="warning"></span><span style="--c:oklch(0.6 0.14 150)" data-l="success"></span><span style="--c:oklch(0.58 0.15 230)" data-l="info"></span><span style="--c:oklch(0.55 0.012 255)" data-l="neutral"></span></div>
+<div class="swatches">
+  <div class="swatch"><i style="--c:oklch(0.55 0.18 255)" aria-hidden="true"></i><b>primary</b><span>authored</span></div>
+  <div class="swatch"><i style="--c:oklch(0.58 0.063 255)" aria-hidden="true"></i><b>secondary</b><span>desaturated brand</span></div>
+  <div class="swatch"><i style="--c:oklch(0.95 0.017 255)" aria-hidden="true"></i><b>accent.tint</b><span>brand-tinted wash</span></div>
+  <div class="swatch"><i style="--c:oklch(0.55 0.19 25)" aria-hidden="true"></i><b>danger</b><span>hue-anchored 25°</span></div>
+  <div class="swatch"><i style="--c:oklch(0.76 0.14 85)" aria-hidden="true"></i><b>warning</b><span>hue-anchored 85°</span></div>
+  <div class="swatch"><i style="--c:oklch(0.6 0.14 150)" aria-hidden="true"></i><b>success</b><span>hue-anchored 150°</span></div>
+  <div class="swatch"><i style="--c:oklch(0.58 0.15 230)" aria-hidden="true"></i><b>info</b><span>hue-anchored 230°</span></div>
+  <div class="swatch"><i style="--c:oklch(0.55 0.012 255)" aria-hidden="true"></i><b>neutral</b><span>brand-hued gray</span></div>
+</div>
 
 …and an 8-color categorical data-viz palette, hue-rotated from the brand, shared verbatim between shadcn's `--chart-*` and ECharts' `color[]`:
 
-<div class="pal"><span style="--c:#026fd7" data-l="1"></span><span style="--c:#d15c56" data-l="2"></span><span style="--c:#319751" data-l="3"></span><span style="--c:#d4a73e" data-l="4"></span><span style="--c:#975ac0" data-l="5"></span><span style="--c:#00a6ae" data-l="6"></span><span style="--c:#d779ba" data-l="7"></span><span style="--c:#7e8814" data-l="8"></span></div>
+<div class="swatches">
+  <div class="swatch"><i style="--c:#026fd7" aria-hidden="true"></i><b>chart-1</b><span>#026fd7</span></div>
+  <div class="swatch"><i style="--c:#d15c56" aria-hidden="true"></i><b>chart-2</b><span>#d15c56</span></div>
+  <div class="swatch"><i style="--c:#319751" aria-hidden="true"></i><b>chart-3</b><span>#319751</span></div>
+  <div class="swatch"><i style="--c:#d4a73e" aria-hidden="true"></i><b>chart-4</b><span>#d4a73e</span></div>
+  <div class="swatch"><i style="--c:#975ac0" aria-hidden="true"></i><b>chart-5</b><span>#975ac0</span></div>
+  <div class="swatch"><i style="--c:#00a6ae" aria-hidden="true"></i><b>chart-6</b><span>#00a6ae</span></div>
+  <div class="swatch"><i style="--c:#d779ba" aria-hidden="true"></i><b>chart-7</b><span>#d779ba</span></div>
+  <div class="swatch"><i style="--c:#7e8814" aria-hidden="true"></i><b>chart-8</b><span>#7e8814</span></div>
+</div>
 
 Every one of these is deterministic, provenance-tagged, contrast-checked where it pairs with text, and overridable by authoring one token. Nothing here is a mockup — these are the compiled values from the [Acme example](/docs/examples/), and `npx transtyle explain` will show you each one's derivation chain.
 

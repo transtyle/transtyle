@@ -42,7 +42,18 @@ Top-level groups declare the tier: `option` (your raw palette, private), `semant
 
 ## Modes
 
-Two equivalent forms. **Inline**, via the sanctioned `$extensions` mechanism — good for small systems that hand-edit token files:
+Two equivalent forms. **Mode-scoped layer files** are the recommended default: every token file stays pure DTCG (readable by Figma, Tokens Studio, Style Dictionary — nothing Transtyle-specific inside), and the mode assignment lives in the config:
+
+```json
+"tokens": [
+  "tokens/base.tokens.json",
+  { "files": "tokens/dark.tokens.json", "mode": { "color-scheme": "dark" } }
+]
+```
+
+`dark.tokens.json` then contains plain `$value`s for whichever tokens vary. This is also the form that scales: generated files, per-mode ownership, and new dimensions (density, brand) each stay their own file.
+
+The **inline** alternative, via the sanctioned `$extensions` mechanism, keeps a token and all its mode values in one place — convenient for small systems that hand-edit token files:
 
 ```json
 { "surface": { "base": {
@@ -52,16 +63,7 @@ Two equivalent forms. **Inline**, via the sanctioned `$extensions` mechanism —
 } } }
 ```
 
-**Mode-scoped layer files** — good when token files are generated (Figma, Tokens Studio) or owned by another team; the token file stays pure DTCG and the mode assignment lives in the config:
-
-```json
-"tokens": [
-  "tokens/base.tokens.json",
-  { "files": "tokens/dark.tokens.json", "mode": { "color-scheme": "dark" } }
-]
-```
-
-`dark.tokens.json` then contains plain `$value`s for whichever tokens vary. Both forms produce the identical internal representation and may be mixed; later layers win, with a warning (`TST1108`) when a mode value is overridden.
+Both forms produce the identical internal representation and may be mixed; later layers win, with a warning (`TST1108`) when a mode value is overridden.
 
 ## The layered layout (recommended for teams)
 

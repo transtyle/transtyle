@@ -163,6 +163,33 @@ h1, h2, h3 { text-wrap: balance; }
 .paths .path-title { font-weight: 650; margin: 0.15rem 0 0.25rem; color: var(--primary); }
 .paths .path-desc { font-size: 0.85rem; color: var(--text-muted); }
 
+/* .swatches — a grid of labeled color cards (replaces bare color strips). */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: 0.7rem; margin: 1.1rem 0; }
+.swatches .swatch {
+  border: 1px solid var(--border-soft); border-radius: 10px; overflow: hidden;
+  background: var(--surface); box-shadow: var(--shadow);
+}
+.swatches .swatch i { display: block; height: 2.6rem; background: var(--c); }
+.swatches .swatch b { display: block; font-size: 0.8rem; font-weight: 650; padding: 0.4rem 0.65rem 0.05rem; font-family: 'JetBrains Mono Variable', monospace; }
+.swatches .swatch span { display: block; font-size: 0.68rem; color: var(--text-muted); padding: 0 0.65rem 0.45rem; font-family: 'JetBrains Mono Variable', monospace; font-variant-numeric: tabular-nums; }
+
+/* .schema — the what-happens diagram in plain language: write → compile → ship. */
+.schema { display: flex; align-items: stretch; gap: 0.8rem; margin: 1.4rem 0; flex-wrap: wrap; }
+.schema .s-col {
+  flex: 1; min-width: 11rem; display: flex; flex-direction: column; gap: 0.25rem;
+  border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem 1.1rem;
+  background: var(--surface); box-shadow: var(--shadow);
+}
+.schema .s-col.hi { border-color: var(--primary); background: linear-gradient(135deg, var(--primary-soft), var(--surface)); }
+.schema .s-kicker { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-muted); font-weight: 700; }
+.schema .s-main { font-weight: 650; font-size: 0.95rem; }
+.schema .s-sub { font-size: 0.8rem; color: var(--text-muted); }
+.schema .s-arrow { align-self: center; color: var(--text-muted); font-size: 1.3rem; }
+@media (max-width: 700px) {
+  .schema { flex-direction: column; }
+  .schema .s-arrow { transform: rotate(90deg); align-self: center; }
+}
+
 /* Provenance/coverage chips — always the same three colors, site-wide. */
 .prov { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 99px; white-space: nowrap; }
 .prov.native, .prov.authored { background: color-mix(in oklch, var(--cov-native) 16%, transparent); color: var(--cov-native); }

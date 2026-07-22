@@ -96,7 +96,7 @@ In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
 }
 ```
 
-Note the two tiers: `option.color.brand.500` is *your* name for *your* value; `primary.solid` is the catalog slot that aliases it. Dark-mode values attach per token via `$extensions` — see [Authoring tokens](/docs/authoring-tokens/#modes).
+Note the two tiers: `option.color.brand.500` is *your* name for *your* value; `primary.solid` is the catalog slot that aliases it. Dark-mode values go in a separate mode-scoped DTCG file (the recommended layout) or inline per token — see [Authoring tokens](/docs/authoring-tokens/#modes).
 
 Then build, and add targets as you need them:
 

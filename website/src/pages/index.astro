@@ -43,21 +43,21 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       <p class="band-sub">The architecture of Babel and LLVM, applied to design systems: pluggable frontends and backends around one intermediate representation. N sources and M targets cost N+M mappings, not N×M converters.</p>
       <div class="pipeline">
         <div class="pipe-col">
-          <h3>Frontends</h3>
+          <h3>You write<span class="pipe-tag">token files · importers</span></h3>
           <div class="chip">DTCG token files</div>
           <div class="chip soon">Figma variables</div>
           <div class="chip soon">Tailwind config</div>
-          <div class="chip soon">Bootstrap Sass</div>
+          <p class="pipe-note">One source of truth: your names, your values, plain JSON any token tool can read.</p>
         </div>
         <div class="pipe-arrow" aria-hidden="true">→</div>
         <div class="pipe-col ir">
-          <h3>Intermediate representation</h3>
+          <h3>Transtyle compiles<span class="pipe-tag">one shared representation</span></h3>
           <div class="chip ir-chip">normalize · derive ·<br />validate · explain</div>
-          <p class="pipe-note">the <a href="/docs/language/">semantic catalog</a> — a pivot vocabulary of <em>meanings</em>, not names</p>
+          <p class="pipe-note">Your tokens bind once to the <a href="/docs/language/">semantic catalog</a> — a pivot vocabulary of <em>meanings</em>, not names. Gaps are filled by deterministic rules.</p>
         </div>
         <div class="pipe-arrow" aria-hidden="true">→</div>
         <div class="pipe-col">
-          <h3>Backends</h3>
+          <h3>You ship<span class="pipe-tag">native themes · exporters</span></h3>
           <div class="chip">shadcn/ui</div>
           <div class="chip">daisyUI</div>
           <div class="chip">Apache ECharts</div>
@@ -66,13 +66,14 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
           <div class="chip">Radix Themes</div>
           <div class="chip">PrimeNG</div>
           <div class="chip">CSS variables</div>
+          <p class="pipe-note">Idiomatic files per ecosystem — plus a coverage report saying how faithful each one is.</p>
         </div>
       </div>
     </section>
 
     <section class="band alt" aria-labelledby="h-derive">
-      <h2 id="h-derive">Author 11 tokens. Ship a complete theme.</h2>
-      <p class="band-sub">You author only real design decisions — in the catalog's vocabulary of meanings. The derivation engine fills every slot you didn't author — hover states, on-colors, tints, dark-mode wiring, a data-viz palette — with deterministic, versioned rules. Authored always wins; every value knows its origin.</p>
+      <h2 id="h-derive">Author 11 tokens — or every single one.</h2>
+      <p class="band-sub">Eleven tokens is the floor, not the ceiling. The derivation engine fills every slot you didn't author — hover states, on-colors, tints, dark-mode wiring, a data-viz palette — with deterministic, versioned rules. But every one of those slots is a real, addressable token: <a href="/docs/language/">the catalog</a> exposes the full role grids, elevation ladder, and scales, so you can pin any value — down to a single dark-mode hover state — and derivation yields to you. Authored always wins; every value knows its origin.</p>
       <div class="duo">
         <div class="card">
           <div class="card-label">You write <span class="prov authored">authored</span></div>
@@ -94,6 +95,54 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
         </div>
       </div>
       <p class="band-foot">Ask the compiler why: <code>npx transtyle explain primary.tint</code> prints the value's full provenance chain.</p>
+    </section>
+
+    <section class="band" aria-labelledby="h-showcase">
+      <h2 id="h-showcase">Same tokens. Native everywhere.</h2>
+      <p class="band-sub">This is the whole product in one picture: one token definition on the left, and what each ecosystem's components look like wearing it. Not screenshots — these previews are styled with the actual compiled Acme values.</p>
+      <div class="showcase">
+        <div class="card show-src">
+          <div class="card-label">tokens/semantic.tokens.json</div>
+          <pre><code>{`"primary": { "solid":
+    "{option.color.blue.600}" },
+"danger":  { "solid":
+    "{option.color.red.600}" },
+"radius":  { "md": "0.5rem" }`}</code></pre>
+        </div>
+        <div class="show-targets">
+          <figure class="tframe">
+            <figcaption>Bootstrap</figcaption>
+            <div class="t-ui">
+              <span class="bs-btn">Primary</span>
+              <span class="bs-btn outline">Secondary</span>
+              <span class="bs-alert">Something went wrong.</span>
+            </div>
+          </figure>
+          <figure class="tframe dark">
+            <figcaption>shadcn/ui · dark</figcaption>
+            <div class="t-ui">
+              <span class="sc-btn">Continue</span>
+              <span class="sc-btn ghost">Cancel</span>
+              <span class="sc-input">Email address</span>
+            </div>
+          </figure>
+          <figure class="tframe">
+            <figcaption>daisyUI</figcaption>
+            <div class="t-ui">
+              <span class="dy-btn">Accept</span>
+              <span class="dy-badge">error</span>
+              <span class="dy-toggle" aria-hidden="true"><i></i></span>
+            </div>
+          </figure>
+          <figure class="tframe">
+            <figcaption>Apache ECharts</figcaption>
+            <div class="t-ui chart" role="img" aria-label="Bar chart using the derived categorical palette">
+              <i style="--h:78%;--c:#026fd7"></i><i style="--h:52%;--c:#d15c56"></i><i style="--h:64%;--c:#319751"></i><i style="--h:38%;--c:#d4a73e"></i><i style="--h:56%;--c:#975ac0"></i>
+            </div>
+          </figure>
+        </div>
+      </div>
+      <p class="band-foot">Every example ships <a href="/docs/examples/">runnable demo projects</a> — the same page built with each target's real components, consuming only the compiled <code>dist/</code>.</p>
     </section>
 
     <section class="band" aria-labelledby="h-language">
@@ -223,6 +272,35 @@ cd examples/acme && npx transtyle build</code></pre>
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
     .card-label { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1.1rem; font-size: 0.75rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); background: var(--bg-soft); }
     .card pre { margin: 0; padding: 1rem 1.2rem; font-size: 0.8rem; line-height: 1.65; overflow-x: auto; background: none; }
+
+    .pipe-tag { display: block; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 500; text-transform: none; margin-top: 0.15rem; font-family: 'JetBrains Mono Variable', monospace; }
+
+    /* ---- showcase: one token file → four native-looking previews ---- */
+    .showcase { display: grid; grid-template-columns: minmax(16rem, 1.1fr) 2fr; gap: 1.2rem; text-align: left; align-items: start; }
+    @media (max-width: 860px) { .showcase { grid-template-columns: 1fr; } }
+    .show-targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
+    .tframe { margin: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+    .tframe figcaption { font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 0.45rem 0.9rem; border-bottom: 1px solid var(--border-soft); background: var(--bg-soft); }
+    .tframe .t-ui { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; padding: 0.95rem; min-height: 5.4rem; }
+    .tframe.dark { background: oklch(0.15 0.012 255); border-color: oklch(0.3 0.02 255); }
+    .tframe.dark figcaption { background: oklch(0.19 0.015 255); border-color: oklch(0.28 0.02 255); color: oklch(0.65 0.015 255); }
+
+    /* Bootstrap: its own 0.375rem radius, solid + outline buttons, danger alert */
+    .bs-btn { background: oklch(0.55 0.18 255); color: #fff; border-radius: 0.375rem; padding: 0.32rem 0.8rem; font-size: 0.82rem; font-weight: 500; }
+    .bs-btn.outline { background: none; color: oklch(0.55 0.18 255); border: 1px solid oklch(0.55 0.18 255); }
+    .bs-alert { flex-basis: 100%; background: oklch(0.95 0.025 25); color: oklch(0.42 0.16 25); border: 1px solid oklch(0.88 0.05 25); border-radius: 0.375rem; padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+    /* shadcn: the authored 0.5rem radius, dark scheme, input field */
+    .sc-btn { background: oklch(0.65 0.16 255); color: oklch(0.13 0.01 255); border-radius: 0.5rem; padding: 0.32rem 0.85rem; font-size: 0.82rem; font-weight: 600; }
+    .sc-btn.ghost { background: transparent; color: oklch(0.93 0.005 255); border: 1px solid oklch(0.32 0.02 255); font-weight: 500; }
+    .sc-input { flex-basis: 100%; border: 1px solid oklch(0.32 0.02 255); border-radius: 0.5rem; padding: 0.32rem 0.7rem; font-size: 0.78rem; color: oklch(0.55 0.015 255); }
+    /* daisyUI: name translation danger→error, toggle control */
+    .dy-btn { background: oklch(0.55 0.18 255); color: #fff; border-radius: 0.5rem; padding: 0.32rem 0.85rem; font-size: 0.82rem; font-weight: 600; }
+    .dy-badge { background: oklch(0.55 0.19 25); color: #fff; border-radius: 99px; padding: 0.12rem 0.6rem; font-size: 0.72rem; font-weight: 600; }
+    .dy-toggle { width: 2.5rem; height: 1.35rem; border-radius: 99px; background: oklch(0.55 0.18 255); position: relative; display: inline-block; }
+    .dy-toggle i { position: absolute; top: 2px; right: 2px; width: calc(1.35rem - 4px); height: calc(1.35rem - 4px); border-radius: 50%; background: #fff; }
+    /* ECharts: bars from the derived categorical palette */
+    .t-ui.chart { align-items: flex-end; gap: 0.45rem; height: 5.4rem; padding-bottom: 0.7rem; }
+    .t-ui.chart i { flex: 1; height: var(--h); background: var(--c); border-radius: 3px 3px 0 0; }
 
     .xlate { display: flex; align-items: center; justify-content: center; gap: 1.4rem; flex-wrap: wrap; }
     .x-src { display: flex; align-items: center; gap: 0.3rem; font-size: 1rem; border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem 1.2rem; background: var(--surface); box-shadow: var(--shadow); }

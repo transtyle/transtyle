@@ -34,12 +34,26 @@ If your system already has meaning-level names ("flame is our action color", "sa
 ```json
 { "semantic": { "color": { "$type": "color",
   "brand-action": { "$value": "{option.color.flame}" },
-  "canvas": { "$value": "{option.color.sand.50}",
-    "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.coal.900}" } } } }
+  "canvas": { "$value": "{option.color.sand.50}" }
 } } }
 ```
 
-(Or keep mode values in [separate pure-DTCG files](/docs/authoring-tokens/#modes) if your token files are generated.)
+Mode variants go in **separate pure-DTCG files** — the recommended layout, because every file stays readable by your existing tooling (Figma, Tokens Studio, Style Dictionary) with the mode assignment in the config, not the tokens:
+
+```json
+// tokens/dark.tokens.json — plain DTCG, only the tokens that vary
+{ "semantic": { "color": { "canvas": { "$value": "{option.color.coal.900}" } } } }
+```
+
+```json
+// transtyle.config.json
+"tokens": [
+  "tokens/*.tokens.json",
+  { "files": "tokens/dark.tokens.json", "mode": { "color-scheme": "dark" } }
+]
+```
+
+(The [inline `$extensions` form](/docs/authoring-tokens/#modes) exists too, for small hand-edited systems.)
 
 ## 3. Bind the catalog — the translation layer
 
@@ -47,10 +61,10 @@ One small file of aliases connects [the Transtyle language](/docs/language/) to 
 
 ```json
 { "semantic": { "color": { "$type": "color",
-  "primary":    { "base": { "$value": "{semantic.color.brand-action}" } },
-  "background": { "base": { "$value": "{semantic.color.canvas}" } },
-  "text":       { "base": { "$value": "{option.color.coal.900}" } },
-  "border":     { "base": { "$value": "{option.color.sand.200}" } }
+  "primary":   { "solid": { "$value": "{semantic.color.brand-action}" } },
+  "elevation": { "0": { "surface": { "$value": "{semantic.color.canvas}" } } },
+  "text":      { "base": { "$value": "{option.color.coal.900}" } },
+  "border":    { "$value": "{option.color.sand.200}" }
 } } }
 ```
 
