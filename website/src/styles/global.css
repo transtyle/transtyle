@@ -99,27 +99,30 @@ h1, h2, h3 { text-wrap: balance; }
 .code-wrap {
   position: relative; border-radius: 12px; overflow: hidden;
   box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--text-muted) 22%, transparent);
-  transition: box-shadow 0.15s ease;
 }
 /* The hero terminal already owns a rounded frame one level up (`.terminal`,
    14px, overflow:hidden, around the title bar AND the code) — nesting a second
    radius/ring here would double up right where they meet. This wrap is a plain
    rectangle instead and inherits its shape from the ancestor's clip. */
 .terminal .code-wrap { border-radius: 0; overflow: visible; box-shadow: none; }
-/* Overflowing: add a colour-independent vignette to the existing ring (a
-   SECOND box-shadow value, not a second declaration — box-shadow doesn't
-   accumulate across rules, only within one value). A same-colour fade-to-
-   background (below) is invisible by construction whenever the code's own
-   background is already light/white (Shiki's light theme is near-#fff, same
-   as the page) — the text obscures correctly, but there's no VISIBLE cue that
-   it's happening. This shadow reads as "the edge recedes" independent of
-   whether the destination colour happens to contrast with anything. */
-.code-wrap.overflowing {
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklch, var(--text-muted) 22%, transparent),
-    inset -14px 0 10px -10px color-mix(in oklch, var(--text-muted) 55%, transparent);
+
+/* A first attempt at this used an inset-shadow vignette instead of the chevron
+   below — verified live (screenshot, both themes) and it was too weak to read
+   against colourful syntax-highlighted text; removed rather than kept as dead
+   weight. A shape-based signal doesn't have this problem: a chevron reads as
+   "more" regardless of what colour the code underneath happens to be. */
+.code-wrap.overflowing::before {
+  content: '›'; position: absolute; top: 50%; right: 0.55rem; z-index: 1;
+  transform: translateY(-54%); line-height: 1; pointer-events: none;
+  font: 700 1.3rem/1 'JetBrains Mono Variable', monospace;
+  color: var(--text-muted); opacity: 0.9;
+  text-shadow: 0 0 4px var(--shiki-light-bg, var(--code-bg)), 0 0 4px var(--shiki-light-bg, var(--code-bg));
 }
-.terminal .code-wrap.overflowing { box-shadow: inset -14px 0 10px -10px oklch(0 0 0 / 0.45); }
+[data-theme='dark'] .code-wrap.overflowing::before {
+  text-shadow: 0 0 4px var(--shiki-dark-bg, var(--code-bg)), 0 0 4px var(--shiki-dark-bg, var(--code-bg));
+}
+.terminal .code-wrap.overflowing::before { text-shadow: 0 0 4px var(--terminal-bg), 0 0 4px var(--terminal-bg); }
+.code-wrap.overflowing.at-end::before { opacity: 0; }
 
 /* Overflow affordance: a block wider than its column otherwise just hard-clips
    with no sign it's scrollable. The fade appears only while there's genuinely

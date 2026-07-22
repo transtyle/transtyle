@@ -11,6 +11,7 @@
 Added a second, colour-independent cue: `.code-wrap.overflowing` now carries an additional inset shadow (`-14px 0 10px -10px`, blended from `--text-muted`) alongside the existing same-colour fade — a vignette that darkens the edge regardless of whether the underlying colour happens to contrast with anything. The hero terminal gets its own version (plain black at low alpha, since it has no ring to combine with). Confirmed visually in both themes: light shows a soft grey shadow at the edge, dark shows a stronger, clearly legible darkening — both now read unambiguously as "more here."
 
 ## Verified
+
 - Computed styles: `pre` in docs pages now has `border-radius: 0`, `border: none` — `.code-wrap` (12px, `overflow: hidden`) is the sole frame.
 - The vignette only appears on the truly-overflowing wrap (checked a non-overflowing sibling reports no `-14px` shadow — no false positive).
 - Screenshots in both themes confirm the corner artifact is gone and the fade is now a genuinely visible cue, not just a theoretically-correct one.
