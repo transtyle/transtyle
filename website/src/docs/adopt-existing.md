@@ -27,6 +27,27 @@ Your palette, your names, your structure. This tier is private vocabulary — no
 
 Paste whatever your stylesheets already contain — hex (including 4/8-digit alpha), `rgb()`/`hsl()` in either the modern or legacy comma form, and CSS named colors like `red` or `purple` all parse. OKLCH is canonical internally; conversion is automatic, so you never retype a value to satisfy the compiler.
 
+### No palette? Synthesize one — the names are throwaway
+
+The step above assumes you *have* a primitive tier. Plenty of real products never built one: colors are literals written at the point of use, and the same value shows up in a dozen places under a dozen different names. If that's you, you're not doing it wrong — you just have one extra job before the interesting part.
+
+**Collect the distinct values and give them any names at all.** That's the whole task. The `option` tier is private vocabulary that nothing downstream binds to, so the names are scaffolding, not decisions — you will never defend them in a design review:
+
+```json
+{ "option": { "color": { "$type": "color",
+  "gray-333": { "$value": "#333333" },
+  "gray-ddd": { "$value": "#dddddd" },
+  "blue-link": { "$value": "#3366cc" }
+} } }
+```
+
+Naming by value (`gray-333`) or by hue-and-lightness (`blue-600`) both work and both take minutes. Resist the urge to name them semantically here — "brand-primary" belongs in step 2, where it can be argued about, not in the tier you'll regenerate whenever your palette changes.
+
+<div class="callout"><div class="callout-title">The duplication you find is a result, not an obstacle</div>
+
+In a [real run against a product with no tokens](https://github.com/transtyle/transtyle/blob/main/docs/findings/hostile-adoption.md), 89 CSS custom properties collapsed to **29 distinct values** — one gray appeared under **13 different names** (`--body-color`, `--title-color`, `--panel-color`, …), with nothing recording that they were the same decision. Discovering that is the first thing adoption pays you, before a single theme is compiled. Expect the ratio; don't be alarmed by it.
+</div>
+
 ## 2. Express your existing semantics — with *your* names
 
 If your system already has meaning-level names ("flame is our action color", "sand is our canvas"), write them as **custom semantic tokens**. They're first-class: carried, resolved per mode, provenance-tracked:
@@ -37,6 +58,8 @@ If your system already has meaning-level names ("flame is our action color", "sa
   "canvas": { "$value": "{option.color.sand.50}" }
 } } }
 ```
+
+If your names are *component*-scoped rather than meaning-scoped — `--button-primary-background`, `--table-th-background`, the usual shape when a product grew its CSS organically — keep them exactly as they are. They are still your system's real vocabulary, and step 3 binds by meaning regardless of how a name is spelled. Renaming them into meaning-words here is the one thing not to do: it invents a semantic layer your team never agreed on, in a file they'll have to maintain.
 
 Mode variants go in **separate pure-DTCG files** — the recommended layout, because every file stays readable by your existing tooling (Figma, Tokens Studio, Style Dictionary) with the mode assignment in the config, not the tokens:
 

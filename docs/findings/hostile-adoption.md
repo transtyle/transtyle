@@ -48,7 +48,9 @@ Effort is given as relative weight and step count rather than wall-clock, since 
 
 > **This reclassified B7** from 🟢 "opportunity" to a real-adoption blocker — and it was **fixed the same day**. The engine now accepts `oklch()`, `#hex` (3/4/6/8-digit, alpha included), `rgb()`/`rgba()`, `hsl()`/`hsla()` (modern and legacy comma forms, `deg`/`rad`/`grad`/`turn`), the CSS named colors, and `transparent`. The extraction above was re-run with Miniflux's **literal `red` and `purple` restored** and builds clean — `ring` resolves to `#ff0000`, `link.visited` to `#800080`. Step 1's "verbatim, no renaming" rule is now actually honorable for this system. Guarded by `scripts/check-color.mjs` against reference values.
 
-**2. Step 1 assumes a palette that does not exist.** "Dump your raw values into `option.*` verbatim" presupposes a primitive tier. Products that never built one force the adopter to *invent* the palette — deduplicating literals and naming them — before the playbook's real work begins. The playbook needs an explicit branch for "you have no palette; here is how to synthesize one (and why the names don't matter)."
+**2. Step 1 assumes a palette that does not exist.** "Dump your raw values into `option.*` verbatim" presupposes a primitive tier. Products that never built one force the adopter to *invent* the palette — deduplicating literals and naming them — before the playbook's real work begins.
+
+> **Fixed 2026-07-22.** [adopt-existing](../../website/src/docs/adopt-existing.md) step 1 gained a **"No palette? Synthesize one — the names are throwaway"** branch (collect distinct values, name them anything, don't name them semantically yet) using this run's real numbers, and step 2 now covers the adjacent case where a product's names are *component*-scoped rather than meaning-scoped — keep them, and let the binding layer map by meaning.
 
 **3. Nothing automates extraction.** Finding, reading, and transcribing the CSS was the single largest cost, and it is exactly the part a machine should do.
 
