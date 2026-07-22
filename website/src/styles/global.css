@@ -99,12 +99,27 @@ h1, h2, h3 { text-wrap: balance; }
 .code-wrap {
   position: relative; border-radius: 12px; overflow: hidden;
   box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--text-muted) 22%, transparent);
+  transition: box-shadow 0.15s ease;
 }
 /* The hero terminal already owns a rounded frame one level up (`.terminal`,
    14px, overflow:hidden, around the title bar AND the code) — nesting a second
    radius/ring here would double up right where they meet. This wrap is a plain
    rectangle instead and inherits its shape from the ancestor's clip. */
 .terminal .code-wrap { border-radius: 0; overflow: visible; box-shadow: none; }
+/* Overflowing: add a colour-independent vignette to the existing ring (a
+   SECOND box-shadow value, not a second declaration — box-shadow doesn't
+   accumulate across rules, only within one value). A same-colour fade-to-
+   background (below) is invisible by construction whenever the code's own
+   background is already light/white (Shiki's light theme is near-#fff, same
+   as the page) — the text obscures correctly, but there's no VISIBLE cue that
+   it's happening. This shadow reads as "the edge recedes" independent of
+   whether the destination colour happens to contrast with anything. */
+.code-wrap.overflowing {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--text-muted) 22%, transparent),
+    inset -14px 0 10px -10px color-mix(in oklch, var(--text-muted) 55%, transparent);
+}
+.terminal .code-wrap.overflowing { box-shadow: inset -14px 0 10px -10px oklch(0 0 0 / 0.45); }
 
 /* Overflow affordance: a block wider than its column otherwise just hard-clips
    with no sign it's scrollable. The fade appears only while there's genuinely
@@ -315,7 +330,12 @@ h1, h2, h3 { text-wrap: balance; }
 .prose p, .prose li { color: var(--text); }
 .prose li { margin: 0.3rem 0; }
 .prose code:not(pre code) { background: var(--code-bg); padding: 0.13em 0.38em; border-radius: 5px; font-size: 0.86em; border: 1px solid var(--border-soft); }
-.prose pre { border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; }
+/* No border/radius here — `.code-wrap` (the injected wrapper) owns the frame,
+   same as the homepage's code blocks. This rule used to draw its own 10px
+   border independently of the wrapper's 12px + overflow:hidden, which is
+   exactly the "rounded corner with no matching container" bug: two frames,
+   two radii, visibly not agreeing at the corners. */
+.prose pre { padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; }
 .prose table { border-collapse: collapse; width: 100%; margin: 1.1rem 0; font-size: 0.9rem; display: block; overflow-x: auto; }
 .prose th, .prose td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; vertical-align: top; }
 .prose th { background: var(--bg-soft); font-weight: 600; }
