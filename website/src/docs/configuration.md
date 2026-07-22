@@ -1,6 +1,6 @@
 ---
-title: "Configuration"
-description: "Every field of transtyle.config.json."
+title: 'Configuration'
+description: 'Every field of transtyle.config.json.'
 order: 5
 ---
 
@@ -30,8 +30,12 @@ Full annotated example:
     "require": ["semantic.color.primary"]
   },
   "targets": {
-    "shadcn":    { "output": "dist/shadcn",    "options": { "era": "tailwind-v4" } },
-    "shadcn-v3": { "exporter": "shadcn", "output": "dist/shadcn-v3", "options": { "era": "tailwind-v3" } }
+    "shadcn": { "output": "dist/shadcn", "options": { "era": "tailwind-v4" } },
+    "shadcn-v3": {
+      "exporter": "shadcn",
+      "output": "dist/shadcn-v3",
+      "options": { "era": "tailwind-v3" }
+    }
   },
   "check": {
     "failOn": "error",
@@ -48,17 +52,17 @@ Used in generated file headers and usage docs. Pick something stable; it's your 
 
 Each entry is a glob string (base layer) or `{ "files": glob | [globs], "mode": { dimension: mode } }` (mode-scoped layer, pure DTCG file whose values apply to one mode). **Order is semantic**: later layers win. Globs support single `*` segments (`tokens/*.tokens.json`); matched files load in sorted order for determinism.
 
-| Rule | Diagnostic |
-|---|---|
-| Glob matches nothing | `TST1001` warning |
-| Token defined twice across base layers | `TST1103` warning, last wins |
-| Mode value overrides an earlier one | `TST1108` warning |
-| Mode value for a token with no default value | `TST1107` warning, skipped |
-| Mode not declared in `modes` | `TST1109` error |
+| Rule                                         | Diagnostic                   |
+| -------------------------------------------- | ---------------------------- |
+| Glob matches nothing                         | `TST1001` warning            |
+| Token defined twice across base layers       | `TST1103` warning, last wins |
+| Mode value overrides an earlier one          | `TST1108` warning            |
+| Mode value for a token with no default value | `TST1107` warning, skipped   |
+| Mode not declared in `modes`                 | `TST1109` error              |
 
 ## `modes`
 
-Declares dimensions of variation. The skeleton supports exactly one dimension. `default` names your design system's **native** mode — the one plain `$value`s describe. It does not reorder exporter output: exporters bind mode *names* (a dark-native system still gets shadcn's light-first structure). See [Weird things](/docs/diagnostics/#my-dark-native-system-comes-out-light-first) for why.
+Declares dimensions of variation. The skeleton supports exactly one dimension. `default` names your design system's **native** mode — the one plain `$value`s describe. It does not reorder exporter output: exporters bind mode _names_ (a dark-native system still gets shadcn's light-first structure). See [Weird things](/docs/diagnostics/#my-dark-native-system-comes-out-light-first) for why.
 
 ## `derivation`
 

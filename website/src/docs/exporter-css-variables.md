@@ -1,12 +1,12 @@
 ---
-title: "css-variables exporter"
-description: "The plugin-API reference implementation and a framework-free escape hatch — every catalog slot as a plain CSS custom property."
+title: 'css-variables exporter'
+description: 'The plugin-API reference implementation and a framework-free escape hatch — every catalog slot as a plain CSS custom property.'
 order: 13
 ---
 
 # css-variables exporter
 
-The simplest possible backend. Unlike every other reference exporter, it isn't really a *translation* target — it's a 1:1 dump of the resolved semantic catalog as `--custom-properties`, with no framework mapping logic in the way. Two reasons it exists:
+The simplest possible backend. Unlike every other reference exporter, it isn't really a _translation_ target — it's a 1:1 dump of the resolved semantic catalog as `--custom-properties`, with no framework mapping logic in the way. Two reasons it exists:
 
 1. **The plugin API's reference implementation.** An exporter is exactly `emit(normalized, ctx) → { files, coverage }` — this one has nothing else going on, so it's what third-party plugin authors (and the Phase 2 conformance kit) diff their own exporter against.
 2. **A framework-free escape hatch.** If your stack isn't Bootstrap, shadcn, daisyUI, or Storybook, you still get something consumable: plain CSS variables you can wire into anything.
@@ -21,7 +21,9 @@ The simplest possible backend. Unlike every other reference exporter, it isn't r
   color: var(--color-primary-on-solid);
   border-radius: var(--radius-md);
 }
-.my-button:hover { background: var(--color-primary-solid-hover); }
+.my-button:hover {
+  background: var(--color-primary-solid-hover);
+}
 ```
 
 ## Naming
@@ -32,11 +34,11 @@ Composite values expand: a typography role (`type.role.body.md`) becomes four lo
 
 ## Mode handling
 
-`:root` carries the light map, `[data-color-scheme="dark"]` the dark map — mode *names*, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) still emits this way. Only color slots vary by mode; scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
+`:root` carries the light map, `[data-color-scheme="dark"]` the dark map — mode _names_, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) still emits this way. Only color slots vary by mode; scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
 
 ## Coverage
 
-Every variable is `native` — there's no target framework to lose fidelity translating into. This *is* the IR, rendered as CSS. On Acme it's 450+ variables from 11 authored tokens.
+Every variable is `native` — there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 450+ variables from 11 authored tokens.
 
 ## Extra mode dimensions
 

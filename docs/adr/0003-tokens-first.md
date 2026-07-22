@@ -8,7 +8,7 @@ The vision includes abstracting components (Button, Modal, Combobox…) across e
 
 ## Decision
 
-v1 compiles foundations only: color, typography, spacing, radius, borders, shadows/elevation, motion, z-index. The component layer is deferred to v2, pre-scoped as component *theming* (appearance binding to targets' existing theming surfaces), never component *implementation* generation — see [component-layer.md](../specs/component-layer.md). v1 reserves the `component` token tier in the IR so v2 is additive.
+v1 compiles foundations only: color, typography, spacing, radius, borders, shadows/elevation, motion, z-index. The component layer is deferred to v2, pre-scoped as component _theming_ (appearance binding to targets' existing theming surfaces), never component _implementation_ generation — see [component-layer.md](../specs/component-layer.md). v1 reserves the `component` token tier in the IR so v2 is additive.
 
 ## Consequences
 

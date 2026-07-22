@@ -2,13 +2,13 @@
 
 **Date:** 2026-07-19 · **Status:** complete, **clean** · **Exit criterion: MET** (rounds 7 and 8 — two consecutive clean attempts)
 
-> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The *findings* below (F1–F21) remain valid evidence; only the vocabulary changed.
+> **Note (2026-07-20):** the slot names used throughout this record (e.g. `.base`/`.subtle`/`.contrast`) predate the role-grid catalog revision — see `docs/adr/0010-pre-release-breaking-changes.md` and `docs/proposals/0001-universal-token-ir.md`. The _findings_ below (F1–F21) remain valid evidence; only the vocabulary changed.
 
 Method: the two-probe protocol against the fully ratified rule pack (post F19/F20/F21).
 
 ## Probe (a): paper mapping — clean
 
-The 33-variable mapping re-traversed: all classifications stand. F20's new `contrast` slots are correctly *not* consumed by any shadcn variable (nothing in shadcn's set wants a text-anchored role variant), and F21's cartesian mix leaves every shadcn-consumed tint identical (the consumed subtles — neutral, accent — share the surface hue, where polar and cartesian coincide; that near-coincidence is exactly how F21 stayed hidden until Bootstrap's border tints).
+The 33-variable mapping re-traversed: all classifications stand. F20's new `contrast` slots are correctly _not_ consumed by any shadcn variable (nothing in shadcn's set wants a text-anchored role variant), and F21's cartesian mix leaves every shadcn-consumed tint identical (the consumed subtles — neutral, accent — share the surface hue, where polar and cartesian coincide; that near-coincidence is exactly how F21 stayed hidden until Bootstrap's border tints).
 
 ## Probe (b): output diff — clean
 
@@ -19,7 +19,7 @@ The round-5 value-level diff re-run against a fresh build: **the identical 16-de
 Round 6 established that `expected/` files serving as acceptance fixtures must be engine-exact. Auditing the remaining fixtures:
 
 - **`expected/storybook/`** carried stale round-3 hand hexes (pre-F19/F20/F21). Regenerated engine-exact and verified by the same scripted exact-match probe as round 7. The regeneration surfaced one more hand-run collapse worth recording: round 3 had used a single gray (#363b47) for two distinct slots — `neutral.subtle[dark]` and `border.base[dark]` — which the engine correctly distinguishes (#1d2127 vs #2a2e34). Same species as round 2's `neutral.contrast` inconsistency, caught by the same mechanism; no rule was ambiguous this time, so no amendment — the fixture was simply wrong and is now exact.
-- **`expected/shadcn/`** is *not* regenerated, deliberately: its fixture role is superseded by the real exporter's own output (`dist/` + `report.json` are the snapshot surface). It remains the historical round-1 artifact; the Acme README now says so explicitly.
+- **`expected/shadcn/`** is _not_ regenerated, deliberately: its fixture role is superseded by the real exporter's own output (`dist/` + `report.json` are the snapshot surface). It remains the historical round-1 artifact; the Acme README now says so explicitly.
 
 ## Verdict
 

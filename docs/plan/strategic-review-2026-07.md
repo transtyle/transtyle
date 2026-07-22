@@ -2,7 +2,7 @@
 
 Commissioned as a three-part exercise: (1) challenge the project's core assumptions, (2) produce a precise, model-assigned execution roadmap for the next six months, (3) plan the documentation overhaul. Each part was saved and committed independently so the review survives partial completion.
 
-**A note on the brief itself.** The commissioning brief described Transtyle as "a design token meta-language enabling translation across design systems via themes/presets," validated by "Gov.UK, Spectrum." That framing lags the repository by several weeks: Transtyle is positioned as a *compiler* (importers → IR → exporters, per [VISION.md](../../VISION.md)), "preset" is PrimeNG's vocabulary rather than ours, and the real-DS validations are **GOV.UK and Carbon** ([docs/findings/](../findings/)) — Spectrum was a *study subject* in the component-tier work, never an adoption. This drift is itself a finding: the strategic narrative circulating outside the repo is stale relative to what's built, which reinforces W3 below (the bottleneck is distribution and legibility, not engineering).
+**A note on the brief itself.** The commissioning brief described Transtyle as "a design token meta-language enabling translation across design systems via themes/presets," validated by "Gov.UK, Spectrum." That framing lags the repository by several weeks: Transtyle is positioned as a _compiler_ (importers → IR → exporters, per [VISION.md](../../VISION.md)), "preset" is PrimeNG's vocabulary rather than ours, and the real-DS validations are **GOV.UK and Carbon** ([docs/findings/](../findings/)) — Spectrum was a _study subject_ in the component-tier work, never an adoption. This drift is itself a finding: the strategic narrative circulating outside the repo is stale relative to what's built, which reinforces W3 below (the bottleneck is distribution and legibility, not engineering).
 
 ---
 
@@ -12,38 +12,38 @@ The brief posed five challenge questions. Unusually, the repo has already run re
 
 ### Q1. Is agnosticism actually achievable, or does it paper over irreconcilable paradigm differences?
 
-**Achievable at the semantic-token tier — proven; achieved *by refusing structure*, which bounds precision.** Two independent cross-ecosystem studies both returned "add nothing to the catalog": proposal 0001's 14-ecosystem role-grid study, and the C1 six-system component-tier study ([component-tier-study.md](../findings/component-tier-study.md)), which faced three *mutually incompatible* component-tier architectures (grouped objects / flat vocabulary / per-component namespaces) and concluded the agnostic answer was to keep the catalog a flat meta-language of meanings and let each exporter shape it. Radix (T9) and GOV.UK/Carbon (T11) then compiled with **zero catalog amendments**.
+**Achievable at the semantic-token tier — proven; achieved _by refusing structure_, which bounds precision.** Two independent cross-ecosystem studies both returned "add nothing to the catalog": proposal 0001's 14-ecosystem role-grid study, and the C1 six-system component-tier study ([component-tier-study.md](../findings/component-tier-study.md)), which faced three _mutually incompatible_ component-tier architectures (grouped objects / flat vocabulary / per-component namespaces) and concluded the agnostic answer was to keep the catalog a flat meta-language of meanings and let each exporter shape it. Radix (T9) and GOV.UK/Carbon (T11) then compiled with **zero catalog amendments**.
 
-So the paradigm differences are real and irreconcilable *at the structural level* — and the design already concedes this. Agnosticism is purchased by (a) keeping the shared vocabulary small and meaning-shaped, (b) making everything structural exporter-private, and (c) declaring lossiness openly (the coverage report; VISION non-goal #3). The honest corollary: **the catalog's expressiveness is the product's ceiling**, and cracks are visible where a source system's scale doesn't fit — GOV.UK's responsive type scale was deliberately left unbound rather than distorted ([govuk-adoption.md](../findings/govuk-adoption.md)). That was the right call for a demo; a production adopter would call it a gap.
+So the paradigm differences are real and irreconcilable _at the structural level_ — and the design already concedes this. Agnosticism is purchased by (a) keeping the shared vocabulary small and meaning-shaped, (b) making everything structural exporter-private, and (c) declaring lossiness openly (the coverage report; VISION non-goal #3). The honest corollary: **the catalog's expressiveness is the product's ceiling**, and cracks are visible where a source system's scale doesn't fit — GOV.UK's responsive type scale was deliberately left unbound rather than distorted ([govuk-adoption.md](../findings/govuk-adoption.md)). That was the right call for a demo; a production adopter would call it a gap.
 
 ### Q2. Are we solving the right problem — token mapping, or design culture translation?
 
-**Both, and the architecture already splits them correctly — but the docs under-sell the split.** The GOV.UK adoption is the cleanest evidence: mechanical mapping covered most slots 1:1, and the residue was *judgment calls* the compiler correctly refused to make (`neutral.solid` had two defensible bindings; four roles were left to derivation because GOV.UK "hasn't made a choice at this granularity"). Culture translation lives in the human-authored binding layer; the compiler's job is to make the mechanical 80% free and the judgmental 20% **explicit, small, and auditable** (`transtyle explain`, provenance, coverage). That is a right-problem framing — "trust is the product" — but it is currently legible only to someone who reads findings documents. It should be the headline pitch, not an internal insight.
+**Both, and the architecture already splits them correctly — but the docs under-sell the split.** The GOV.UK adoption is the cleanest evidence: mechanical mapping covered most slots 1:1, and the residue was _judgment calls_ the compiler correctly refused to make (`neutral.solid` had two defensible bindings; four roles were left to derivation because GOV.UK "hasn't made a choice at this granularity"). Culture translation lives in the human-authored binding layer; the compiler's job is to make the mechanical 80% free and the judgmental 20% **explicit, small, and auditable** (`transtyle explain`, provenance, coverage). That is a right-problem framing — "trust is the product" — but it is currently legible only to someone who reads findings documents. It should be the headline pitch, not an internal insight.
 
 ### Q3. Does the plugin-based model scale? Should external teams create mappers directly?
 
-**This is the single most untested assumption in the project — see W1.** All eight exporters were written inside this repo by the same effort that wrote the core; the plugin API has therefore never been exercised by anyone who couldn't read the compiler's source or fix the contract mid-flight. The v1.0 exit criterion ("a third party has shipped a working exporter without touching core, using only public docs") is *exactly right* — but nothing published on npm, no plugin conformance kit (promised in the plugin docs, doesn't exist — [audit A3](../audit-2026-07.md)), and no third-party tutorial means the criterion currently has no path to being met organically. "External teams create mappers directly" is not an alternative to the plugin model — it *is* the plugin model; the question is whether they can do it without us, and today the answer is demonstrably no.
+**This is the single most untested assumption in the project — see W1.** All eight exporters were written inside this repo by the same effort that wrote the core; the plugin API has therefore never been exercised by anyone who couldn't read the compiler's source or fix the contract mid-flight. The v1.0 exit criterion ("a third party has shipped a working exporter without touching core, using only public docs") is _exactly right_ — but nothing published on npm, no plugin conformance kit (promised in the plugin docs, doesn't exist — [audit A3](../audit-2026-07.md)), and no third-party tutorial means the criterion currently has no path to being met organically. "External teams create mappers directly" is not an alternative to the plugin model — it _is_ the plugin model; the question is whether they can do it without us, and today the answer is demonstrably no.
 
 ### Q4. Are GOV.UK and Carbon truly validating the meta-language, or just proving specific cases?
 
-**They validate the binding-layer pattern on best-case inputs; they do not validate the median case — see W2.** Both are publicly documented, token-mature, semantically disciplined systems — the easiest real systems that exist. Both adoptions were performed by the project itself (T11's practitioner sign-off is still pending), single-mode for GOV.UK, type scale unbound. What they *do* prove is non-trivial: the catalog generalizes past the systems it was designed against, with zero amendments. What they *don't* prove: that a messy enterprise DS — values scattered across Figma styles and Sass spaghetti, no semantic tier, conflicting sources of truth — can get to a binding layer at acceptable cost. That's the actual median customer, and no experiment has touched it.
+**They validate the binding-layer pattern on best-case inputs; they do not validate the median case — see W2.** Both are publicly documented, token-mature, semantically disciplined systems — the easiest real systems that exist. Both adoptions were performed by the project itself (T11's practitioner sign-off is still pending), single-mode for GOV.UK, type scale unbound. What they _do_ prove is non-trivial: the catalog generalizes past the systems it was designed against, with zero amendments. What they _don't_ prove: that a messy enterprise DS — values scattered across Figma styles and Sass spaghetti, no semantic tier, conflicting sources of truth — can get to a binding layer at acceptable cost. That's the actual median customer, and no experiment has touched it.
 
 ### Q5. Who is the actual user: theme adopters, or mapper creators?
 
-**Adopters first, by the project's own revealed evidence; creators are the Phase-2 flywheel, currently population zero.** The backlog already discovered this empirically: B4 ("adopt an existing design system" — "probably the #1 missing doc"; "the primary real-world user *already has* a design system") was written, shipped, and slotted second in the Start-here nav. The vision needs both sides eventually — framework authors shipping exporters is what makes the ecosystem compound — but sequencing matters: a two-sided market bootstraps from the side that gets value unilaterally, and that's the team with one DS and N target frameworks. Every near-term investment should serve that user; mapper-creator investment should be concentrated into making *one* pilot succeed (Q3), not into speculative breadth.
+**Adopters first, by the project's own revealed evidence; creators are the Phase-2 flywheel, currently population zero.** The backlog already discovered this empirically: B4 ("adopt an existing design system" — "probably the #1 missing doc"; "the primary real-world user _already has_ a design system") was written, shipped, and slotted second in the Start-here nav. The vision needs both sides eventually — framework authors shipping exporters is what makes the ecosystem compound — but sequencing matters: a two-sided market bootstraps from the side that gets value unilaterally, and that's the team with one DS and N target frameworks. Every near-term investment should serve that user; mapper-creator investment should be concentrated into making _one_ pilot succeed (Q3), not into speculative breadth.
 
 ### The three assumptions most likely to be wrong
 
 **W1 — "The exporter ecosystem will materialize from good architecture and good docs."**
-Zero third-party exporters, zero npm packages published, no conformance kit, no tutorial; every data point about plugin-API usability comes from its own authors. *Implication:* the v1.0 exit criterion slips indefinitely if treated as an organic milestone. Treat the first third-party exporter as a **recruited, hand-held pilot** (a named partner, direct support, the kit built *for* them) and treat everything they stumble on as a release-blocking bug in docs or API. Roadmap: tasks R4–R6, P1–P3.
+Zero third-party exporters, zero npm packages published, no conformance kit, no tutorial; every data point about plugin-API usability comes from its own authors. _Implication:_ the v1.0 exit criterion slips indefinitely if treated as an organic milestone. Treat the first third-party exporter as a **recruited, hand-held pilot** (a named partner, direct support, the kit built _for_ them) and treat everything they stumble on as a release-blocking bug in docs or API. Roadmap: tasks R4–R6, P1–P3.
 
 **W2 — "GOV.UK/Carbon generalize to real-world adoption."**
-Both validations are best-case inputs, self-performed, and (for T11) still awaiting the practitioner sign-off the exit criterion requires. The unproven step is *upstream* of Transtyle: getting a messy, undocumented DS into DTCG + binding form at all. *Implication:* importers and the adoption pathway are not Phase-3 conveniences — they are the wedge for the median user. A deliberate "hostile adoption" experiment (a real DS with *no* published tokens) would tell us more than an eighth and ninth exporter. Roadmap: tasks P4, I1–I2.
+Both validations are best-case inputs, self-performed, and (for T11) still awaiting the practitioner sign-off the exit criterion requires. The unproven step is _upstream_ of Transtyle: getting a messy, undocumented DS into DTCG + binding form at all. _Implication:_ importers and the adoption pathway are not Phase-3 conveniences — they are the wedge for the median user. A deliberate "hostile adoption" experiment (a real DS with _no_ published tokens) would tell us more than an eighth and ninth exporter. Roadmap: tasks P4, I1–I2.
 
 **W3 — "The bottleneck is mapping precision / meta-language expressiveness."**
-Three consecutive expressiveness experiments (proposal 0001, C1, T9/T11) all concluded the catalog is sufficient and should *not* grow. Meanwhile: nothing on npm, website undeployed, domains unregistered, T11 unsigned, Phase-1 freeze undeclared. The engineering is ahead of the product's ability to be found, trusted, or used. *Implication:* further mapping-edge-case work has sharply diminishing returns; the next six months should be weighted toward **distribution and trust surfaces** (publish, deploy, playground, diff) over catalog or exporter breadth. Roadmap: Phase A, tasks R1–R6, P2.
+Three consecutive expressiveness experiments (proposal 0001, C1, T9/T11) all concluded the catalog is sufficient and should _not_ grow. Meanwhile: nothing on npm, website undeployed, domains unregistered, T11 unsigned, Phase-1 freeze undeclared. The engineering is ahead of the product's ability to be found, trusted, or used. _Implication:_ further mapping-edge-case work has sharply diminishing returns; the next six months should be weighted toward **distribution and trust surfaces** (publish, deploy, playground, diff) over catalog or exporter breadth. Roadmap: Phase A, tasks R1–R6, P2.
 
-**Verdict on the meta-language itself:** the core bet survives scrutiny well — it has been genuinely stress-tested and held, and its discipline (refuse structure, declare lossiness, exporter-private by default) is the reason. The at-risk assumptions are all *go-to-market* assumptions wearing engineering clothes.
+**Verdict on the meta-language itself:** the core bet survives scrutiny well — it has been genuinely stress-tested and held, and its discipline (refuse structure, declare lossiness, exporter-private by default) is the reason. The at-risk assumptions are all _go-to-market_ assumptions wearing engineering clothes.
 
 ---
 
@@ -232,33 +232,33 @@ Blocks: nothing — schedule into gaps
 
 ### Consolidated model-assignment table
 
-| Task | Model | One-line rationale |
-|---|---|---|
-| R1 sign-off | **human** (Sonnet prep) | Exit criterion demands the maintainer's own pass |
-| R2 freeze declaration | **Opus** | Promise audit against engine reality; exclusion judgment |
-| R3 schemas + validation | **Sonnet** | Mechanical generation from existing specs |
-| R4 npm publication | **Sonnet** | Release mechanics, well-trodden |
-| R5 site deploy | **human + Sonnet** | Domain purchase; then routine pipeline |
-| P1 conformance kit | **Opus** | The plugin contract made executable — architecture |
-| P2 exporter tutorial | **Sonnet** | Docs drafting against an executable contract |
-| P3 third-party pilot | **human + Fable** | Recruiting; then API-change triage with v1-contract stakes |
-| P4 hostile adoption | **Fable** | Open-ended adversarial experiment; verdict redirects Phase C |
-| P5 playground | **Sonnet** | Composition of existing zero-dep pieces |
-| P6 diff | **Opus spec → Sonnet impl** | Novel semantics; routine plumbing |
-| I1 Tailwind importer | **Sonnet** | Mechanical once mapping table exists |
-| I2 Figma importer | **Sonnet** (Opus for mode mapping) | JSON transform + one architectural call |
-| I3 watch/CI recipes | **Sonnet** | Batched DX small-wins |
+| Task                    | Model                              | One-line rationale                                           |
+| ----------------------- | ---------------------------------- | ------------------------------------------------------------ |
+| R1 sign-off             | **human** (Sonnet prep)            | Exit criterion demands the maintainer's own pass             |
+| R2 freeze declaration   | **Opus**                           | Promise audit against engine reality; exclusion judgment     |
+| R3 schemas + validation | **Sonnet**                         | Mechanical generation from existing specs                    |
+| R4 npm publication      | **Sonnet**                         | Release mechanics, well-trodden                              |
+| R5 site deploy          | **human + Sonnet**                 | Domain purchase; then routine pipeline                       |
+| P1 conformance kit      | **Opus**                           | The plugin contract made executable — architecture           |
+| P2 exporter tutorial    | **Sonnet**                         | Docs drafting against an executable contract                 |
+| P3 third-party pilot    | **human + Fable**                  | Recruiting; then API-change triage with v1-contract stakes   |
+| P4 hostile adoption     | **Fable**                          | Open-ended adversarial experiment; verdict redirects Phase C |
+| P5 playground           | **Sonnet**                         | Composition of existing zero-dep pieces                      |
+| P6 diff                 | **Opus spec → Sonnet impl**        | Novel semantics; routine plumbing                            |
+| I1 Tailwind importer    | **Sonnet**                         | Mechanical once mapping table exists                         |
+| I2 Figma importer       | **Sonnet** (Opus for mode mapping) | JSON transform + one architectural call                      |
+| I3 watch/CI recipes     | **Sonnet**                         | Batched DX small-wins                                        |
 
 ### Prioritized backlog (the six months at a glance)
 
-| Month | Focus | Tasks |
-|---|---|---|
-| 1 | Release readiness | R1 → R2 → R3 → R4 → R5 |
-| 2 | Plugin contract | P1 → P2; recruit P3 partner; start P5 |
-| 3 | The two experiments | P3 running; P4; P5 ships |
-| 4 | Trust tooling | P6 (spec then impl); P3 concludes → plugin API v1 call |
-| 5 | Importers | I1 (or I2 first, per P4's verdict) |
-| 6 | Importers + DX | I2 (or I1); I3; regroup against W1/W2 verdicts |
+| Month | Focus               | Tasks                                                  |
+| ----- | ------------------- | ------------------------------------------------------ |
+| 1     | Release readiness   | R1 → R2 → R3 → R4 → R5                                 |
+| 2     | Plugin contract     | P1 → P2; recruit P3 partner; start P5                  |
+| 3     | The two experiments | P3 running; P4; P5 ships                               |
+| 4     | Trust tooling       | P6 (spec then impl); P3 concludes → plugin API v1 call |
+| 5     | Importers           | I1 (or I2 first, per P4's verdict)                     |
+| 6     | Importers + DX      | I2 (or I1); I3; regroup against W1/W2 verdicts         |
 
 **Explicitly not scheduled** (consistent with Part 1): new exporters beyond the pilot's (breadth adds no learning until W1/W2 resolve); catalog growth (three studies say no); MUI/Ant (after object-emitter pattern proven by the pilot); everything in ROADMAP's "explicitly cut" list stays cut.
 
@@ -266,7 +266,7 @@ Blocks: nothing — schedule into gaps
 
 ## Part 3 — Documentation overhaul
 
-**Correcting the premise first.** The brief's diagnosis ("overly technical, difficult for non-experts") was written before the two biggest fixes shipped: [adopt-existing.md](../../website/src/docs/adopt-existing.md) (backlog B4, the #1 missing doc) and [language.md](../../website/src/docs/language.md) (B5, the interlingua reference) both exist on the website. What actually remains is narrower than an overhaul: (a) no true beginner on-ramp — every page assumes the reader already knows what a design token is and why an IR helps; (b) the 21 website pages grew organically and their nav doesn't signal *which kind* of page each one is (learning vs task vs lookup); (c) near-zero visual material — the pipeline, the role grid, and the coverage report are all described in prose, and they are exactly the concepts a designer or DS lead would grasp in one diagram; (d) the trust story (Q2's "explicit, small, auditable judgment calls") is the product's best pitch and is currently buried in `docs/findings/`.
+**Correcting the premise first.** The brief's diagnosis ("overly technical, difficult for non-experts") was written before the two biggest fixes shipped: [adopt-existing.md](../../website/src/docs/adopt-existing.md) (backlog B4, the #1 missing doc) and [language.md](../../website/src/docs/language.md) (B5, the interlingua reference) both exist on the website. What actually remains is narrower than an overhaul: (a) no true beginner on-ramp — every page assumes the reader already knows what a design token is and why an IR helps; (b) the 21 website pages grew organically and their nav doesn't signal _which kind_ of page each one is (learning vs task vs lookup); (c) near-zero visual material — the pipeline, the role grid, and the coverage report are all described in prose, and they are exactly the concepts a designer or DS lead would grasp in one diagram; (d) the trust story (Q2's "explicit, small, auditable judgment calls") is the product's best pitch and is currently buried in `docs/findings/`.
 
 Tasks, same conventions as Part 2. All land on the website surface, so they gain leverage only after R5 (deploy) and pair naturally with P5 (playground).
 
@@ -329,7 +329,7 @@ Est. tokens: 20K–30K
 Blocks: nothing; the showcase page doubles as P3 recruitment collateral
 ```
 
-**Sequencing inside the six months:** D1 + D2 fit month 2 (cheap, parallel to P1); D3 waits for the R2 freeze (month 2–3); D4 rides with P5's playground (month 3). Total docs investment ≈ 70K–105K tokens, all Sonnet except D3 — deliberately light next to Part 2, because Part 1's verdict says the docs' biggest problem is that nobody can *reach* them yet, not what they say.
+**Sequencing inside the six months:** D1 + D2 fit month 2 (cheap, parallel to P1); D3 waits for the R2 freeze (month 2–3); D4 rides with P5's playground (month 3). Total docs investment ≈ 70K–105K tokens, all Sonnet except D3 — deliberately light next to Part 2, because Part 1's verdict says the docs' biggest problem is that nobody can _reach_ them yet, not what they say.
 
 ---
 

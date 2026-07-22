@@ -8,7 +8,7 @@ The vision's CLI example targeted `bootstrap 5.3.8` — implying patch-level out
 
 ## Decision
 
-Exporters declare supported version *ranges* backed by mapping profiles; core selects the covering profile for a requested version and records both (requested version, selected profile) in the build manifest ([versioning.md](../architecture/versioning.md)). Uncovered versions fail with ranges listed; `--force-profile` is the explicit escape hatch. Narrow profiles remain possible when a patch genuinely changes theming.
+Exporters declare supported version _ranges_ backed by mapping profiles; core selects the covering profile for a requested version and records both (requested version, selected profile) in the build manifest ([versioning.md](../architecture/versioning.md)). Uncovered versions fail with ranges listed; `--force-profile` is the explicit escape hatch. Narrow profiles remain possible when a patch genuinely changes theming.
 
 ## Consequences
 

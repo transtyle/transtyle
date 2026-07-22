@@ -37,7 +37,7 @@ None of these would have been caught by the C3 acceptance script's lightweight b
 
 ## Deviations from the plan
 
-- Fixed two small pieces of *pre-existing* documentation staleness while already editing the touched files (missing radix/css-variables rows in `demo-app.md`'s project table; CI missing `check:component-tier`) — both directly adjacent to this task's actual scope, not unrelated drive-by changes.
+- Fixed two small pieces of _pre-existing_ documentation staleness while already editing the touched files (missing radix/css-variables rows in `demo-app.md`'s project table; CI missing `check:component-tier`) — both directly adjacent to this task's actual scope, not unrelated drive-by changes.
 - Bumped the Angular workspaces' production bundle-size budget (1MB → 1.5MB warning threshold) — PrimeNG + Angular's baseline bundle is larger than the other demos' Vite bundles; this is a real, expected difference in toolchain weight, not a regression to chase.
 
 ## Not done in this pass

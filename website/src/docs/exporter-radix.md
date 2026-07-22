@@ -1,5 +1,5 @@
 ---
-title: "Radix Colors / Themes exporter"
+title: 'Radix Colors / Themes exporter'
 description: "12-step scales, alpha ramps, and a contrast color per role — the role grid's own acceptance test."
 order: 14
 ---
@@ -14,23 +14,23 @@ Radix's 12-step-per-color model is, cell for cell, [the role grid](/docs/languag
 
 ## Mapping
 
-| Radix step | Meaning | Comes from |
-|---|---|---|
-| 1 | App background | `elevation.0.surface` |
-| 2 | Subtle background | mix toward the page, 96% — no direct cell |
-| 3 / 4 / 5 | UI background · hover · active | `tint` / `tint-hover` / `tint-active` |
-| 6 | Subtle border | mix toward the card surface, 78% — no direct cell, fills the gap between tint and outline |
-| 7 / 8 | Border · hover border | `outline` / `outline-hover` |
-| 9 / 10 | Solid · hover solid | `solid` / `solid-hover` |
-| 11 / 12 | Low-contrast text · high-contrast text | `text` / `text-strong` |
-| `contrast` | Text on the solid fill | `on-solid` |
-| `a1`–`a12` | Alpha variants | the same 12 colors, alpha from a fixed ramp — not Radix's real per-color alpha algorithm |
+| Radix step | Meaning                                | Comes from                                                                                |
+| ---------- | -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1          | App background                         | `elevation.0.surface`                                                                     |
+| 2          | Subtle background                      | mix toward the page, 96% — no direct cell                                                 |
+| 3 / 4 / 5  | UI background · hover · active         | `tint` / `tint-hover` / `tint-active`                                                     |
+| 6          | Subtle border                          | mix toward the card surface, 78% — no direct cell, fills the gap between tint and outline |
+| 7 / 8      | Border · hover border                  | `outline` / `outline-hover`                                                               |
+| 9 / 10     | Solid · hover solid                    | `solid` / `solid-hover`                                                                   |
+| 11 / 12    | Low-contrast text · high-contrast text | `text` / `text-strong`                                                                    |
+| `contrast` | Text on the solid fill                 | `on-solid`                                                                                |
+| `a1`–`a12` | Alpha variants                         | the same 12 colors, alpha from a fixed ramp — not Radix's real per-color alpha algorithm  |
 
 `neutral` also ships as `--gray-*`, Radix's conventional paired-gray name.
 
 ## An honest gap, found by building this — and fixed
 
-Any step that falls outside the sRGB gamut gets flagged `approximated` too — browsers gamut-map `oklch()` on render, which can look different from what was intended. Building this exporter surfaced a real one: `text-strong` (step 12) re-anchors a role at the *content* text lightness while keeping the role's *full* chroma — for a vivid brand color in dark mode, that combination could leave the gamut (very light + very saturated has little headroom). Fixed at the derivation source (`clampChromaToGamut`, [role grid](/docs/language/#color-roles-the-role-grid) F20) rather than only flagged downstream — it now reduces chroma at the same lightness/hue until the color is representable, instead of leaving it to be clipped per-channel on render.
+Any step that falls outside the sRGB gamut gets flagged `approximated` too — browsers gamut-map `oklch()` on render, which can look different from what was intended. Building this exporter surfaced a real one: `text-strong` (step 12) re-anchors a role at the _content_ text lightness while keeping the role's _full_ chroma — for a vivid brand color in dark mode, that combination could leave the gamut (very light + very saturated has little headroom). Fixed at the derivation source (`clampChromaToGamut`, [role grid](/docs/language/#color-roles-the-role-grid) F20) rather than only flagged downstream — it now reduces chroma at the same lightness/hue until the color is representable, instead of leaving it to be clipped per-channel on render.
 
 ## Using it with `@radix-ui/themes`
 

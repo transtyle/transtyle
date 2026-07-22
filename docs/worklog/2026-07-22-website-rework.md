@@ -5,6 +5,7 @@
 **Design decision:** the site's visual language is now the product's own trust model — the coverage trio (native green / derived blue / approximated amber) is tokenized (`--cov-*`) and used consistently across every diagram, chip, and swatch; JetBrains Mono is the "compiler voice" (tokens, slots, labels), Inter the explaining voice. Existing OKLCH palette honored, `--text-muted` darkened slightly for AA headroom.
 
 **Content precision fixes (all verified against source):**
+
 - Homepage + docs overview claimed **5 exporters; 8 are shipped** — both now enumerate all eight, and `check-docs.mjs` §5 enforces this permanently against `OFFICIAL_EXPORTERS`.
 - getting-started claimed "no `transtyle init` yet" — **false since T6**; §4 now teaches the real `init` scaffold, and its token example used **dead pre-revision vocabulary** (`primary.base`, `background`) — now the real catalog names (`primary.solid`, `elevation.0.surface`, `text.base`).
 - `cmdInit`'s next-steps message listed 5 targets — now derived from `OFFICIAL_EXPORTERS` at runtime, can't drift.

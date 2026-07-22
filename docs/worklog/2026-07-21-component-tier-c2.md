@@ -1,6 +1,6 @@
 # 2026-07-21 — C2: component-tier engine resolution
 
-Per [docs/plan/component-tier.md](../plan/component-tier.md) C2. Independent of C1 (the cross-ecosystem study, still open) — this task only had to prove the *engine* handles a `component.*` tier at all, generically, not specific to any one target ecosystem or component.
+Per [docs/plan/component-tier.md](../plan/component-tier.md) C2. Independent of C1 (the cross-ecosystem study, still open) — this task only had to prove the _engine_ handles a `component.*` tier at all, generically, not specific to any one target ecosystem or component.
 
 ## What shipped
 
@@ -19,4 +19,4 @@ The plan listed `packages/core/src/normalize.js` as a file this task might need 
 
 ## Scope not touched
 
-C1 (cross-ecosystem study) remains open and was not a blocker — C2 only needed the engine to prove it can resolve *a* component tier generically, not to settle which vocabulary belongs in it. C3 (the PrimeNG severity-grid mapper) and everything downstream is still unstarted.
+C1 (cross-ecosystem study) remains open and was not a blocker — C2 only needed the engine to prove it can resolve _a_ component tier generically, not to settle which vocabulary belongs in it. C3 (the PrimeNG severity-grid mapper) and everything downstream is still unstarted.

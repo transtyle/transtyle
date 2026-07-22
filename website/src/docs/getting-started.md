@@ -1,6 +1,6 @@
 ---
-title: "Getting started"
-description: "From clone to a compiled theme in four steps."
+title: 'Getting started'
+description: 'From clone to a compiled theme in four steps.'
 order: 2
 ---
 
@@ -47,11 +47,11 @@ npx transtyle explain primary.tint     # why does this value exist? full derivat
 For a Tailwind v4 shadcn app: copy `globals.transtyle.css` next to your global stylesheet and import it after Tailwind:
 
 ```css
-@import "tailwindcss";
-@import "./globals.transtyle.css";
+@import 'tailwindcss';
+@import './globals.transtyle.css';
 ```
 
-Dark mode uses the standard shadcn class strategy — toggle `dark` on `<html>`. Details for the Tailwind v3 era are in the [shadcn exporter page](/docs/exporter-shadcn/). Every target works the same way: build, then follow the generated `usage.md`. To *see* a theme on real components first, each example ships [runnable demo projects](/docs/examples/) per target.
+Dark mode uses the standard shadcn class strategy — toggle `dark` on `<html>`. Details for the Tailwind v3 era are in the [shadcn exporter page](/docs/exporter-shadcn/). Every target works the same way: build, then follow the generated `usage.md`. To _see_ a theme on real components first, each example ships [runnable demo projects](/docs/examples/) per target.
 
 ## 4. Create your own design system
 
@@ -62,14 +62,14 @@ npx transtyle init          # scaffolds transtyle.config.json + tokens/brand.tok
 
 The scaffold authors the honest minimum — **six real decisions**, each marked `TODO` with a description of what it is:
 
-| You author | Catalog slot | Why it can't be derived |
-|---|---|---|
-| Your brand color | `primary.solid` | The one non-negotiable input |
-| Page background | `elevation.0.surface` | Anchors the whole surface ladder |
-| Card background | `elevation.1.surface` | First rung above the page |
-| Body text color | `text.base` | Anchors the content hierarchy |
-| Muted text color | `text.muted` | Second rung of that hierarchy |
-| Default border | `border` | The neutral hairline everything shares |
+| You author       | Catalog slot          | Why it can't be derived                |
+| ---------------- | --------------------- | -------------------------------------- |
+| Your brand color | `primary.solid`       | The one non-negotiable input           |
+| Page background  | `elevation.0.surface` | Anchors the whole surface ladder       |
+| Card background  | `elevation.1.surface` | First rung above the page              |
+| Body text color  | `text.base`           | Anchors the content hierarchy          |
+| Muted text color | `text.muted`          | Second rung of that hierarchy          |
+| Default border   | `border`              | The neutral hairline everything shares |
 
 In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
 
@@ -87,7 +87,7 @@ In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
         "1": { "surface": { "$value": "oklch(0.98 0.003 255)" } }
       },
       "text": {
-        "base":  { "$value": "oklch(0.2 0.01 255)" },
+        "base": { "$value": "oklch(0.2 0.01 255)" },
         "muted": { "$value": "oklch(0.5 0.01 255)" }
       },
       "border": { "$value": "oklch(0.9 0.005 255)" }
@@ -96,7 +96,7 @@ In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
 }
 ```
 
-Note the two tiers: `option.color.brand.500` is *your* name for *your* value; `primary.solid` is the catalog slot that aliases it. Dark-mode values go in a separate mode-scoped DTCG file (the recommended layout) or inline per token — see [Authoring tokens](/docs/authoring-tokens/#modes).
+Note the two tiers: `option.color.brand.500` is _your_ name for _your_ value; `primary.solid` is the catalog slot that aliases it. Dark-mode values go in a separate mode-scoped DTCG file (the recommended layout) or inline per token — see [Authoring tokens](/docs/authoring-tokens/#modes).
 
 Then build, and add targets as you need them:
 

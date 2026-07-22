@@ -7,7 +7,7 @@ Source: [design-system.service.gov.uk/styles/colour](https://design-system.servi
 - `primary.solid` ← `govuk-functional-colour("brand")` (#1d70b8). Unambiguous — GOV.UK has exactly one brand color.
 - `danger.solid` ← `govuk-functional-colour("error")` (#ca3535).
 - `success.solid` ← `govuk-functional-colour("success")` (#0f7a52).
-- `ring` ← `govuk-functional-colour("focus")` (#ffdd00). **The best mapping found in this pass** — GOV.UK's iconic yellow keyboard-focus outline is *exactly* what the catalog's `ring` slot exists for, no interpretation needed.
+- `ring` ← `govuk-functional-colour("focus")` (#ffdd00). **The best mapping found in this pass** — GOV.UK's iconic yellow keyboard-focus outline is _exactly_ what the catalog's `ring` slot exists for, no interpretation needed.
 - `text.base`/`text.muted` ← `text`/`secondary-text` functional colours.
 - `border` ← `border` functional colour.
 - `elevation.0.surface`/`elevation.1.surface` ← `body-background`/`template-background`.
@@ -23,7 +23,7 @@ Source: [design-system.service.gov.uk/styles/colour](https://design-system.servi
 ## Scope boundaries (not gaps — deliberate, documented)
 
 - **No dark mode.** `modes.color-scheme` declares only `"light"`. GOV.UK's public design system doesn't publish a dark theme; declaring one would mean inventing colors GOV.UK never specified. A single-mode config is fully legal (`docs/architecture/ir.md#modes`) — this is a positive finding, not a limitation: the engine, all seven exporters, and the demo projects all handle a single-dimension, single-value mode config with zero special-casing.
-- **Type scale not bound.** GOV.UK's own type scale (16/19/24/27/36/48/80px, responsive) doesn't map cleanly onto the catalog's fixed `type.size.*` steps without either distorting GOV.UK's scale or extending the catalog's. Left as a catalog default per the adoption playbook's "don't translate everything on day one" guidance — a real team adopting GOV.UK for production would bind this properly; it's out of scope for demonstrating the binding-layer *pattern*, which is what T11 tests.
+- **Type scale not bound.** GOV.UK's own type scale (16/19/24/27/36/48/80px, responsive) doesn't map cleanly onto the catalog's fixed `type.size.*` steps without either distorting GOV.UK's scale or extending the catalog's. Left as a catalog default per the adoption playbook's "don't translate everything on day one" guidance — a real team adopting GOV.UK for production would bind this properly; it's out of scope for demonstrating the binding-layer _pattern_, which is what T11 tests.
 - **Font fallback, not the real GOV.UK typeface.** GDS Transport is licensed to crown services only and isn't publicly hosted. `option.font.transport` names GOV.UK's own real fallback stack (`GDS Transport, arial, sans-serif`); the demo projects render in `arial`, exactly as GOV.UK's own CSS would for any non-crown-service consumer. A licensing constraint, not a compiler one.
 
 ## Verification

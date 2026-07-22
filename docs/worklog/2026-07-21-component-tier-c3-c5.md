@@ -13,17 +13,17 @@ Per [docs/plan/component-tier.md](../plan/component-tier.md) C3, C4, C5. Depends
 
 Proposal 0002 §5.2 estimated ~25–35 severity-colored components by pattern-matching from Button alone. **Fetching and reading real source for 20 components (fetched 2026-07-21, `github.com/primefaces/primeuix`) found that estimate was too high** — most of the originally-assumed candidates are not severity-colored at all:
 
-| Real shape | Components (verified) |
-|---|---|
-| Full grid (`variant × severity × part`) | **Button** only, of those checked |
-| Flat (`severity × part`, no variant/state) | **Tag**, **Badge** |
+| Real shape                                                            | Components (verified)                                                                                                                                |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full grid (`variant × severity × part`)                               | **Button** only, of those checked                                                                                                                    |
+| Flat (`severity × part`, no variant/state)                            | **Tag**, **Badge**                                                                                                                                   |
 | Flat + a `filled`/`outlined`/`simple` variant, severity-major nesting | **Message**, **InlineMessage** (also: neither has a `primary` severity — both use `info/success/warn/danger(named "error")/secondary/contrast` only) |
-| Field-shaped (own tokens read `form.field.*`, no severity axis) | Checkbox, RadioButton, ToggleSwitch, SelectButton, Listbox's root |
-| Primary-anchored only (no severity axis at all) | ProgressBar, Slider, Knob, Rating |
-| Plain surface/neutral (no brand color) | Chip |
-| Structural, near-zero color tokens of its own | ToggleButton (surface-neutral only, no severity), SplitButton (almost no color tokens — composes visually via Button) |
+| Field-shaped (own tokens read `form.field.*`, no severity axis)       | Checkbox, RadioButton, ToggleSwitch, SelectButton, Listbox's root                                                                                    |
+| Primary-anchored only (no severity axis at all)                       | ProgressBar, Slider, Knob, Rating                                                                                                                    |
+| Plain surface/neutral (no brand color)                                | Chip                                                                                                                                                 |
+| Structural, near-zero color tokens of its own                         | ToggleButton (surface-neutral only, no severity), SplitButton (almost no color tokens — composes visually via Button)                                |
 
-This is exactly the kind of variance the plan itself warned about ("Tag has no hover state... don't assume Button's shape generalizes uniformly") — but the *degree* of it is a genuine correction to record: **5 components use the severity mapper (Button, Tag, Badge, Message, InlineMessage), not ~25–35.** The mapper itself is still the right design — proven generic (same function, both a full-grid and two flat shapes) — there just turned out to be a smaller real audience for it than estimated. The remaining bulk of PrimeNG's ~82 components (86 preset folders minus `base`/`css`/`index.d.ts`/`index.ts`) are either archetype-helper consumers (below) or structural residue.
+This is exactly the kind of variance the plan itself warned about ("Tag has no hover state... don't assume Button's shape generalizes uniformly") — but the _degree_ of it is a genuine correction to record: **5 components use the severity mapper (Button, Tag, Badge, Message, InlineMessage), not ~25–35.** The mapper itself is still the right design — proven generic (same function, both a full-grid and two flat shapes) — there just turned out to be a smaller real audience for it than estimated. The remaining bulk of PrimeNG's ~82 components (86 preset folders minus `base`/`css`/`index.d.ts`/`index.ts`) are either archetype-helper consumers (below) or structural residue.
 
 **Also real, not PrimeNG's polish**: PrimeNG itself is internally inconsistent about the "danger" severity's name — Button/Tag/Badge call it `danger`, Message/InlineMessage call it `error`. The exporter's severity resolver treats this as a per-component naming detail (each builder maps its own output key), not a bug to normalize away — Transtyle's `danger` role feeds both.
 
@@ -40,6 +40,7 @@ Each helper is proven on at least one real component, per C5's acceptance: `fiel
 ## Verification performed (temporary script, not a permanent fixture, per C3's acceptance wording)
 
 A throwaway script (written to the session scratchpad, not committed — matches the plan's own "temporary... not a permanent fixture" instruction) called `compile()` against Acme and Cathode directly, with a `loadExporter` that returns `@transtyle/exporter-primeng` regardless of name — bypassing the CLI registry entirely, per C3's acceptance criteria. Confirmed:
+
 - The emitted `preset.transtyle.ts` is syntactically well-formed (balanced braces, no leaked `undefined`, valid `definePreset` import/export shape).
 - `button.colorScheme.light.root.primary.background` exactly matches `semantic.color.primary.solid`'s resolved value.
 - `tag.colorScheme.light.success.background` exactly matches `semantic.color.success.tint` (brand-coherent — hue-anchored off `primary`, not PrimeNG's literal `green` default) for both Acme and Cathode, which have different primary hues.

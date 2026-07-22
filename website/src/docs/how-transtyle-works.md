@@ -1,6 +1,6 @@
 ---
-title: "How Transtyle works"
-description: "The compiler mental model in one diagram — still no code."
+title: 'How Transtyle works'
+description: 'The compiler mental model in one diagram — still no code.'
 order: 21
 ---
 
@@ -32,15 +32,15 @@ Four ideas make that middle box trustworthy.
 
 ## 1. A pivot language, like translators use
 
-Translating between twenty languages doesn't need translators for every pair — it needs one shared *interlingua* everyone translates through. Transtyle's version is [the catalog](/docs/language/): a fixed vocabulary of **meanings** — "the action color", "the raised surface", "destructive, at rest, as a filled button".
+Translating between twenty languages doesn't need translators for every pair — it needs one shared _interlingua_ everyone translates through. Transtyle's version is [the catalog](/docs/language/): a fixed vocabulary of **meanings** — "the action color", "the raised surface", "destructive, at rest, as a filled button".
 
-Your names map *into* the catalog once — you declare "our `flame` is the action color" — and each framework's names map *out* of it, maintained by the people who know that framework. You never learn Bootstrap's dialect; you state your meanings once.
+Your names map _into_ the catalog once — you declare "our `flame` is the action color" — and each framework's names map _out_ of it, maintained by the people who know that framework. You never learn Bootstrap's dialect; you state your meanings once.
 
 This is also the defense against **false friends**: your "secondary" and Bootstrap's "secondary" share a spelling, not a meaning. Binding happens by meaning, never by name similarity — so the collision becomes harmless.
 
 ## 2. Derivation fills what you didn't decide
 
-Frameworks need far more values than you'd ever want to hand-author: hover shades, pressed shades, readable text on every colored background, subtle tinted washes, a chart palette, the whole dark-mode mirror. Transtyle computes every one of these from the decisions you *did* make, using **fixed, versioned rules** — the hover shade is a defined nudge of your color, the foreground paired with your blue is chosen to pass contrast, the chart palette is rotated from your brand hue.
+Frameworks need far more values than you'd ever want to hand-author: hover shades, pressed shades, readable text on every colored background, subtle tinted washes, a chart palette, the whole dark-mode mirror. Transtyle computes every one of these from the decisions you _did_ make, using **fixed, versioned rules** — the hover shade is a defined nudge of your color, the foreground paired with your blue is chosen to pass contrast, the chart palette is rotated from your brand hue.
 
 Two properties keep this safe:
 

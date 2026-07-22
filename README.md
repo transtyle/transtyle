@@ -40,7 +40,7 @@ npx transtyle check         # pipeline without emit: validation + contrast + cov
 
 The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project, `_variables.transtyle.scss`/`_maps.transtyle.scss` import around Bootstrap's own Sass build, and `theme.*-{light,dark}.json` registers straight into Apache ECharts — see each generated `usage.md`. 11 authored tokens produce the full variable set of every target; everything unauthored is derived deterministically with provenance recorded in `report.json`.
 
-To *see* the themes on real framework components, each example ships npm-runnable demo projects (`examples/<example>/demo/<target>/`, one Vite/Storybook project per target, consuming only the compiled `dist/`):
+To _see_ the themes on real framework components, each example ships npm-runnable demo projects (`examples/<example>/demo/<target>/`, one Vite/Storybook project per target, consuming only the compiled `dist/`):
 
 ```bash
 npm run dev -w acme-demo-bootstrap     # Nimbus Console in real Bootstrap (Sass path), port 4101
@@ -48,7 +48,7 @@ npm run dev -w acme-demo-shadcn        # the same page in real shadcn/ui compone
 npm run dev -w cathode-demo-storybook  # a phosphor-green Storybook, port 6201
 ```
 
-A second, deliberately hostile example lives in [examples/cathode/](examples/cathode/): a dark-native CRT terminal DS with its own vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`) bound to the semantic catalog through one-line aliases — the pattern for compiling *uncommon* design systems.
+A second, deliberately hostile example lives in [examples/cathode/](examples/cathode/): a dark-native CRT terminal DS with its own vocabulary (`crt.ink`, `crt.tube`, `crt.meltdown`) bound to the semantic catalog through one-line aliases — the pattern for compiling _uncommon_ design systems.
 
 Two more examples adopt **real, published design systems** nobody on this project designed — [examples/govuk/](examples/govuk/) (the UK government's [GOV.UK Design System](https://design-system.service.gov.uk/styles/colour/)) and [examples/carbon/](examples/carbon/) (IBM's [Carbon Design System](https://carbondesignsystem.com/elements/color/tokens/)) — the same binding-layer pattern as Cathode, this time against systems with real published token values and real accessibility/branding constraints. See each example's README and [`docs/findings/`](docs/findings/) for what mapped cleanly and what needed a judgment call.
 
@@ -62,14 +62,14 @@ Engineering documentation (architecture, specs, ADRs) lives in [docs/](docs/) �
 
 ## Documentation map
 
-| Area | Documents |
-|---|---|
-| Why / what | [VISION.md](VISION.md), [docs/prior-art.md](docs/prior-art.md), [docs/naming.md](docs/naming.md) |
-| Architecture | [overview](docs/architecture/overview.md), [pipeline](docs/architecture/pipeline.md), [IR](docs/architecture/ir.md), [derivation](docs/architecture/derivation.md), [plugins](docs/architecture/plugins.md), [versioning](docs/architecture/versioning.md) |
-| Specifications | [configuration](docs/specs/configuration.md), [CLI](docs/specs/cli.md), [validation & coverage](docs/specs/validation-and-coverage.md), [doc generation](docs/specs/doc-generation.md), [component layer (v2)](docs/specs/component-layer.md) |
+| Area                | Documents                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Why / what          | [VISION.md](VISION.md), [docs/prior-art.md](docs/prior-art.md), [docs/naming.md](docs/naming.md)                                                                                                                                                                                                                                                                                              |
+| Architecture        | [overview](docs/architecture/overview.md), [pipeline](docs/architecture/pipeline.md), [IR](docs/architecture/ir.md), [derivation](docs/architecture/derivation.md), [plugins](docs/architecture/plugins.md), [versioning](docs/architecture/versioning.md)                                                                                                                                    |
+| Specifications      | [configuration](docs/specs/configuration.md), [CLI](docs/specs/cli.md), [validation & coverage](docs/specs/validation-and-coverage.md), [doc generation](docs/specs/doc-generation.md), [component layer (v2)](docs/specs/component-layer.md)                                                                                                                                                 |
 | Reference exporters | [Bootstrap](docs/specs/exporters/bootstrap.md), [shadcn/ui](docs/specs/exporters/shadcn.md), [ECharts](docs/specs/exporters/echarts.md), [Storybook](docs/specs/exporters/storybook.md), [daisyUI](docs/specs/exporters/daisyui.md), [css-variables](docs/specs/exporters/css-variables.md), [Radix Colors/Themes](docs/specs/exporters/radix.md), [PrimeNG](docs/specs/exporters/primeng.md) |
-| Decisions | [docs/adr/](docs/adr/) |
-| Plan | [ROADMAP.md](ROADMAP.md) |
+| Decisions           | [docs/adr/](docs/adr/)                                                                                                                                                                                                                                                                                                                                                                        |
+| Plan                | [ROADMAP.md](ROADMAP.md)                                                                                                                                                                                                                                                                                                                                                                      |
 
 ## Naming
 

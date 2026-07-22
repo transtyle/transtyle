@@ -6,10 +6,10 @@
 
 ## Emitted artifacts
 
-| File | Purpose |
-|---|---|
+| File                      | Purpose                                                                                                    |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `variables.transtyle.css` | The complete resolved semantic catalog as `--custom-properties`, one per slot (or per composite sub-field) |
-| `usage.md` | Install snippet, naming rule, dark-mode wiring |
+| `usage.md`                | Install snippet, naming rule, dark-mode wiring                                                             |
 
 ## Naming
 

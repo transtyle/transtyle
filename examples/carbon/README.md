@@ -10,14 +10,14 @@ This is the second half of the **T11 "real-DS run"** (`docs/plan/catalog-revisio
 
 ## What's genuinely real here — and what isn't
 
-- **Colors, both modes**: real Carbon core tokens — `$link-primary`, `$support-error/success/warning/info`, `$text-primary/secondary`, `$border-subtle-00`, `$focus` — each with its documented White *and* G100 value, bound as real per-mode aliases (`$extensions.transtyle.modes`), not derived.
+- **Colors, both modes**: real Carbon core tokens — `$link-primary`, `$support-error/success/warning/info`, `$text-primary/secondary`, `$border-subtle-00`, `$focus` — each with its documented White _and_ G100 value, bound as real per-mode aliases (`$extensions.transtyle.modes`), not derived.
 - **Typeface**: real — **IBM Plex Sans** / **IBM Plex Mono**, Carbon's actual open-source, freely-embeddable type family (unlike GOV.UK's licensed font, these load for real in the demo projects).
 - **Radius**: real for Carbon's core structural components (buttons, inputs, tiles render square) — Carbon does use small radii on a few components (tags, tooltips) that this single `radius.md` binding doesn't capture; see the findings ledger.
 - **Both modes are real Carbon themes**: light = White, dark = G100. Carbon actually ships four themes (White, G10, G90, G100); the catalog's `color-scheme` dimension is binary, so G10/G90 aren't modeled here — a deliberate, documented scope boundary, not an oversight.
 
 ## What had to be a judgment call (see the findings ledger)
 
-Carbon has real, named roles for `danger`/`success`/`warning`/`info` (its "Support" token group) *and* a real named `secondary` (`$button-secondary`) — better 1:1 coverage than GOV.UK. Two things still needed judgment: `neutral` has no dedicated Carbon role (mapped to Gray 60, its general-purpose helper gray), and `secondary`'s dark-mode value falls back to the light value because the G100 theme's `$button-secondary` wasn't independently re-verified against the live source for this pass — flagged rather than guessed. Full reasoning: [`../../docs/findings/carbon-adoption.md`](../../docs/findings/carbon-adoption.md).
+Carbon has real, named roles for `danger`/`success`/`warning`/`info` (its "Support" token group) _and_ a real named `secondary` (`$button-secondary`) — better 1:1 coverage than GOV.UK. Two things still needed judgment: `neutral` has no dedicated Carbon role (mapped to Gray 60, its general-purpose helper gray), and `secondary`'s dark-mode value falls back to the light value because the G100 theme's `$button-secondary` wasn't independently re-verified against the live source for this pass — flagged rather than guessed. Full reasoning: [`../../docs/findings/carbon-adoption.md`](../../docs/findings/carbon-adoption.md).
 
 ## Build it
 

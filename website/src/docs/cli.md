@@ -1,6 +1,6 @@
 ---
-title: "CLI reference"
-description: "Commands, exit codes, diagnostics format."
+title: 'CLI reference'
+description: 'Commands, exit codes, diagnostics format.'
 order: 7
 ---
 
@@ -86,7 +86,7 @@ It also flags **contrast regressions** — pairs that passed your configured WCA
   ✖ text.base on elevation.0.surface (light): 18.1:1 → 2.2:1 — now FAILS 4.5:1
 ```
 
-That's the difference between `check` ("contrast is bad") and `diff` ("*this change* made it bad") — the second is what a green CI baseline can otherwise lose silently.
+That's the difference between `check` ("contrast is bad") and `diff` ("_this change_ made it bad") — the second is what a green CI baseline can otherwise lose silently.
 
 Exits `0` when the compiled themes are identical, `1` when there are changes (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling, including a `contrastRegressions` array. Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
 
@@ -100,11 +100,11 @@ Validates the target against the CLI's known exporters and inserts `"<target>": 
 
 ## Exit codes
 
-| Code | Meaning |
-|---|---|
-| 0 | Success (possibly with warnings below your `check.failOn` threshold) |
-| 1 | Diagnostics at or above the `failOn` threshold |
-| 2 | Usage or config error (unknown command, missing config, broken exporter) |
+| Code | Meaning                                                                  |
+| ---- | ------------------------------------------------------------------------ |
+| 0    | Success (possibly with warnings below your `check.failOn` threshold)     |
+| 1    | Diagnostics at or above the `failOn` threshold                           |
+| 2    | Usage or config error (unknown command, missing config, broken exporter) |
 
 `transtyle diff` overloads exit `1` to mean "changes found" (like `git diff --exit-code`), not a diagnostic failure.
 
@@ -123,12 +123,12 @@ The full code table lives in [Weird things & diagnostics](/docs/diagnostics/#dia
 
 These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the same principles when they land:
 
-| Command | What it will do |
-|---|---|
-| `transtyle init` (interactive mode) | A brand-color prompt instead of the fixed placeholder scaffold shipped today |
-| `transtyle add <exporter>` (community plugins) | Install + register third-party exporter packages, printing their manifest first |
+| Command                                             | What it will do                                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `transtyle init` (interactive mode)                 | A brand-color prompt instead of the fixed placeholder scaffold shipped today                      |
+| `transtyle add <exporter>` (community plugins)      | Install + register third-party exporter packages, printing their manifest first                   |
 | `transtyle explain <token> --target <t>` (new flag) | Also show which target variable the value maps to and why (today's `explain` stops at provenance) |
-| `transtyle import <source>` | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
-| `transtyle preview` | Local themed preview site across all targets |
+| `transtyle import <source>`                         | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files           |
+| `transtyle preview`                                 | Local themed preview site across all targets                                                      |
 
 Programmatic use: every command wraps `@transtyle/core`'s public `compile()` — the CLI contains no logic a build-tool integration can't reach.

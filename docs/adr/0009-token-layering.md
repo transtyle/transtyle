@@ -4,9 +4,9 @@
 
 ## Context
 
-The original config spec required mode values inline, via `$extensions["transtyle.modes"]` inside token files. A design system maintainer objected: the source-of-truth token files should not carry tool-specific annotations. The objection is only half-formal — `$extensions` is the DTCG-sanctioned mechanism and conformant tools ignore it — but it is fully *operational*: token files are frequently generated (Figma variables, Tokens Studio) and regenerated, wiping hand-added extensions; team ownership differs (designers own token values, platform engineers own transtyle wiring); and mode-per-file is how the ecosystem already organizes (Tokens Studio token sets, Style Dictionary common practice).
+The original config spec required mode values inline, via `$extensions["transtyle.modes"]` inside token files. A design system maintainer objected: the source-of-truth token files should not carry tool-specific annotations. The objection is only half-formal — `$extensions` is the DTCG-sanctioned mechanism and conformant tools ignore it — but it is fully _operational_: token files are frequently generated (Figma variables, Tokens Studio) and regenerated, wiping hand-added extensions; team ownership differs (designers own token values, platform engineers own transtyle wiring); and mode-per-file is how the ecosystem already organizes (Tokens Studio token sets, Style Dictionary common practice).
 
-Separately, the Cathode example had conflated a DS's native vocabulary and its catalog bindings in one file, obscuring that the binding layer is transtyle-specific knowledge *about* a design system, not part of it.
+Separately, the Cathode example had conflated a DS's native vocabulary and its catalog bindings in one file, obscuring that the binding layer is transtyle-specific knowledge _about_ a design system, not part of it.
 
 ## Decision
 

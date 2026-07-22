@@ -1,6 +1,6 @@
 ---
-title: "Core concepts"
-description: "The pipeline, token tiers, semantic catalog, modes, and provenance."
+title: 'Core concepts'
+description: 'The pipeline, token tiers, semantic catalog, modes, and provenance.'
 order: 3
 ---
 
@@ -21,14 +21,14 @@ Every build runs the same six stages:
   <span class="fnode">REPORT</span>
 </div>
 
-| Stage | What happens |
-|---|---|
-| LOAD | Read `transtyle.config.json` and the token layers it lists |
+| Stage     | What happens                                                                              |
+| --------- | ----------------------------------------------------------------------------------------- |
+| LOAD      | Read `transtyle.config.json` and the token layers it lists                                |
 | NORMALIZE | Merge layers, resolve aliases (with cycle detection), expand modes, parse colors to OKLCH |
-| DERIVE | Fill every unauthored semantic slot using deterministic rules |
-| RESOLVE | Map the completed token graph onto each target's native theming surface |
-| EMIT | Write native artifacts (only this stage touches your disk; `check` skips it) |
-| REPORT | Coverage classification + diagnostics, human and JSON |
+| DERIVE    | Fill every unauthored semantic slot using deterministic rules                             |
+| RESOLVE   | Map the completed token graph onto each target's native theming surface                   |
+| EMIT      | Write native artifacts (only this stage touches your disk; `check` skips it)              |
+| REPORT    | Coverage classification + diagnostics, human and JSON                                     |
 
 Identical inputs produce byte-identical outputs — no timestamps, no randomness, no network.
 
@@ -77,22 +77,22 @@ Two equivalent authoring forms exist (inline `$extensions`, or separate mode-sco
 
 Every resolved value carries its origin:
 
-| Provenance | Meaning |
-|---|---|
-| `authored` | You wrote this value |
-| `aliased` | You pointed at another token |
-| `derived` | A named rule computed it from your tokens |
+| Provenance  | Meaning                                    |
+| ----------- | ------------------------------------------ |
+| `authored`  | You wrote this value                       |
+| `aliased`   | You pointed at another token               |
+| `derived`   | A named rule computed it from your tokens  |
 | `defaulted` | A catalog constant, no user input involved |
 
 And every emitted variable is classified in `report.json`:
 
-| Coverage class | Meaning |
-|---|---|
-| <span class="sw" style="--c:var(--cov-native)"></span>`native` | The target has a first-class slot; lossless mapping |
-| <span class="sw" style="--c:var(--cov-derived)"></span>`derived` | Synthesized by derivation, then mapped natively |
+| Coverage class                                                       | Meaning                                                                      |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| <span class="sw" style="--c:var(--cov-native)"></span>`native`       | The target has a first-class slot; lossless mapping                          |
+| <span class="sw" style="--c:var(--cov-derived)"></span>`derived`     | Synthesized by derivation, then mapped natively                              |
 | <span class="sw" style="--c:var(--cov-approx)"></span>`approximated` | Mapped, but meaning changed (unit conversion, gamut clamp, concept mismatch) |
-| <span class="sw" style="--c:oklch(0.55 0.02 262)"></span>`dropped` | Your system expresses it; this target can't; omitted with a reason |
-| <span class="sw" style="--c:oklch(0.4 0.09 25)"></span>`unsupported` | The target has a themable slot Transtyle doesn't cover yet |
+| <span class="sw" style="--c:oklch(0.55 0.02 262)"></span>`dropped`   | Your system expresses it; this target can't; omitted with a reason           |
+| <span class="sw" style="--c:oklch(0.4 0.09 25)"></span>`unsupported` | The target has a themable slot Transtyle doesn't cover yet                   |
 
 A build isn't "done" at 100% native — that's impossible across real ecosystems. It's done when the report matches your intent: your decisions authored, coherent derivation for the rest, every approximation known and accepted.
 

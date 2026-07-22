@@ -6,26 +6,26 @@
 
 ## Emitted artifacts
 
-| File | Purpose |
-|---|---|
+| File                         | Purpose                                                                                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `radix-colors.transtyle.css` | `:root` (light) + `.dark` blocks; per role: `--<role>-1..12`, `--<role>-a1..a12` (alpha variants), `--<role>-contrast`; `neutral` is also aliased as `--gray-*` (Radix's conventional paired-gray name) |
-| `usage.md` | Standalone usage + the `@radix-ui/themes` override pattern |
+| `usage.md`                   | Standalone usage + the `@radix-ui/themes` override pattern                                                                                                                                              |
 
 ## Mapping (per role, both modes)
 
-| Step | Comes from | Class |
-|---|---|---|
-| 1 | `elevation.0.surface` | `native` |
-| 2 | `mix(solid, elevation.0.surface, 0.96)` | `approximated` — no direct grid cell |
-| 3 / 4 / 5 | `tint` / `tint-hover` / `tint-active` | `native` |
-| 6 | `mix(solid, elevation.1.surface, 0.78)` | `approximated` — no direct grid cell; sits between the tint and outline families |
-| 7 / 8 | `outline` / `outline-hover` | `native` |
-| 9 / 10 | `solid` / `solid-hover` | `native` |
-| 11 / 12 | `text` / `text-strong` | `native` |
-| `contrast` | `on-solid` | `native` |
-| `a1`–`a12` | the same 12 colors, alpha from a fixed ramp | `approximated` — not a colorimetric derivation of Radix's real per-color alpha |
+| Step       | Comes from                                  | Class                                                                            |
+| ---------- | ------------------------------------------- | -------------------------------------------------------------------------------- |
+| 1          | `elevation.0.surface`                       | `native`                                                                         |
+| 2          | `mix(solid, elevation.0.surface, 0.96)`     | `approximated` — no direct grid cell                                             |
+| 3 / 4 / 5  | `tint` / `tint-hover` / `tint-active`       | `native`                                                                         |
+| 6          | `mix(solid, elevation.1.surface, 0.78)`     | `approximated` — no direct grid cell; sits between the tint and outline families |
+| 7 / 8      | `outline` / `outline-hover`                 | `native`                                                                         |
+| 9 / 10     | `solid` / `solid-hover`                     | `native`                                                                         |
+| 11 / 12    | `text` / `text-strong`                      | `native`                                                                         |
+| `contrast` | `on-solid`                                  | `native`                                                                         |
+| `a1`–`a12` | the same 12 colors, alpha from a fixed ramp | `approximated` — not a colorimetric derivation of Radix's real per-color alpha   |
 
-Any step whose OKLCH value falls outside the sRGB gamut (`ctx.formatHex(...).clamped`) is additionally marked `approximated` with a note — browsers gamut-map `oklch()` on render, which can look noticeably different from the intended color. Building this exporter surfaced exactly this gap in the `text-strong` derivation rule (F20): it re-anchors a role at the *content* text lightness while keeping the role's *full* chroma, which could leave the sRGB gamut for vivid brand colors in dark mode (a very light, fully saturated color has very little gamut headroom). Fixed at the source: F20 now runs the result through `clampChromaToGamut` (`packages/core/src/color.js`), which reduces chroma at the same lightness/hue until the color is representable, rather than letting per-channel clipping distort it downstream. See the worklog for the fix and its one (expected, corrected) fixture-value change.
+Any step whose OKLCH value falls outside the sRGB gamut (`ctx.formatHex(...).clamped`) is additionally marked `approximated` with a note — browsers gamut-map `oklch()` on render, which can look noticeably different from the intended color. Building this exporter surfaced exactly this gap in the `text-strong` derivation rule (F20): it re-anchors a role at the _content_ text lightness while keeping the role's _full_ chroma, which could leave the sRGB gamut for vivid brand colors in dark mode (a very light, fully saturated color has very little gamut headroom). Fixed at the source: F20 now runs the result through `clampChromaToGamut` (`packages/core/src/color.js`), which reduces chroma at the same lightness/hue until the color is representable, rather than letting per-channel clipping distort it downstream. See the worklog for the fix and its one (expected, corrected) fixture-value change.
 
 ## `@radix-ui/themes` integration
 

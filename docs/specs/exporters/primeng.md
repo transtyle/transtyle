@@ -6,10 +6,10 @@
 
 ## Emitted artifacts
 
-| File | Purpose |
-|---|---|
+| File                  | Purpose                                                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `preset.transtyle.ts` | A `definePreset(Aura, { semantic, components })` TypeScript module — override an existing PrimeNG preset, don't author one from zero |
-| `usage.md` | Setup snippet (`providePrimeNG`) + coverage summary |
+| `usage.md`            | Setup snippet (`providePrimeNG`) + coverage summary                                                                                  |
 
 ## Strategy: one generic mapper, not ~90 hand-written tables
 

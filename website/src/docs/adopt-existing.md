@@ -1,5 +1,5 @@
 ---
-title: "You already have a design system"
+title: 'You already have a design system'
 description: "The main workflow: map an existing design system's vocabulary onto the catalog without renaming anything."
 order: 3
 ---
@@ -10,7 +10,7 @@ This is the primary use case. Your design system exists — in Figma, in Sass va
 
 <div class="callout"><div class="callout-title">In Figma-token terms</div>
 
-If you use primitive → alias → component token layering (Tokens Studio, Figma variables collections): your primitives go in `option.*` unchanged, your alias layer becomes custom semantic tokens under *your* names, and the binding file below is a second, tiny alias layer that only the build pipeline knows about. Your designers never see it.
+If you use primitive → alias → component token layering (Tokens Studio, Figma variables collections): your primitives go in `option.*` unchanged, your alias layer becomes custom semantic tokens under _your_ names, and the binding file below is a second, tiny alias layer that only the build pipeline knows about. Your designers never see it.
 </div>
 
 ## 1. Dump your raw values into `option.*`, verbatim
@@ -18,27 +18,37 @@ If you use primitive → alias → component token layering (Tokens Studio, Figm
 Your palette, your names, your structure. This tier is private vocabulary — nothing downstream depends on its shape:
 
 ```json
-{ "option": { "color": { "$type": "color",
-  "flame": { "$value": "#e8590c" },
-  "coal":  { "900": { "$value": "#1a1614" }, "600": { "$value": "#57504b" } },
-  "sand":  { "50": { "$value": "#faf6f1" }, "200": { "$value": "#eadfd3" } }
-} } }
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "flame": { "$value": "#e8590c" },
+      "coal": { "900": { "$value": "#1a1614" }, "600": { "$value": "#57504b" } },
+      "sand": { "50": { "$value": "#faf6f1" }, "200": { "$value": "#eadfd3" } }
+    }
+  }
+}
 ```
 
 Paste whatever your stylesheets already contain — hex (including 4/8-digit alpha), `rgb()`/`hsl()` in either the modern or legacy comma form, and CSS named colors like `red` or `purple` all parse. OKLCH is canonical internally; conversion is automatic, so you never retype a value to satisfy the compiler.
 
 ### No palette? Synthesize one — the names are throwaway
 
-The step above assumes you *have* a primitive tier. Plenty of real products never built one: colors are literals written at the point of use, and the same value shows up in a dozen places under a dozen different names. If that's you, you're not doing it wrong — you just have one extra job before the interesting part.
+The step above assumes you _have_ a primitive tier. Plenty of real products never built one: colors are literals written at the point of use, and the same value shows up in a dozen places under a dozen different names. If that's you, you're not doing it wrong — you just have one extra job before the interesting part.
 
 **Collect the distinct values and give them any names at all.** That's the whole task. The `option` tier is private vocabulary that nothing downstream binds to, so the names are scaffolding, not decisions — you will never defend them in a design review:
 
 ```json
-{ "option": { "color": { "$type": "color",
-  "gray-333": { "$value": "#333333" },
-  "gray-ddd": { "$value": "#dddddd" },
-  "blue-link": { "$value": "#3366cc" }
-} } }
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "gray-333": { "$value": "#333333" },
+      "gray-ddd": { "$value": "#dddddd" },
+      "blue-link": { "$value": "#3366cc" }
+    }
+  }
+}
 ```
 
 Naming by value (`gray-333`) or by hue-and-lightness (`blue-600`) both work and both take minutes. Resist the urge to name them semantically here — "brand-primary" belongs in step 2, where it can be argued about, not in the tier you'll regenerate whenever your palette changes.
@@ -48,18 +58,23 @@ Naming by value (`gray-333`) or by hue-and-lightness (`blue-600`) both work and 
 In a [real run against a product with no tokens](https://github.com/transtyle/transtyle/blob/main/docs/findings/hostile-adoption.md), 89 CSS custom properties collapsed to **29 distinct values** — one gray appeared under **13 different names** (`--body-color`, `--title-color`, `--panel-color`, …), with nothing recording that they were the same decision. Discovering that is the first thing adoption pays you, before a single theme is compiled. Expect the ratio; don't be alarmed by it.
 </div>
 
-## 2. Express your existing semantics — with *your* names
+## 2. Express your existing semantics — with _your_ names
 
 If your system already has meaning-level names ("flame is our action color", "sand is our canvas"), write them as **custom semantic tokens**. They're first-class: carried, resolved per mode, provenance-tracked:
 
 ```json
-{ "semantic": { "color": { "$type": "color",
-  "brand-action": { "$value": "{option.color.flame}" },
-  "canvas": { "$value": "{option.color.sand.50}" }
-} } }
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "brand-action": { "$value": "{option.color.flame}" },
+      "canvas": { "$value": "{option.color.sand.50}" }
+    }
+  }
+}
 ```
 
-If your names are *component*-scoped rather than meaning-scoped — `--button-primary-background`, `--table-th-background`, the usual shape when a product grew its CSS organically — keep them exactly as they are. They are still your system's real vocabulary, and step 3 binds by meaning regardless of how a name is spelled. Renaming them into meaning-words here is the one thing not to do: it invents a semantic layer your team never agreed on, in a file they'll have to maintain.
+If your names are _component_-scoped rather than meaning-scoped — `--button-primary-background`, `--table-th-background`, the usual shape when a product grew its CSS organically — keep them exactly as they are. They are still your system's real vocabulary, and step 3 binds by meaning regardless of how a name is spelled. Renaming them into meaning-words here is the one thing not to do: it invents a semantic layer your team never agreed on, in a file they'll have to maintain.
 
 Mode variants go in **separate pure-DTCG files** — the recommended layout, because every file stays readable by your existing tooling (Figma, Tokens Studio, Style Dictionary) with the mode assignment in the config, not the tokens:
 
@@ -80,15 +95,20 @@ Mode variants go in **separate pure-DTCG files** — the recommended layout, bec
 
 ## 3. Bind the catalog — the translation layer
 
-One small file of aliases connects [the Transtyle language](/docs/language/) to yours. This file is *knowledge about* your system, not part of it — keep it separate, own it in the platform team:
+One small file of aliases connects [the Transtyle language](/docs/language/) to yours. This file is _knowledge about_ your system, not part of it — keep it separate, own it in the platform team:
 
 ```json
-{ "semantic": { "color": { "$type": "color",
-  "primary":   { "solid": { "$value": "{semantic.color.brand-action}" } },
-  "elevation": { "0": { "surface": { "$value": "{semantic.color.canvas}" } } },
-  "text":      { "base": { "$value": "{option.color.coal.900}" } },
-  "border":    { "$value": "{option.color.sand.200}" }
-} } }
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "primary": { "solid": { "$value": "{semantic.color.brand-action}" } },
+      "elevation": { "0": { "surface": { "$value": "{semantic.color.canvas}" } } },
+      "text": { "base": { "$value": "{option.color.coal.900}" } },
+      "border": { "$value": "{option.color.sand.200}" }
+    }
+  }
+}
 ```
 
 Don't translate everything on day one. Bind what you're sure of; the coverage report will show you what derivation guessed for the rest.
@@ -99,7 +119,7 @@ Don't translate everything on day one. Bind what you're sure of; the coverage re
 npx transtyle build
 ```
 
-Open `report.json` (or read the `· derived` comments in the output). Every variable is classified: what came from *your* system, what was derived from it, what was approximated. Derived values aren't wrong — they're **proposals computed from your brand**. The hover states and tinted backgrounds will already be coherent with your colors.
+Open `report.json` (or read the `· derived` comments in the output). Every variable is classified: what came from _your_ system, what was derived from it, what was approximated. Derived values aren't wrong — they're **proposals computed from your brand**. The hover states and tinted backgrounds will already be coherent with your colors.
 
 ## 5. Tighten as trust grows
 
@@ -118,4 +138,4 @@ Now a build fails if someone deletes the binding and derivation silently takes o
 The failures we see are never technical — they're these two, both preventable on day one.
 </div>
 
-**Don't rename your system into our catalog.** The catalog names never leak into your design language — they're the compilation interface. If your team says "flame", your tokens say "flame" forever. **Don't bind by name similarity.** Your "secondary" and shadcn's `--secondary` and Bootstrap's `$secondary` are three different concepts that happen to share a word — bind by *meaning*, and read [the language reference](/docs/language/#false-friends) before assuming. The [Cathode example](/docs/examples/#cathode--the-hostile-example) runs this whole playbook against a maximally alien system, with file layout included.
+**Don't rename your system into our catalog.** The catalog names never leak into your design language — they're the compilation interface. If your team says "flame", your tokens say "flame" forever. **Don't bind by name similarity.** Your "secondary" and shadcn's `--secondary` and Bootstrap's `$secondary` are three different concepts that happen to share a word — bind by _meaning_, and read [the language reference](/docs/language/#false-friends) before assuming. The [Cathode example](/docs/examples/#cathode--the-hostile-example) runs this whole playbook against a maximally alien system, with file layout included.

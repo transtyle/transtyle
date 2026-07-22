@@ -1,6 +1,6 @@
 ---
-title: "Your first build"
-description: "A ten-minute walkthrough of the Acme example: build, read the output, ask why."
+title: 'Your first build'
+description: 'A ten-minute walkthrough of the Acme example: build, read the output, ask why.'
 order: 22
 ---
 
@@ -46,7 +46,7 @@ shadcn  42% native · 53% derived · 3% approximated · 3% dropped
 ✔ build complete
 ```
 
-That first line is the [coverage summary](/docs/concepts/#5-provenance-and-coverage): under half of shadcn's variable set came straight from Acme's decisions; most of the rest was computed *from* them; a sliver was bent to fit; and one thing shadcn can't express was dropped — with a note, not silently.
+That first line is the [coverage summary](/docs/concepts/#5-provenance-and-coverage): under half of shadcn's variable set came straight from Acme's decisions; most of the rest was computed _from_ them; a sliver was bent to fit; and one thing shadcn can't express was dropped — with a note, not silently.
 
 ## 4. Read the output
 

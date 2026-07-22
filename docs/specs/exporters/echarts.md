@@ -2,7 +2,7 @@
 
 > **Status: implemented** in the walking skeleton (`@transtyle/exporter-echarts`). Deviations from the original spec, recorded per the sync rule: palette default is **8** colors (not 10) — the first 5 are frozen because shadcn's `--chart-*` consumes them and extending the palette must never change existing targets' output; artifacts are named `theme.<project>-<mode>.{json,js}`; the ESM register module was simplified to a UMD script that self-registers in browsers and exports the theme object in CJS; `tooltip.borderRadius` rem→px conversion is classified `approximated`; the perceptual-distance warning between adjacent palette colors is still pending.
 
-**Why it's a reference exporter:** proves the pipeline is not a CSS generator. Output is a JS/JSON theme object, the mapping is dominated by *programmatic* resolution rather than declarative tables, and it introduces a derivation problem no UI-framework target has: **categorical data palettes**.
+**Why it's a reference exporter:** proves the pipeline is not a CSS generator. Output is a JS/JSON theme object, the mapping is dominated by _programmatic_ resolution rather than declarative tables, and it introduces a derivation problem no UI-framework target has: **categorical data palettes**.
 
 ## Compatibility
 
@@ -10,17 +10,17 @@
 
 ## Emitted artifacts
 
-| File | Purpose |
-|---|---|
+| File                | Purpose                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `theme.<name>.json` | Theme object for `echarts.registerTheme(name, theme)` — one per color-scheme mode (`theme.acme-light.json`, `theme.acme-dark.json`) |
-| `theme.<name>.js` | Same, wrapped as ESM/UMD register module for script-tag users |
-| `usage.md` | Registration snippet, mode-switching pattern, coverage summary |
+| `theme.<name>.js`   | Same, wrapped as ESM/UMD register module for script-tag users                                                                       |
+| `usage.md`          | Registration snippet, mode-switching pattern, coverage summary                                                                      |
 
 Per-mode theme files (not one theme with embedded modes) because ECharts has no runtime mode concept — theme choice at `init` is the native pattern; the mode dimension is thus `native` via file multiplication.
 
 ## The categorical palette problem
 
-ECharts' most important themable value is `color: [...]` — a list of series colors that must be *mutually distinguishable*, not just on-brand. A design system defines roles, not a 10-color categorical set, so this is a first-class derivation rule (`categorical-palette@standard@1`), not exporter ad-hockery:
+ECharts' most important themable value is `color: [...]` — a list of series colors that must be _mutually distinguishable_, not just on-brand. A design system defines roles, not a 10-color categorical set, so this is a first-class derivation rule (`categorical-palette@standard@1`), not exporter ad-hockery:
 
 - inputs: `primary`, `accent`, `secondary` + option-palette hues if present;
 - generates N (default 8) colors by distributing hues in OKLCH around the brand anchors, holding lightness/chroma in bands tuned for adjacent-distinguishability on both light and dark surfaces;

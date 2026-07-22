@@ -2,7 +2,7 @@
 
 > **Status: implemented** (`@transtyle/exporter-daisyui`), era `v5` (Tailwind 4, `@plugin "daisyui/theme"` blocks, OKLCH-native). **Verify the exact v5 variable set against daisyui.com before npm publication** — implemented from known format, not re-checked against current docs. daisyUI 4 (Tailwind 3 config themes) could be a second era profile if demanded.
 
-**Why it matters:** the first target whose `secondary`/`accent` are *true brand roles* — mapping is nearly 1:1 with the catalog (the anti-shadcn), which makes it the cleanest demonstration of the false-friends principle: same words, opposite mapping decisions, both correct.
+**Why it matters:** the first target whose `secondary`/`accent` are _true brand roles_ — mapping is nearly 1:1 with the catalog (the anti-shadcn), which makes it the cleanest demonstration of the false-friends principle: same words, opposite mapping decisions, both correct.
 
 ## Artifacts
 

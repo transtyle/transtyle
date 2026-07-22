@@ -1,5 +1,5 @@
 ---
-title: "daisyUI exporter"
+title: 'daisyUI exporter'
 description: "Complete daisyUI v5 themes (light + dark) from your tokens — where 'secondary' finally means secondary."
 order: 10
 ---
@@ -14,9 +14,13 @@ Emits **daisyUI v5** theme blocks (Tailwind 4 era): one `@plugin "daisyui/theme"
 
 ```css
 /* your global CSS */
-@import "tailwindcss";
-@plugin "daisyui" { themes: acme-design-system-light --default, acme-design-system-dark --prefersdark; }
-@import "./daisyui.transtyle.css";
+@import 'tailwindcss';
+@plugin "daisyui" {
+  themes:
+    acme-design-system-light --default,
+    acme-design-system-dark --prefersdark;
+}
+@import './daisyui.transtyle.css';
 ```
 
 ## The interesting part: false friends, resolved correctly
@@ -25,15 +29,15 @@ daisyUI's `secondary` and `accent` are **true brand roles** — so this exporter
 
 ## Mapping table
 
-| daisyUI variable | Comes from | Note |
-|---|---|---|
-| `--color-base-100` / `-200` | `elevation.0.surface` / `elevation.1.surface` | |
-| `--color-base-300` | `border` | `approximated` — daisyUI wants a third bg-ramp step the IR doesn't define (catalog watch item) |
-| `--color-base-content` | `text.base` | |
-| `--color-{primary,secondary,accent,neutral,info,success,warning}` + `-content` | the same-named roles' `.solid` + `.on-solid` grid cells | brand-direct |
-| `--color-error` + `-content` | `danger.solid` + `danger.on-solid` | name translation |
-| `--radius-{selector,field,box}` | `radius.md` | one radius feeds three families — `approximated` |
-| `--depth`, `--noise`, `--size-*` | — | `dropped`: stylistic effects without token semantics; daisyUI defaults apply |
+| daisyUI variable                                                               | Comes from                                              | Note                                                                                           |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `--color-base-100` / `-200`                                                    | `elevation.0.surface` / `elevation.1.surface`           |                                                                                                |
+| `--color-base-300`                                                             | `border`                                                | `approximated` — daisyUI wants a third bg-ramp step the IR doesn't define (catalog watch item) |
+| `--color-base-content`                                                         | `text.base`                                             |                                                                                                |
+| `--color-{primary,secondary,accent,neutral,info,success,warning}` + `-content` | the same-named roles' `.solid` + `.on-solid` grid cells | brand-direct                                                                                   |
+| `--color-error` + `-content`                                                   | `danger.solid` + `danger.on-solid`                      | name translation                                                                               |
+| `--radius-{selector,field,box}`                                                | `radius.md`                                             | one radius feeds three families — `approximated`                                               |
+| `--depth`, `--noise`, `--size-*`                                               | —                                                       | `dropped`: stylistic effects without token semantics; daisyUI defaults apply                   |
 
 Because daisyUI wants every role authored-or-derived, coverage skews `derived` on minimal systems (Acme: 68% derived) — the report shows exactly which roles you might want to author. Both [examples](/docs/examples/) ship daisyUI targets.
 

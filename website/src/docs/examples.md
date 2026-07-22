@@ -1,6 +1,6 @@
 ---
-title: "Example walkthroughs"
-description: "Acme (minimal input), Cathode (maximal weirdness), and two real, independently-designed systems: GOV.UK and Carbon."
+title: 'Example walkthroughs'
+description: 'Acme (minimal input), Cathode (maximal weirdness), and two real, independently-designed systems: GOV.UK and Carbon.'
 order: 10
 ---
 
@@ -79,7 +79,7 @@ npx transtyle build          # same seven targets
 
 What to study:
 
-- **Better native role coverage than GOV.UK.** Carbon has real, named tokens for `danger`/`success`/`warning`/`info` (its "Support" group) *and* a real `secondary` (`$button-secondary`) — bound directly, not derived.
+- **Better native role coverage than GOV.UK.** Carbon has real, named tokens for `danger`/`success`/`warning`/`info` (its "Support" group) _and_ a real `secondary` (`$button-secondary`) — bound directly, not derived.
 - **Real per-mode tokens, not synthetic dark mode.** Carbon ships four themes (White, G10, G90, G100); this example binds White → light, G100 → dark, with every color's actual documented value in both modes via `$extensions.transtyle.modes` — `$focus`, `$link-primary`, and the four Support colors all have real, distinct light/dark values.
 - **A genuinely open type system.** IBM Plex Sans/Mono are open-source and load for real in the demo projects — unlike GOV.UK's licensed font.
 - **A flagged, not guessed, gap.** `secondary`'s dark-mode value falls back to its light value because Carbon's G100 `$button-secondary` wasn't independently re-verified against the live source for this pass — the honest alternative to inventing a plausible-looking hex.

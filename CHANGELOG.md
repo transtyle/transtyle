@@ -2,7 +2,7 @@
 
 All notable changes to the Transtyle CLI/core are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows the scheme in [docs/architecture/versioning.md](docs/architecture/versioning.md) (the IR spec and plugin API are versioned separately).
 
-Nothing is published to npm yet; entries under *Unreleased* describe what exists on `main`.
+Nothing is published to npm yet; entries under _Unreleased_ describe what exists on `main`.
 
 ## [Unreleased]
 

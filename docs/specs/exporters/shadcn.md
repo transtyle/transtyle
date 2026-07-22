@@ -1,6 +1,6 @@
 # Exporter spec: shadcn/ui
 
-**Why it's a reference exporter:** the semantic-token-native target — shadcn's theme *is* a set of semantic CSS variables (`--background`, `--primary`, `--muted`, `--destructive`, `--radius`…), so it exercises the IR's semantic catalog almost 1:1 and is the cleanest test of mode handling (light/dark classes). Also the most-demanded target in the current ecosystem.
+**Why it's a reference exporter:** the semantic-token-native target — shadcn's theme _is_ a set of semantic CSS variables (`--background`, `--primary`, `--muted`, `--destructive`, `--radius`…), so it exercises the IR's semantic catalog almost 1:1 and is the cleanest test of mode handling (light/dark classes). Also the most-demanded target in the current ecosystem.
 
 ## Moving-target caveat
 
@@ -8,10 +8,10 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 
 ## Emitted artifacts (tailwind-v4 profile)
 
-| File | Purpose |
-|---|---|
+| File                    | Purpose                                                                                                                            |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `globals.transtyle.css` | `:root` + `.dark` blocks defining the full shadcn variable set in OKLCH; `@theme inline` block wiring tokens to Tailwind utilities |
-| `usage.md` | Where to paste/import, how it interacts with `components.json`, coverage summary |
+| `usage.md`              | Where to paste/import, how it interacts with `components.json`, coverage summary                                                   |
 
 (tailwind-v3 profile: HSL channel-triplet variables + a `tailwind.config` theme-extension snippet instead of `@theme`.)
 
@@ -31,7 +31,7 @@ Fixture Vite app with a representative shadcn component set; CI applies generate
 
 ## Out of scope
 
-`components.json` with `cssVariables: false` (utility-class theming) is not supported: without variables there is no theme *artifact* — theming means rewriting component files, which violates the generated-output-only principle. The exporter documents this as a limitation rather than emitting something misleading. Non-Tailwind consumers who want shadcn-convention variables are served by the `:root`/`.dark` blocks directly (self-contained) or, properly, by the `css-variables` exporter.
+`components.json` with `cssVariables: false` (utility-class theming) is not supported: without variables there is no theme _artifact_ — theming means rewriting component files, which violates the generated-output-only principle. The exporter documents this as a limitation rather than emitting something misleading. Non-Tailwind consumers who want shadcn-convention variables are served by the `:root`/`.dark` blocks directly (self-contained) or, properly, by the `css-variables` exporter.
 
 ## Notes
 

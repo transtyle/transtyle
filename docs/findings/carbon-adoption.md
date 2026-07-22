@@ -1,10 +1,10 @@
 # Findings: adopting the IBM Carbon Design System (T11)
 
-Source: [carbondesignsystem.com/elements/color/tokens](https://carbondesignsystem.com/elements/color/tokens/), fetched live 2026-07-21, for the White (light) theme core tokens and the Support/Button component tokens. The G100 (dark) theme's per-token values were **not** independently re-fetched from a live rendering of that specific theme tab in this pass (the site's theme switcher didn't expose a clean text extraction for it) — the G100 values used here are well-established, stable Carbon v11 constants, cross-checked against the White-theme values that *were* live-verified (which matched expectations exactly), but flagged here as a lower-confidence input than the White theme numbers.
+Source: [carbondesignsystem.com/elements/color/tokens](https://carbondesignsystem.com/elements/color/tokens/), fetched live 2026-07-21, for the White (light) theme core tokens and the Support/Button component tokens. The G100 (dark) theme's per-token values were **not** independently re-fetched from a live rendering of that specific theme tab in this pass (the site's theme switcher didn't expose a clean text extraction for it) — the G100 values used here are well-established, stable Carbon v11 constants, cross-checked against the White-theme values that _were_ live-verified (which matched expectations exactly), but flagged here as a lower-confidence input than the White theme numbers.
 
 ## Clean 1:1 mappings, both modes
 
-Every one of these has a real, named Carbon token with a documented value in *both* the White and G100 themes, bound via `$extensions.transtyle.modes`:
+Every one of these has a real, named Carbon token with a documented value in _both_ the White and G100 themes, bound via `$extensions.transtyle.modes`:
 
 - `primary.solid` ← `$link-primary` / `$interactive` / `$button-primary` (all Blue 60, #0f62fe light; Blue 40, #78a9ff dark).
 - `danger.solid` ← `$support-error` (Red 60 #da1e28 light; Red 50 #fa4d56 dark).
@@ -22,11 +22,11 @@ This is the **strongest per-role coverage of the two real-DS adoptions** — Car
 ## Judgment calls
 
 - **`neutral.solid`** — Carbon's core tokens don't name a "neutral brand" role either (same gap as GOV.UK). Bound to Gray 60 (#6f6f6f), Carbon's own `$text-helper`/`$icon-secondary` gray — mode-invariant, since Carbon doesn't publish a distinct G100 value for this exact gray step relative to White that would meaningfully change the pairing.
-- **`secondary.solid`** — Carbon *does* have a real, named secondary role (`$button-secondary`, Gray 80 #393939) — a better starting point than GOV.UK, which has none. **Bound light-mode only.** The G100 theme's own `$button-secondary` value wasn't independently re-confirmed against a live source in this pass (see the header note); rather than guess a plausible-looking dark-mode hex, dark mode falls back to the same light value. This is the one place this adoption is honestly incomplete rather than fully verified — flagged, not hidden.
+- **`secondary.solid`** — Carbon _does_ have a real, named secondary role (`$button-secondary`, Gray 80 #393939) — a better starting point than GOV.UK, which has none. **Bound light-mode only.** The G100 theme's own `$button-secondary` value wasn't independently re-confirmed against a live source in this pass (see the header note); rather than guess a plausible-looking dark-mode hex, dark mode falls back to the same light value. This is the one place this adoption is honestly incomplete rather than fully verified — flagged, not hidden.
 
 ## Scope boundaries (not gaps — deliberate, documented)
 
-- **Two of Carbon's four themes, not all four.** Carbon ships White, G10, G90, and G100; the catalog's `color-scheme` dimension is binary. This example binds White → light and G100 → dark (the two visual extremes) and doesn't model G10/G90 at all. A real Carbon-based team wanting all four would need a second mode dimension (`docs/architecture/ir.md#modes`, T8) — architecturally possible, out of scope for demonstrating the *binding* pattern.
+- **Two of Carbon's four themes, not all four.** Carbon ships White, G10, G90, and G100; the catalog's `color-scheme` dimension is binary. This example binds White → light and G100 → dark (the two visual extremes) and doesn't model G10/G90 at all. A real Carbon-based team wanting all four would need a second mode dimension (`docs/architecture/ir.md#modes`, T8) — architecturally possible, out of scope for demonstrating the _binding_ pattern.
 - **Radius.md binds the dominant structural value (0rem), not every component's radius.** Carbon's buttons, inputs, and tiles are square; a handful of components (tags, tooltips) use a small radius the single `radius.md` catalog slot can't express alongside the square value. A real adoption would likely leave those specific components on Carbon's own defaults rather than force a single radius token to cover both.
 
 ## Verification

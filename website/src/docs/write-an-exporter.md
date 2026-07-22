@@ -1,6 +1,6 @@
 ---
-title: "Write an exporter"
-description: "Build a third-party exporter from zero and prove it with the conformance kit."
+title: 'Write an exporter'
+description: 'Build a third-party exporter from zero and prove it with the conformance kit.'
 order: 23
 ---
 
@@ -26,7 +26,7 @@ One function. It receives the fully resolved design system and returns files plu
 }
 ```
 
-That's it. No build step, no framework, no registration ceremony. Three rules the [conformance kit](#4-prove-it) enforces: `emit` must be **deterministic**, it must **not mutate** the IR, and it must never touch the filesystem — you return file *descriptions*, core writes them.
+That's it. No build step, no framework, no registration ceremony. Three rules the [conformance kit](#4-prove-it) enforces: `emit` must be **deterministic**, it must **not mutate** the IR, and it must never touch the filesystem — you return file _descriptions_, core writes them.
 
 ## 1. Set up the package
 
@@ -36,7 +36,7 @@ npm init -y
 npm install @transtyle/plugin-kit    # while unpublished: npm install /path/to/transtyle/packages/plugin-kit
 ```
 
-Your `package.json` carries a `transtyle` manifest — static metadata that tools can read *without executing your code*, which is what makes `transtyle add` and any future registry safe:
+Your `package.json` carries a `transtyle` manifest — static metadata that tools can read _without executing your code_, which is what makes `transtyle add` and any future registry safe:
 
 ```json
 {
@@ -66,14 +66,24 @@ Alacritty wants eight "normal" and eight "bright" ANSI colours. The [role grid](
 
 ```js
 const ANSI = [
-  { name: 'black',   slot: 'neutral.solid',  class: 'approximated', note: 'ANSI black is a palette slot, not a surface' },
-  { name: 'red',     slot: 'danger.solid',   class: 'native' },
-  { name: 'green',   slot: 'success.solid',  class: 'native' },
-  { name: 'yellow',  slot: 'warning.solid',  class: 'native' },
-  { name: 'blue',    slot: 'primary.solid',  class: 'native' },
-  { name: 'magenta', slot: 'accent.solid',   class: 'approximated', note: 'no magenta concept in the catalog; accent is the closest intent' },
-  { name: 'cyan',    slot: 'info.solid',     class: 'native' },
-  { name: 'white',   slot: 'text.base',      class: 'approximated', note: 'ANSI white is a foreground' },
+  {
+    name: 'black',
+    slot: 'neutral.solid',
+    class: 'approximated',
+    note: 'ANSI black is a palette slot, not a surface',
+  },
+  { name: 'red', slot: 'danger.solid', class: 'native' },
+  { name: 'green', slot: 'success.solid', class: 'native' },
+  { name: 'yellow', slot: 'warning.solid', class: 'native' },
+  { name: 'blue', slot: 'primary.solid', class: 'native' },
+  {
+    name: 'magenta',
+    slot: 'accent.solid',
+    class: 'approximated',
+    note: 'no magenta concept in the catalog; accent is the closest intent',
+  },
+  { name: 'cyan', slot: 'info.solid', class: 'native' },
+  { name: 'white', slot: 'text.base', class: 'approximated', note: 'ANSI white is a foreground' },
 ];
 ```
 
@@ -109,11 +119,18 @@ export default {
     const row = (variable, slot, cls, note) => {
       const value = hex(slot);
       if (value === null) {
-        coverage.push({ variable, slot: S + slot, class: 'unsupported', note: 'slot missing from the IR' });
+        coverage.push({
+          variable,
+          slot: S + slot,
+          class: 'unsupported',
+          note: 'slot missing from the IR',
+        });
         return null;
       }
       coverage.push({
-        variable, slot: S + slot, class: cls,
+        variable,
+        slot: S + slot,
+        class: cls,
         provenance: map.get(S + slot).provenance.kind,
         ...(note && { note }),
       });
@@ -122,24 +139,42 @@ export default {
 
     const fg = row('colors.primary.foreground', 'text.base', 'native');
     const bg = row('colors.primary.background', 'elevation.0.surface', 'native');
-    const normal = ANSI.map((a) => [a.name, row(`colors.normal.${a.name}`, a.slot, a.class, a.note)]);
+    const normal = ANSI.map((a) => [
+      a.name,
+      row(`colors.normal.${a.name}`, a.slot, a.class, a.note),
+    ]);
     const bright = ANSI.map((a) => [
       a.name,
-      row(`colors.bright.${a.name}`, `${a.slot}-hover`, a.class, 'bright variant from the grid’s hover state') ?? hex(a.slot),
+      row(
+        `colors.bright.${a.name}`,
+        `${a.slot}-hover`,
+        a.class,
+        'bright variant from the grid’s hover state',
+      ) ?? hex(a.slot),
     ]);
 
     // Say plainly what this target cannot express.
     for (const missing of ['radius.*', 'space.*', 'type.*', 'elevation.*.shadow']) {
-      coverage.push({ variable: `(${missing})`, slot: '—', class: 'dropped', note: 'Alacritty themes carry colour only' });
+      coverage.push({
+        variable: `(${missing})`,
+        slot: '—',
+        class: 'dropped',
+        note: 'Alacritty themes carry colour only',
+      });
     }
 
     const toml = [
       `# Generated by transtyle from ${ctx.projectName} (${mode} mode) — do not edit.`,
-      '', '[colors.primary]',
+      '',
+      '[colors.primary]',
       `background = "${bg}"`,
       `foreground = "${fg}"`,
-      '', '[colors.normal]', ...normal.map(([k, v]) => `${k} = "${v}"`),
-      '', '[colors.bright]', ...bright.map(([k, v]) => `${k} = "${v}"`),
+      '',
+      '[colors.normal]',
+      ...normal.map(([k, v]) => `${k} = "${v}"`),
+      '',
+      '[colors.bright]',
+      ...bright.map(([k, v]) => `${k} = "${v}"`),
       '',
     ].join('\n');
 
@@ -170,7 +205,8 @@ import plugin from './src/index.js';
 const manifest = JSON.parse(readFileSync('./package.json', 'utf8')).transtyle;
 const { pass, checks } = await conformance(plugin, { manifest });
 
-for (const c of checks) console.log(`${c.pass ? '✔' : '✖'} ${c.name}${c.pass ? '' : ` — ${c.detail}`}`);
+for (const c of checks)
+  console.log(`${c.pass ? '✔' : '✖'} ${c.name}${c.pass ? '' : ` — ${c.detail}`}`);
 if (!pass) process.exit(1);
 ```
 

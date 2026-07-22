@@ -1,6 +1,6 @@
 # Findings: hostile adoption — a real product with no design tokens (P4)
 
-**Tests [W2](../plan/strategic-review-2026-07.md)**: *"GOV.UK/Carbon generalize to real-world adoption."* Those two are published, token-mature, semantically disciplined design systems — the easiest real inputs that exist, and both were adopted by this project itself. This experiment deliberately picks the opposite: a real shipping **product** with a hand-rolled design language, no token files, no semantic tier, and no one who intended it to be portable.
+**Tests [W2](../plan/strategic-review-2026-07.md)**: _"GOV.UK/Carbon generalize to real-world adoption."_ Those two are published, token-mature, semantically disciplined design systems — the easiest real inputs that exist, and both were adopted by this project itself. This experiment deliberately picks the opposite: a real shipping **product** with a hand-rolled design language, no token files, no semantic tier, and no one who intended it to be portable.
 
 **Subject:** [Miniflux](https://github.com/miniflux/v2) (Apache-2.0), a minimalist RSS reader. Source: `internal/ui/static/css/{common,light,dark}.css`, fetched 2026-07-22. Values transcribed verbatim; nothing invented.
 
@@ -11,7 +11,7 @@
 Miniflux declares **89 CSS custom properties**, and not one is semantic:
 
 - **Every name is component + part + property** — `--button-primary-background`, `--table-th-background`, `--entry-content-quote-color`, `--feed-has-unread-background-color`. There is no tier that says "this is our danger color"; there are only places where a color is used.
-- **No palette layer.** Values are literals at the point of declaration. `#333` appears under **13 different names** (`--body-color`, `--title-color`, `--panel-color`, `--table-th-color`, `--pagination-link-color`, …); `#ddd` under 7. Nothing records that these are *the same decision*.
+- **No palette layer.** Values are literals at the point of declaration. `#333` appears under **13 different names** (`--body-color`, `--title-color`, `--panel-color`, `--table-th-color`, `--pagination-link-color`, …); `#ddd` under 7. Nothing records that these are _the same decision_.
 - **The namespace mixes types.** Alongside colors sit `--item-padding: 5px`, `--item-title-link-font-weight: 600`, `--feed-parsing-error-border-style: solid`, `--input-border: 1px solid #ccc` (a composite), and `--input-focus-box-shadow`.
 - **Literals bypass the variables anyway** — `common.css` hardcodes `#888`, `#339966`, `#d14836`, `brown`, `red`, `rgba(0,0,0,0.7)` directly in component rules.
 
@@ -19,28 +19,28 @@ This is the median product, and it is nothing like GOV.UK.
 
 ## Cost ledger
 
-Effort is given as relative weight and step count rather than wall-clock, since this run was performed by an AI agent with web access; the *shape* of the cost is what transfers, not the duration.
+Effort is given as relative weight and step count rather than wall-clock, since this run was performed by an AI agent with web access; the _shape_ of the cost is what transfers, not the duration.
 
-| Step (playbook order) | What it took | Mechanical or judgment? |
-|---|---|---|
-| 0. Locate the source of truth | 3 fetches (`common.css` → found vars undeclared → directory listing → `light.css`, `dark.css`) | mechanical, but **not scripted** — a human must know where a product hides its colors |
-| 1. "Dump your palette into `option.*` verbatim" | **Playbook broke — there is no palette.** Deduplicated 89 declarations into a 29-entry invented palette | **judgment** (naming) over mechanical (dedupe) |
-| 2. Express your semantics under your names | Transcribed 25 catalog-relevant variables as `semantic.color.miniflux.*` | mechanical |
-| 3. Bind the catalog | 15 slot bindings, **5 of them contested** (below) | **judgment** — the irreducible core |
-| 4. Build + read the report | one command, 8 targets, zero errors after the workaround | mechanical |
-| 5. Tighten | not attempted (see verdict) | — |
+| Step (playbook order)                           | What it took                                                                                            | Mechanical or judgment?                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 0. Locate the source of truth                   | 3 fetches (`common.css` → found vars undeclared → directory listing → `light.css`, `dark.css`)          | mechanical, but **not scripted** — a human must know where a product hides its colors |
+| 1. "Dump your palette into `option.*` verbatim" | **Playbook broke — there is no palette.** Deduplicated 89 declarations into a 29-entry invented palette | **judgment** (naming) over mechanical (dedupe)                                        |
+| 2. Express your semantics under your names      | Transcribed 25 catalog-relevant variables as `semantic.color.miniflux.*`                                | mechanical                                                                            |
+| 3. Bind the catalog                             | 15 slot bindings, **5 of them contested** (below)                                                       | **judgment** — the irreducible core                                                   |
+| 4. Build + read the report                      | one command, 8 targets, zero errors after the workaround                                                | mechanical                                                                            |
+| 5. Tighten                                      | not attempted (see verdict)                                                                             | —                                                                                     |
 
 **Resulting coverage:** 318 resolved slots, of which **39 (12%) trace to Miniflux's real values** (`aliased`), 144 derived, 135 catalog defaults. Twelve percent authored is not a failure — it is the honest ratio for a system that only ever made ~25 color decisions.
 
 ### The five contested bindings (no tool can settle these)
 
-| Catalog slot | The conflict |
-|---|---|
+| Catalog slot    | The conflict                                                                                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `primary.solid` | **Two competing blues**: links `#3366cc` vs primary buttons `#4d90fe` (plus a third for button borders, `#3079ed`). Bound to the button; the link is equally defensible. |
-| `border` | **Three borders with different values**: item `#ddd`/`#666`, table `#ddd`/`#555`, hr `#ccc`/`#555`. The catalog has one slot; the source has three de facto. |
-| `text.muted` | `entry-content-color` (`#555`/`#999`) vs `counter-color` (`#666`/`#bbb`) — neither is named "muted". |
-| `ring` | Miniflux's focus indicator is literally `red`. Bound faithfully. |
-| `link.visited` | `purple` (light) but `#f083e4` (dark) — an unexplained hue jump upstream. |
+| `border`        | **Three borders with different values**: item `#ddd`/`#666`, table `#ddd`/`#555`, hr `#ccc`/`#555`. The catalog has one slot; the source has three de facto.             |
+| `text.muted`    | `entry-content-color` (`#555`/`#999`) vs `counter-color` (`#666`/`#bbb`) — neither is named "muted".                                                                     |
+| `ring`          | Miniflux's focus indicator is literally `red`. Bound faithfully.                                                                                                         |
+| `link.visited`  | `purple` (light) but `#f083e4` (dark) — an unexplained hue jump upstream.                                                                                                |
 
 ## Where the playbook broke
 
@@ -48,9 +48,9 @@ Effort is given as relative weight and step count rather than wall-clock, since 
 
 > **This reclassified B7** from 🟢 "opportunity" to a real-adoption blocker — and it was **fixed the same day**. The engine now accepts `oklch()`, `#hex` (3/4/6/8-digit, alpha included), `rgb()`/`rgba()`, `hsl()`/`hsla()` (modern and legacy comma forms, `deg`/`rad`/`grad`/`turn`), the CSS named colors, and `transparent`. The extraction above was re-run with Miniflux's **literal `red` and `purple` restored** and builds clean — `ring` resolves to `#ff0000`, `link.visited` to `#800080`. Step 1's "verbatim, no renaming" rule is now actually honorable for this system. Guarded by `scripts/check-color.mjs` against reference values.
 
-**2. Step 1 assumes a palette that does not exist.** "Dump your raw values into `option.*` verbatim" presupposes a primitive tier. Products that never built one force the adopter to *invent* the palette — deduplicating literals and naming them — before the playbook's real work begins.
+**2. Step 1 assumes a palette that does not exist.** "Dump your raw values into `option.*` verbatim" presupposes a primitive tier. Products that never built one force the adopter to _invent_ the palette — deduplicating literals and naming them — before the playbook's real work begins.
 
-> **Fixed 2026-07-22.** [adopt-existing](../../website/src/docs/adopt-existing.md) step 1 gained a **"No palette? Synthesize one — the names are throwaway"** branch (collect distinct values, name them anything, don't name them semantically yet) using this run's real numbers, and step 2 now covers the adjacent case where a product's names are *component*-scoped rather than meaning-scoped — keep them, and let the binding layer map by meaning.
+> **Fixed 2026-07-22.** [adopt-existing](../../website/src/docs/adopt-existing.md) step 1 gained a **"No palette? Synthesize one — the names are throwaway"** branch (collect distinct values, name them anything, don't name them semantically yet) using this run's real numbers, and step 2 now covers the adjacent case where a product's names are _component_-scoped rather than meaning-scoped — keep them, and let the binding layer map by meaning.
 
 **3. Nothing automates extraction.** Finding, reading, and transcribing the CSS was the single largest cost, and it is exactly the part a machine should do.
 
@@ -83,7 +83,7 @@ Verified in the emitted artifacts — `dist/css-variables/variables.transtyle.cs
 - **The binding-layer pattern held in shape**, and the judgment calls stayed small and explicit (5 contested bindings out of 15) — which is the design working as intended.
 - **But the first mile is rough.** One trivial gap (B7) is a hard stop, and the playbook's opening step assumes structure the median product lacks.
 
-So: *not* "importers must come first" in the sense of blocking everything — but **the cheap fixes at the entry point (B7, a no-palette playbook branch) buy more real-world adoptability than any further mapping work.**
+So: _not_ "importers must come first" in the sense of blocking everything — but **the cheap fixes at the entry point (B7, a no-palette playbook branch) buy more real-world adoptability than any further mapping work.**
 
 ## Consequence for Phase C order
 

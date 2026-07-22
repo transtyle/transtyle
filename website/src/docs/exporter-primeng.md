@@ -1,6 +1,6 @@
 ---
-title: "PrimeNG exporter"
-description: "A definePreset(Aura, overrides) preset — the first target with its own three-tier component-token system, and the first Angular demo in the repo."
+title: 'PrimeNG exporter'
+description: 'A definePreset(Aura, overrides) preset — the first target with its own three-tier component-token system, and the first Angular demo in the repo.'
 order: 15
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: "GOV.UK, end to end"
-description: "A real, independently-designed system compiled to eight ecosystems — the tokens, the judgment calls, and the honest coverage, all shown."
+title: 'GOV.UK, end to end'
+description: 'A real, independently-designed system compiled to eight ecosystems — the tokens, the judgment calls, and the honest coverage, all shown.'
 order: 30
 ---
 
@@ -41,10 +41,10 @@ GOV.UK keeps its own vocabulary. One small [binding file](/docs/adopt-existing/)
 
 From there, one value fans out to every target in that target's own dialect. The brand blue `#1d70b8`, as actually emitted:
 
-| Target | Emitted |
-|---|---|
-| Bootstrap | `$primary: #1d70b8;` |
-| shadcn/ui | `--primary: oklch(0.535 0.136 249.9);` |
+| Target        | Emitted                                            |
+| ------------- | -------------------------------------------------- |
+| Bootstrap     | `$primary: #1d70b8;`                               |
+| shadcn/ui     | `--primary: oklch(0.535 0.136 249.9);`             |
 | CSS variables | `--color-primary-solid: oklch(0.535 0.136 249.9);` |
 
 Same decision; sRGB hex where Bootstrap wants it, OKLCH where the modern targets want it. And the flat aesthetic survives translation — Bootstrap's `$border-radius`, `$border-radius-sm`, and `$border-radius-lg` all emit `0rem`.
@@ -105,26 +105,26 @@ Eight targets build with **zero diagnostics** — no contrast failures against W
 
 <p class="covmatrix-legend"><span><i class="native"></i>native — lossless</span><span><i class="derived"></i>derived — computed from GOV.UK's values</span><span><i class="approx"></i>approximated — meaning bent, reason recorded</span><span><i class="other"></i>dropped / unsupported — this target can't say it</span></p>
 
-Read the shape, not a single number. `css-variables` is 100% native because it is the conformance dump — it has a slot for everything. `radix` is 58% approximated because its 12-step alpha ramps are a *fixed* projection, not a colorimetric reconstruction of Radix's real per-colour alpha — honest about the compromise rather than hiding it. `bootstrap` is 66% derived because GOV.UK authored a handful of colours and the standard rules coherently filled Bootstrap's large variable surface from them.
+Read the shape, not a single number. `css-variables` is 100% native because it is the conformance dump — it has a slot for everything. `radix` is 58% approximated because its 12-step alpha ramps are a _fixed_ projection, not a colorimetric reconstruction of Radix's real per-colour alpha — honest about the compromise rather than hiding it. `bootstrap` is 66% derived because GOV.UK authored a handful of colours and the standard rules coherently filled Bootstrap's large variable surface from them.
 
 ## The honesty is in the notes
 
 The grey slice above — dropped and unsupported — is where a lesser tool would fake a value. Transtyle omits it, with a reason attached. These are real `note` fields from the reports:
 
-| Target | Item | Grade | The note |
-|---|---|---|---|
-| bootstrap | `$box-shadow-inset` | unsupported | no IR inset-shadow concept; Bootstrap default kept |
-| bootstrap | `$transition-*` (motion) | dropped | Bootstrap themes almost none of it |
-| echarts | candlestick / gauge series | unsupported | beyond catalog semantics; extend the emitted theme manually |
-| radix | `--primary-a1` (alpha ramp) | approximated | fixed alpha ramp, not a colorimetric derivation of Radix's real per-colour alpha |
-| primeng | structural components | unsupported | no severity-coloured surface; inherits Aura's own default untouched |
+| Target    | Item                        | Grade        | The note                                                                         |
+| --------- | --------------------------- | ------------ | -------------------------------------------------------------------------------- |
+| bootstrap | `$box-shadow-inset`         | unsupported  | no IR inset-shadow concept; Bootstrap default kept                               |
+| bootstrap | `$transition-*` (motion)    | dropped      | Bootstrap themes almost none of it                                               |
+| echarts   | candlestick / gauge series  | unsupported  | beyond catalog semantics; extend the emitted theme manually                      |
+| radix     | `--primary-a1` (alpha ramp) | approximated | fixed alpha ramp, not a colorimetric derivation of Radix's real per-colour alpha |
+| primeng   | structural components       | unsupported  | no severity-coloured surface; inherits Aura's own default untouched              |
 
 ## Scope, stated plainly
 
-Two things are deliberately *not* done, because doing them would mean inventing what GOV.UK never specified — and saying so is part of the honesty:
+Two things are deliberately _not_ done, because doing them would mean inventing what GOV.UK never specified — and saying so is part of the honesty:
 
 - **No dark mode.** GOV.UK publishes no dark theme; the config declares only `light`. A single-mode config is fully legal and every target handles it without special-casing.
-- **The type scale is left to catalog defaults.** GOV.UK's responsive 16–80px scale doesn't map onto the catalog's fixed steps without distorting one or the other; a production adopter would bind it properly. Out of scope for demonstrating the *pattern*.
+- **The type scale is left to catalog defaults.** GOV.UK's responsive 16–80px scale doesn't map onto the catalog's fixed steps without distorting one or the other; a production adopter would bind it properly. Out of scope for demonstrating the _pattern_.
 - **The real GDS Transport typeface** is licensed to crown services only; the tokens name GOV.UK's own public fallback stack (`GDS Transport, arial, sans-serif`), exactly as GOV.UK's own CSS resolves for non-crown consumers.
 
 ## See it running

@@ -4,8 +4,8 @@
 
 The original vision had one `ds-exporter.config.*` holding everything. We split it:
 
-- **`transtyle.config.json`** — the build manifest: *how* to compile (targets, modes, derivation policy, paths).
-- **`tokens/**/*.tokens.json`** — the design system itself: *what* to compile (pure DTCG superset).
+- **`transtyle.config.json`** — the build manifest: _how_ to compile (targets, modes, derivation policy, paths).
+- **`tokens/**/*.tokens.json`** — the design system itself: _what_ to compile (pure DTCG superset).
 
 Rationale: token files stay valid, portable DTCG that Figma/Tokens Studio/Style Dictionary can read and that designers' tools can write, uncontaminated by build concerns; the manifest can change freely (new target added) without touching the design system, which keeps diffs reviewable ("this PR changes the brand" vs "this PR adds a target" are different reviewers); and importers have a clean output format (token files only).
 
@@ -19,30 +19,33 @@ Rationale: token files stay valid, portable DTCG that Figma/Tokens Studio/Style 
 {
   "$schema": "https://…/transtyle.config/v0.json",
   "name": "acme-design-system",
-  "tokens": ["tokens/**/*.tokens.json"],        // ordered; later files may override earlier (explicit, warned)
+  "tokens": ["tokens/**/*.tokens.json"], // ordered; later files may override earlier (explicit, warned)
 
   "modes": {
-    "color-scheme": { "values": ["light", "dark"], "default": "light" }
+    "color-scheme": { "values": ["light", "dark"], "default": "light" },
   },
 
   "derivation": {
-    "rules": "standard@1",                       // pinned rule pack (see architecture/derivation.md)
+    "rules": "standard@1", // pinned rule pack (see architecture/derivation.md)
     "autoDark": false,
-    "require": ["semantic.color.primary"],       // must be authored, not derived
-    "overrides": { /* per-slot rules */ }
+    "require": ["semantic.color.primary"], // must be authored, not derived
+    "overrides": {/* per-slot rules */},
   },
 
   "targets": {
     "bootstrap": { "version": "5.3", "output": "dist/bootstrap", "options": { "emitSass": true } },
-    "shadcn":    { "version": "latest-profile", "output": "dist/shadcn" },
-    "echarts":   { "output": "dist/echarts" },
-    "storybook": { "output": "dist/storybook", "options": { "previewTargets": ["bootstrap", "shadcn"] } }
+    "shadcn": { "version": "latest-profile", "output": "dist/shadcn" },
+    "echarts": { "output": "dist/echarts" },
+    "storybook": {
+      "output": "dist/storybook",
+      "options": { "previewTargets": ["bootstrap", "shadcn"] },
+    },
   },
 
   "check": {
-    "failOn": "error",                           // error | warning | approximation
-    "contrast": { "standard": "wcag21-aa" }      // future: apca
-  }
+    "failOn": "error", // error | warning | approximation
+    "contrast": { "standard": "wcag21-aa" }, // future: apca
+  },
 }
 ```
 
@@ -74,7 +77,7 @@ The `tokens` array is an **ordered list of layers** ([ADR-0009](../adr/0009-toke
 ]
 ```
 
-This is the **recommended layout for teams whose token files are generated or owned elsewhere**: every token file stays valid, tool-ingestible DTCG; transtyle-specific syntax is confined to this manifest. Inline `$extensions["transtyle.modes"]` remains fully supported (see the Acme example) — both forms produce the identical internal representation, and may be mixed. Precedence: later layers win; overriding an existing mode value warns (`TST1108`); a mode value for a token with no default-mode value is skipped with a warning (`TST1107`); an undeclared mode errors (`TST1109`). Layer *order is semantic* — treat the manifest's `tokens` array as carefully as an import order.
+This is the **recommended layout for teams whose token files are generated or owned elsewhere**: every token file stays valid, tool-ingestible DTCG; transtyle-specific syntax is confined to this manifest. Inline `$extensions["transtyle.modes"]` remains fully supported (see the Acme example) — both forms produce the identical internal representation, and may be mixed. Precedence: later layers win; overriding an existing mode value warns (`TST1108`); a mode value for a token with no default-mode value is skipped with a warning (`TST1107`); an undeclared mode errors (`TST1109`). Layer _order is semantic_ — treat the manifest's `tokens` array as carefully as an import order.
 
 ## Token file conventions
 
@@ -91,25 +94,28 @@ Example:
 {
   "option": {
     "color": {
-      "blue":  { "500": { "$type": "color", "$value": "oklch(0.55 0.18 255)" } },
-      "white": { "$type": "color", "$value": "#ffffff" }
-    }
+      "blue": { "500": { "$type": "color", "$value": "oklch(0.55 0.18 255)" } },
+      "white": { "$type": "color", "$value": "#ffffff" },
+    },
   },
   "semantic": {
     "color": {
       "primary": { "base": { "$type": "color", "$value": "{option.color.blue.500}" } },
       "surface": {
         "base": {
-          "$type": "color", "$value": "{option.color.white}",
-          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "oklch(0.2 0.02 255)" } } }
-        }
-      }
-    }
-  }
+          "$type": "color",
+          "$value": "{option.color.white}",
+          "$extensions": {
+            "transtyle.modes": { "color-scheme": { "dark": "oklch(0.2 0.02 255)" } },
+          },
+        },
+      },
+    },
+  },
 }
 ```
 
-This file, with the manifest above and the standard rule pack, is a *complete, compilable design system*: everything else (hover states, on-colors, secondary, scales, shadows…) derives — with every derived value marked and explainable. That's the minimal-input promise of the vision, delivered without magic.
+This file, with the manifest above and the standard rule pack, is a _complete, compilable design system_: everything else (hover states, on-colors, secondary, scales, shadows…) derives — with every derived value marked and explainable. That's the minimal-input promise of the vision, delivered without magic.
 
 ## Validation & DX
 

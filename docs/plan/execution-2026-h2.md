@@ -12,16 +12,16 @@
 
 **Suggested model per task** (judgment call, not a hard rule — full rationale in the review's consolidated table):
 
-| Task | Suggested | Task | Suggested |
-|---|---|---|---|
-| R1 | human (Sonnet prep) | P4 | **Fable** |
-| R2 | **Opus** | P5 | Sonnet |
-| R3 | Sonnet | P6 | **Opus** spec → Sonnet impl |
-| R4 | Sonnet | I1 | Sonnet |
-| R5 | human + Sonnet | I2 | Sonnet (Opus: mode mapping) |
-| P1 | **Opus** | I3 | Sonnet |
-| P2 | Sonnet | D1, D2, D4 | Sonnet |
-| P3 | human + **Fable** | D3 | **Opus** |
+| Task | Suggested           | Task       | Suggested                   |
+| ---- | ------------------- | ---------- | --------------------------- |
+| R1   | human (Sonnet prep) | P4         | **Fable**                   |
+| R2   | **Opus**            | P5         | Sonnet                      |
+| R3   | Sonnet              | P6         | **Opus** spec → Sonnet impl |
+| R4   | Sonnet              | I1         | Sonnet                      |
+| R5   | human + Sonnet      | I2         | Sonnet (Opus: mode mapping) |
+| P1   | **Opus**            | I3         | Sonnet                      |
+| P2   | Sonnet              | D1, D2, D4 | Sonnet                      |
+| P3   | human + **Fable**   | D3         | **Opus**                    |
 
 ---
 
@@ -38,7 +38,7 @@ The maintainer runs the practitioner pass the T11 exit criterion requires — th
 ### R2 — Freeze-readiness audit: IR spec v0 ready; plugin API deferred
 
 **Draft landed 2026-07-22** ([ADR-0011](../adr/0011-v0-freeze-readiness.md), `proposed`); ratifies when R1 signs. **Depends:** R1 for ratification. **Files:** `docs/adr/0011-v0-freeze-readiness.md`; the drift banner on [plugins.md](../architecture/plugins.md); ADR index; this ledger.
-The audit found the two surfaces are **not equally ready**, correcting this task's original "freeze both together" framing: every IR-spec guarantee is verified against a named CI script (freeze-ready, locks at R4); the plugin API spec materially diverges from the implemented `emit(normalizedIR, ctx) → { files, coverage }` interface, so its freeze is **deferred and gated on P1** (the conformance kit reconciles spec with reality). Per [ADR-0010](../adr/0010-pre-release-breaking-changes.md), the freeze *discipline* re-arms mechanically at first npm publication (R4), so what R4 locks is exactly the audited IR surface — no more.
+The audit found the two surfaces are **not equally ready**, correcting this task's original "freeze both together" framing: every IR-spec guarantee is verified against a named CI script (freeze-ready, locks at R4); the plugin API spec materially diverges from the implemented `emit(normalizedIR, ctx) → { files, coverage }` interface, so its freeze is **deferred and gated on P1** (the conformance kit reconciles spec with reality). Per [ADR-0010](../adr/0010-pre-release-breaking-changes.md), the freeze _discipline_ re-arms mechanically at first npm publication (R4), so what R4 locks is exactly the audited IR surface — no more.
 **Acceptance (met for the draft):** ADR-0011 carries the verified-guarantee table with a CI-script citation per IR promise and an explicit exclusion + gate for every unready promise (plugin API → P1, schemas → R3, `transtyle.lock` → unimplemented); plugins.md carries the drift banner; `npm run check:all` passes. **Remaining for ratification:** R1 sign-off, then flip ADR-0011 to `accepted`.
 
 ### R3 — Real JSON schemas + strict options validation (audit A7 + A8)
@@ -65,7 +65,7 @@ Dry-run first, then publish all workspace packages with npm provenance attestati
 **Depends:** R2 (the kit executes the frozen contract). **Files:** new `packages/plugin-kit/`; CI workflow extended; [docs/architecture/plugins.md](../architecture/plugins.md) gains a "conformance" section.
 The kit is a runnable suite any exporter repo can point at its plugin: determinism (two runs byte-identical), coverage honesty (every emitted value traces to `native`/`derived`/`approximated`), mode handling (single- and multi-dimension fixtures), manifest range checking, unknown-option rejection (R3). Each rule cites the spec line it enforces.
 **Reconciliation deliverable (from [ADR-0011](../adr/0011-v0-freeze-readiness.md) §2):** this task owns closing the gap ADR-0011 documented between plugins.md and the implemented interface. Either the spec drops to what's real (single `emit(normalizedIR, ctx) → { files, coverage }` hook, JS mappings, era-string manifest) or the implementation rises to the richer spec — decide per hook, and **remove the drift banner** from plugins.md once the spec and the kit agree. Only then is the plugin API a freezable surface (plugin API v1 is still declared at the Phase 2 exit, not here).
-**Acceptance:** all 8 official exporters pass the kit in CI (`npm run check:all` includes it); the kit runs against an exporter *outside* the monorepo (prove with a scratch repo); every conformance rule carries a spec citation; plugins.md and the kit describe the same interface (banner gone).
+**Acceptance:** all 8 official exporters pass the kit in CI (`npm run check:all` includes it); the kit runs against an exporter _outside_ the monorepo (prove with a scratch repo); every conformance rule carries a spec citation; plugins.md and the kit describe the same interface (banner gone).
 
 ### P2 — "Write your own exporter" tutorial
 
@@ -89,7 +89,7 @@ Pick an OSS product with a hand-rolled design language (no token files, no seman
 
 **Depends:** R4, R5. **Files:** new `website/src/playground/` (Astro island); a browser entry export in `packages/core`; nav.
 Core is zero-dep ESM — it runs client-side unchanged. Paste tokens → live css-variables + shadcn output, coverage bar, `explain`-on-hover; doubles as the report.json viewer.
-**Acceptance:** playground works on the deployed site with no server round-trip, importing the *published* npm ESM; Acme's tokens pasted in reproduce `examples/acme/dist/` output byte-identically.
+**Acceptance:** playground works on the deployed site with no server round-trip, importing the _published_ npm ESM; Acme's tokens pasted in reproduce `examples/acme/dist/` output byte-identically.
 
 ### P6 — `transtyle diff` (semantic DS diff, per-target impact)
 
@@ -134,4 +134,4 @@ Spec first (Opus): what constitutes a breaking design change; how impact propaga
 ### D4 — Visual assets + the "GOV.UK, end to end" showcase
 
 **Depends:** D1; playground deep-links after P5. **Files:** diagrams (pipeline, role grid, binding layer) embedded in D2/D3 pages; new showcase page built from [govuk-adoption.md](../findings/govuk-adoption.md) + real `report.json` data.
-**Acceptance:** showcase shows real tokens in → seven targets out with the judgment calls and coverage *shown, not narrated*; used as P3 recruitment collateral.
+**Acceptance:** showcase shows real tokens in → seven targets out with the judgment calls and coverage _shown, not narrated_; used as P3 recruitment collateral.

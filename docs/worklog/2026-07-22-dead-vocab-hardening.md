@@ -3,6 +3,7 @@
 **Why:** pre-revision catalog names (`primary.base`, `background`, `surface.base`) slipped past `check-sync`'s dead-vocab guard twice this session. Root cause: every existing pattern matched only the **dotted** spelling (`semantic.color.primary.base`), but the vocabulary reappears as **nested JSON keys** in token files and docs code-fences (`"primary": { "base": … }`), which no pattern covered.
 
 **Changes to `scripts/check-sync.mjs`:**
+
 1. Added a nested-JSON companion for every old shape:
    - `"(primary|…|neutral)": { … "(base|hover|active|subtle|contrast)": }` — a color role directly holding an old grid cell. The role set is explicit precisely so `text.base` and `link.{base,hover,visited}` (current vocab) can never match.
    - `"(background|surface|overlay|text-muted)": { … "base": }` — old surface/content slots. **Requires the `.base` child**, which is the discriminator: the new elevation leaf (`"surface": { "$value" }`) and a design system's own custom token (`carbon.background`, holds `$value` directly) don't match.

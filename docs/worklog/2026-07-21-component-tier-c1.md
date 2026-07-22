@@ -4,7 +4,7 @@ Per [docs/plan/component-tier.md](../plan/component-tier.md) C1. Research/synthe
 
 ## What the task had to settle
 
-Proposal 0002 proposed grouping shared component tokens into five named objects (`field`/`list`/`navigation`/`overlay`/`content`) but validated that grouping against exactly one ecosystem (PrimeNG) plus one disagreeing spot-check (Spectrum, §2.8). C1 does the real pass — six systems, at proposal-0001's "verify against upstream" discipline — to answer: does any group appear as a *shared named grouping* in 3+ of the six, justifying promotion to `semantic.*`?
+Proposal 0002 proposed grouping shared component tokens into five named objects (`field`/`list`/`navigation`/`overlay`/`content`) but validated that grouping against exactly one ecosystem (PrimeNG) plus one disagreeing spot-check (Spectrum, §2.8). C1 does the real pass — six systems, at proposal-0001's "verify against upstream" discipline — to answer: does any group appear as a _shared named grouping_ in 3+ of the six, justifying promotion to `semantic.*`?
 
 ## What shipped
 
@@ -14,13 +14,13 @@ Proposal 0002 proposed grouping shared component tokens into five named objects 
 
 ## The verdict
 
-**Not convergent.** Only PrimeNG (1 of 6) groups shared component tokens into named objects. Of the five groups, only `field` has *any* second-system echo — Ant Design's flat `control*` alias family (`controlHeight`, `controlPaddingHorizontal`, `controlOutline`, `controlItemBgHover`), which is flat, not grouped, and doesn't clear a 3-of-6 bar. `list`/`navigation`/`overlay`/`content` are single-source. **All five stay exporter-private permanently; C7 is skipped.**
+**Not convergent.** Only PrimeNG (1 of 6) groups shared component tokens into named objects. Of the five groups, only `field` has _any_ second-system echo — Ant Design's flat `control*` alias family (`controlHeight`, `controlPaddingHorizontal`, `controlOutline`, `controlItemBgHover`), which is flat, not grouped, and doesn't clear a 3-of-6 bar. `list`/`navigation`/`overlay`/`content` are single-source. **All five stay exporter-private permanently; C7 is skipped.**
 
-This *confirms* proposal 0002 §2.8's provisional resolution (reached from a single Spectrum spot-check) rather than overturning it — the full six-system pass reached the same place with real evidence.
+This _confirms_ proposal 0002 §2.8's provisional resolution (reached from a single Spectrum spot-check) rather than overturning it — the full six-system pass reached the same place with real evidence.
 
 ## The finding that matters most
 
-The one thing all six systems *do* share is one tier down: **component tokens alias a lower semantic/system tier** (Material 3's `md.comp.* → md.sys.*`, Fluent's control tokens → alias set, Ant's component tokens → alias/map, Chakra recipes → tokens, Spectrum's per-context tokens → numeric scale, PrimeNG's `components.* → semantic.*`). That is *exactly* the `component.* defaultFrom semantic.*` model C2 already built — so C1 independently validates the C2 engine design as the genuinely universal pattern, while narrowing what belongs in that tier's shared vocabulary to nothing new. The meta-language principle held under real scrutiny: faced with three mutually incompatible component-tier architectures, the agnostic answer was to keep the catalog a flat meta-language and let each exporter shape it — the second cross-ecosystem study (after proposal 0001) to return "add nothing new to the catalog."
+The one thing all six systems _do_ share is one tier down: **component tokens alias a lower semantic/system tier** (Material 3's `md.comp.* → md.sys.*`, Fluent's control tokens → alias set, Ant's component tokens → alias/map, Chakra recipes → tokens, Spectrum's per-context tokens → numeric scale, PrimeNG's `components.* → semantic.*`). That is _exactly_ the `component.* defaultFrom semantic.*` model C2 already built — so C1 independently validates the C2 engine design as the genuinely universal pattern, while narrowing what belongs in that tier's shared vocabulary to nothing new. The meta-language principle held under real scrutiny: faced with three mutually incompatible component-tier architectures, the agnostic answer was to keep the catalog a flat meta-language and let each exporter shape it — the second cross-ecosystem study (after proposal 0001) to return "add nothing new to the catalog."
 
 ## Deviation from the plan
 

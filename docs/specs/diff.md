@@ -1,6 +1,6 @@
 # `transtyle diff` — semantic diff + per-target impact
 
-**Status: implemented** (ROADMAP P6). `transtyle diff [ref]` answers the question a design-system PR reviewer actually has: *what did this change do to the compiled themes?* — not "which token-file lines moved," but which **resolved semantic values** changed and how that propagates to each target's output.
+**Status: implemented** (ROADMAP P6). `transtyle diff [ref]` answers the question a design-system PR reviewer actually has: _what did this change do to the compiled themes?_ — not "which token-file lines moved," but which **resolved semantic values** changed and how that propagates to each target's output.
 
 ## What it diffs, and why that's the right unit
 
@@ -20,7 +20,7 @@ This matters because the source and the meaning are different things:
 - `~ <slot>  <before> → <after>` value changed, with hex alongside OKLCH for colors
 - a `(<kind> → <kind>)` note when only the **provenance** changed (e.g. a value that used to be `derived` is now `authored` because someone pinned it — same value, meaningful governance change)
 
-**2. Contrast regressions** — the accessibility cost of the change. `check` tells you contrast is bad *now*; diff tells you **this change made it bad**, which is the reviewer's actual question and the thing a green CI baseline can silently lose:
+**2. Contrast regressions** — the accessibility cost of the change. `check` tells you contrast is bad _now_; diff tells you **this change made it bad**, which is the reviewer's actual question and the thing a green CI baseline can silently lose:
 
 ```
 ⚠ Contrast regressions:
@@ -52,13 +52,13 @@ The project subtree is located via `git rev-parse --show-prefix` (not `path.rela
 
 ## CLI contract
 
-| | |
-|---|---|
-| **Exit 0** | no semantic changes (compiled themes identical) |
-| **Exit 1** | changes found — composes in CI like `git diff --exit-code` |
-| **Exit 2** | not a git repo, unknown ref, or the project can't be resolved at the ref |
-| `--json` | print a machine-readable report to stdout (for PR-comment tooling); human summary otherwise goes to stderr |
-| `--cwd <dir>` | project directory, as for every command |
+|               |                                                                                                            |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Exit 0**    | no semantic changes (compiled themes identical)                                                            |
+| **Exit 1**    | changes found — composes in CI like `git diff --exit-code`                                                 |
+| **Exit 2**    | not a git repo, unknown ref, or the project can't be resolved at the ref                                   |
+| `--json`      | print a machine-readable report to stdout (for PR-comment tooling); human summary otherwise goes to stderr |
+| `--cwd <dir>` | project directory, as for every command                                                                    |
 
 If the project didn't exist at the ref, diff says so and exits 0 (nothing to diff against).
 
@@ -69,15 +69,21 @@ If the project didn't exist at the ref, diff says so and exits 0 (nothing to dif
   "ref": "HEAD",
   "hasChanges": true,
   "semantic": [
-    { "mode": "light", "added": [], "removed": [],
+    {
+      "mode": "light",
+      "added": [],
+      "removed": [],
       "changed": [
-        { "slot": "semantic.color.primary.solid",
+        {
+          "slot": "semantic.color.primary.solid",
           "before": "oklch(0.55 0.18 255)  [#026fd7]",
-          "after":  "oklch(0.55 0.19 25)  [#ca3535]",
-          "provenance": "authored" }
-      ] }
+          "after": "oklch(0.55 0.19 25)  [#ca3535]",
+          "provenance": "authored",
+        },
+      ],
+    },
   ],
-  "impact": [ { "target": "shadcn", "status": "changed", "changedLines": 34 } ]
+  "impact": [{ "target": "shadcn", "status": "changed", "changedLines": 34 }],
 }
 ```
 
@@ -87,4 +93,4 @@ Implemented: the resolved-graph semantic diff, contrast-regression flagging, per
 
 Deliberately not yet done: a rich token-level line diff inside each target (the current impact is a count plus a sample), and contrast checking beyond the four `text.{base,muted}` × `elevation.{0,1}.surface` pairs `runChecks` defines — extending that list benefits `check` and `diff` together, by construction. Neither changes this command's contract.
 
-**A note on the exit code:** a contrast regression does not get its own exit code. Any regression implies a semantic change, which already exits `1`; CI that needs to fail *specifically* on accessibility reads `contrastRegressions` from `--json`. Keeping one meaning for exit `1` is worth more than a second signal.
+**A note on the exit code:** a contrast regression does not get its own exit code. Any regression implies a semantic change, which already exits `1`; CI that needs to fail _specifically_ on accessibility reads `contrastRegressions` from `--json`. Keeping one meaning for exit `1` is worth more than a second signal.

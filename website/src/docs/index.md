@@ -1,6 +1,6 @@
 ---
-title: "Overview"
-description: "What Transtyle is, why it exists, and the mental model."
+title: 'Overview'
+description: 'What Transtyle is, why it exists, and the mental model.'
 order: 1
 ---
 
@@ -61,19 +61,19 @@ npx transtyle build
 
 ## Why another token tool?
 
-Existing token pipelines (Style Dictionary, Terrazzo) transform token files into *variables*. Transtyle understands what your design system *means* — that `danger` maps to shadcn's `--destructive` and daisyUI's `--color-error`, that a subtle background needs its own readable foreground, that a data-viz palette must be derived from your brand, not copy-pasted — and produces configuration a framework practitioner would recognize as idiomatic.
+Existing token pipelines (Style Dictionary, Terrazzo) transform token files into _variables_. Transtyle understands what your design system _means_ — that `danger` maps to shadcn's `--destructive` and daisyUI's `--color-error`, that a subtle background needs its own readable foreground, that a data-viz palette must be derived from your brand, not copy-pasted — and produces configuration a framework practitioner would recognize as idiomatic.
 
-| Principle | What it means for you |
-|---|---|
-| **DTCG superset** | Your token files are valid W3C Design Tokens. Figma, Tokens Studio, Style Dictionary can read them. No lock-in. |
-| **Deterministic derivation** | Missing tokens (hover states, on-colors, a secondary color) are filled by inspectable rules — never magic. Authored values always win. |
-| **Honest lossiness** | Every build reports what mapped natively, what was derived, what was approximated, what was dropped — per variable. |
-| **Native output** | You get a `globals.css` a shadcn user would write, not a pile of generic variables. Generated files are disposable: regenerate, never edit. |
-| **No runtime** | Transtyle ships nothing into your app. Files out, nothing in. |
+| Principle                    | What it means for you                                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **DTCG superset**            | Your token files are valid W3C Design Tokens. Figma, Tokens Studio, Style Dictionary can read them. No lock-in.                             |
+| **Deterministic derivation** | Missing tokens (hover states, on-colors, a secondary color) are filled by inspectable rules — never magic. Authored values always win.      |
+| **Honest lossiness**         | Every build reports what mapped natively, what was derived, what was approximated, what was dropped — per variable.                         |
+| **Native output**            | You get a `globals.css` a shadcn user would write, not a pile of generic variables. Generated files are disposable: regenerate, never edit. |
+| **No runtime**               | Transtyle ships nothing into your app. Files out, nothing in.                                                                               |
 
 ## If you run a design system, this is for you
 
-In your vocabulary: **option tokens** are your primitives, **semantic tokens** are your alias/decision layer, and the catalog is a *published interface* over that decision layer which frameworks plug into. You keep your names, your Figma sync, your governance; Transtyle compiles the decision layer outward — and reports, per variable, what was your decision (<span class="prov authored">authored</span>), what was inferred from it (<span class="prov derived">derived</span>), and what got bent in translation (<span class="prov approx">approximated</span>).
+In your vocabulary: **option tokens** are your primitives, **semantic tokens** are your alias/decision layer, and the catalog is a _published interface_ over that decision layer which frameworks plug into. You keep your names, your Figma sync, your governance; Transtyle compiles the decision layer outward — and reports, per variable, what was your decision (<span class="prov authored">authored</span>), what was inferred from it (<span class="prov derived">derived</span>), and what got bent in translation (<span class="prov approx">approximated</span>).
 
 Seeing is believing. From **one authored brand color** <span class="sw" style="--c:oklch(0.55 0.18 255)"></span> `oklch(0.55 0.18 255)`, the standard rules derive the full role set:
 

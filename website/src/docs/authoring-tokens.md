@@ -1,6 +1,6 @@
 ---
-title: "Authoring tokens"
-description: "DTCG token files, aliases, tiers, modes, and the layered layout."
+title: 'Authoring tokens'
+description: 'DTCG token files, aliases, tiers, modes, and the layered layout.'
 order: 4
 ---
 
@@ -30,8 +30,11 @@ Supported `$type`s today: `color` (values: `oklch()`, `#hex` incl. 4/8-digit alp
 Reference other tokens with the DTCG brace syntax:
 
 ```json
-{ "semantic": { "color": { "$type": "color",
-  "primary": { "solid": { "$value": "{option.color.blue.600}" } } } } }
+{
+  "semantic": {
+    "color": { "$type": "color", "primary": { "solid": { "$value": "{option.color.blue.600}" } } }
+  }
+}
 ```
 
 Aliases resolve per mode, chain freely (semantic → semantic → option), and cycles are a hard error with the full chain printed (`TST1104`).
@@ -56,11 +59,19 @@ Two equivalent forms. **Mode-scoped layer files** are the recommended default: e
 The **inline** alternative, via the sanctioned `$extensions` mechanism, keeps a token and all its mode values in one place — convenient for small systems that hand-edit token files:
 
 ```json
-{ "elevation": { "1": { "surface": {
-  "$type": "color",
-  "$value": "oklch(0.985 0.003 255)",
-  "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "oklch(0.22 0.012 255)" } } }
-} } } }
+{
+  "elevation": {
+    "1": {
+      "surface": {
+        "$type": "color",
+        "$value": "oklch(0.985 0.003 255)",
+        "$extensions": {
+          "transtyle.modes": { "color-scheme": { "dark": "oklch(0.22 0.012 255)" } }
+        }
+      }
+    }
+  }
+}
 ```
 
 Both forms produce the identical internal representation and may be mixed; later layers win, with a warning (`TST1108`) when a mode value is overridden.
@@ -69,11 +80,11 @@ Both forms produce the identical internal representation and may be mixed; later
 
 The pattern the [Cathode example](/docs/examples/#cathode--the-hostile-example) demonstrates — three kinds of files, every one pure DTCG:
 
-| Layer | Contains | Typical owner |
-|---|---|---|
+| Layer           | Contains                                                              | Typical owner                       |
+| --------------- | --------------------------------------------------------------------- | ----------------------------------- |
 | Source of truth | Option palette + your native semantic vocabulary, default-mode values | design system team / design tooling |
-| Mode overlays | Per-mode values for tokens that vary | design system team |
-| Bindings | One-line aliases from catalog slots to your vocabulary | platform team |
+| Mode overlays   | Per-mode values for tokens that vary                                  | design system team                  |
+| Bindings        | One-line aliases from catalog slots to your vocabulary                | platform team                       |
 
 ```json
 "tokens": [
@@ -83,7 +94,7 @@ The pattern the [Cathode example](/docs/examples/#cathode--the-hostile-example) 
 ]
 ```
 
-Your design system thinks in its own language (`crt.ink`, `brand.flame`, whatever is true for you); the catalog binding is knowledge *about* your system, versioned separately. Regenerating the source files from design tooling loses nothing.
+Your design system thinks in its own language (`crt.ink`, `brand.flame`, whatever is true for you); the catalog binding is knowledge _about_ your system, versioned separately. Regenerating the source files from design tooling loses nothing.
 
 ## Authoring rules of thumb
 

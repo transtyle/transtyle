@@ -1,6 +1,6 @@
 ---
-title: "Using Transtyle with AI agents"
-description: "Transtyle is built to be operated by machines: deterministic builds, stable codes, JSON reports, markdown-native docs."
+title: 'Using Transtyle with AI agents'
+description: 'Transtyle is built to be operated by machines: deterministic builds, stable codes, JSON reports, markdown-native docs.'
 order: 9
 ---
 
@@ -10,14 +10,14 @@ Transtyle is designed to be operated by AI agents as a first-class use case — 
 
 ## Why the design already fits agents
 
-| Property | Why it matters to an agent |
-|---|---|
-| **Deterministic builds** | Same inputs → byte-identical outputs. An agent can reason about cause and effect; a diff means *its* change did it. |
-| **Config is data** | The entire project state is JSON (manifest + DTCG token files). No code execution needed to read, write, or validate a project. |
-| **Stable diagnostic codes** | `TST1104` means the same thing forever. Agents can pattern-match remediation instead of parsing prose. |
-| **Stable exit codes** | 0 / 1 / 2 with documented meaning; stderr for logs. Scriptable without heuristics. |
-| **`report.json`** | Schema-versioned coverage + provenance for every emitted variable — the build explains itself in JSON. |
-| **`check` = build minus emit** | Agents can validate hypothetical states cheaply and safely before writing anything. |
+| Property                            | Why it matters to an agent                                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Deterministic builds**            | Same inputs → byte-identical outputs. An agent can reason about cause and effect; a diff means _its_ change did it.                  |
+| **Config is data**                  | The entire project state is JSON (manifest + DTCG token files). No code execution needed to read, write, or validate a project.      |
+| **Stable diagnostic codes**         | `TST1104` means the same thing forever. Agents can pattern-match remediation instead of parsing prose.                               |
+| **Stable exit codes**               | 0 / 1 / 2 with documented meaning; stderr for logs. Scriptable without heuristics.                                                   |
+| **`report.json`**                   | Schema-versioned coverage + provenance for every emitted variable — the build explains itself in JSON.                               |
+| **`check` = build minus emit**      | Agents can validate hypothetical states cheaply and safely before writing anything.                                                  |
 | **Authored-always-wins derivation** | An agent can make minimal edits with bounded blast radius: authoring one token changes that token and its derivatives, nothing else. |
 
 ## The agent workflow
@@ -53,6 +53,6 @@ This site is agent-consumable by construction:
 
 ## The boundary: AI outside, determinism inside
 
-Transtyle will never embed AI in the compilation pipeline ([the vision's non-goal #5](/docs/internals/)). Derivation is deterministic rules, because a brand pipeline that produces different output on different days is worthless — to companies *and* to agents, which need reproducibility more than humans do.
+Transtyle will never embed AI in the compilation pipeline ([the vision's non-goal #5](/docs/internals/)). Derivation is deterministic rules, because a brand pipeline that produces different output on different days is worthless — to companies _and_ to agents, which need reproducibility more than humans do.
 
-The intended division of labor: **agents write config; the compiler compiles it.** An agent with taste (or with a human in the loop) decides that `info` should be amber on a CRT theme; Transtyle guarantees that decision propagates to every target, identically, forever. The deterministic core is what makes agent-driven theming *auditable*: every value in production traces to either an authored token (someone's decision) or a versioned rule (everyone's convention).
+The intended division of labor: **agents write config; the compiler compiles it.** An agent with taste (or with a human in the loop) decides that `info` should be amber on a CRT theme; Transtyle guarantees that decision propagates to every target, identically, forever. The deterministic core is what makes agent-driven theming _auditable_: every value in production traces to either an authored token (someone's decision) or a versioned rule (everyone's convention).

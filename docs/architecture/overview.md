@@ -26,14 +26,14 @@ Everything user-facing hangs off this spine: the CLI drives the pipeline, `check
 
 ## Package layout
 
-| Package | Responsibility | Depends on |
-|---|---|---|
-| `@transtyle/ir` | IR types, schema, validation. Zero runtime deps. The published spec artifact. | — |
-| `@transtyle/core` | Pipeline: loader, normalizer, derivation, resolver host, emitter, diagnostics, provenance. | ir |
-| `@transtyle/cli` | Command surface, config discovery, plugin loading, output/UX. | core |
-| `@transtyle/plugin-kit` | Helpers + conformance test suite for plugin authors. | ir, core (test-only) |
-| `@transtyle/exporter-*` | One package per official exporter. | plugin-kit (dev), ir |
-| `@transtyle/importer-*` | One package per official importer. | plugin-kit (dev), ir |
+| Package                 | Responsibility                                                                             | Depends on           |
+| ----------------------- | ------------------------------------------------------------------------------------------ | -------------------- |
+| `@transtyle/ir`         | IR types, schema, validation. Zero runtime deps. The published spec artifact.              | —                    |
+| `@transtyle/core`       | Pipeline: loader, normalizer, derivation, resolver host, emitter, diagnostics, provenance. | ir                   |
+| `@transtyle/cli`        | Command surface, config discovery, plugin loading, output/UX.                              | core                 |
+| `@transtyle/plugin-kit` | Helpers + conformance test suite for plugin authors.                                       | ir, core (test-only) |
+| `@transtyle/exporter-*` | One package per official exporter.                                                         | plugin-kit (dev), ir |
+| `@transtyle/importer-*` | One package per official importer.                                                         | plugin-kit (dev), ir |
 
 Design rules embedded in this layout:
 
@@ -46,13 +46,13 @@ Design rules embedded in this layout:
 Three data shapes cross public boundaries, and each is schema-versioned:
 
 1. **Source config + token files** — authored by users ([specs/configuration.md](../specs/configuration.md)).
-2. **The IR** — produced by NORMALIZE/DERIVE, consumed by exporters ([ir.md](ir.md)). Exporters receive a *resolved, immutable* IR snapshot: all aliases resolved, all modes expanded, all derivations applied, provenance attached. Exporters never see raw user files.
+2. **The IR** — produced by NORMALIZE/DERIVE, consumed by exporters ([ir.md](ir.md)). Exporters receive a _resolved, immutable_ IR snapshot: all aliases resolved, all modes expanded, all derivations applied, provenance attached. Exporters never see raw user files.
 3. **The build manifest + coverage report** — produced by EMIT/REPORT ([specs/validation-and-coverage.md](../specs/validation-and-coverage.md)). Machine-readable (JSON) with a human rendering; consumed by CI, `diff`, and the preview site.
 
 ## Key invariants
 
 - **Determinism:** identical inputs (config + tokens + plugin versions) produce byte-identical outputs. No timestamps, no randomness, no network access during build. Verified in CI by double-build comparison.
-- **Isolation:** exporters cannot mutate the IR or affect other exporters. Exporters return *file descriptions* (path + content); only core touches the filesystem — this enables dry-runs, atomic writes, and the manifest.
+- **Isolation:** exporters cannot mutate the IR or affect other exporters. Exporters return _file descriptions_ (path + content); only core touches the filesystem — this enables dry-runs, atomic writes, and the manifest.
 - **Provenance everywhere:** every value in the IR knows whether it was authored, aliased, derived (by which rule, from what), or defaulted. This powers `explain`, coverage classification, and trustworthy diffs.
 - **No network at build time.** Plugin installation (`transtyle add`) touches the network; `transtyle build` never does. Doc generation ([specs/doc-generation.md](../specs/doc-generation.md)) is the sole, explicitly-flagged exception.
 

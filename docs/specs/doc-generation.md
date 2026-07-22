@@ -8,14 +8,14 @@ The original vision: `--doc` downloads a target framework's documentation site, 
 - **Licensing differs from code:** e.g. Bootstrap's code is MIT but its docs content is CC BY 3.0; other projects vary. Redistributing rebuilt doc sites needs per-target legal review.
 - It breaks the **no-network-at-build** invariant and determinism guarantees.
 
-The underlying user need is real, though: *see and share your brand applied to a target ecosystem*. We meet it in three tiers, cheapest first.
+The underlying user need is real, though: _see and share your brand applied to a target ecosystem_. We meet it in three tiers, cheapest first.
 
 ## Tier 1 — Themed preview site (`transtyle preview`, Phase 2, core feature)
 
 Our own static site, generated from build output + report:
 
 - token reference (every semantic slot, per mode, with provenance badges: authored/derived/defaulted);
-- native sample renders per target: real Bootstrap markup with the generated theme, shadcn component samples, live ECharts charts with the theme JSON — using each target's *published* CSS/JS, not rebuilt docs;
+- native sample renders per target: real Bootstrap markup with the generated theme, shadcn component samples, live ECharts charts with the theme JSON — using each target's _published_ CSS/JS, not rebuilt docs;
 - the coverage report, rendered;
 - static output → deployable to Netlify/Vercel/GitHub Pages/Cloudflare Pages with zero config (this satisfies the vision's deployability requirement).
 

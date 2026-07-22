@@ -1,6 +1,6 @@
 # 2026-07-20 — Proposal 0001: the universal token IR
 
-> **Later correction (same day):** this entry describes the proposal's *original* additive-minor/alias posture and its "v1" framing, as first delivered. Both were superseded within the day — see [ADR-0010](../adr/0010-pre-release-breaking-changes.md) and [the follow-up worklog](2026-07-20-catalog-revision-plan.md): the catalog is revised in place as a breaking change, and there is no version bump — the spec stays `v0`. Kept as-is below for the historical record.
+> **Later correction (same day):** this entry describes the proposal's _original_ additive-minor/alias posture and its "v1" framing, as first delivered. Both were superseded within the day — see [ADR-0010](../adr/0010-pre-release-breaking-changes.md) and [the follow-up worklog](2026-07-20-catalog-revision-plan.md): the catalog is revised in place as a breaking change, and there is no version bump — the spec stays `v0`. Kept as-is below for the historical record.
 
 Maintainer redirected implementation work to a spec-level question: make Transtyle the most design-system-agnostic token language possible — a true universal IR. Deliverable: [docs/proposals/0001-universal-token-ir.md](../proposals/0001-universal-token-ir.md), a complete specification proposal (comparative study, redesigned taxonomy, naming/aliasing/inheritance/extension rules, per-ecosystem conversion strategies, worked translations, loss analysis, migration plan).
 

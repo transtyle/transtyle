@@ -4,7 +4,7 @@
 
 ## What was done
 
-1. **Hand-executed the pipeline** for the Acme fixture against the [Storybook exporter spec](../specs/exporters/storybook.md) (`>=8 <10`) — the meta-target round. Composition was exercised against the *real* sibling artifacts in `examples/acme/dist/` (shadcn's `.dark` class, daisyUI's `data-theme` attribute — two different mode encodings driven by one manifest-assembled decorator).
+1. **Hand-executed the pipeline** for the Acme fixture against the [Storybook exporter spec](../specs/exporters/storybook.md) (`>=8 <10`) — the meta-target round. Composition was exercised against the _real_ sibling artifacts in `examples/acme/dist/` (shadcn's `.dark` class, daisyUI's `data-theme` attribute — two different mode encodings driven by one manifest-assembled decorator).
 2. **Expected outputs written** with full inline provenance in [examples/acme/expected/storybook/](../../examples/acme/expected/storybook/): `theme.transtyle.ts` (ThemeVars light + dark), `manager.transtyle.ts` (chrome wears the DS's default mode, per the mode-polarity rule), `preview.transtyle.ts` (sibling stylesheet imports, `color-scheme` toolbar global, decorator, backgrounds/grid from tokens). The optional token-stories file was deliberately not hand-written — no paper-validation value (rationale in the report).
 3. **Exercise report** with findings F14–F18: [docs/exercises/phase0-storybook.md](../exercises/phase0-storybook.md). Headlines:
    - **Zero amendments — the first clean attempt.** Exit-criterion counter: 1 of 2.

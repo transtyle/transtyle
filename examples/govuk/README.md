@@ -6,7 +6,7 @@ This is the **T11 "real-DS run"** (`docs/plan/catalog-revision.md`) — proof th
 
 ## Where the values come from
 
-`tokens/option.tokens.json` is the GOV.UK web palette and the functional-colour set, transcribed verbatim (hex, as published — GOV.UK's own guidance says never hardcode these hexes in a real service, always reference `govuk-colour()`/`govuk-functional-colour()`; this example is a *compiler fixture*, not a service, so the literal values are the whole point) from [design-system.service.gov.uk/styles/colour](https://design-system.service.gov.uk/styles/colour/), current as of 2026-07-21.
+`tokens/option.tokens.json` is the GOV.UK web palette and the functional-colour set, transcribed verbatim (hex, as published — GOV.UK's own guidance says never hardcode these hexes in a real service, always reference `govuk-colour()`/`govuk-functional-colour()`; this example is a _compiler fixture_, not a service, so the literal values are the whole point) from [design-system.service.gov.uk/styles/colour](https://design-system.service.gov.uk/styles/colour/), current as of 2026-07-21.
 
 ## What's genuinely real here — and what isn't
 

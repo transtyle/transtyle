@@ -7,7 +7,7 @@ Six stages. Each stage has a single responsibility, a typed input/output, and em
 Discover and parse inputs: `transtyle.config.*`, token files it references, and any importer-provided sources.
 
 - Config discovery follows the cosmiconfig-style convention ([specs/configuration.md](../specs/configuration.md)).
-- Token files are parsed as DTCG JSON. Importers (Tailwind config, Figma export…) run here and must output *the same raw DTCG-superset structure* as if the user had authored files — importers get no private path into the IR. This keeps `import` explainable: you can materialize what an importer produced (`transtyle import --write`) and inspect it.
+- Token files are parsed as DTCG JSON. Importers (Tailwind config, Figma export…) run here and must output _the same raw DTCG-superset structure_ as if the user had authored files — importers get no private path into the IR. This keeps `import` explainable: you can materialize what an importer produced (`transtyle import --write`) and inspect it.
 - Output: raw token forest + config object + source maps (file/line per token, for diagnostics).
 
 ## 2. NORMALIZE
