@@ -1,5 +1,36 @@
 ---
 import Base from '../layouts/Base.astro';
+import { Code } from 'astro:components';
+
+// Match the markdown pipeline's Shiki config (astro.config.mjs) so highlighted
+// code looks identical on the homepage and in the docs, in both themes.
+const shiki = { themes: { light: 'github-light', dark: 'github-dark' }, defaultColor: false };
+
+const authoredTokens = `{ "semantic": { "color": {
+  "primary":   { "solid": { "$value": "{option.color.blue.600}" } },
+  "elevation": { "0": { "surface": { "$value": "{option.color.white}" } } },
+  "text":      { "base":  { "$value": "{option.color.gray.900}" } },
+  "border":    { "$value": "{option.color.gray.200}" }
+} } }`;
+
+const derivedCss = `--primary: oklch(0.55 0.18 255);
+--primary-foreground: oklch(1 0 0);  /* contrast-picked, AA ✓ */
+--accent: oklch(0.95 0.017 255);     /* brand-tinted */
+--chart-1: #026fd7;                  /* hue-rotated palette */
+/* …plus every hover/active state, light + dark,
+   for all eight targets, from the same tokens */`;
+
+const showcaseTokens = `{ "semantic": {
+  "color": {
+    "primary": { "solid": { "$value": "{option.color.blue.600}" } },
+    "danger":  { "solid": { "$value": "{option.color.red.600}" } }
+  },
+  "radius": { "md": { "$value": "0.5rem" } }
+} }`;
+
+const startCommands = `git clone https://github.com/transtyle/transtyle && cd transtyle
+npm install
+cd examples/acme && npx transtyle build`;
 ---
 <Base title="Transtyle — the design system compiler" current="home">
   <main id="main">
@@ -19,7 +50,7 @@ import Base from '../layouts/Base.astro';
 
       <div class="terminal">
         <div class="term-bar"><span></span><span></span><span></span><em>examples/acme</em></div>
-        <pre><code><span class="dim">$</span> npx transtyle build shadcn bootstrap echarts
+        <pre data-copy="npx transtyle build shadcn bootstrap echarts"><code><span class="dim">$</span> npx transtyle build shadcn bootstrap echarts
 
 shadcn     <span class="cov-n">42% native</span> · <span class="cov-d">53% derived</span> · <span class="cov-a">3% approximated</span> · 3% dropped
   ↳ dist/shadcn/globals.transtyle.css
@@ -77,21 +108,11 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       <div class="duo">
         <div class="card">
           <div class="card-label">You write <span class="prov authored">authored</span></div>
-          <pre><code>{`{ "semantic": { "color": {
-  "primary": { "solid": "{option.color.blue.600}" },
-  "elevation": { "0": { "surface": "…light + dark…" } },
-  "text":    { "base": "…", "muted": "…" },
-  "border":  "…"
-} } }`}</code></pre>
+          <Code code={authoredTokens} lang="json" {...shiki} />
         </div>
         <div class="card">
           <div class="card-label">You get <span class="prov derived">derived</span></div>
-          <pre><code>{`--primary: oklch(0.55 0.18 255);
---primary-foreground: oklch(1 0 0); /* contrast-picked, AA ✓ */
---accent: oklch(0.95 0.017 255);    /* brand-tinted */
---chart-1 … --chart-5               /* hue-rotated palette */
-+ every hover/active state, light + dark —
-  for all eight targets, from the same tokens`}</code></pre>
+          <Code code={derivedCss} lang="css" {...shiki} />
         </div>
       </div>
       <p class="band-foot">Ask the compiler why: <code>npx transtyle explain primary.tint</code> prints the value's full provenance chain.</p>
@@ -103,11 +124,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       <div class="showcase">
         <div class="card show-src">
           <div class="card-label">tokens/semantic.tokens.json</div>
-          <pre><code>{`"primary": { "solid":
-    "{option.color.blue.600}" },
-"danger":  { "solid":
-    "{option.color.red.600}" },
-"radius":  { "md": "0.5rem" }`}</code></pre>
+          <Code code={showcaseTokens} lang="json" {...shiki} />
         </div>
         <div class="show-targets">
           <figure class="tframe">
@@ -203,9 +220,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     <section class="band final" aria-labelledby="h-start">
       <h2 id="h-start">Start compiling</h2>
       <p class="band-sub">Not yet on npm — you run it from the repository. Four real examples ship with it, including two independently-designed systems (GOV.UK, Carbon).</p>
-      <pre class="start"><code>git clone https://github.com/transtyle/transtyle && cd transtyle
-npm install
-cd examples/acme && npx transtyle build</code></pre>
+      <div class="start"><Code code={startCommands} lang="bash" {...shiki} /></div>
       <div class="cta center">
         <a class="btn primary" href="/docs/getting-started/">Getting started guide</a>
         <a class="btn" href="/docs/adopt-existing/">I already have a design system</a>
@@ -271,7 +286,10 @@ cd examples/acme && npx transtyle build</code></pre>
     .duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 1.2rem; text-align: left; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
     .card-label { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1.1rem; font-size: 0.75rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); background: var(--bg-soft); }
-    .card pre { margin: 0; padding: 1rem 1.2rem; font-size: 0.8rem; line-height: 1.65; overflow-x: auto; background: none; }
+    /* No `background: none` here — Shiki's own background rule is !important and
+       would win anyway; letting it through keeps homepage code identical to the
+       docs pages, which is the point of using the same highlighter. */
+    .card pre { margin: 0; padding: 1rem 1.2rem; font-size: 0.8rem; line-height: 1.65; overflow-x: auto; }
 
     .pipe-tag { display: block; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 500; text-transform: none; margin-top: 0.15rem; font-family: 'JetBrains Mono Variable', monospace; }
 
@@ -319,6 +337,10 @@ cd examples/acme && npx transtyle build</code></pre>
     .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; }
 
     .band.alt { background: transparent; }
-    .band.final .start { max-width: 42rem; margin: 0 auto; text-align: left; background: var(--terminal-bg); color: var(--terminal-text); border-radius: 12px; padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; }
+    /* Shiki paints the code block itself (its background rule carries
+       !important), so this is only a centring container — giving it a
+       terminal background too would double up behind the highlighted block. */
+    .band.final .start { max-width: 42rem; margin: 0 auto; text-align: left; }
+    .band.final .start pre { border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; margin: 0; }
   </style>
 </Base>

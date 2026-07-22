@@ -54,6 +54,37 @@ const { title, description = 'Transtyle is a design system compiler: describe yo
   </footer>
 
   <script is:inline>
+    // Copy button on every code block — markdown (Shiki) and hand-built alike.
+    // A `data-copy` attribute on the block overrides what gets copied, so a
+    // terminal transcript yields the command rather than command plus output.
+    for (const pre of document.querySelectorAll('pre')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.setAttribute('aria-label', 'Copy code to clipboard');
+      wrap.appendChild(btn);
+
+      btn.addEventListener('click', async () => {
+        const text = pre.dataset.copy ?? pre.textContent;
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = 'Copied';
+        } catch {
+          btn.textContent = 'Press ⌘C';
+        }
+        btn.classList.add('done');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1600);
+      });
+    }
+  </script>
+
+  <script is:inline>
     document.getElementById('theme-toggle').addEventListener('click', () => {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = next;

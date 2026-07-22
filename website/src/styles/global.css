@@ -85,6 +85,24 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 h1, h2, h3 { text-wrap: balance; }
 
+/* ---------- copy button (injected around every <pre> by Base.astro) ---------- */
+.code-wrap { position: relative; }
+.code-wrap .copy-btn {
+  position: absolute; top: 0.5rem; right: 0.5rem;
+  font: inherit; font-size: 0.72rem; font-weight: 600;
+  padding: 0.2rem 0.55rem; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text-muted);
+  opacity: 0; transition: opacity 0.12s, color 0.12s, border-color 0.12s;
+}
+/* Keyboard users get it whenever it's focused; pointer users on hover. */
+.code-wrap:hover .copy-btn,
+.code-wrap .copy-btn:focus-visible { opacity: 1; }
+.code-wrap .copy-btn:hover { color: var(--text); border-color: var(--text-muted); }
+.code-wrap .copy-btn.done { opacity: 1; color: var(--ok); border-color: var(--ok); }
+/* Terminal-style blocks are dark in both themes — keep the button legible there. */
+.terminal .copy-btn, .start .copy-btn { background: color-mix(in oklch, var(--terminal-bg) 80%, transparent); color: var(--terminal-text); border-color: oklch(1 0 0 / 0.25); }
+@media (max-width: 700px) { .code-wrap .copy-btn { opacity: 1; } }
+
 /* Shiki dual themes */
 .astro-code, .astro-code span {
   color: var(--shiki-light);
