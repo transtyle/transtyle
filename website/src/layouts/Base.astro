@@ -63,23 +63,39 @@ const { title, description = 'Transtyle is a design system compiler: describe yo
       pre.parentNode.insertBefore(wrap, pre);
       wrap.appendChild(pre);
 
+      const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      const ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy-btn';
-      btn.textContent = 'Copy';
+      btn.innerHTML = ICON_COPY;
       btn.setAttribute('aria-label', 'Copy code to clipboard');
       wrap.appendChild(btn);
 
       btn.addEventListener('click', async () => {
         const text = pre.dataset.copy ?? pre.textContent;
+        let label = 'Copied';
         try {
           await navigator.clipboard.writeText(text);
-          btn.textContent = 'Copied';
         } catch {
-          btn.textContent = 'Press ⌘C';
+          // No clipboard permission (or an insecure context): select the code so
+          // the keyboard shortcut works, rather than silently doing nothing.
+          const range = document.createRange();
+          range.selectNodeContents(pre);
+          const sel = getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          label = 'Code selected — press ⌘C';
         }
+        btn.innerHTML = ICON_DONE;
+        btn.setAttribute('aria-label', label);
         btn.classList.add('done');
-        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1600);
+        setTimeout(() => {
+          btn.innerHTML = ICON_COPY;
+          btn.setAttribute('aria-label', 'Copy code to clipboard');
+          btn.classList.remove('done');
+        }, 1600);
       });
     }
   </script>

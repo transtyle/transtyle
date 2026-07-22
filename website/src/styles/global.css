@@ -86,22 +86,29 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 h1, h2, h3 { text-wrap: balance; }
 
 /* ---------- copy button (injected around every <pre> by Base.astro) ---------- */
+/* Icon-only, borderless, and out of the way until you reach for it — a labelled
+   pill in the corner reads as chrome and competes with the code itself. */
 .code-wrap { position: relative; }
 .code-wrap .copy-btn {
-  position: absolute; top: 0.5rem; right: 0.5rem;
-  font: inherit; font-size: 0.72rem; font-weight: 600;
-  padding: 0.2rem 0.55rem; border-radius: 6px; cursor: pointer;
-  border: 1px solid var(--border); background: var(--bg); color: var(--text-muted);
-  opacity: 0; transition: opacity 0.12s, color 0.12s, border-color 0.12s;
+  position: absolute; top: 0.45rem; right: 0.45rem;
+  display: grid; place-items: center; width: 1.75rem; height: 1.75rem;
+  padding: 0; border: none; border-radius: 8px; cursor: pointer;
+  background: color-mix(in oklch, var(--bg) 55%, transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: var(--text-muted);
+  opacity: 0; transition: opacity 0.14s ease, color 0.14s ease, background 0.14s ease;
 }
-/* Keyboard users get it whenever it's focused; pointer users on hover. */
+.code-wrap .copy-btn svg { width: 0.9rem; height: 0.9rem; }
+/* Pointer users on hover; keyboard users whenever it's focused. */
 .code-wrap:hover .copy-btn,
 .code-wrap .copy-btn:focus-visible { opacity: 1; }
-.code-wrap .copy-btn:hover { color: var(--text); border-color: var(--text-muted); }
-.code-wrap .copy-btn.done { opacity: 1; color: var(--ok); border-color: var(--ok); }
-/* Terminal-style blocks are dark in both themes — keep the button legible there. */
-.terminal .copy-btn, .start .copy-btn { background: color-mix(in oklch, var(--terminal-bg) 80%, transparent); color: var(--terminal-text); border-color: oklch(1 0 0 / 0.25); }
-@media (max-width: 700px) { .code-wrap .copy-btn { opacity: 1; } }
+.code-wrap .copy-btn:hover { color: var(--text); background: color-mix(in oklch, var(--bg) 85%, transparent); }
+.code-wrap .copy-btn.done { opacity: 1; color: var(--cov-native); }
+/* The hero terminal is dark in both themes — its own contrast, not the page's. */
+.terminal .copy-btn { color: oklch(1 0 0 / 0.55); background: oklch(1 0 0 / 0.08); }
+.terminal .copy-btn:hover { color: oklch(1 0 0 / 0.9); background: oklch(1 0 0 / 0.16); }
+/* No hover on touch — show it, quietly. */
+@media (hover: none) { .code-wrap .copy-btn { opacity: 0.55; } }
 
 /* Shiki dual themes */
 .astro-code, .astro-code span {
