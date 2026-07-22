@@ -31,7 +31,7 @@ Reference other tokens with the DTCG brace syntax:
 
 ```json
 { "semantic": { "color": { "$type": "color",
-  "primary": { "base": { "$value": "{option.color.blue.600}" } } } } }
+  "primary": { "solid": { "$value": "{option.color.blue.600}" } } } } }
 ```
 
 Aliases resolve per mode, chain freely (semantic → semantic → option), and cycles are a hard error with the full chain printed (`TST1104`).
@@ -56,11 +56,11 @@ Two equivalent forms. **Mode-scoped layer files** are the recommended default: e
 The **inline** alternative, via the sanctioned `$extensions` mechanism, keeps a token and all its mode values in one place — convenient for small systems that hand-edit token files:
 
 ```json
-{ "surface": { "base": {
+{ "elevation": { "1": { "surface": {
   "$type": "color",
   "$value": "oklch(0.985 0.003 255)",
   "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "oklch(0.22 0.012 255)" } } }
-} } }
+} } } }
 ```
 
 Both forms produce the identical internal representation and may be mixed; later layers win, with a warning (`TST1108`) when a mode value is overridden.

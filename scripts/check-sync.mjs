@@ -117,26 +117,78 @@ for (const name of exporters) {
 // website docs — one vocabulary, no aliases (ADR-0010). Docs that *describe*
 // the migration (historical record, before/after mapping) are excluded by
 // name, not by pattern — keep this list tiny and reviewed.
+// Two spellings of every old name must be caught: the DOTTED path a code/prose
+// reference uses (`semantic.color.primary.base`) and the NESTED-JSON form a token
+// file or a docs code-fence uses (`"primary": { "base": … }`). The dotted patterns
+// alone missed the JSON form twice this session (primary.base, surface.base in the
+// docs), so each old shape now has a nested-JSON companion below.
+//
+// Discriminating dead vocab from legitimate custom vocab: every removed color/surface
+// slot carried an old grid *cell* (`.base`/`.hover`/`.active`/`.subtle`/`.contrast`),
+// whereas (a) the new elevation leaf is `"surface": { "$value": … }` and (b) a design
+// system's own custom token (e.g. Carbon's `semantic.color.carbon.background`) holds a
+// `$value` directly. So the nested-JSON patterns REQUIRE an old cell child — a bare
+// `"background": { "$value" }` is left alone, an old `"background": { "base" }` is not.
 const DEAD_VOCAB = [
   { name: 'text-on-<role> foreground slots', re: /text-on-/ },
   // (?<!text): text.subtle is a legitimate new content-hierarchy rung, not the old grid cell
   { name: '.subtle color scale slot', re: /(?<!text)\.subtle\b/ },
   { name: 'surface-raised slot', re: /surface-raised/ },
-  { name: '<role>.base / .hover / .active / .contrast (old grid, qualified path)', re: /semantic\.color\.[a-z][\w-]*\.(base|hover|active|contrast)\b/ },
-  { name: 'background.base / surface.base / overlay.base (old surface slots, qualified path)', re: /semantic\.color\.(background|surface|overlay)\.base\b/ },
-  { name: 'text-muted.base (old content slot, qualified path)', re: /semantic\.color\.text-muted\.base\b/ },
+  // ---- dotted-path forms (code, prose, config values) ----
+  { name: '<role>.base / .hover / .active / .contrast (old grid, dotted path)', re: /semantic\.color\.[a-z][\w-]*\.(base|hover|active|contrast)\b/ },
+  { name: 'background.base / surface.base / overlay.base (old surface slots, dotted path)', re: /semantic\.color\.(background|surface|overlay)\.base\b/ },
+  { name: 'text-muted.base (old content slot, dotted path)', re: /semantic\.color\.text-muted\.base\b/ },
+  // ---- nested-JSON forms (token files, docs code-fences) ----
+  // A color role directly holding an old grid cell — text.base / link.{base,hover,visited}
+  // are NOT color roles, so they can never match this (that's why the role set is explicit).
+  { name: '<role> with an old grid cell (base/hover/active/subtle/contrast), JSON-nested', re: /"(primary|secondary|accent|success|warning|danger|info|neutral)"\s*:\s*\{[^{}]*"(base|hover|active|subtle|contrast)"\s*:/ },
+  // Old surface/content slots that still carry a `.base` child (the new elevation leaf
+  // and custom `<system>.background` tokens hold `$value` directly, so they don't match).
+  { name: 'background/surface/overlay/text-muted old .base slot, JSON-nested', re: /"(background|surface|overlay|text-muted)"\s*:\s*\{[^{}]*"base"\s*:/ },
 ];
 const DEAD_VOCAB_EXCLUDE_FILES = [
   // Explains the old->new mapping by name; excluded from the pattern guard,
   // reviewed by hand instead. Keep this list tiny.
   'website/src/docs/language.md',
 ];
+const deadVocabHits = (text) => DEAD_VOCAB.some(({ re }) => re.test(text));
 function scanDeadVocab(relPath, text) {
   if (DEAD_VOCAB_EXCLUDE_FILES.includes(relPath)) return;
   for (const { name, re } of DEAD_VOCAB) {
     const m = re.exec(text);
     if (m) fail(`${relPath}: dead vocabulary "${name}" found (matched "${m[0]}") — the catalog was revised, see ADR-0010`);
   }
+}
+
+// Guard the guard: the DEAD_VOCAB patterns are the contract, so their behavior is
+// tested against fixtures. Weaken a pattern (or a false positive creep in) and this
+// fails immediately, before the file scan — so the guard can't silently rot. Each
+// MUST_MATCH is a real old spelling; each MUST_NOT is current vocab that once tripped
+// a naive pattern (text.base, link.hover, the elevation leaf, custom `<sys>.background`).
+const DEAD_VOCAB_MUST_MATCH = [
+  'semantic.color.primary.base',
+  '"primary": { "base": { "$value": "x" } }',
+  '"danger": { "solid-hover-was": 0, "hover": {} }',
+  '"surface": { "base": { "$value": "x" } }',
+  '"background": { "base": { "$value": "x" } }',
+  '"text-muted": { "base": { "$value": "x" } }',
+  'text-on-primary.base',
+  'primary.subtle',
+  'surface-raised.base',
+];
+const DEAD_VOCAB_MUST_NOT = [
+  '"primary": { "solid": { "$value": "x" } }',
+  '"text": { "base": { "$value": "x" } }',           // text.base is a real ladder rung
+  '"link": { "base": {}, "hover": {}, "visited": {} }', // link cells are current vocab
+  '"elevation": { "1": { "surface": { "$value": "x" } } }', // new elevation leaf
+  '"carbon": { "background": { "$value": "x" } }',    // custom token, holds $value directly
+  'semantic.color.text.subtle',                       // text.subtle is a real content rung
+];
+for (const s of DEAD_VOCAB_MUST_MATCH) {
+  if (!deadVocabHits(s)) fail(`dead-vocab self-test: expected a pattern to catch ${JSON.stringify(s)} but none did (a pattern was weakened)`);
+}
+for (const s of DEAD_VOCAB_MUST_NOT) {
+  if (deadVocabHits(s)) fail(`dead-vocab self-test: a pattern falsely matched legitimate vocab ${JSON.stringify(s)} (false positive)`);
 }
 function walkFiles(dir, filter) {
   const out = [];
@@ -154,6 +206,9 @@ for (const ex of examples) {
   scanDeadVocab(configRel, read(configRel));
 }
 for (const rel of walkFiles('website/src/docs', (n) => n.endsWith('.md'))) scanDeadVocab(rel, read(rel));
+// The homepage and layouts reference catalog vocab too (e.g. the token showcase) —
+// scan the rest of the site's authored sources so dead names can't hide there.
+for (const rel of walkFiles('website/src/pages', (n) => n.endsWith('.astro'))) scanDeadVocab(rel, read(rel));
 
 if (errors.length) {
   console.error(`✖ sync check failed — ${errors.length} violation(s) of the CONTRIBUTING sync rule:\n`);
