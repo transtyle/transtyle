@@ -55,8 +55,8 @@ The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited th
 - [ ] **R1** — T11 practitioner sign-off & Phase 1 exit *(human)*
 - [~] **R2** — Freeze-readiness audit ([ADR-0011](docs/adr/0011-v0-freeze-readiness.md), draft 2026-07-22): **IR spec v0 freeze-ready** (every guarantee cited against a CI script); **plugin API freeze deferred** to P1 (spec diverges from the implemented interface). Ratifies when R1 signs; the freeze discipline re-arms at R4 per ADR-0010.
 - [x] **R3** — Real JSON schemas + strict options validation (audit A7 + A8's options half) — done 2026-07-22 (zero-dep validator + published `config/v0` & `report/v0` schemas from one source of truth; config keys and per-exporter options validated at load time, `TST1010`/`TST1011`; `check:schemas` in CI. A8's manifest-range half stays deferred to P1 per [ADR-0011](docs/adr/0011-v0-freeze-readiness.md).)
-- [ ] **R4** — npm publication of `@transtyle/*` *(publish step human-gated)*
-- [ ] **R5** — Website deployed on a real domain *(domain purchase human)*
+- [⏸] **R4** — npm publication of `@transtyle/*` — **parked (maintainer, 2026-07-22): not a priority until a good first alpha exists.** R3 already staged the prerequisites (real schemas). The freeze re-arm (ADR-0010) that R4 triggers therefore also waits — pre-alpha, in-place breaking changes stay allowed.
+- [⏸] **R5** — Website deployed on a real domain — **parked (maintainer, 2026-07-22): same gate.** The schema `$id` URLs resolve only once this lands, which is fine pre-alpha. Site is developed and previewed locally until then.
 - [ ] **P1** — Plugin conformance kit
 - [ ] **P2** — "Write your own exporter" tutorial
 - [ ] **P3** — Recruited third-party exporter pilot ← tests W1 (v1.0 exit criterion)
@@ -72,6 +72,8 @@ The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited th
 - [x] **D4** — Visuals + GOV.UK end-to-end showcase — done 2026-07-22 (`govuk-showcase.md`: real source values, the six judgment calls, an eight-target coverage matrix and honesty-notes table all built from live `transtyle build`/`explain` output; new `.covmatrix` + `.jcalls` theme-aware components)
 
 Explicitly not scheduled this half: new exporters beyond the pilot's, catalog growth, MUI/Ant (after the object-emitter pattern is proven by the pilot).
+
+**Priority note (maintainer, 2026-07-22):** publication (R4) and public deployment (R5) are **deprioritized until the project reaches a good first alpha** — the near-term focus is making the compiler genuinely good to use, not shipping it. Every task that lists `Depends: R4` (P2 tutorial, P3 pilot, P5 playground) inherits that gate; work that doesn't need published packages (R1, P1, P6, the importers, docs) is unaffected. "First alpha" is not yet crisply defined — worth pinning down before the next planning pass.
 
 ## Phase 2 — Trust and workflow (v1.0)
 
