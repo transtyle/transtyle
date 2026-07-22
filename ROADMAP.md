@@ -48,6 +48,28 @@ Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir
 
 **Exit:** a real design system compiles to all reference targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — *Progress: two real DSs (GOV.UK, Carbon) compile to all seven shipped targets, zero diagnostics, and render correctly in the demo projects (engine-side verification complete); `docs/findings/t11-review-checklist.md` is ready for the maintainer's own practitioner pass — Phase 1 exit is contingent on that sign-off, per the exit criterion's own wording.*
 
+## 2026-H2 execution ledger
+
+The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited the project's assumptions (verdict: the at-risk assumptions W1–W3 are go-to-market, not engineering) and produced a six-month, model-assigned plan. Precise task specs — files, acceptance commands, dependencies — live in **[docs/plan/execution-2026-h2.md](docs/plan/execution-2026-h2.md)**; states are tracked here. Tasks close Phase 0's tail (R2), Phase 1's exit (R1), and advance Phase 2 (P/I) and the docs (D).
+
+- [ ] **R1** — T11 practitioner sign-off & Phase 1 exit *(human)*
+- [ ] **R2** — Formal freeze declaration: IR spec v0 + plugin API v0 (ADR-0011)
+- [ ] **R3** — Real JSON schemas + strict options validation (audit A7+A8)
+- [ ] **R4** — npm publication of `@transtyle/*` *(publish step human-gated)*
+- [ ] **R5** — Website deployed on a real domain *(domain purchase human)*
+- [ ] **P1** — Plugin conformance kit
+- [ ] **P2** — "Write your own exporter" tutorial
+- [ ] **P3** — Recruited third-party exporter pilot ← tests W1 (v1.0 exit criterion)
+- [ ] **P4** — Hostile-adoption experiment (real DS, no published tokens) ← tests W2; decides I1/I2 order
+- [ ] **P5** — Browser playground
+- [ ] **P6** — `transtyle diff` (spec, then implementation)
+- [ ] **I1** — Tailwind config importer
+- [ ] **I2** — Figma variables importer
+- [ ] **I3** — Watch mode + CI recipe
+- [ ] **D1** — Docs information-architecture pass · **D2** — beginner path · **D3** — reference clarity rewrite (after R2) · **D4** — visuals + GOV.UK showcase
+
+Explicitly not scheduled this half: new exporters beyond the pilot's, catalog growth, MUI/Ant (after the object-emitter pattern is proven by the pilot).
+
 ## Phase 2 — Trust and workflow (v1.0)
 
 - `transtyle diff`: semantic diff between two DS versions, per-target impact summary.

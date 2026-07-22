@@ -336,3 +336,5 @@ Blocks: nothing; the showcase page doubles as P3 recruitment collateral
 ## Review complete
 
 Delivered: Part 1 (five challenge questions answered from repo evidence; three at-risk assumptions W1–W3, all go-to-market rather than engineering), Part 2 (14 tasks, model-assigned, dependency-ordered, six-month backlog), Part 3 (four docs tasks correcting the brief's stale premise). Committed in three increments per the save-checkpoints constraint.
+
+**Handoff:** the executable half of this review — exact files, acceptance commands, dependencies per task, in the house plan style — is [docs/plan/execution-2026-h2.md](execution-2026-h2.md); task states are tracked in the ROADMAP's [2026-H2 execution ledger](../../ROADMAP.md#2026-h2-execution-ledger).
