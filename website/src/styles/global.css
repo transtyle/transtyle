@@ -190,6 +190,39 @@ h1, h2, h3 { text-wrap: balance; }
   .schema .s-arrow { transform: rotate(90deg); align-self: center; }
 }
 
+/* .covmatrix — one row per target: label + a real stacked coverage bar + counts.
+   Drive each segment width with an inline --n (percent). Classes reuse the
+   site-wide coverage palette; grey (--cov-other) covers dropped + unsupported. */
+.covmatrix { display: flex; flex-direction: column; gap: 0.5rem; margin: 1.3rem 0; }
+.covmatrix .cm-row { display: grid; grid-template-columns: 8.5rem 1fr; gap: 0.9rem; align-items: center; }
+.covmatrix .cm-name { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.82rem; font-weight: 600; }
+.covmatrix .cm-bar { display: flex; height: 1.5rem; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-soft); background: var(--bg-soft); }
+.covmatrix .cm-seg { height: 100%; }
+.covmatrix .cm-seg.native { background: var(--cov-native); }
+.covmatrix .cm-seg.derived { background: var(--cov-derived); }
+.covmatrix .cm-seg.approx { background: var(--cov-approx); }
+.covmatrix .cm-seg.other { background: color-mix(in oklch, var(--text-muted) 45%, transparent); }
+.covmatrix-legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1.3rem; font-size: 0.8rem; color: var(--text-muted); margin: 0.4rem 0 0; }
+.covmatrix-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.35rem; vertical-align: baseline; }
+.covmatrix-legend i.native { background: var(--cov-native); }
+.covmatrix-legend i.derived { background: var(--cov-derived); }
+.covmatrix-legend i.approx { background: var(--cov-approx); }
+.covmatrix-legend i.other { background: color-mix(in oklch, var(--text-muted) 45%, transparent); }
+
+/* .jcalls — judgment-call cards: what the source didn't say, and what was chosen. */
+.jcalls { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.9rem; margin: 1.3rem 0; }
+.jcalls .jcall { border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem 1.1rem; background: var(--surface); box-shadow: var(--shadow); }
+.jcalls .jcall.clean { border-left: 3px solid var(--cov-native); }
+.jcalls .jcall.chose { border-left: 3px solid var(--cov-approx); }
+.jcalls .jcall.derived { border-left: 3px solid var(--cov-derived); }
+.jcalls .jc-slot { font-family: 'JetBrains Mono Variable', monospace; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 0.45rem; }
+.jcalls .jc-slot .sw { margin: 0; }
+.jcalls .jc-body { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem; }
+.jcalls .jc-tag { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700; }
+.jcalls .jcall.clean .jc-tag { color: var(--cov-native); }
+.jcalls .jcall.chose .jc-tag { color: var(--cov-approx); }
+.jcalls .jcall.derived .jc-tag { color: var(--cov-derived); }
+
 /* Provenance/coverage chips — always the same three colors, site-wide. */
 .prov { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 99px; white-space: nowrap; }
 .prov.native, .prov.authored { background: color-mix(in oklch, var(--cov-native) 16%, transparent); color: var(--cov-native); }

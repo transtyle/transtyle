@@ -69,7 +69,7 @@ The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited th
 - [x] **D1** — Docs information-architecture pass — done 2026-07-22 (six labeled nav sections, prev/next pager, on-page TOC with scrollspy; plus the `check:docs` docs-precision guard, which found and fixed 12 broken anchors)
 - [x] **D2** — Beginner path — done 2026-07-22 ("Learn" nav section: *What is a design token?* (code-free) → *How Transtyle works* (one diagram, code-free) → *Your first build* (every output real, produced by executing the walkthrough against `examples/acme`))
 - [ ] **D3** — Reference clarity rewrite (after R2)
-- [ ] **D4** — Visuals + GOV.UK end-to-end showcase
+- [x] **D4** — Visuals + GOV.UK end-to-end showcase — done 2026-07-22 (`govuk-showcase.md`: real source values, the six judgment calls, an eight-target coverage matrix and honesty-notes table all built from live `transtyle build`/`explain` output; new `.covmatrix` + `.jcalls` theme-aware components)
 
 Explicitly not scheduled this half: new exporters beyond the pilot's, catalog growth, MUI/Ant (after the object-emitter pattern is proven by the pilot).
 
