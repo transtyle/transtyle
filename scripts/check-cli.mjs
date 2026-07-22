@@ -8,7 +8,7 @@
  * target, unknown slot) behave as specced.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -79,8 +79,49 @@ try {
   })());
 }
 
+// ---------- P6: diff against a git ref ----------
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-diff-'));
+  const git = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' });
+  const runIn = (args) => {
+    const r = spawnSync('node', [cli, ...args, '--cwd', dir], { encoding: 'utf8' });
+    return { code: r.status ?? 1, out: (r.stdout ?? '') + (r.stderr ?? ''), stdout: r.stdout ?? '' };
+  };
+  try {
+    git('init', '-q');
+    git('config', 'user.email', 't@t.test');
+    git('config', 'user.name', 'test');
+    runIn(['init', 'diff-ds']);
+    git('add', '-A');
+    git('commit', '-q', '-m', 'initial');
+
+    let r = runIn(['diff']);
+    expect('diff: no changes vs HEAD (exit 0)', r.code === 0, `exit ${r.code}: ${r.out}`);
+    expect('diff: reports identical', r.out.includes('No semantic changes'));
+
+    // Change the authored brand color, uncommitted.
+    const tp = join(dir, 'tokens/brand.tokens.json');
+    writeFileSync(tp, readFileSync(tp, 'utf8').replace('oklch(0.55 0.18 255)', 'oklch(0.55 0.19 25)'));
+
+    r = runIn(['diff']);
+    expect('diff: detects a change (exit 1)', r.code === 1, `exit ${r.code}`);
+    expect('diff: names the changed slot', r.out.includes('primary.solid'));
+    expect('diff: shows per-target impact', r.out.includes('Per-target impact:'));
+
+    r = runIn(['diff', '--json']);
+    expect('diff --json: parseable with hasChanges true', (() => {
+      try { return JSON.parse(r.stdout).hasChanges === true; } catch { return false; }
+    })(), r.out);
+
+    r = runIn(['diff', 'no-such-ref']);
+    expect('diff: unknown ref refused (exit 2)', r.code === 2, `exit ${r.code}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init/add/build/explain golden path and error cases all pass');
+console.log('\n✔ check-cli: init/add/build/explain/diff golden path and error cases all pass');

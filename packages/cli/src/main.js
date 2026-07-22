@@ -5,9 +5,11 @@
  */
 
 import path from 'node:path';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, formatColor, formatHex } from '@transtyle/core';
+import { compile, diffResolved, formatColor, formatHex } from '@transtyle/core';
 
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -50,16 +52,17 @@ Usage:
   transtyle build [target...]     compile configured targets (default: all)
   transtyle check [target...]     run the pipeline without writing files
   transtyle explain <slot>        show a resolved slot's value, provenance, and rule inputs
+  transtyle diff [ref]            semantic diff of the resolved graph vs a git ref (default: HEAD), with per-target impact
   transtyle init [name]           scaffold transtyle.config.json + tokens/tokens.json
   transtyle add <target>          add a target to transtyle.config.json
 Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
   --mode <name>                   mode to resolve for (explain only; default: the DS's default mode)
-  --json                          check only: also print a machine-readable report to stdout
+  --json                          check/diff only: also print a machine-readable report to stdout
 `;
 
 const ICONS = { error: '✖', warning: '⚠', info: 'ℹ' };
-const COMMANDS = ['build', 'check', 'explain', 'init', 'add'];
+const COMMANDS = ['build', 'check', 'explain', 'diff', 'init', 'add'];
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -70,6 +73,7 @@ async function main() {
   }
 
   if (args.command === 'explain') return cmdExplain(args);
+  if (args.command === 'diff') return cmdDiff(args);
   if (args.command === 'init') return cmdInit(args);
   if (args.command === 'add') return cmdAdd(args);
   return cmdBuildOrCheck(args);
@@ -233,6 +237,152 @@ function levenshtein(a, b) {
     }
   }
   return dp[a.length][b.length];
+}
+
+// ---------- diff ----------
+
+/**
+ * Semantic diff of the working tree against a git ref (default HEAD), plus
+ * per-target impact. Resolves both sides with emit:false and diffs the resolved
+ * graph (diffResolved) and the in-memory emitted files (docs/specs/diff.md).
+ * Exit 0 = no changes; exit 1 = changes found (so it composes in CI, like `git
+ * diff --exit-code`); exit 2 = usage/environment error.
+ */
+async function cmdDiff(args) {
+  const ref = args.targets[0] ?? 'HEAD';
+
+  // "after" = the working tree as it is now.
+  let after;
+  try {
+    after = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter });
+  } catch (e) { console.error(`✖ ${e.message}`); process.exit(2); }
+
+  // "before" = the project at `ref`, materialized into a temp dir via git archive.
+  let repoRoot;
+  try {
+    repoRoot = execSync('git rev-parse --show-toplevel', { cwd: args.cwd, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch { console.error('✖ transtyle diff requires a git repository'); process.exit(2); }
+  try {
+    execSync(`git rev-parse --verify --quiet ${ref}^{commit}`, { cwd: repoRoot, stdio: 'ignore' });
+  } catch { console.error(`✖ Unknown git ref: ${ref}`); process.exit(2); }
+
+  // The project's path relative to the repo root, straight from git — avoids the
+  // macOS /var → /private/var symlink mismatch that path.relative(toplevel, cwd)
+  // would produce (toplevel is realpath'd, cwd may be the symlink).
+  const prefix = execSync('git rev-parse --show-prefix', { cwd: args.cwd, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().replace(/\/$/, '');
+  const tmp = mkdtempSync(path.join(tmpdir(), 'transtyle-diff-'));
+  let before;
+  try {
+    execSync(`git archive ${ref} ${prefix} | tar -x -C "${tmp}"`, { cwd: repoRoot, stdio: ['ignore', 'ignore', 'pipe'] });
+    const beforeCwd = path.join(tmp, prefix);
+    if (!existsSync(path.join(beforeCwd, 'transtyle.config.json'))) {
+      console.error(`ℹ No transtyle project at ${ref} — nothing to diff against.`);
+      rmSync(tmp, { recursive: true, force: true });
+      process.exit(0);
+    }
+    before = await compile({ cwd: beforeCwd, targets: [], emit: false, loadExporter });
+  } catch (e) {
+    rmSync(tmp, { recursive: true, force: true });
+    console.error(`✖ Could not resolve the project at ${ref}: ${e.message}`);
+    process.exit(2);
+  }
+  rmSync(tmp, { recursive: true, force: true });
+
+  const diff = diffResolved(before.normalized, after.normalized);
+  const impact = diffTargets(before.results, after.results);
+
+  if (args.json) {
+    console.log(JSON.stringify(serializeDiff(ref, diff, impact), null, 2));
+  } else {
+    printDiff(ref, diff, impact);
+  }
+  // Set exitCode rather than process.exit(): the JSON report can be tens of KB,
+  // and process.exit() truncates an async stdout write to a pipe mid-flush.
+  process.exitCode = diff.hasChanges ? 1 : 0;
+}
+
+/** Per-target impact: re-emit both sides (already done by compile) and diff file contents. */
+function diffTargets(beforeResults, afterResults) {
+  const byName = (rs) => new Map(rs.map((r) => [r.target, r]));
+  const b = byName(beforeResults), a = byName(afterResults);
+  const names = [...new Set([...b.keys(), ...a.keys()])].sort();
+  const rows = [];
+  for (const name of names) {
+    const br = b.get(name), ar = a.get(name);
+    if (!br) { rows.push({ target: name, status: 'new-target' }); continue; }
+    if (!ar) { rows.push({ target: name, status: 'removed-target' }); continue; }
+    const bf = new Map((br.emitted ?? []).map((f) => [f.path, f.contents]));
+    const af = new Map((ar.emitted ?? []).map((f) => [f.path, f.contents]));
+    let changedLines = 0; const samples = [];
+    for (const [p, ac] of af) {
+      if (p.endsWith('usage.md')) continue; // generated docs, not the theme itself
+      const bc = bf.get(p);
+      if (bc === ac) continue;
+      const d = lineChanges(bc ?? '', ac);
+      changedLines += d.length;
+      for (const line of d) if (samples.length < 8) samples.push(`${p}: ${line}`);
+    }
+    rows.push({ target: name, status: 'changed', changedLines, samples });
+  }
+  return rows;
+}
+
+/** Meaningful (non-comment, non-blank) lines in `after` absent verbatim from `before`. */
+function lineChanges(before, after) {
+  const beforeLines = new Set(before.split('\n').map((l) => l.trim()));
+  const out = [];
+  for (const raw of after.split('\n')) {
+    const l = raw.trim();
+    if (!l || l.startsWith('*') || l.startsWith('//') || l.startsWith('/*')) continue;
+    if (!beforeLines.has(l)) out.push(l);
+  }
+  return out;
+}
+
+function serializeDiff(ref, diff, impact) {
+  return {
+    ref,
+    hasChanges: diff.hasChanges,
+    semantic: diff.modes.map((m) => ({
+      mode: m.mode,
+      added: m.added,
+      removed: m.removed,
+      changed: m.changed.map((c) => ({
+        slot: c.slot,
+        before: formatEntryValue(c.before),
+        after: formatEntryValue(c.after),
+        provenance: c.provChanged ? `${c.before.provenance.kind} → ${c.after.provenance.kind}` : c.after.provenance.kind,
+      })),
+    })),
+    impact: impact.map((r) => ({ target: r.target, status: r.status, changedLines: r.changedLines ?? 0 })),
+  };
+}
+
+function printDiff(ref, diff, impact) {
+  if (!diff.hasChanges) {
+    console.error(`No semantic changes vs ${ref} — compiled themes are identical.`);
+    return;
+  }
+  console.error(`Semantic diff vs ${ref}:\n`);
+  for (const m of diff.modes) {
+    if (!m.added.length && !m.removed.length && !m.changed.length) continue;
+    console.error(`[${m.mode}]`);
+    for (const s of m.added) console.error(`  + ${s}`);
+    for (const s of m.removed) console.error(`  - ${s}`);
+    for (const c of m.changed) {
+      const prov = c.provChanged ? `  (${c.before.provenance.kind} → ${c.after.provenance.kind})` : '';
+      console.error(`  ~ ${c.slot}  ${formatEntryValue(c.before)} → ${formatEntryValue(c.after)}${prov}`);
+    }
+    console.error('');
+  }
+  console.error('Per-target impact:');
+  for (const r of impact) {
+    if (r.status === 'new-target') { console.error(`  ${r.target}: new target (not present at ${ref})`); continue; }
+    if (r.status === 'removed-target') { console.error(`  ${r.target}: removed since ${ref}`); continue; }
+    if (!r.changedLines) { console.error(`  ${r.target}: no output change`); continue; }
+    console.error(`  ${r.target}: ${r.changedLines} line${r.changedLines === 1 ? '' : 's'} changed`);
+    for (const s of r.samples) console.error(`      ${s}`);
+  }
 }
 
 // ---------- init ----------

@@ -16,6 +16,7 @@ import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './
 
 export { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 export { Diagnostics } from './diagnostics.js';
+export { diffResolved } from './diff.js';
 
 /**
  * Run the pipeline. `emit: false` = `transtyle check` (pipeline minus EMIT —
@@ -106,7 +107,10 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
       await writeFile(path.join(outDir, 'report.json'), JSON.stringify(report, null, 2) + '\n', 'utf8');
       written.push(path.relative(cwd, path.join(outDir, 'report.json')));
     }
-    results.push({ target: name, files: written, coverage });
+    // `emitted` carries the file *specs* (path + contents) even when emit is
+    // off — `transtyle diff` re-emits both sides in-memory to compute per-target
+    // impact without writing anything. `files` stays the written paths.
+    results.push({ target: name, files: written, coverage, emitted: files });
   }
 
   return { config, diagnostics, results, normalized };

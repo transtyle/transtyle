@@ -62,6 +62,25 @@ npx transtyle explain primary.on-tint
 
 An unknown slot exits 2 and lists the 5 closest catalog names instead of a bare error.
 
+### `transtyle diff [ref]`
+
+Semantic diff of the **resolved** token graph against a git ref (default `HEAD`), plus per-target impact. It compiles both the working tree and the project at the ref and compares resolved values per mode — so a token rename that changes no resolved value reports nothing, while one authored change shows its full derived cascade.
+
+```bash
+npx transtyle diff              # what have I changed since my last commit?
+npx transtyle diff main         # what does this branch do to the compiled themes?
+#
+# Semantic diff vs main:
+# [light]
+#   ~ semantic.color.primary.solid  oklch(0.55 0.18 255)  [#026fd7] → oklch(0.55 0.19 25)  [#ca3535]
+#   ...
+# Per-target impact:
+#   bootstrap: 63 lines changed
+#   shadcn: 34 lines changed
+```
+
+Exits `0` when the compiled themes are identical, `1` when there are changes (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling. Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
+
 ### `transtyle init [name]`
 
 Scaffolds `transtyle.config.json` + `tokens/brand.tokens.json` (a minimal example: one brand color, elevation levels 0–1, text, border, radius, fonts — each with a `$description: "TODO: ..."` placeholder) and a `css-variables` target so the first build works immediately. Refuses (exit 2) if a config already exists.
@@ -77,6 +96,8 @@ Validates the target against the CLI's known exporters and inserts `"<target>": 
 | 0 | Success (possibly with warnings below your `check.failOn` threshold) |
 | 1 | Diagnostics at or above the `failOn` threshold |
 | 2 | Usage or config error (unknown command, missing config, broken exporter) |
+
+`transtyle diff` overloads exit `1` to mean "changes found" (like `git diff --exit-code`), not a diagnostic failure.
 
 ## Diagnostics format
 
@@ -98,7 +119,6 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle init` (interactive mode) | A brand-color prompt instead of the fixed placeholder scaffold shipped today |
 | `transtyle add <exporter>` (community plugins) | Install + register third-party exporter packages, printing their manifest first |
 | `transtyle explain <token> --target <t>` (new flag) | Also show which target variable the value maps to and why (today's `explain` stops at provenance) |
-| `transtyle diff [ref]` | Semantic diff of the resolved token graph vs. a git ref, with per-target impact |
 | `transtyle import <source>` | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
 | `transtyle preview` | Local themed preview site across all targets |
 
