@@ -22,13 +22,14 @@ const { title, description = 'Transtyle is a design system compiler: describe yo
   </script>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <a class="wordmark" href="/">
       <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="oklch(0.55 0.19 262)"/><stop offset="1" stop-color="oklch(0.55 0.2 296)"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M18 24h28M32 24v22" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/></svg>
       transtyle
     </a>
-    <nav class="site-nav">
-      <a href="/docs/" class={current === 'docs' ? 'active' : ''}>Docs</a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="/docs/" class={current === 'docs' ? 'active' : ''} aria-current={current === 'docs' ? 'page' : undefined}>Docs</a>
       <a href="/docs/ai-agents/">For AI agents</a>
       <a href="https://github.com/transtyle" rel="noopener">GitHub</a>
       <button id="theme-toggle" aria-label="Toggle color scheme" title="Toggle color scheme">

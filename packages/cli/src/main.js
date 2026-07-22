@@ -291,7 +291,7 @@ async function cmdInit(args) {
 Next steps:
   1. Edit tokens/brand.tokens.json — replace the TODO placeholders with your brand.
   2. npx transtyle build          (starts with css-variables; add more with "add")
-  3. npx transtyle add <target>   (shadcn, daisyui, bootstrap, storybook, css-variables)`);
+  3. npx transtyle add <target>   (${Object.keys(OFFICIAL_EXPORTERS).join(', ')})`);
 }
 
 // ---------- add ----------

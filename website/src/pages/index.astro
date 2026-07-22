@@ -2,13 +2,14 @@
 import Base from '../layouts/Base.astro';
 ---
 <Base title="Transtyle — the design system compiler" current="home">
-  <main>
+  <main id="main">
     <section class="hero">
       <p class="eyebrow">Design System Compiler</p>
       <h1>One design system.<br /><span class="grad">Every ecosystem.</span></h1>
       <p class="sub">
         Describe your design system once, as standard W3C design tokens. Transtyle compiles it into
-        native, idiomatic themes — shadcn/ui, daisyUI, Apache ECharts, Bootstrap and Storybook today.
+        native, idiomatic themes for <strong>eight ecosystems today</strong> — shadcn/ui, daisyUI,
+        Apache&nbsp;ECharts, Bootstrap, Storybook, Radix&nbsp;Themes, PrimeNG, and plain CSS variables.
         Deterministic. Explainable. Zero runtime.
       </p>
       <div class="cta">
@@ -16,16 +17,17 @@ import Base from '../layouts/Base.astro';
         <a class="btn" href="/docs/">Read the docs</a>
       </div>
 
-      <div class="terminal" role="img" aria-label="Terminal output of a transtyle build">
+      <div class="terminal">
         <div class="term-bar"><span></span><span></span><span></span><em>examples/acme</em></div>
-        <pre><code><span class="dim">$</span> npx transtyle build shadcn
+        <pre><code><span class="dim">$</span> npx transtyle build shadcn bootstrap echarts
 
-shadcn  <span class="cov-n">43% native</span> · <span class="cov-d">54% derived</span> · <span class="cov-a">3% approximated</span>
+shadcn     <span class="cov-n">43% native</span> · <span class="cov-d">54% derived</span> · <span class="cov-a">3% approximated</span>
   ↳ dist/shadcn/globals.transtyle.css
-  ↳ dist/shadcn/usage.md
-  ↳ dist/shadcn/report.json
+bootstrap  ↳ dist/bootstrap/_variables.transtyle.scss
+echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
+           ↳ report.json — provenance for every value
 
-<span class="ok">✔ build complete</span></code></pre>
+<span class="ok">✔ build complete — rebuilds are byte-identical</span></code></pre>
       </div>
 
       <p class="strip">
@@ -36,9 +38,9 @@ shadcn  <span class="cov-n">43% native</span> · <span class="cov-d">54% derived
       </p>
     </section>
 
-    <section class="band">
-      <h2>A compiler, not a converter</h2>
-      <p class="band-sub">The architecture of Babel and LLVM, applied to design systems: pluggable frontends and backends around one intermediate representation. N sources + M targets = N×M translation paths, for N+M cost.</p>
+    <section class="band" aria-labelledby="h-pipeline">
+      <h2 id="h-pipeline">A compiler, not a converter</h2>
+      <p class="band-sub">The architecture of Babel and LLVM, applied to design systems: pluggable frontends and backends around one intermediate representation. N sources and M targets cost N+M mappings, not N×M converters.</p>
       <div class="pipeline">
         <div class="pipe-col">
           <h3>Frontends</h3>
@@ -47,12 +49,13 @@ shadcn  <span class="cov-n">43% native</span> · <span class="cov-d">54% derived
           <div class="chip soon">Tailwind config</div>
           <div class="chip soon">Bootstrap Sass</div>
         </div>
-        <div class="pipe-arrow">→</div>
+        <div class="pipe-arrow" aria-hidden="true">→</div>
         <div class="pipe-col ir">
           <h3>Intermediate representation</h3>
           <div class="chip ir-chip">normalize · derive ·<br />validate · explain</div>
+          <p class="pipe-note">the <a href="/docs/language/">semantic catalog</a> — a pivot vocabulary of <em>meanings</em>, not names</p>
         </div>
-        <div class="pipe-arrow">→</div>
+        <div class="pipe-arrow" aria-hidden="true">→</div>
         <div class="pipe-col">
           <h3>Backends</h3>
           <div class="chip">shadcn/ui</div>
@@ -60,50 +63,83 @@ shadcn  <span class="cov-n">43% native</span> · <span class="cov-d">54% derived
           <div class="chip">Apache ECharts</div>
           <div class="chip">Bootstrap</div>
           <div class="chip">Storybook</div>
+          <div class="chip">Radix Themes</div>
+          <div class="chip">PrimeNG</div>
+          <div class="chip">CSS variables</div>
         </div>
       </div>
     </section>
 
-    <section class="band alt">
-      <h2>Author 11 tokens. Ship a complete theme.</h2>
-      <p class="band-sub">The derivation engine fills every slot you didn't author — hover states, on-colors, subtle tints, dark mode wiring, a data-viz palette — with deterministic, versioned rules. Authored values always win. Every value knows its origin.</p>
+    <section class="band alt" aria-labelledby="h-derive">
+      <h2 id="h-derive">Author 11 tokens. Ship a complete theme.</h2>
+      <p class="band-sub">You author only real design decisions — in the catalog's vocabulary of meanings. The derivation engine fills every slot you didn't author — hover states, on-colors, tints, dark-mode wiring, a data-viz palette — with deterministic, versioned rules. Authored always wins; every value knows its origin.</p>
       <div class="duo">
         <div class="card">
-          <div class="card-label">You write</div>
+          <div class="card-label">You write <span class="prov authored">authored</span></div>
           <pre><code>{`{ "semantic": { "color": {
-    "primary":    { "base": "oklch(0.55 0.18 255)" },
-    "background": { "base": "…", "dark": "…" },
-    "text":       { "base": "…", "dark": "…" }
+  "primary": { "solid": "{option.color.blue.600}" },
+  "elevation": { "0": { "surface": "…light + dark…" } },
+  "text":    { "base": "…", "muted": "…" },
+  "border":  "…"
 } } }`}</code></pre>
         </div>
         <div class="card">
-          <div class="card-label">You get</div>
+          <div class="card-label">You get <span class="prov derived">derived</span></div>
           <pre><code>{`--primary: oklch(0.55 0.18 255);
---primary-foreground: oklch(1 0 0);  /* contrast-picked, AA ✓ */
---accent: oklch(0.95 0.017 255);     /* brand-tinted  · derived */
---chart-1 … --chart-5               /* palette        · derived */
-+ 26 more variables, light + dark`}</code></pre>
+--primary-foreground: oklch(1 0 0); /* contrast-picked, AA ✓ */
+--accent: oklch(0.95 0.017 255);    /* brand-tinted */
+--chart-1 … --chart-5               /* hue-rotated palette */
++ every hover/active state, light + dark —
+  for all eight targets, from the same tokens`}</code></pre>
         </div>
       </div>
+      <p class="band-foot">Ask the compiler why: <code>npx transtyle explain primary.tint</code> prints the value's full provenance chain.</p>
     </section>
 
-    <section class="band">
-      <h2>Honest about lossiness</h2>
+    <section class="band" aria-labelledby="h-language">
+      <h2 id="h-language">One meaning, every dialect</h2>
+      <p class="band-sub">Frameworks disagree on names, not needs. The catalog slot is the <em>meaning</em>; each exporter speaks its target's dialect natively. Your <code>danger</code>, everywhere:</p>
+      <div class="xlate">
+        <div class="x-src"><span class="sw" style="--c:oklch(0.55 0.19 25)"></span><code>danger.solid</code></div>
+        <div class="x-arrow" aria-hidden="true">→</div>
+        <ul class="x-out">
+          <li><code>--destructive</code><em>shadcn/ui</em></li>
+          <li><code>$danger</code><em>Bootstrap Sass</em></li>
+          <li><code>--color-error</code><em>daisyUI</em></li>
+          <li><code>--danger-9</code><em>Radix Themes</em></li>
+          <li><code>danger</code> severity<em>PrimeNG preset</em></li>
+        </ul>
+      </div>
+      <p class="band-foot">The full pivot vocabulary is one page: <a href="/docs/language/">the Transtyle language</a>. Your own names stay yours — you bind them once, with <a href="/docs/adopt-existing/">one-line aliases</a>.</p>
+    </section>
+
+    <section class="band alt" aria-labelledby="h-honest">
+      <h2 id="h-honest">Honest about lossiness</h2>
       <p class="band-sub">Translation between ecosystems is lossy. Transtyle doesn't hide it — it measures it. Every build classifies every variable, so trust is a number, not a vibe.</p>
       <div class="coverage">
         <div class="cov-bar">
           <span class="seg native" style="width:43%">native</span><span class="seg derived" style="width:54%">derived</span><span class="seg approx" style="width:3%"></span>
         </div>
         <div class="cov-legend">
-          <span><i class="dot native"></i> native — lossless, first-class mapping</span>
-          <span><i class="dot derived"></i> derived — synthesized by rules, provenance recorded</span>
-          <span><i class="dot approx"></i> approximated — mapped, meaning changed; reason given</span>
+          <span><i class="dot native" aria-hidden="true"></i> native — lossless, first-class mapping</span>
+          <span><i class="dot derived" aria-hidden="true"></i> derived — synthesized by rules, provenance recorded</span>
+          <span><i class="dot approx" aria-hidden="true"></i> approximated — mapped, meaning changed; reason given</span>
         </div>
       </div>
     </section>
 
-    <section class="band alt">
-      <h2>Built for humans <em>and</em> agents</h2>
+    <section class="band" aria-labelledby="h-plugins">
+      <h2 id="h-plugins">Every exporter is a plugin</h2>
+      <p class="band-sub">
+        The core knows nothing about Bootstrap. All eight official exporters use the same public plugin
+        API — resolve the catalog, emit native files, report coverage honestly. The
+        <a href="/docs/exporter-css-variables/">css-variables exporter</a> is the reference
+        implementation to copy from; the <a href="/docs/internals/">internals guide</a> documents the contract.
+      </p>
+    </section>
+
+    <section class="band alt" aria-labelledby="h-agents">
+      <h2 id="h-agents">Built for humans <em>and</em> agents</h2>
       <p class="band-sub">
         Deterministic builds, config-as-data, stable diagnostic codes, and a JSON report per build make
         Transtyle operable by AI agents end-to-end — while the compiler itself stays rule-based and auditable.
@@ -115,13 +151,15 @@ shadcn  <span class="cov-n">43% native</span> · <span class="cov-d">54% derived
       </div>
     </section>
 
-    <section class="band final">
-      <h2>Start compiling</h2>
+    <section class="band final" aria-labelledby="h-start">
+      <h2 id="h-start">Start compiling</h2>
+      <p class="band-sub">Not yet on npm — you run it from the repository. Four real examples ship with it, including two independently-designed systems (GOV.UK, Carbon).</p>
       <pre class="start"><code>git clone https://github.com/transtyle/transtyle && cd transtyle
 npm install
-cd examples/acme && npx transtyle build shadcn</code></pre>
+cd examples/acme && npx transtyle build</code></pre>
       <div class="cta center">
         <a class="btn primary" href="/docs/getting-started/">Getting started guide</a>
+        <a class="btn" href="/docs/adopt-existing/">I already have a design system</a>
       </div>
     </section>
   </main>
@@ -132,10 +170,12 @@ cd examples/acme && npx transtyle build shadcn</code></pre>
     .eyebrow {
       display: inline-block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
       color: var(--primary); background: var(--primary-soft); padding: 0.3rem 0.9rem; border-radius: 99px;
+      font-family: 'JetBrains Mono Variable', monospace;
     }
     h1 { font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.08; letter-spacing: -0.035em; font-weight: 800; margin: 1rem 0; }
     .grad { background: linear-gradient(90deg, var(--primary), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .sub { max-width: 42rem; margin: 0 auto 1.6rem; font-size: 1.1rem; color: var(--text-muted); }
+    .sub { max-width: 46rem; margin: 0 auto 1.6rem; font-size: 1.1rem; color: var(--text-muted); }
+    .sub strong { color: var(--text); }
     .cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
     .cta.center { margin-top: 1.4rem; }
     .btn {
@@ -147,25 +187,26 @@ cd examples/acme && npx transtyle build shadcn</code></pre>
     .btn.primary:hover { filter: brightness(1.08); }
 
     .terminal {
-      max-width: 38rem; margin: 2.6rem auto 0; border-radius: 14px; overflow: hidden;
+      max-width: 42rem; margin: 2.6rem auto 0; border-radius: 14px; overflow: hidden;
       box-shadow: var(--shadow); border: 1px solid var(--border); text-align: left;
     }
     .term-bar { display: flex; align-items: center; gap: 6px; padding: 0.6rem 0.9rem; background: var(--bg-soft); border-bottom: 1px solid var(--border-soft); }
     .term-bar span { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
     .term-bar em { margin-left: auto; font-size: 0.75rem; color: var(--text-muted); font-style: normal; font-family: 'JetBrains Mono Variable', monospace; }
     .terminal pre { margin: 0; padding: 1.1rem 1.3rem; background: var(--terminal-bg); color: var(--terminal-text); font-size: 0.83rem; line-height: 1.7; overflow-x: auto; }
-    .dim { opacity: 0.5; }
+    .dim { opacity: 0.6; }
     .ok { color: oklch(0.75 0.15 150); }
-    .cov-n { color: oklch(0.75 0.13 150); }
+    .cov-n { color: oklch(0.78 0.13 150); }
     .cov-d { color: oklch(0.78 0.12 262); }
-    .cov-a { color: oklch(0.8 0.13 85); }
+    .cov-a { color: oklch(0.82 0.12 82); }
 
     .strip { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; justify-content: center; margin-top: 2.4rem; font-size: 0.85rem; color: var(--text-muted); }
     .strip span::before { content: '✓ '; color: var(--ok); }
 
     .band { padding: 3.5rem 0; border-top: 1px solid var(--border-soft); text-align: center; }
     .band h2 { font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.025em; margin: 0 0 0.6rem; }
-    .band-sub { max-width: 44rem; margin: 0 auto 2rem; color: var(--text-muted); }
+    .band-sub { max-width: 46rem; margin: 0 auto 2rem; color: var(--text-muted); }
+    .band-foot { max-width: 46rem; margin: 1.6rem auto 0; color: var(--text-muted); font-size: 0.9rem; }
 
     .pipeline { display: flex; align-items: stretch; justify-content: center; gap: 1rem; flex-wrap: wrap; }
     .pipe-col { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.3rem; min-width: 13rem; box-shadow: var(--shadow); }
@@ -176,22 +217,30 @@ cd examples/acme && npx transtyle build shadcn</code></pre>
     .chip.soon::after { content: ' · specced'; font-size: 0.72rem; }
     .pipe-col.ir { background: linear-gradient(135deg, var(--primary-soft), transparent); border-color: var(--primary); }
     .ir-chip { border: none; font-family: 'JetBrains Mono Variable', monospace; font-size: 0.82rem; }
+    .pipe-note { font-size: 0.8rem; color: var(--text-muted); margin: 0.7rem 0 0; max-width: 13rem; }
 
     .duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 1.2rem; text-align: left; }
     .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
-    .card-label { padding: 0.55rem 1.1rem; font-size: 0.75rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); background: var(--bg-soft); }
+    .card-label { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 1.1rem; font-size: 0.75rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); background: var(--bg-soft); }
     .card pre { margin: 0; padding: 1rem 1.2rem; font-size: 0.8rem; line-height: 1.65; overflow-x: auto; background: none; }
+
+    .xlate { display: flex; align-items: center; justify-content: center; gap: 1.4rem; flex-wrap: wrap; }
+    .x-src { display: flex; align-items: center; gap: 0.3rem; font-size: 1rem; border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem 1.2rem; background: var(--surface); box-shadow: var(--shadow); }
+    .x-arrow { color: var(--text-muted); font-size: 1.5rem; }
+    .x-out { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; text-align: left; }
+    .x-out li { display: flex; align-items: baseline; gap: 0.8rem; justify-content: space-between; border: 1px solid var(--border-soft); border-radius: 8px; padding: 0.3rem 0.8rem; background: var(--surface); }
+    .x-out em { font-style: normal; font-size: 0.78rem; color: var(--text-muted); }
 
     .coverage { max-width: 44rem; margin: 0 auto; }
     .cov-bar { display: flex; height: 2.4rem; border-radius: 10px; overflow: hidden; font-size: 0.8rem; font-weight: 650; color: white; box-shadow: var(--shadow); }
     .seg { display: grid; place-items: center; }
-    .seg.native, .dot.native { background: oklch(0.62 0.14 150); }
-    .seg.derived, .dot.derived { background: oklch(0.58 0.17 262); }
-    .seg.approx, .dot.approx { background: oklch(0.75 0.14 85); }
+    .seg.native, .dot.native { background: var(--cov-native); }
+    .seg.derived, .dot.derived { background: var(--cov-derived); }
+    .seg.approx, .dot.approx { background: var(--cov-approx); }
     .cov-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; justify-content: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); }
     .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; }
 
     .band.alt { background: transparent; }
-    .band.final .start { max-width: 38rem; margin: 0 auto; text-align: left; background: var(--terminal-bg); color: var(--terminal-text); border-radius: 12px; padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; }
+    .band.final .start { max-width: 42rem; margin: 0 auto; text-align: left; background: var(--terminal-bg); color: var(--terminal-text); border-radius: 12px; padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; }
   </style>
 </Base>

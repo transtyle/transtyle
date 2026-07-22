@@ -150,6 +150,34 @@ for (const m of diagPage.matchAll(/^\|\s*`(TST\d{4})`/gm)) {
   if (!sourceCodes.has(m[1])) fail(`diagnostics: diagnostics.md lists ${m[1]} as a code table row, but nothing in packages/*/src emits it`);
 }
 
+// ---------- 5. overview surfaces name every shipped exporter ----------
+// The docs overview and the homepage both enumerate "what ships today"; a new
+// exporter that misses either page understates the product (this happened:
+// both pages said 5 exporters while 8 were registered).
+const registry = cliSrc.match(/OFFICIAL_EXPORTERS\s*=\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+const exporters = [...registry.matchAll(/^\s*['"]?([\w-]+)['"]?:/gm)].map((m) => m[1]);
+const squash = (s) => s.toLowerCase().replace(/[\s/-]/g, '');
+for (const surface of ['website/src/docs/index.md', 'website/src/pages/index.astro']) {
+  const text = squash(read(surface));
+  for (const name of exporters) {
+    if (!text.includes(squash(name))) fail(`overview: ${surface} does not name shipped exporter "${name}"`);
+  }
+}
+
+// ---------- 6. implemented features described as unimplemented ----------
+// "There is no `transtyle init` yet" survived two releases after init shipped.
+// cli.md is exempt (its Implemented/Specced split has its own exact check above).
+const STALE = (cmd) => new RegExp(
+  '(?:no|not yet|not implemented|specced)[^.\\n]{0,60}`transtyle ' + cmd + '\\b' +
+  '|`transtyle ' + cmd + '[^`]*`[^.\\n]{0,60}(?:not implemented|not yet|specced)', 'i');
+for (const s of slugs) {
+  if (s === 'cli') continue;
+  const body = read(`${DOCS_DIR}/${s}.md`);
+  for (const c of commands) {
+    if (STALE(c).test(body)) fail(`stale-claim: ${s}.md describes implemented command "transtyle ${c}" as unimplemented`);
+  }
+}
+
 // ---------- verdict ----------
 if (errors.length) {
   console.error(`✖ docs check: ${errors.length} violation(s)\n`);

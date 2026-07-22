@@ -1,11 +1,19 @@
-/* transtyle.dev — design tokens (OKLCH, naturally) + base + docs prose. */
+/*
+ * transtyle.dev — design tokens (OKLCH, naturally) + base + docs prose +
+ * the diagram components markdown pages compose from raw HTML.
+ *
+ * The visual language is the product's own trust model: everywhere on the
+ * site, GREEN means native/authored, BLUE means derived, AMBER means
+ * approximated. Mono type is the compiler's voice (tokens, slots, output);
+ * Inter is the explaining voice.
+ */
 
 :root {
   --bg: oklch(0.99 0.002 260);
   --bg-soft: oklch(0.965 0.006 260);
   --surface: oklch(1 0 0);
   --text: oklch(0.2 0.015 260);
-  --text-muted: oklch(0.48 0.02 260);
+  --text-muted: oklch(0.45 0.02 260);
   --primary: oklch(0.55 0.19 262);
   --primary-strong: oklch(0.47 0.2 262);
   --violet: oklch(0.55 0.2 296);
@@ -15,8 +23,12 @@
   --code-bg: oklch(0.965 0.006 260);
   --terminal-bg: oklch(0.2 0.02 262);
   --terminal-text: oklch(0.92 0.01 260);
-  --ok: oklch(0.62 0.15 150);
-  --warn: oklch(0.75 0.14 85);
+  /* the coverage/provenance trio — the site's pedagogical color code */
+  --cov-native: oklch(0.55 0.14 150);
+  --cov-derived: oklch(0.55 0.17 262);
+  --cov-approx: oklch(0.66 0.13 78);
+  --ok: oklch(0.55 0.14 150);
+  --warn: oklch(0.66 0.13 78);
   --shadow: 0 1px 2px oklch(0.2 0.02 260 / 0.06), 0 8px 24px oklch(0.2 0.02 260 / 0.07);
 }
 [data-theme='dark'] {
@@ -24,7 +36,7 @@
   --bg-soft: oklch(0.19 0.016 262);
   --surface: oklch(0.21 0.018 262);
   --text: oklch(0.93 0.008 260);
-  --text-muted: oklch(0.67 0.015 260);
+  --text-muted: oklch(0.7 0.015 260);
   --primary: oklch(0.72 0.15 262);
   --primary-strong: oklch(0.78 0.13 262);
   --violet: oklch(0.72 0.16 296);
@@ -33,11 +45,20 @@
   --border-soft: oklch(0.26 0.018 262);
   --code-bg: oklch(0.23 0.018 262);
   --terminal-bg: oklch(0.14 0.014 262);
+  --cov-native: oklch(0.72 0.14 150);
+  --cov-derived: oklch(0.72 0.15 262);
+  --cov-approx: oklch(0.78 0.13 82);
+  --ok: oklch(0.72 0.14 150);
+  --warn: oklch(0.78 0.13 82);
   --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 24px oklch(0 0 0 / 0.35);
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
 body {
   margin: 0;
   font-family: 'Inter Variable', system-ui, -apple-system, sans-serif;
@@ -51,6 +72,18 @@ body {
 code, pre, kbd { font-family: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', monospace; }
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Keyboard a11y: one visible, consistent focus treatment everywhere. */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+.skip-link {
+  position: absolute; left: 0.5rem; top: -3rem; z-index: 100;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; box-shadow: var(--shadow);
+  transition: top 0.15s;
+}
+.skip-link:focus { top: 0.5rem; text-decoration: none; }
+
+h1, h2, h3 { text-wrap: balance; }
 
 /* Shiki dual themes */
 .astro-code, .astro-code span {
@@ -72,7 +105,8 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .pal span { flex: 1; background: var(--c); position: relative; }
 .pal span::after {
   content: attr(data-l); position: absolute; inset: auto 0 2px 0; text-align: center;
-  font-size: 0.6rem; color: oklch(1 0 0 / 0.85); font-family: 'JetBrains Mono Variable', monospace;
+  font-size: 0.6rem; color: oklch(1 0 0 / 0.9); text-shadow: 0 1px 2px oklch(0 0 0 / 0.55);
+  font-family: 'JetBrains Mono Variable', monospace;
 }
 .badge {
   display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
@@ -88,6 +122,52 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .callout > :first-child { margin-top: 0.2rem; }
 .callout > :last-child { margin-bottom: 0.2rem; }
 .callout-title { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+
+/* .flow — a horizontal pipeline diagram: nodes joined by arrows.
+   <div class="flow"><span class="fnode">…</span><span class="farr">→</span>…</div>
+   Variants: .fnode.hi (the emphasized stage), .fnode.dim (specced/planned). */
+.flow {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem;
+  margin: 1.3rem 0; font-family: 'JetBrains Mono Variable', monospace; font-size: 0.8rem;
+}
+.flow .fnode {
+  border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
+  padding: 0.35rem 0.7rem; white-space: nowrap; box-shadow: var(--shadow);
+}
+.flow .fnode.hi { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-strong); font-weight: 600; }
+.flow .fnode.dim { border-style: dashed; color: var(--text-muted); box-shadow: none; }
+.flow .farr { color: var(--text-muted); }
+.flow .fgroup { display: flex; flex-direction: column; gap: 0.35rem; }
+
+/* .tiers — the three-tier token model as a vertical diagram. */
+.tiers { display: flex; flex-direction: column; gap: 0; margin: 1.3rem 0; max-width: 34rem; }
+.tiers .tier {
+  display: grid; grid-template-columns: 7.5rem 1fr; gap: 0.2rem 1rem; align-items: baseline;
+  border: 1px solid var(--border); background: var(--surface); border-radius: 10px;
+  padding: 0.7rem 1rem; box-shadow: var(--shadow);
+}
+.tiers .tier.public { border-color: var(--primary); background: linear-gradient(135deg, var(--primary-soft), var(--surface)); }
+.tiers .tier-name { font-family: 'JetBrains Mono Variable', monospace; font-weight: 700; font-size: 0.85rem; }
+.tiers .tier-desc { font-size: 0.85rem; color: var(--text-muted); grid-column: 2; }
+.tiers .tier-ex { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.78rem; grid-column: 2; }
+.tiers .tier-link { text-align: center; color: var(--text-muted); font-size: 0.78rem; padding: 0.15rem 0; font-family: 'JetBrains Mono Variable', monospace; }
+
+/* .paths — entry-path cards on the overview page. */
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.9rem; margin: 1.3rem 0; }
+.paths a {
+  display: block; border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem 1.1rem;
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow);
+}
+.paths a:hover { text-decoration: none; border-color: var(--primary); }
+.paths .path-kicker { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-muted); font-weight: 700; }
+.paths .path-title { font-weight: 650; margin: 0.15rem 0 0.25rem; color: var(--primary); }
+.paths .path-desc { font-size: 0.85rem; color: var(--text-muted); }
+
+/* Provenance/coverage chips — always the same three colors, site-wide. */
+.prov { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 99px; white-space: nowrap; }
+.prov.native, .prov.authored { background: color-mix(in oklch, var(--cov-native) 16%, transparent); color: var(--cov-native); }
+.prov.derived { background: color-mix(in oklch, var(--cov-derived) 14%, transparent); color: var(--cov-derived); }
+.prov.approx { background: color-mix(in oklch, var(--cov-approx) 18%, transparent); color: var(--cov-approx); }
 
 /* ---------- docs prose ---------- */
 .prose { max-width: 46rem; min-width: 0; }

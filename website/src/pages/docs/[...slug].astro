@@ -32,14 +32,14 @@ const next = i < orderedSlugs.length - 1 ? orderedSlugs[i + 1] : null;
         <div class="nav-section">
           <div class="nav-title">{section.title}</div>
           {section.slugs.map((s) => (
-            <a class:list={['nav-link', { active: s === slug }]} href={docPath(s)}>
+            <a class:list={['nav-link', { active: s === slug }]} href={docPath(s)} aria-current={s === slug ? 'page' : undefined}>
               {pages[s].frontmatter.title}
             </a>
           ))}
         </div>
       ))}
     </nav>
-    <main class="prose">
+    <main class="prose" id="main">
       <div class="page-tools">
         <a href={mdHref} title="This page as raw markdown — for humans with taste and agents with context windows">View as Markdown</a>
       </div>

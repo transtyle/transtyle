@@ -1,12 +1,17 @@
 ---
 title: "Getting started"
-description: "From clone to a compiled shadcn theme in four steps."
+description: "From clone to a compiled theme in four steps."
 order: 2
 ---
 
 # Getting started
 
-Transtyle is not yet published to npm, so you run it from the monorepo. Node ≥ 18 is the only requirement — the project has **zero external dependencies**, so `npm install` just links the workspace packages.
+Transtyle is not yet published to npm, so you run it from the monorepo. Node ≥ 18 is the only requirement — the compiler has **zero external dependencies**, so `npm install` just links the workspace packages.
+
+<div class="callout"><span class="callout-title">Already have a design system?</span>
+
+This page builds a project from scratch. The more common path — keeping your existing names and values and binding them to the catalog — is [You already have a design system](/docs/adopt-existing/).
+</div>
 
 ## 1. Clone and link
 
@@ -29,7 +34,13 @@ Output lands in `dist/shadcn/`:
 - `usage.md` — generated paste-in instructions for your target project
 - `report.json` — coverage classification and provenance for every variable
 
-`npx transtyle check` runs the same pipeline without writing files: schema validation, alias/cycle checks, WCAG contrast checks, coverage summary.
+Two commands to know before anything else:
+
+```bash
+npx transtyle check                    # same pipeline, no files written:
+                                       # validation, alias cycles, WCAG contrast, coverage
+npx transtyle explain primary.tint     # why does this value exist? full derivation chain
+```
 
 ## 3. Use the theme in a real project
 
@@ -40,49 +51,63 @@ For a Tailwind v4 shadcn app: copy `globals.transtyle.css` next to your global s
 @import "./globals.transtyle.css";
 ```
 
-Dark mode uses the standard shadcn class strategy — toggle `dark` on `<html>`. Details for the Tailwind v3 era are in the [shadcn exporter page](/docs/exporter-shadcn/).
+Dark mode uses the standard shadcn class strategy — toggle `dark` on `<html>`. Details for the Tailwind v3 era are in the [shadcn exporter page](/docs/exporter-shadcn/). Every target works the same way: build, then follow the generated `usage.md`. To *see* a theme on real components first, each example ships [runnable demo projects](/docs/examples/) per target.
 
 ## 4. Create your own design system
 
-There is no `transtyle init` yet (specced, not implemented), so scaffold by hand. Minimal viable project — two files:
-
-```
-my-ds/
-  transtyle.config.json
-  tokens/brand.tokens.json
+```bash
+mkdir my-ds && cd my-ds
+npx transtyle init          # scaffolds transtyle.config.json + tokens/brand.tokens.json
 ```
 
-`transtyle.config.json`:
+The scaffold authors the honest minimum — **six real decisions**, each marked `TODO` with a description of what it is:
+
+| You author | Catalog slot | Why it can't be derived |
+|---|---|---|
+| Your brand color | `primary.solid` | The one non-negotiable input |
+| Page background | `elevation.0.surface` | Anchors the whole surface ladder |
+| Card background | `elevation.1.surface` | First rung above the page |
+| Body text color | `text.base` | Anchors the content hierarchy |
+| Muted text color | `text.muted` | Second rung of that hierarchy |
+| Default border | `border` | The neutral hairline everything shares |
+
+In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
 
 ```json
 {
-  "name": "my-design-system",
-  "tokens": ["tokens/*.tokens.json"],
-  "modes": { "color-scheme": { "values": ["light", "dark"], "default": "light" } },
-  "derivation": { "rules": "standard@1", "require": ["semantic.color.primary"] },
-  "targets": { "shadcn": { "output": "dist/shadcn", "options": { "era": "tailwind-v4" } } },
-  "check": { "failOn": "error", "contrast": { "standard": "wcag21-aa" } }
-}
-```
-
-`tokens/brand.tokens.json` — the honest minimum is one brand color plus your neutral surfaces (see [Authoring tokens](/docs/authoring-tokens/) for the full picture and [Concepts](/docs/concepts/) for why these names):
-
-```json
-{
+  "option": {
+    "color": { "$type": "color", "brand": { "500": { "$value": "oklch(0.55 0.18 255)" } } }
+  },
   "semantic": {
     "color": {
       "$type": "color",
-      "primary": { "base": { "$value": "oklch(0.55 0.18 255)" } },
-      "background": { "base": { "$value": "oklch(1 0 0)",
-        "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "oklch(0.15 0.01 255)" } } } } },
-      "text": { "base": { "$value": "oklch(0.22 0.01 255)",
-        "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "oklch(0.98 0 0)" } } } } }
+      "primary": { "solid": { "$value": "{option.color.brand.500}" } },
+      "elevation": {
+        "0": { "surface": { "$value": "oklch(1 0 0)" } },
+        "1": { "surface": { "$value": "oklch(0.98 0.003 255)" } }
+      },
+      "text": {
+        "base":  { "$value": "oklch(0.2 0.01 255)" },
+        "muted": { "$value": "oklch(0.5 0.01 255)" }
+      },
+      "border": { "$value": "oklch(0.9 0.005 255)" }
     }
   }
 }
 ```
 
-Everything you don't author — hover states, on-colors, secondary, borders' defaults, the chart palette — is [derived deterministically](/docs/derivation/), and the report tells you exactly what was derived so you can override selectively.
+Note the two tiers: `option.color.brand.500` is *your* name for *your* value; `primary.solid` is the catalog slot that aliases it. Dark-mode values attach per token via `$extensions` — see [Authoring tokens](/docs/authoring-tokens/#modes).
+
+Then build, and add targets as you need them:
+
+```bash
+npx transtyle build             # starts with css-variables
+npx transtyle add shadcn        # registers another target in the config
+npx transtyle add bootstrap     # …any of the eight official exporters
+npx transtyle build
+```
+
+Everything you didn't author — hover states, on-colors, `secondary`, the full role grids, the chart palette — is <span class="prov derived">derived</span> deterministically, and `report.json` says so per variable, so you can override selectively: author any slot and derivation yields to you.
 
 Run it from inside the monorepo (`npx` resolves the workspace binary from any subdirectory), or link the CLI globally to use it anywhere:
 
@@ -93,6 +118,7 @@ transtyle build --cwd ~/anywhere/my-ds
 
 ## Where next
 
-- [Core concepts](/docs/concepts/) — tiers, the semantic catalog, modes, provenance
+- [Core concepts](/docs/concepts/) — the pipeline, tiers, the semantic catalog, modes, provenance
+- [The Transtyle language](/docs/language/) — every catalog slot, with derivation rules and per-exporter consumers
 - [Configuration](/docs/configuration/) — every manifest field
 - [Weird things & diagnostics](/docs/diagnostics/) — when output surprises you, it's explained there

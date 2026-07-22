@@ -12,6 +12,15 @@ Five ideas explain everything Transtyle does. Master these and the rest of the d
 
 Every build runs the same six stages:
 
+<div class="flow" role="img" aria-label="The six pipeline stages in order: load, normalize, derive, resolve, emit, report — emit is the only stage that writes files">
+  <span class="fnode">LOAD</span><span class="farr">→</span>
+  <span class="fnode">NORMALIZE</span><span class="farr">→</span>
+  <span class="fnode hi">DERIVE</span><span class="farr">→</span>
+  <span class="fnode">RESOLVE</span><span class="farr">→</span>
+  <span class="fnode">EMIT</span><span class="farr">→</span>
+  <span class="fnode">REPORT</span>
+</div>
+
 | Stage | What happens |
 |---|---|
 | LOAD | Read `transtyle.config.json` and the token layers it lists |
@@ -25,13 +34,25 @@ Identical inputs produce byte-identical outputs — no timestamps, no randomness
 
 ## 2. The three-tier token model
 
-```
-option tokens     color.blue.500, font.mono     raw values; YOUR private vocabulary
-   ↓ alias
-semantic tokens   color.primary, color.surface  meaning; the stable public surface
-   ↓ alias
-component tokens  (reserved for v2)             per-component refinement
-```
+<div class="tiers">
+  <div class="tier">
+    <span class="tier-name">option</span>
+    <span class="tier-ex">color.blue.600 · font.mono</span>
+    <span class="tier-desc">raw values — <strong>your</strong> private vocabulary, any names you like</span>
+  </div>
+  <div class="tier-link" aria-hidden="true">↓ alias</div>
+  <div class="tier public">
+    <span class="tier-name">semantic</span>
+    <span class="tier-ex">primary.solid · text.base · elevation.0.surface</span>
+    <span class="tier-desc">meaning — the stable public surface exporters bind to</span>
+  </div>
+  <div class="tier-link" aria-hidden="true">↓ alias</div>
+  <div class="tier">
+    <span class="tier-name">component</span>
+    <span class="tier-ex">component.button.* (prototype)</span>
+    <span class="tier-desc">per-component refinement — defaults from semantic; reserved for v2</span>
+  </div>
+</div>
 
 Tiers are structural — the top-level group name (`option`, `semantic`, `component`) declares the tier. Exporters only ever bind to the **semantic** tier: you can rename your entire option palette tomorrow and no target output changes, as long as the semantic aliases still point somewhere sensible.
 
@@ -67,9 +88,9 @@ And every emitted variable is classified in `report.json`:
 
 | Coverage class | Meaning |
 |---|---|
-| <span class="sw" style="--c:oklch(0.62 0.14 150)"></span>`native` | The target has a first-class slot; lossless mapping |
-| <span class="sw" style="--c:oklch(0.58 0.17 262)"></span>`derived` | Synthesized by derivation, then mapped natively |
-| <span class="sw" style="--c:oklch(0.75 0.14 85)"></span>`approximated` | Mapped, but meaning changed (unit conversion, gamut clamp, concept mismatch) |
+| <span class="sw" style="--c:var(--cov-native)"></span>`native` | The target has a first-class slot; lossless mapping |
+| <span class="sw" style="--c:var(--cov-derived)"></span>`derived` | Synthesized by derivation, then mapped natively |
+| <span class="sw" style="--c:var(--cov-approx)"></span>`approximated` | Mapped, but meaning changed (unit conversion, gamut clamp, concept mismatch) |
 | <span class="sw" style="--c:oklch(0.55 0.02 262)"></span>`dropped` | Your system expresses it; this target can't; omitted with a reason |
 | <span class="sw" style="--c:oklch(0.4 0.09 25)"></span>`unsupported` | The target has a themable slot Transtyle doesn't cover yet |
 
