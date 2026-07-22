@@ -47,4 +47,221 @@ Three consecutive expressiveness experiments (proposal 0001, C1, T9/T11) all con
 
 ---
 
-*Parts 2 and 3 follow in subsequent commits.*
+## Part 2 — Execution roadmap (next 6 months)
+
+Priorities follow directly from Part 1: Phase A converts finished engineering into a released, findable product (W3); Phase B builds the trust surfaces and runs the two experiments that test W1 and W2; Phase C opens the importer side. Tasks are granular enough for direct handoff; each names a model assignment with rationale (the standing convention from [component-tier.md](component-tier.md), now with Fable in the palette: **Sonnet** for well-specified implementation, **Opus** for architectural judgment, **Fable** for the few open-ended, high-ambiguity calls with long-term consequences). Human-only steps are marked — a model can prepare them but not perform them.
+
+### Phase A — Release the thing that exists (month 1)
+
+```
+R1 — T11 practitioner sign-off & Phase 1 exit
+Model: human (maintainer) · Sonnet for prep
+Why: the exit criterion requires the maintainer's own practitioner pass, by its own wording
+Input: docs/findings/t11-review-checklist.md; the 8 GOV.UK/Carbon demo projects
+Output: signed checklist; ROADMAP T11 flipped to [x]; Phase 1 declared exited
+Est. tokens: 2K–5K (prep only)
+Blocks: R2 (freeze should follow, not precede, the last Phase-1 evidence)
+```
+
+```
+R2 — Formal freeze declaration: IR spec v0 + plugin API v0
+Model: Opus
+Why: a freeze is a promise audit — every guarantee in ir.md/plugins.md must be checked
+     against what the engine actually does before it becomes a compatibility contract.
+     Judgment about what to *exclude* from the freeze matters as much as the text.
+Input: docs/architecture/ir.md, plugins.md, versioning.md; ADR-0010; T5 ground-truth scripts
+Output: freeze ADR (no. 0011); stability tables in both specs marked frozen;
+        ROADMAP Phase-0 tail closed
+Est. tokens: 15K–25K
+Blocks: R4 (publishing re-arms the freeze per ADR-0010 — do not publish unfrozen)
+```
+
+```
+R3 — Real JSON schemas + strict options validation (audit A7 + A8)
+Model: Sonnet
+Why: mechanical schema generation from existing specs; clear acceptance (editor
+     autocomplete works, unknown options error as the spec already promises)
+Input: docs/specs/configuration.md; loader source; the fictional $schema URLs
+Output: served schemas under website/public/schemas/; loader validates config +
+        exporter options + transtyle manifest key; tests
+Est. tokens: 20K–30K
+Blocks: R4 (schema URLs must be real before packages advertise them)
+```
+
+```
+R4 — npm publication of @transtyle/* (audit A5 + G3)
+Model: Sonnet
+Why: release mechanics — changesets/versioning, provenance attestations, dry-run,
+     publish order for 10 workspace packages; well-trodden ground
+Input: R2, R3 done; package manifests; CHANGELOG.md
+Output: all packages live on npm with provenance; release-process doc; git tags
+Est. tokens: 10K–20K
+Blocks: P2, P3, P5 (nothing third-party can exist before install works);
+        unblocks create-transtyle (backlog B2)
+```
+
+```
+R5 — Website deployed on a real domain (audit F1)
+Model: human (domain purchase) · Sonnet (deploy pipeline)
+Why: llms.txt and schema URLs already reference transtyle.dev; a product that
+     cannot be found cannot recruit a pilot partner (W1) — cheapest task, gates most
+Input: website/ (Astro, builds today); registrar access
+Output: live site + CI deploy on push; sitemap; the naming tail (domains) closed
+Est. tokens: 5K–10K
+Blocks: P3 recruitment credibility; Part 3 docs work lands somewhere visible
+```
+
+### Phase B — Trust surfaces & the two experiments (months 2–4)
+
+```
+P1 — Plugin conformance kit
+Model: Opus
+Why: the kit *is* the plugin contract made executable — deciding what conformance
+     means (determinism, coverage honesty, mode handling, manifest ranges) is
+     architecture, not test-writing; it encodes the API semantics third parties rely on
+Input: docs/architecture/plugins.md; the 8 in-repo exporters as corpus
+Output: @transtyle/plugin-kit: conformance suite any exporter repo can run;
+        all 8 official exporters pass it in CI
+Est. tokens: 30K–45K
+Blocks: P2, P3
+```
+
+```
+P2 — "Write your own exporter" tutorial
+Model: Sonnet
+Why: documentation drafting against a now-executable contract (P1); the css-variables
+     exporter already exists as the designated reference implementation
+Input: P1 kit; exporter-css-variables source; plugin docs
+Output: website tutorial: zero → published third-party exporter, kit-verified,
+        without touching core
+Est. tokens: 12K–18K
+Blocks: P3
+```
+
+```
+P3 — Recruited third-party exporter pilot  ← tests W1
+Model: human (recruiting) · Fable (feedback triage & API-change decisions)
+Why: W1 says this milestone will not happen organically — pick a partner (Mantine or
+     Chakra per backlog B3: object-emitter, semantic-token-native, strong adoption),
+     support them directly, and treat every stumble as a release-blocking docs/API bug.
+     Triage of what their friction *means* for the API is the highest-judgment call in
+     this roadmap — wrong calls here freeze mistakes into the v1 plugin contract.
+Input: P1, P2, R4; a named partner
+Output: one exporter shipped outside this repo using only public docs;
+        v1.0 exit criterion met or a precise list of why not
+Est. tokens: 20K–40K (support, spread over weeks)
+Blocks: plugin API v1 declaration (Phase 2 exit)
+```
+
+```
+P4 — Hostile-adoption experiment: a real DS with no published tokens  ← tests W2
+Model: Fable
+Why: the median-customer simulation — extract a DS from a live product's CSS/Sass
+     (no token files, no semantic tier), get it to a binding layer, and *measure the
+     cost honestly*. Open-ended, adversarial, and the verdict ("the wedge works" /
+     "importers must come first") redirects Phase C. Same shape as C1: highest
+     ambiguity, judgment with long-term consequences.
+Input: a candidate DS (an OSS product with a hand-rolled design language, not a
+       design system); the adopt-existing playbook
+Output: docs/findings/hostile-adoption.md — cost ledger, where the playbook broke,
+        verdict on W2; example promoted to examples/ only if it earns it
+Est. tokens: 40K–60K
+Blocks: Phase C prioritization (I1 vs I2 order is decided by this finding)
+```
+
+```
+P5 — Browser playground (audit E1)
+Model: Sonnet
+Why: core is zero-dep ESM and runs client-side unchanged — this is composition, not
+     invention; the audit already calls it the best wow-per-effort item available
+Input: R4 (published packages), R5 (live site); @transtyle/core
+Output: website playground: paste tokens → live shadcn/css-variables output +
+        coverage bar + explain-on-hover; doubles as report.json viewer (audit E4)
+Est. tokens: 25K–40K
+Blocks: nothing; multiplies everything (marketing surface for P3 recruitment)
+```
+
+```
+P6 — transtyle diff (semantic DS diff, per-target impact)
+Model: Opus (design + review) · Sonnet (implementation against the written spec)
+Why: the diff *semantics* (what is a breaking design change? how does impact
+     propagate through derivation provenance?) are novel design; the CLI plumbing
+     is not. Split explicitly: Opus writes docs/specs/diff.md, Sonnet implements.
+Input: IR + provenance model; report.json shape
+Output: transtyle diff <ref> with per-target impact summary; the CI story for
+        design-system PRs (audit B3, Phase 2 ledger)
+Est. tokens: 15K–25K (spec) + 25K–35K (impl)
+Blocks: E5 (GitHub Action for consumer repos — natural follow-on, not scheduled here)
+```
+
+### Phase C — The importer side (months 4–6, order set by P4's verdict)
+
+```
+I1 — Tailwind config importer
+Model: Sonnet
+Why: cheapest first importer (audit D1); tailwind config → option/semantic binding is
+     mostly mechanical once the mapping table is written; huge demo value
+Input: ADR-0008; a corpus of real tailwind.config files
+Output: @transtyle/importer-tailwind + round-trip coverage report; demo:
+        tailwind.config → shadcn + ECharts themes
+Est. tokens: 30K–40K
+Blocks: the "ecosystem translation" story (Phase 3) getting its first real leg
+```
+
+```
+I2 — Figma variables importer
+Model: Sonnet · Opus for the mode-mapping design decision
+Why: implementation is JSON transformation (Sonnet); the one hard call is mapping
+     Figma's mode model onto IR mode dimensions — that decision is small but
+     architectural, worth an Opus pass before code
+Input: Figma variables JSON export format; ADR-0008; T8 multi-dimension modes
+Output: @transtyle/importer-figma; the designer-side on-ramp documented
+Est. tokens: 30K–45K
+Blocks: the designer entry path; pairs with P4's findings on messy sources
+```
+
+```
+I3 — Watch mode + CI recipes (audit B10 + E5-lite)
+Model: Sonnet
+Why: small DX wins batched together; no design content
+Input: CLI source; P6's diff output
+Output: build --watch; documented GitHub Actions recipe running check + diff on PRs
+Est. tokens: 10K–15K
+Blocks: nothing — schedule into gaps
+```
+
+### Consolidated model-assignment table
+
+| Task | Model | One-line rationale |
+|---|---|---|
+| R1 sign-off | **human** (Sonnet prep) | Exit criterion demands the maintainer's own pass |
+| R2 freeze declaration | **Opus** | Promise audit against engine reality; exclusion judgment |
+| R3 schemas + validation | **Sonnet** | Mechanical generation from existing specs |
+| R4 npm publication | **Sonnet** | Release mechanics, well-trodden |
+| R5 site deploy | **human + Sonnet** | Domain purchase; then routine pipeline |
+| P1 conformance kit | **Opus** | The plugin contract made executable — architecture |
+| P2 exporter tutorial | **Sonnet** | Docs drafting against an executable contract |
+| P3 third-party pilot | **human + Fable** | Recruiting; then API-change triage with v1-contract stakes |
+| P4 hostile adoption | **Fable** | Open-ended adversarial experiment; verdict redirects Phase C |
+| P5 playground | **Sonnet** | Composition of existing zero-dep pieces |
+| P6 diff | **Opus spec → Sonnet impl** | Novel semantics; routine plumbing |
+| I1 Tailwind importer | **Sonnet** | Mechanical once mapping table exists |
+| I2 Figma importer | **Sonnet** (Opus for mode mapping) | JSON transform + one architectural call |
+| I3 watch/CI recipes | **Sonnet** | Batched DX small-wins |
+
+### Prioritized backlog (the six months at a glance)
+
+| Month | Focus | Tasks |
+|---|---|---|
+| 1 | Release readiness | R1 → R2 → R3 → R4 → R5 |
+| 2 | Plugin contract | P1 → P2; recruit P3 partner; start P5 |
+| 3 | The two experiments | P3 running; P4; P5 ships |
+| 4 | Trust tooling | P6 (spec then impl); P3 concludes → plugin API v1 call |
+| 5 | Importers | I1 (or I2 first, per P4's verdict) |
+| 6 | Importers + DX | I2 (or I1); I3; regroup against W1/W2 verdicts |
+
+**Explicitly not scheduled** (consistent with Part 1): new exporters beyond the pilot's (breadth adds no learning until W1/W2 resolve); catalog growth (three studies say no); MUI/Ant (after object-emitter pattern proven by the pilot); everything in ROADMAP's "explicitly cut" list stays cut.
+
+---
+
+*Part 3 follows in a subsequent commit.*
