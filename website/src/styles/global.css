@@ -123,6 +123,18 @@ h1, h2, h3 { text-wrap: balance; }
 [data-theme='dark'] .code-wrap::after {
   background: linear-gradient(to right, transparent, var(--shiki-dark-bg, var(--code-bg)) 45%, var(--shiki-dark-bg, var(--code-bg)));
 }
+/* The hero terminal isn't Shiki-rendered, so it has no --shiki-*-bg to lift and
+   the generic rules above fall back to --code-bg — a DIFFERENT colour from the
+   terminal's own --terminal-bg in both themes (near-white vs dark navy in
+   light; two visibly distinct dark shades in dark), painting a mismatched
+   patch rather than fading into the box it's supposedly part of. Fade to the
+   terminal's real background instead. `--terminal-bg` already differs per
+   theme on its own, so one rule covers both — but it must be placed AFTER the
+   dark-theme rule above: same specificity (class+class vs attribute+class),
+   so source order is what wins the tie in dark mode. */
+.terminal .code-wrap::after {
+  background: linear-gradient(to right, transparent, var(--terminal-bg) 45%, var(--terminal-bg));
+}
 .code-wrap.overflowing::after { opacity: 1; }
 .code-wrap.overflowing.at-end::after { opacity: 0; }
 /* The copy button rides above the fade. */
