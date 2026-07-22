@@ -264,4 +264,75 @@ Blocks: nothing — schedule into gaps
 
 ---
 
-*Part 3 follows in a subsequent commit.*
+## Part 3 — Documentation overhaul
+
+**Correcting the premise first.** The brief's diagnosis ("overly technical, difficult for non-experts") was written before the two biggest fixes shipped: [adopt-existing.md](../../website/src/docs/adopt-existing.md) (backlog B4, the #1 missing doc) and [language.md](../../website/src/docs/language.md) (B5, the interlingua reference) both exist on the website. What actually remains is narrower than an overhaul: (a) no true beginner on-ramp — every page assumes the reader already knows what a design token is and why an IR helps; (b) the 21 website pages grew organically and their nav doesn't signal *which kind* of page each one is (learning vs task vs lookup); (c) near-zero visual material — the pipeline, the role grid, and the coverage report are all described in prose, and they are exactly the concepts a designer or DS lead would grasp in one diagram; (d) the trust story (Q2's "explicit, small, auditable judgment calls") is the product's best pitch and is currently buried in `docs/findings/`.
+
+Tasks, same conventions as Part 2. All land on the website surface, so they gain leverage only after R5 (deploy) and pair naturally with P5 (playground).
+
+```
+D1 — Information-architecture pass: four explicit doc kinds
+Model: Sonnet
+Why: structure refinement over an existing corpus — classification, not invention
+Input: the 21 website pages; the Diátaxis model (Concepts / Tutorials / How-to /
+       Reference) the current nav is already close to
+Output: restructured nav with labeled sections; a redirect map; an overlap audit
+        (concepts.md vs language.md vs derivation.md say adjacent things — decide
+        one home per idea, cross-link the rest); no page rewrites in this task
+Est. tokens: 10K–15K
+Blocks: D2–D4 land into the new structure
+```
+
+```
+D2 — The beginner path (three progressive pages)
+Model: Sonnet
+Why: exactly the brief's guidance — tutorial drafting over settled material
+Input: existing getting-started + concepts pages; the Acme example (11 authored
+       tokens → every target) as the running artifact
+Output: "What is a design token?" (for designers/DS leads, zero JSON) →
+        "How Transtyle works" (the compiler mental model, one diagram, no code) →
+        "Your first build" (10-minute Acme walkthrough). Adopt-existing stays the
+        *second* nav item per B4 — greenfield is the classroom, adoption the job.
+Est. tokens: 15K–25K
+Blocks: nothing; the entry funnel for every audience P3/P5 attract
+```
+
+```
+D3 — Clarity rewrite of the load-bearing references
+Model: Opus
+Why: per the brief's own split — simplifying technical explanation without changing
+     meaning is judgment work; these pages *are* the contract, so wrong analogies
+     are expensive
+Input: language.md, derivation.md, configuration.md; the freeze ADR (R2) as the
+       authority on what's promised vs incidental
+Output: rewritten pages with a worked example per concept and one analogy per
+        mechanism (derivation ≈ CSS cascade with provenance; coverage ≈ compiler
+        warnings; binding ≈ adapter, not translation); reading level checked
+        against a non-engineer DS lead
+Est. tokens: 25K–35K
+Blocks: after R2 (rewriting a reference while its guarantees are unfrozen wastes a pass)
+```
+
+```
+D4 — Visual assets + the trust story, surfaced
+Model: Sonnet
+Why: diagram generation and worked-example rendering over existing data — the
+     GOV.UK finding already contains the story; this task makes it visible
+Input: govuk-adoption.md + carbon-adoption.md; report.json from real builds;
+       the pipeline/role-grid prose descriptions
+Output: (1) pipeline + role-grid + binding-layer diagrams embedded in D2/D3 pages;
+        (2) a "GOV.UK, end to end" showcase page: real tokens in → seven targets
+        out, with the judgment calls and coverage report shown, not narrated —
+        the W2-facing proof page a pilot partner or DS lead evaluates us by;
+        (3) playground deep-links once P5 ships
+Est. tokens: 20K–30K
+Blocks: nothing; the showcase page doubles as P3 recruitment collateral
+```
+
+**Sequencing inside the six months:** D1 + D2 fit month 2 (cheap, parallel to P1); D3 waits for the R2 freeze (month 2–3); D4 rides with P5's playground (month 3). Total docs investment ≈ 70K–105K tokens, all Sonnet except D3 — deliberately light next to Part 2, because Part 1's verdict says the docs' biggest problem is that nobody can *reach* them yet, not what they say.
+
+---
+
+## Review complete
+
+Delivered: Part 1 (five challenge questions answered from repo evidence; three at-risk assumptions W1–W3, all go-to-market rather than engineering), Part 2 (14 tasks, model-assigned, dependency-ordered, six-month backlog), Part 3 (four docs tasks correcting the brief's stale premise). Committed in three increments per the save-checkpoints constraint.
