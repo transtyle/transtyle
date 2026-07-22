@@ -25,7 +25,7 @@ Your palette, your names, your structure. This tier is private vocabulary — no
 } } }
 ```
 
-Hex is fine — OKLCH is canonical internally, conversion is automatic.
+Paste whatever your stylesheets already contain — hex (including 4/8-digit alpha), `rgb()`/`hsl()` in either the modern or legacy comma form, and CSS named colors like `red` or `purple` all parse. OKLCH is canonical internally; conversion is automatic, so you never retype a value to satisfy the compiler.
 
 ## 2. Express your existing semantics — with *your* names
 

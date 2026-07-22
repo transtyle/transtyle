@@ -114,7 +114,7 @@ Rules: the mode matrix is the cross-product of dimensions, resolved per-dimensio
 
 ## Values and canonicalization
 
-- **Color:** any CSS color syntax accepted; canonical internal form is OKLCH (perceptually uniform — required for honest derivation of hover states, scales, and contrast math). Original authored form is kept in provenance; exporters choose output syntax per target version (hex for ECharts, HSL channels for shadcn pre-v4 era, etc.).
+- **Color:** accepted syntaxes are `oklch()`, `#hex` (3/4/6/8 digits, alpha included), `rgb()`/`rgba()`, `hsl()`/`hsla()` (both the modern space-separated and legacy comma forms, with `deg`/`rad`/`grad`/`turn` hues), the CSS named colors, and `transparent` — i.e. what real stylesheets actually contain, so an existing product's values can be adopted verbatim (audit B7, forced by [P4](../findings/hostile-adoption.md)). `lab()`/`lch()`/`hwb()`/`color()` are not yet parsed. Canonical internal form is OKLCH (perceptually uniform — required for honest derivation of hover states, scales, and contrast math). Original authored form is kept in provenance; exporters choose output syntax per target version (hex for ECharts, HSL channels for shadcn pre-v4 era, etc.).
 - **Dimensions:** explicit units required (`16px`, `1rem`). A config-level `rem` base (default 16) enables conversion where a target demands a specific unit; unit conversion is flagged `approximated` in coverage when it changes meaning.
 - **References:** DTCG `{path.to.token}` aliases, resolved in NORMALIZE; cycles are errors with the full chain in the diagnostic.
 

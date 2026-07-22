@@ -46,7 +46,7 @@ Effort is given as relative weight and step count rather than wall-clock, since 
 
 **1. Named CSS colors are a hard stop (audit [B7](../audit-2026-07.md)).** `red` and `purple` — used verbatim by Miniflux — are rejected: `TST1106 Unsupported color syntax (skeleton supports oklch() and #hex)`, cascading into `TST1105` dangling aliases. The build cannot proceed. The workaround is hand-converting to spec hex, which **violates the playbook's own step 1** ("verbatim, no renaming") and silently discards the author's intent.
 
-> **This reclassifies B7.** It is filed as 🟢 "opportunity — accept `rgb()`/`hsl()`/named colors." On this evidence it is a **release blocker for real-world adoption**: cheap to fix, and it stops the median user at the first command. `rgb()`/`hsl()` will bite identically — most real CSS uses them.
+> **This reclassified B7** from 🟢 "opportunity" to a real-adoption blocker — and it was **fixed the same day**. The engine now accepts `oklch()`, `#hex` (3/4/6/8-digit, alpha included), `rgb()`/`rgba()`, `hsl()`/`hsla()` (modern and legacy comma forms, `deg`/`rad`/`grad`/`turn`), the CSS named colors, and `transparent`. The extraction above was re-run with Miniflux's **literal `red` and `purple` restored** and builds clean — `ring` resolves to `#ff0000`, `link.visited` to `#800080`. Step 1's "verbatim, no renaming" rule is now actually honorable for this system. Guarded by `scripts/check-color.mjs` against reference values.
 
 **2. Step 1 assumes a palette that does not exist.** "Dump your raw values into `option.*` verbatim" presupposes a primitive tier. Products that never built one force the adopter to *invent* the palette — deduplicating literals and naming them — before the playbook's real work begins. The playbook needs an explicit branch for "you have no palette; here is how to synthesize one (and why the names don't matter)."
 
@@ -89,7 +89,7 @@ The plan says this finding decides I1 (Tailwind importer) vs I2 (Figma importer)
 
 Recommendation, on one data point and stated as such:
 
-1. **B7 first** (accept `rgb()`/`hsl()`/named colors) — hours of work, removes a hard stop.
+1. ~~**B7 first** (accept `rgb()`/`hsl()`/named colors) — hours of work, removes a hard stop.~~ **Done 2026-07-22**, verified by re-running this extraction verbatim.
 2. **Keep I1 (Tailwind) ahead of I2 (Figma)** — unchanged. Tailwind configs are codebase artifacts, and this experiment says the codebase is where the median product's truth lives; I1 is also the cheaper build (audit D1).
 3. **Add a CSS-variable importer as a candidate** and let it compete with I1 on the next planning pass. One sample is not enough to promote it above Tailwind's much larger installed base, but it is the importer this experiment actually asked for.
 

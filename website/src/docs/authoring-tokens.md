@@ -23,7 +23,7 @@ A token is a node with `$value`; groups may declare `$type` for their children:
 }
 ```
 
-Supported `$type`s today: `color` (values: `oklch()` or `#hex`), `dimension` (explicit units: `0.5rem`, `16px`), `fontFamily` (array of family names). The full DTCG type set — `shadow`, `typography`, `duration`, `cubicBezier`, composites — is specced for the full catalog.
+Supported `$type`s today: `color` (values: `oklch()`, `#hex` incl. 4/8-digit alpha, `rgb()`/`rgba()`, `hsl()`/`hsla()`, CSS named colors, `transparent`), `dimension` (explicit units: `0.5rem`, `16px`), `fontFamily` (array of family names). The full DTCG type set — `shadow`, `typography`, `duration`, `cubicBezier`, composites — is specced for the full catalog.
 
 ## Aliases
 

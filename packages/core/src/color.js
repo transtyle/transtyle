@@ -3,18 +3,104 @@
  * Internal canonical form: { l, c, h, alpha } — docs/architecture/ir.md#values.
  */
 
-const OKLCH_RE = /^oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)$/i;
+import { NAMED_COLORS } from './css-colors.js';
 
+const OKLCH_RE = /^oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)$/i;
+const FUNC_RE = /^(rgba?|hsla?)\(\s*([^)]*)\s*\)$/i;
+
+/**
+ * Parse any color syntax a real stylesheet is likely to contain
+ * (docs/architecture/ir.md#values): `oklch()`, `#hex` (3/4/6/8 digits),
+ * `rgb()`/`rgba()`, `hsl()`/`hsla()`, the CSS named colors, and `transparent`.
+ * Both the modern space-separated (`rgb(255 0 0 / 50%)`) and legacy comma
+ * (`rgba(255, 0, 0, .5)`) forms are accepted. Everything canonicalizes to OKLCH.
+ */
 export function parseColor(str) {
   if (typeof str !== 'string') throw new Error(`Not a color string: ${JSON.stringify(str)}`);
   const s = str.trim();
+
   const m = OKLCH_RE.exec(s);
   if (m) {
     const num = (v) => (v.endsWith('%') ? parseFloat(v) / 100 : parseFloat(v));
     return { l: num(m[1]), c: parseFloat(m[2]), h: parseFloat(m[3]), alpha: m[4] ? num(m[4]) : 1 };
   }
-  if (/^#([0-9a-f]{6}|[0-9a-f]{3})$/i.test(s)) return srgbToOklch(hexToSrgb(s));
-  throw new Error(`Unsupported color syntax (skeleton supports oklch() and #hex): ${s}`);
+
+  if (/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(s)) {
+    const { alpha, ...rgb } = hexToSrgb(s);
+    return srgbToOklch(rgb, alpha);
+  }
+
+  const fn = FUNC_RE.exec(s);
+  if (fn) {
+    const kind = fn[1].toLowerCase();
+    const { parts, alpha } = splitComponents(fn[2]);
+    if (parts.length < 3) throw new Error(`Malformed ${kind}() color: ${s}`);
+    const a = parseAlpha(alpha);
+    if (kind.startsWith('rgb')) {
+      const ch = (v) => (v === 'none' ? 0 : v.endsWith('%') ? parseFloat(v) / 100 : parseFloat(v) / 255);
+      const rgb = { r: ch(parts[0]), g: ch(parts[1]), b: ch(parts[2]) };
+      if (Object.values(rgb).some(Number.isNaN)) throw new Error(`Malformed ${kind}() color: ${s}`);
+      return srgbToOklch(rgb, a);
+    }
+    const h = parseHue(parts[0]);
+    const pct = (v) => (v === 'none' ? 0 : parseFloat(v) / 100);
+    const sat = pct(parts[1]), lig = pct(parts[2]);
+    if ([h, sat, lig].some(Number.isNaN)) throw new Error(`Malformed ${kind}() color: ${s}`);
+    return srgbToOklch(hslToSrgb(h, sat, lig), a);
+  }
+
+  const lower = s.toLowerCase();
+  if (lower === 'transparent') return { l: 0, c: 0, h: 0, alpha: 0 };
+  if (NAMED_COLORS[lower]) {
+    const { alpha, ...rgb } = hexToSrgb(NAMED_COLORS[lower]);
+    return srgbToOklch(rgb, alpha);
+  }
+
+  throw new Error(`Unsupported color syntax: ${s} (expected oklch(), #hex, rgb(), hsl(), or a CSS named color)`);
+}
+
+/** Split a function body into 3 components + optional alpha, modern or legacy form. */
+function splitComponents(inner) {
+  const body = inner.trim();
+  const slash = body.indexOf('/');
+  if (slash !== -1) {
+    return { parts: body.slice(0, slash).trim().split(/\s+/), alpha: body.slice(slash + 1).trim() };
+  }
+  if (body.includes(',')) {
+    const all = body.split(',').map((p) => p.trim());
+    return { parts: all.slice(0, 3), alpha: all[3] };
+  }
+  return { parts: body.split(/\s+/), alpha: undefined };
+}
+
+const parseAlpha = (v) => {
+  if (v === undefined || v === '' || v === 'none') return 1;
+  const n = v.endsWith('%') ? parseFloat(v) / 100 : parseFloat(v);
+  return Number.isNaN(n) ? 1 : Math.min(1, Math.max(0, n));
+};
+
+/** CSS <angle> → degrees (deg/rad/grad/turn, or unitless = deg). */
+function parseHue(v) {
+  const m = /^(-?[\d.]+)(deg|rad|grad|turn)?$/i.exec(v.trim());
+  if (!m) return NaN;
+  const n = parseFloat(m[1]);
+  switch ((m[2] ?? 'deg').toLowerCase()) {
+    case 'rad': return (n * 180) / Math.PI;
+    case 'grad': return n * 0.9;
+    case 'turn': return n * 360;
+    default: return n;
+  }
+}
+
+function hslToSrgb(hDeg, s, l) {
+  const h = ((hDeg % 360) + 360) % 360;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const [r, g, b] =
+    h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x]
+    : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return { r: r + m, g: g + m, b: b + m };
 }
 
 export function formatColor({ l, c, h, alpha = 1 }) {
@@ -57,18 +143,20 @@ function oklchToLinearSrgb({ l, c, h }) {
   };
 }
 
+/** #rgb / #rgba / #rrggbb / #rrggbbaa → sRGB (+ alpha). */
 function hexToSrgb(hex) {
   let s = hex.slice(1);
-  if (s.length === 3) s = s.split('').map((ch) => ch + ch).join('');
-  const n = parseInt(s, 16);
-  return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 };
+  if (s.length === 3 || s.length === 4) s = s.split('').map((ch) => ch + ch).join('');
+  const n = parseInt(s.slice(0, 6), 16);
+  const alpha = s.length === 8 ? parseInt(s.slice(6, 8), 16) / 255 : 1;
+  return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255, alpha };
 }
 
 function srgbToLinear(v) {
   return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
 }
 
-function srgbToOklch({ r, g, b }) {
+function srgbToOklch({ r, g, b }, alpha = 1) {
   const lr = srgbToLinear(r), lg = srgbToLinear(g), lb = srgbToLinear(b);
   const l_ = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
   const m_ = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
@@ -78,7 +166,7 @@ function srgbToOklch({ r, g, b }) {
   const B = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_;
   const c = Math.hypot(A, B);
   const h = ((Math.atan2(B, A) * 180) / Math.PI + 360) % 360;
-  return { l: L, c, h, alpha: 1 };
+  return { l: L, c, h, alpha };
 }
 
 const linearToSrgb = (v) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);

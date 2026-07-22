@@ -19,7 +19,7 @@ Transtyle prefers surprising you *loudly* over failing silently. This page colle
 | `TST1103` | warning | Token defined more than once across base layers (last wins) | Make the override explicit or remove the duplicate |
 | `TST1104` | error | Alias cycle (full chain printed) | Break the cycle |
 | `TST1105` | error | Dangling alias — `{path}` points at nothing | Fix the path; check tier prefixes (`option.` vs `semantic.`) |
-| `TST1106` | error | Unparseable value (e.g. unsupported color syntax) | Use `oklch()` or `#hex` |
+| `TST1106` | error | Unparseable value (e.g. unsupported color syntax) | Colors accept `oklch()`, `#hex`, `rgb()`, `hsl()`, and CSS named colors; `lab()`/`lch()`/`hwb()`/`color()` are not yet parsed |
 | `TST1107` | warning | Mode-scoped file provides a value for a token with no default value | Add the token to a base layer first |
 | `TST1108` | warning | A mode value was overridden by a later layer | Confirm the layer order is intentional |
 | `TST1109` | error | Mode-scoped layer targets a mode not declared in `modes` | Declare it, or fix the typo |
