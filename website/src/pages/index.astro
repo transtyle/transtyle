@@ -24,13 +24,21 @@ const derivedCss = `--primary: oklch(0.55 0.18 255);
 /* …plus every hover/active state, light + dark,
    for all eight targets, from the same tokens */`;
 
+// Expanded rather than one-lined: this card sits in a narrow column, and short
+// lines beat horizontal scrolling for something meant to be read at a glance.
 const showcaseTokens = `{
   "semantic": {
     "color": {
-      "primary": { "solid": { "$value": "{option.color.blue.600}" } },
-      "danger": { "solid": { "$value": "{option.color.red.600}" } }
+      "primary": {
+        "solid": { "$value": "{option.color.blue.600}" }
+      },
+      "danger": {
+        "solid": { "$value": "{option.color.red.600}" }
+      }
     },
-    "radius": { "md": { "$value": "0.5rem" } }
+    "radius": {
+      "md": { "$value": "0.5rem" }
+    }
   }
 }`;
 
@@ -320,7 +328,9 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .pipe-tag { display: block; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 500; text-transform: none; margin-top: 0.15rem; font-family: 'JetBrains Mono Variable', monospace; }
 
     /* ---- showcase: one token file → four native-looking previews ---- */
-    .showcase { display: grid; grid-template-columns: minmax(16rem, 1.1fr) 2fr; gap: 1.2rem; text-align: left; align-items: start; }
+    /* Wide enough for the token snippet's longest line, so the common case is
+       "it fits" rather than "it scrolls". */
+    .showcase { display: grid; grid-template-columns: minmax(18rem, 1.25fr) 2fr; gap: 1.2rem; text-align: left; align-items: start; }
     @media (max-width: 860px) { .showcase { grid-template-columns: 1fr; } }
     .show-targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
     .tframe { margin: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }

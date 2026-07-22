@@ -89,6 +89,29 @@ h1, h2, h3 { text-wrap: balance; }
 /* Icon-only, borderless, and out of the way until you reach for it — a labelled
    pill in the corner reads as chrome and competes with the code itself. */
 .code-wrap { position: relative; }
+
+/* Overflow affordance: a block wider than its column otherwise just hard-clips
+   at the rounded edge, which reads as a rendering bug rather than "scroll me".
+   The fade only appears when the block actually overflows, and clears once
+   you've reached the end so it never lies about hidden content. It fades to the
+   block's own background — the Shiki theme vars are copied onto the wrapper by
+   the script in Base.astro, so this tracks the highlighter, not a guess. */
+.code-wrap::after {
+  content: ''; position: absolute; top: 1px; right: 1px; bottom: 1px; width: 3rem;
+  pointer-events: none; border-radius: 0 12px 12px 0;
+  background: linear-gradient(to right, transparent, var(--shiki-light-bg, var(--code-bg)) 85%);
+  opacity: 0; transition: opacity 0.15s ease;
+}
+[data-theme='dark'] .code-wrap::after {
+  background: linear-gradient(to right, transparent, var(--shiki-dark-bg, var(--code-bg)) 85%);
+}
+.code-wrap.overflowing::after { opacity: 1; }
+.code-wrap.overflowing.at-end::after { opacity: 0; }
+/* The copy button rides above the fade. */
+.code-wrap .copy-btn { z-index: 1; }
+/* No extra right padding here on purpose: the block's own padding survives to
+   the scroll end, and the fade clears at `.at-end`, so the last characters are
+   never left sitting under the gradient. */
 .code-wrap .copy-btn {
   position: absolute; top: 0.45rem; right: 0.45rem;
   display: grid; place-items: center; width: 1.75rem; height: 1.75rem;

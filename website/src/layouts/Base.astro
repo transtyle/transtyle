@@ -66,6 +66,26 @@ const { title, description = 'Transtyle is a design system compiler: describe yo
       const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
       const ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
 
+      // Let the wrapper's fade match the block's own background: Shiki sets the
+      // theme colours as custom properties on the <pre>, so lift them one level.
+      for (const v of ['--shiki-light-bg', '--shiki-dark-bg']) {
+        const value = pre.style.getPropertyValue(v);
+        if (value) wrap.style.setProperty(v, value);
+      }
+
+      // Show the fade only while there is genuinely more to the right.
+      const syncOverflow = () => {
+        const overflows = pre.scrollWidth - pre.clientWidth > 1;
+        wrap.classList.toggle('overflowing', overflows);
+        wrap.classList.toggle('at-end', overflows && pre.scrollLeft + pre.clientWidth >= pre.scrollWidth - 1);
+      };
+      syncOverflow();
+      pre.addEventListener('scroll', syncOverflow, { passive: true });
+      addEventListener('resize', syncOverflow, { passive: true });
+      // The first measurement can happen on fallback font metrics; re-check once
+      // the real mono face has loaded, or a block can be mislabelled either way.
+      document.fonts?.ready.then(syncOverflow);
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'copy-btn';
