@@ -31,6 +31,17 @@
       <p-button label="Outline" [outlined]="true" />
       <p-button label="Ghost" [text]="true" />
       <p-button label="Disabled" [disabled]="true" />
+      <!-- component.tooltip.max-width (proposal 0004). Long text on purpose:
+           a max-width is only observable when the content wants to exceed it.
+           Acme authors the slot, so its tooltips wrap at 18rem here AND in the
+           Bootstrap demo; the other examples don't, so they show Aura's own
+           200px. Same markup everywhere — only dist/ differs. -->
+      <p-button
+        label="Hover me"
+        [outlined]="true"
+        pTooltip="This tooltip wraps at the design system's own measure, not the component library's default — one authored token, honored by both targets."
+        tooltipPosition="bottom"
+      />
     </div>
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
       <p-tag value="Badge" />

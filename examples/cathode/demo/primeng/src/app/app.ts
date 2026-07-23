@@ -8,6 +8,7 @@ import { Select } from 'primeng/select';
 import { Checkbox } from 'primeng/checkbox';
 import { RadioButton } from 'primeng/radiobutton';
 import { ToggleSwitch } from 'primeng/toggleswitch';
+import { Tooltip } from 'primeng/tooltip';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
 import { Card } from 'primeng/card';
@@ -25,7 +26,7 @@ interface Invoice {
   selector: 'app-root',
   standalone: true,
   imports: [
-    FormsModule, Button, Tag, Message, InputText, Select, Checkbox, RadioButton, ToggleSwitch,
+    FormsModule, Button, Tag, Message, InputText, Select, Checkbox, RadioButton, ToggleSwitch, Tooltip,
     TableModule, Dialog, Card,
   ],
   templateUrl: './app.html',

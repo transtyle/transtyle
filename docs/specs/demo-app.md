@@ -29,6 +29,11 @@ Each example design system (Acme, Cathode, future ones) ships runnable demo proj
 
 - **Theme comes only from compiled output.** Projects import artifacts from the example's `dist/` exactly as that target's generated `usage.md` prescribes. Never hand-copy values. A `predev`/`prebuild` script runs `transtyle build --cwd ../..` so `dist/` always exists and is fresh.
 - **One file of DS-specifics.** Within a target, the project is file-identical across examples except `src/ds.config.{js,ts}` (DS label, default mode, theme/font names) and `package.json` (workspace name, port). If an example needs any other difference, that's a finding, not a patch.
+
+  **Enforced since 2026-07-23 by `check:demo-parity`** (in `check:all`): every demo source file must be byte-identical across all four examples, and a file present in one example's demo but not another's is drift too. This rule was prose-only until a tooltip added to Acme's Bootstrap and PrimeNG demos silently diverged three files — the invariant is what makes the demos a _comparison_ rather than four unrelated pages, so it now fails the build instead of relying on discipline.
+
+  The checker carries one exception the prose above had missed, and it is a genuine finding rather than a patch: **`demo/radix/src/theme-override.css`**. Radix's `<Theme accentColor>` prop only accepts Radix's own preset names, so each example aliases a different one onto our primary ramp (violet for Acme, green for Cathode, blue for GOV.UK, indigo for Carbon). That is a per-design-system mapping the target forces, not demo drift.
+
 - **Real components only.** Markup/components come from the target's own docs (Bootstrap components, shadcn registry sources, daisyUI classes). No hand-rolled imitations.
 - **npm-launchable.** Every project is a workspace: `npm run dev -w <example>-demo-<target>`. Ports follow `<example-block>0<target-slot>`: Acme 4101–4107 (bootstrap/daisyui/shadcn/echarts/css-variables/radix/primeng) + 6101 (Storybook); Cathode 4201–4207 + 6201; GOV.UK 4301–4307 + 6301; Carbon 4401–4407 + 6401 (see `.claude/launch.json` for the exact per-target assignment).
 - **Mode polarity.** Cathode's projects default to dark (the terminal is native); the toggle always drives the target's own mechanism.

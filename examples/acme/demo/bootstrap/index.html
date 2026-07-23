@@ -42,9 +42,11 @@
           <button class="btn btn-outline-primary">Outline</button>
           <button class="btn btn-link">Link</button>
           <button class="btn btn-primary" disabled>Disabled</button>
-          <!-- component.tooltip.max-width (proposal 0004) — the same authored
-               token drives tooltip.root.maxWidth in the PrimeNG demo. Long text
-               on purpose: the ceiling only shows when content wants to exceed it. -->
+          <!-- component.tooltip.max-width (proposal 0004). Long text on purpose:
+               a max-width is only observable when the content wants to exceed it.
+               Acme authors the slot, so its tooltips wrap at 18rem here AND in the
+               PrimeNG demo; the other examples don't, so they show Bootstrap's own
+               200px. Same markup everywhere — only dist/ differs. -->
           <button
             class="btn btn-outline-primary"
             data-bs-toggle="tooltip"
