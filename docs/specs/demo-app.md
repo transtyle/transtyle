@@ -32,6 +32,8 @@ Each example design system (Acme, Cathode, future ones) ships runnable demo proj
 
   **Enforced since 2026-07-23 by `check:demo-parity`** (in `check:all`): every demo source file must be byte-identical across all four examples, and a file present in one example's demo but not another's is drift too. This rule was prose-only until a tooltip added to Acme's Bootstrap and PrimeNG demos silently diverged three files — the invariant is what makes the demos a _comparison_ rather than four unrelated pages, so it now fails the build instead of relying on discipline.
 
+  `package.json` is covered too, canonicalized rather than compared raw: `name` must equal `<example>-demo-<target>` exactly, the dev/preview port is masked, and everything left — dependencies, devDependencies, the rest of `scripts` — must be identical. That is the field that most matters to get right: without it one demo could pin a different framework version than its siblings and the cross-example comparison would quietly stop being like-for-like.
+
   The checker carries one exception the prose above had missed, and it is a genuine finding rather than a patch: **`demo/radix/src/theme-override.css`**. Radix's `<Theme accentColor>` prop only accepts Radix's own preset names, so each example aliases a different one onto our primary ramp (violet for Acme, green for Cathode, blue for GOV.UK, indigo for Carbon). That is a per-design-system mapping the target forces, not demo drift.
 
 - **Real components only.** Markup/components come from the target's own docs (Bootstrap components, shadcn registry sources, daisyUI classes). No hand-rolled imitations.

@@ -63,9 +63,54 @@ const targets = existsSync(refDemoDir)
   ? readdirSync(refDemoDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
   : [];
 
+/**
+ * package.json is the one file that legitimately differs — but only in two
+ * fields: `name` (`<example>-demo-<target>`) and the dev/preview port. Every
+ * other field (dependencies, devDependencies, the rest of `scripts`) must match,
+ * or one demo could quietly pin a different framework version than its siblings
+ * and the cross-example comparison would no longer be honest. Rather than skip
+ * the file (its previous fate) or demand byte-identity (impossible), canonicalize
+ * away exactly those two fields and compare the remainder.
+ */
+function canonicalPackageJson(target, ex) {
+  const p = join(root, 'examples', ex, 'demo', target, 'package.json');
+  if (!existsSync(p)) return null;
+  const raw = readFileSync(p, 'utf8');
+  let pkg;
+  try {
+    pkg = JSON.parse(raw);
+  } catch (e) {
+    errors.push(`${ex}/demo/${target}/package.json is not valid JSON: ${e.message}`);
+    return null;
+  }
+  const wantName = `${ex}-demo-${target}`;
+  if (pkg.name !== wantName) {
+    errors.push(`${ex}/demo/${target}/package.json: name is "${pkg.name}", expected "${wantName}"`);
+  }
+  // Mask the two allowed differences: the name value and any 4–5 digit port.
+  // (Verified: no other 4–5 digit number appears in these files — versions are
+  // dotted like "^22.0.0".) Everything left must be identical across examples.
+  return raw.replace(`"${wantName}"`, '"NAME"').replace(/\b\d{4,5}\b/g, 'PORT');
+}
+
 let compared = 0;
 for (const target of targets) {
   const refDir = join(refDemoDir, target);
+
+  // package.json parity (canonicalized — see above).
+  const refPkg = canonicalPackageJson(target, reference);
+  if (refPkg !== null) {
+    compared++;
+    for (const ex of others) {
+      const otherPkg = canonicalPackageJson(target, ex);
+      if (otherPkg === null) {
+        errors.push(`${ex}/demo/${target}/package.json is missing — ${reference} has one`);
+      } else if (otherPkg !== refPkg) {
+        errors.push(`${ex}/demo/${target}/package.json differs from ${reference}'s beyond name and port — dependencies and scripts must match across examples`);
+      }
+    }
+  }
+
   for (const rel of walk(refDir, refDir)) {
     if (PER_EXAMPLE.some((re) => re.test(rel))) continue;
     const refText = readFileSync(join(refDir, rel), 'utf8');
@@ -102,4 +147,4 @@ if (errors.length) {
   console.error(`  (only ds.config.* and Radix's theme-override.css may legitimately differ).`);
   process.exit(1);
 }
-console.log(`✔ demo parity: ${compared} demo source files identical across all ${examples.length} examples (${targets.length} targets); only dist/ differs`);
+console.log(`✔ demo parity: ${compared} demo files identical across all ${examples.length} examples (${targets.length} targets); only dist/, package.json name+port differ`);
