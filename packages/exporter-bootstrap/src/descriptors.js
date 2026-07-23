@@ -135,7 +135,15 @@ export const DESCRIPTORS = {
     },
   },
   btn: {
-    emit: { 'btn-transition': T_FAST },
+    emit: {
+      // Review finding (2026-07-23): $btn-border-radius defaults to the global
+      // var(--bs-border-radius) — without an explicit binding, an authored
+      // component.button.radius (the catalog's flagship slot) would be
+      // silently ignored on Bootstrap. Bound; unauthored builds emit the
+      // resolved default (≡ what the chain produced) — explicit, not drifted.
+      'btn-border-radius': { comp: 'button.radius' },
+      'btn-transition': T_FAST,
+    },
     drop: {
       'btn-disabled-opacity': { cls: 'unsupported', note: N_OPACITY },
       'btn-hover-bg-shade-amount': { cls: 'dropped', note: N_PARAM },
@@ -277,7 +285,7 @@ export const DESCRIPTORS = {
       'nav-underline-border-width': {
         sem: 'border-width.medium',
         cls: 'approximated',
-        note: '.125rem (2px) — nearest border-width rung',
+        note: 'medium rung (2px) ≡ Bootstrap’s .125rem at a 16px root; unit semantics differ (px vs rem-relative)',
       },
     },
   },

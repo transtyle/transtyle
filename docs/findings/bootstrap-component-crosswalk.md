@@ -36,4 +36,8 @@ The five calls a reviewer should challenge, mirrored in the spec's component-the
 
 ## One out-of-inventory flag
 
-`$component-active-bg`/`$component-active-color` (cross-component active-state pair, shaped exactly like `primary.solid`/`on-solid`) sit _outside_ the component surface but are currently not driven by the semantic mapping either — a cheap, high-leverage addition for AL1.3 to pick up on the semantic side while it's in the file.
+`$component-active-bg`/`$component-active-color` (cross-component active-state pair, shaped exactly like `primary.solid`/`on-solid`) sit _outside_ the component surface. **Review correction (2026-07-23, verified against source):** `$component-active-bg: $primary !default` — it is already driven transitively through `$primary`. The real gap is only `$component-active-color: $white !default`, a hardcoded literal that ignores the brand's `on-solid` — picked up by AL1.3 on the semantic side.
+
+## Review log (2026-07-23, pre-AL1.3)
+
+All five contested calls were re-verified against `_variables.scss` before emission work started. Three corrections came out of it: (a) the `$component-active-bg` claim above was wrong and is fixed; (b) `$btn-border-radius` chains to the global radius var, meaning an authored `component.button.radius` had **no emission path** — an explicit `comp:` binding was added to the descriptors (without it, the catalog's flagship component slot was decorative on Bootstrap); (c) the `nav-underline-border-width` note now states the 2px rung is value-identical at a 16px root rather than "nearest rung". Calls #1 (shared root coupling — confirmed in source: both `$btn-padding-*` and `$input-padding-*` chain from `$input-btn-padding-*`), #2, #3, #4, #5 stand as written.
