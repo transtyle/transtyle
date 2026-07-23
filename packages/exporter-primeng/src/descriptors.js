@@ -275,7 +275,7 @@ export function buildProgressBar() {
     coverage: [
       {
         variable: 'progressbar.value.background',
-        slot: 'semantic.primary.color (alias)',
+        slot: 'PrimeNG preset {primary.color} (runtime alias, not an IR path)',
         class: 'native',
       },
     ],
@@ -294,7 +294,7 @@ export function buildRating() {
     coverage: [
       {
         variable: 'rating.icon.hoverColor',
-        slot: 'semantic.primary.color (alias)',
+        slot: 'PrimeNG preset {primary.color} (runtime alias, not an IR path)',
         class: 'native',
       },
     ],

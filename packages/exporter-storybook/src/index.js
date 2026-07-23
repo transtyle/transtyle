@@ -89,7 +89,25 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
   };
   const cov = (variable, slot, cls, note) => {
     if (!first) return;
-    const provKind = map.get(slot.startsWith('semantic') ? slot : S + slot)?.provenance.kind;
+    const fullSlot = slot.startsWith('semantic') ? slot : S + slot;
+    const entry = map.get(fullSlot);
+    // AL5 sweep: an absent slot used to fall through to `native` — the strongest
+    // coverage claim this exporter can make — because the class was derived from
+    // `provenance.kind`, and no entry means no provenance. The value was
+    // correctly skipped at emission (see the `v === undefined` guard below), so
+    // the report claimed five ThemeVars (appBorderColor, fontBase, fontCode,
+    // buttonBorder, inputBorder) that the theme did not contain. Absence is not
+    // coverage; it is the same `dropped` row Bootstrap emits for the same cause.
+    if (entry?.value === undefined) {
+      coverage.push({
+        variable,
+        slot: '—',
+        class: 'dropped',
+        note: `nothing to bind: this design system has no ${fullSlot}. Storybook's own default applies — author that slot to drive this variable.`,
+      });
+      return;
+    }
+    const provKind = entry.provenance.kind;
     const klass = cls ?? (provKind === 'derived' ? 'derived' : 'native');
     coverage.push({ variable, slot: slot.startsWith('semantic') ? slot : S + slot, class: klass, ...(provKind && { provenance: provKind }), ...(note && { note }) });
   };

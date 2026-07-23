@@ -63,6 +63,22 @@ function buildTheme(map, mode, ctx) {
   };
   const prov = (path) => map.get(path)?.provenance.kind;
   const cov = (variable, slot, cls, note, provSlot = slot) => {
+    // AL5 sweep: when the slot doesn't resolve, `hex()` returns undefined and
+    // JSON.stringify silently omits the key — the right behavior, since ECharts
+    // then uses its own default. But the row still claimed `native`, so the
+    // report asserted coverage for a property the theme file doesn't contain
+    // (`semantic.color.border` is authored in all four examples and absent from
+    // a minimal design system). Only single-path slots are checkable; the
+    // palette row's slot is a range label.
+    if (/^semantic\.[\w.-]+$/.test(slot) && map.get(slot)?.value === undefined) {
+      coverage.push({
+        variable,
+        slot: '—',
+        class: 'dropped',
+        note: `nothing to bind: this design system has no ${slot}, so the property is omitted and ECharts' own default applies`,
+      });
+      return;
+    }
     const provKind = prov(provSlot);
     const finalCls = cls === 'approximated' ? 'approximated' : (provKind === 'derived' ? 'derived' : cls);
     coverage.push({ variable, slot, class: finalCls, provenance: provKind, ...(note && { note }) });

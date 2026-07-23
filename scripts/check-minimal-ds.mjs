@@ -19,7 +19,17 @@
  * Asserts, for every registered exporter:
  *   1. it compiles without throwing;
  *   2. no emitted file contains a leaked `undefined` / `null` / `NaN` value;
- *   3. every emitted file has content.
+ *   3. every emitted file has content;
+ *   4. **coverage honesty**: no row classed `native`/`derived` names an IR slot
+ *      that doesn't resolve.
+ *
+ * (4) came from the AL5 follow-up sweep, and found what (1)–(3) structurally
+ * cannot: exporters that correctly *skip* an absent value — so nothing leaks and
+ * nothing crashes — while still reporting it as covered. Storybook claimed five
+ * ThemeVars its theme did not contain, because its class came from
+ * `provenance.kind` and "no entry" fell through to `native`, the strongest claim
+ * available. Silence plus a coverage claim is worse than either alone: the
+ * report is the artifact users audit.
  *
  * Run: node scripts/check-minimal-ds.mjs   (npm run check:minimal-ds)
  */
@@ -108,6 +118,21 @@ for (const [name, pkg] of Object.entries(EXPORTERS)) {
     contents.split('\n').forEach((line, i) => {
       if (LEAK.test(line)) errors.push(`${name}/${f.path}:${i + 1} leaked a JS value into output: ${line.trim()}`);
     });
+  }
+
+  // 4. Coverage honesty. Only rows whose `slot` is a single, complete IR path
+  //    are checkable — many rows legitimately carry a summary label instead
+  //    (`semantic.{font.sans, type.size.md}`, `semantic.color.primary.1–8`, or a
+  //    target's own namespace such as PrimeNG's `{primary.color}` runtime
+  //    reference). Those are skipped rather than guessed at.
+  const map = result.normalized.modes[result.normalized.defaultMode];
+  for (const c of emitted.coverage ?? []) {
+    if (!['native', 'derived'].includes(c.class)) continue;
+    const slot = String(c.slot ?? '');
+    if (!/^(semantic|component|option)\.[\w.-]+$/.test(slot)) continue;
+    if (map.get(slot)?.value === undefined) {
+      errors.push(`${name}: coverage row "${c.variable}" claims class ${c.class} from ${slot}, which does not resolve — absence is not coverage`);
+    }
   }
 }
 

@@ -75,13 +75,22 @@ export default {
         .split('\n')
         .filter((l) => {
           if (!/:\s*undefined\s*[;,]/.test(l)) return true;
-          const slot = /^\s*(--?[\w-]+|\$[\w-]+)/.exec(l)?.[1] ?? l.trim();
-          r.coverage.push({
-            variable: slot,
-            slot: '—',
-            class: 'dropped',
-            note: `not emitted in ${file}: this design system provides no value for it, so Bootstrap's own default stands`,
-          });
+          const name = /^\s*(--?[\w-]+|\$[\w-]+)/.exec(l)?.[1] ?? l.trim();
+          const note = `not emitted in ${file}: this design system provides no value for it, so Bootstrap's own default stands`;
+          // Reconcile with the row the resolution pass already wrote (AL5 sweep):
+          // pushing a second row left `$border-color` reported as BOTH `native`
+          // and `dropped` in the same report. The declaration is the ground
+          // truth — if it isn't in the file, no earlier claim about it survives.
+          const existing = r.coverage.filter((c) => c.variable === name);
+          if (existing.length) {
+            for (const c of existing) {
+              c.class = 'dropped';
+              c.slot = '—';
+              c.note = note;
+            }
+          } else {
+            r.coverage.push({ variable: name, slot: '—', class: 'dropped', note });
+          }
           return false;
         })
         .join('\n');
@@ -231,8 +240,15 @@ function resolve(light, dark, ctx) {
   cov(
     '$border-radius-pill',
     'semantic.radius.full',
-    'derived',
-    'emitted in Bootstrap idiom (50rem)',
+    // AL5 sweep: was `derived`, which claimed the emitted value came from the
+    // slot. It does not — `50rem` is a hard-coded Bootstrap idiom emitted
+    // unconditionally, and the exporter never reads `semantic.radius.full` at
+    // all. The *meaning* maps exactly (both say "fully rounded"), the value is
+    // the target's own constant: that is what `approximated` is for. The old
+    // class also named a slot that need not exist — a design system with no
+    // radius scale has no `radius.full`, yet the pill still emits correctly.
+    'approximated',
+    "meaning maps exactly (fully rounded); the value is Bootstrap's own 50rem idiom, emitted unconditionally rather than read from the slot",
   );
 
   const font = (k) => light.get(`semantic.font.${k}`);
