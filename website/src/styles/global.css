@@ -133,7 +133,12 @@ h1, h2, h3 { text-wrap: balance; }
    at the edge still reads as legible text, so the tail needs real width — about
    1.6rem of flat, fully-opaque background — to actually hide a character. */
 .code-wrap::after {
-  content: ''; position: absolute; inset: 0; left: auto; width: 3rem;
+  /* --fade-w is set per-block by Base.astro's script, capped to how much is
+     actually hidden (plus a small margin) rather than always 48px — a block
+     that overflows by only 20px must not paint a 48px overlay across text
+     that was already fully visible. Falls back to 3rem for the rare case the
+     script hasn't run yet (e.g. no-JS). */
+  content: ''; position: absolute; inset: 0; left: auto; width: var(--fade-w, 3rem);
   pointer-events: none;
   background: linear-gradient(to right, transparent, var(--shiki-light-bg, var(--code-bg)) 45%, var(--shiki-light-bg, var(--code-bg)));
   opacity: 0; transition: opacity 0.15s ease;
@@ -338,7 +343,14 @@ h1, h2, h3 { text-wrap: balance; }
    border independently of the wrapper's 12px + overflow:hidden, which is
    exactly the "rounded corner with no matching container" bug: two frames,
    two radii, visibly not agreeing at the corners. */
-.prose pre { padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; }
+/* margin: 0 is load-bearing here, not tidiness — every other pre rule on the
+   site (.terminal, .transform/.show-src, .start) resets the browser default
+   `pre { margin: 1em 0 }`; this one never did. Left unset, .code-wrap (which
+   has no background of its own) shows that ~13.6px top/bottom gap as bare
+   page background peeking through above and below the code's own surface —
+   exactly the "extra black padding" a docs page has and the homepage never
+   did, because the homepage's rules all zero it. */
+.prose pre { margin: 0; padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; }
 .prose table { border-collapse: collapse; width: 100%; margin: 1.1rem 0; font-size: 0.9rem; display: block; overflow-x: auto; }
 .prose th, .prose td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; vertical-align: top; }
 .prose th { background: var(--bg-soft); font-weight: 600; }

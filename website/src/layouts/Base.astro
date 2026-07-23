@@ -73,11 +73,24 @@ const { title, description = 'Transtyle is a design system compiler: describe yo
         if (value) wrap.style.setProperty(v, value);
       }
 
-      // Show the fade only while there is genuinely more to the right.
+      // Show the fade only while there is genuinely more to the right. The
+      // threshold is deliberately above 1px: a block can measure a few px of
+      // "overflow" from font-metric rounding alone with nothing actually
+      // hidden, and at the default 48px fade width that false positive used to
+      // paint an obscuring overlay over text that was already fully visible —
+      // worse than the hard-clip it was meant to fix. 6px is comfortably under
+      // one monospace character (~8px at this font-size), so real single-
+      // character overflows still get the affordance.
+      const MIN_MEANINGFUL_OVERFLOW = 6;
       const syncOverflow = () => {
-        const overflows = pre.scrollWidth - pre.clientWidth > 1;
+        const amount = pre.scrollWidth - pre.clientWidth;
+        const overflows = amount > MIN_MEANINGFUL_OVERFLOW;
         wrap.classList.toggle('overflowing', overflows);
         wrap.classList.toggle('at-end', overflows && pre.scrollLeft + pre.clientWidth >= pre.scrollWidth - 1);
+        // Cap the fade/chevron width to what's actually hidden, so a real but
+        // small overflow (say 20px) doesn't paint over 48px of fine, fully-
+        // visible text just because that's the default width.
+        if (overflows) wrap.style.setProperty('--fade-w', Math.min(48, amount + 12) + 'px');
       };
       syncOverflow();
       pre.addEventListener('scroll', syncOverflow, { passive: true });
