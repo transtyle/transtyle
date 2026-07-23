@@ -75,7 +75,40 @@ The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited th
 
 Explicitly not scheduled this half: new exporters beyond the pilot's, catalog growth, MUI/Ant (after the object-emitter pattern is proven by the pilot).
 
-**Priority note (maintainer, 2026-07-22):** publication (R4) and public deployment (R5) are **deprioritized until the project reaches a good first alpha** — the near-term focus is making the compiler genuinely good to use, not shipping it. Every task that lists `Depends: R4` (P2 tutorial, P3 pilot, P5 playground) inherits that gate; work that doesn't need published packages (R1, P1, P6, the importers, docs) is unaffected. "First alpha" is not yet crisply defined — worth pinning down before the next planning pass.
+**Priority note (maintainer, 2026-07-22):** publication (R4) and public deployment (R5) are **deprioritized until the project reaches a good first alpha** — the near-term focus is making the compiler genuinely good to use, not shipping it. Every task that lists `Depends: R4` (P2 tutorial, P3 pilot, P5 playground) inherits that gate; work that doesn't need published packages (R1, P1, P6, the importers, docs) is unaffected. ~~"First alpha" is not yet crisply defined — worth pinning down before the next planning pass.~~ Defined below (maintainer, 2026-07-23).
+
+## First alpha — definition (maintainer, 2026-07-23)
+
+**What the alpha is:** the first published, publicly deployed release. R4 (npm) and R5 (site) are _part of_ the alpha but execute at the absolute end, on explicit maintainer decision — the criteria below are the feature bar that has to be met first, not a schedule.
+
+**The headline feature bar:** a large design system that already speaks DTCG must be able to export to rich, customizable component libraries — Bootstrap and PrimeNG are the two named targets — with **all three tiers mapped: raw/option, semantic, and component tokens**, driving the target's component-theming surface as completely and as natively as that surface allows. The proof fixtures are the two real adopted systems already in the repo (Carbon, GOV.UK), not just the invented ones.
+
+**Import scope for the alpha: DTCG only.** The alpha targets design systems that already have DTCG tokens. I1 (Tailwind), I2 (Figma), and I4 (CSS custom properties) are explicitly post-alpha — they are adoption accelerators for products _without_ a token file, which is not the alpha audience. The [importer contract](docs/plan/importer-contract.md) (M1–M4) waits with them.
+
+**Sequencing decision this implies (recorded, not hidden):** the component tier moves from "v2, after the Phase-4 gate" into the alpha bar. The [component-tier plan](docs/plan/component-tier.md) named "a second independent component-heavy prototype" as the trigger for that conversation — the maintainer is pulling that trigger deliberately: Bootstrap is the second prototype (AL1), and catalog generalization from the two real implementations happens inside the alpha (AL2). ADR-0003's evidence preconditions (real hand-written prototypes to generalize from) are being met the way it asked; its calendar preconditions (≥1 year, ≥3 community exporters) are waived by maintainer decision — AL2 includes writing that amendment into the ADR itself.
+
+### Alpha ledger
+
+- [ ] **AL1** — Bootstrap component-tier theming (the second component-heavy prototype): drive Bootstrap's per-component theming surface (`$btn-*`, `$card-*`, `$modal-*`, … Sass variables and the `--bs-<component>-*` CSS-variable layer) from `component.*` tokens with semantic-tier defaults, the same resolve-or-fill pattern C2 built and `exporter-primeng` exercises. Starts with a plan doc (component-tier.md's C-series is the template), not code.
+- [ ] **AL2** — Generalize the shared `component.*` catalog from the two real implementations (PrimeNG's descriptors + AL1's Bootstrap bindings), RFC-style per [component-layer.md](docs/specs/component-layer.md)'s additive-only discipline — nothing enters the shared catalog that both targets don't independently need (the meta-language principle, unchanged). Includes the ADR-0003 amendment recording the sequencing decision above.
+- [ ] **AL3** — Make "ALL tokens mapped" measurable: a per-target inventory of the documented component-theming surface, and a coverage bar on top of it — for Bootstrap and PrimeNG, every inventoried slot classified `native`/`derived`/`approximated` with an honest note, **zero silent `unsupported`**. Acceptance runs on all four examples, with Carbon and GOV.UK as the big-DS proof.
+- [ ] **AL4** — D3, the reference clarity rewrite (existing task, now alpha-gating). Sequencing wrinkle to resolve when it starts: D3 is marked "after R2", and R2 ratifies on R1's sign-off — but R1 is **not** alpha-gating (below). If R1 hasn't landed when AL4 starts, D3 proceeds against the [ADR-0011](docs/adr/0011-v0-freeze-readiness.md) draft and says so.
+- [ ] **AL5** — Diagnostics polish pass: sweep every diagnostic code and error path for actionability — "genuinely good to use" judged by what happens when the user does something wrong (bad config key, broken alias, missing file, unratified contested value). Message text, suggested fix, and exit behavior reviewed against real mistakes, not the happy path.
+- [ ] **AL6** — R4 then R5, executed last, on explicit maintainer go — nothing here is automatic.
+
+**Explicitly not alpha-gating:** R1 (practitioner sign-off — stays open and valuable, but the alpha does not wait on it; maintainer decision 2026-07-23), I1/I2/I4 (non-DTCG importers), I3 (watch mode), M1–M4 (importer contract), P3/P5 (still R4-gated; the third-party pilot naturally follows publication).
+
+**Suggested model per task** (judgment call, not a hard rule — same convention as [component-tier.md](docs/plan/component-tier.md)):
+
+| Task | Suggested                                          | Why                                                                                                                                                                                           |
+| ---- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AL1  | **Opus** for the plan doc, **Sonnet** to implement | The plan requires real judgment (Bootstrap's theming surface is far larger and messier than PrimeNG's preset objects); the implementation then mirrors a pattern the repo has executed twice. |
+| AL2  | **Opus**                                           | Catalog-shape decisions with freeze consequences — the highest-stakes judgment work in the alpha, same class as C1.                                                                           |
+| AL3  | **Sonnet**                                         | Inventory + report plumbing over existing coverage machinery; the design decision (what counts as the "documented surface") lands in AL1's plan doc.                                          |
+| AL4  | **Sonnet**, **Opus** for structure decisions       | Rewrite work against an existing docs corpus; escalate only if the information architecture itself needs rethinking.                                                                          |
+| AL5  | **Sonnet**                                         | High-volume, per-diagnostic review with a clear quality bar; precedented by the docs-precision pass (D1).                                                                                     |
+
+**On Fable:** per the standing note in [component-tier.md](docs/plan/component-tier.md) — no verified capability documentation to ground a recommendation on; check Anthropic's model docs before assigning it here.
 
 ## Phase 2 — Trust and workflow (v1.0)
 
@@ -96,7 +129,7 @@ Explicitly not scheduled this half: new exporters beyond the pilot's, catalog gr
 
 ## Phase 4 — Component layer (v2.0)
 
-Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); deliberately deferred ([ADR-0003](docs/adr/0003-tokens-first.md)). Begins only after ≥3 community exporters exist and the token IR has survived a year of real use.
+Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); deliberately deferred ([ADR-0003](docs/adr/0003-tokens-first.md)). Begins only after ≥3 community exporters exist and the token IR has survived a year of real use. **Amended by the first-alpha definition (maintainer, 2026-07-23):** the component tier's core — a shared `component.*` catalog generalized from two real component-heavy implementations — is pulled forward into the alpha bar (AL1/AL2 above); ADR-0003's calendar preconditions are waived by that decision, and AL2 writes the amendment into the ADR. What remains Phase-4 is the rest of this section's scope beyond the two proven targets.
 
 **Evidence-gathering in progress, not Phase 4 itself:** [docs/plan/component-tier.md](docs/plan/component-tier.md) (tasks C1–C7, each with a suggested-model note) builds one real, working PrimeNG exporter — the "hand-written component-theming prototype" ADR-0003's precondition list calls for — using PrimeNG's own three-tier design-token system (`primitive`/`semantic`/`components`) as the forcing function. See [proposal 0002](docs/proposals/0002-component-theming-primeng.md) for the architecture analysis. This does **not** flip ADR-0003's gate or start Phase 4 early; a second independent component-heavy prototype is still the actual trigger for that conversation.
 

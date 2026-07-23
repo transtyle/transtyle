@@ -57,7 +57,9 @@ Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their
 2. **Phase 1 — foundations compiler + four reference exporters**, npm publication, `init`.
 3. **Phase 2 — trust & workflow**: `explain`, `diff`, preview site, plugin conformance kit, importers beyond DTCG. Exit criterion for v1.0: a third party ships a working exporter using only public docs.
 4. **Phase 3 — ecosystem translation**: importers from Bootstrap/MUI/shadcn; round-trip fidelity reporting.
-5. **Phase 4 — component theming layer (v2)**, only after the token IR has survived a year of real use.
+5. **Phase 4 — component theming layer (v2)** — partially pulled forward by the first-alpha definition (2026-07-23): the shared `component.*` catalog, generalized from two real component-heavy implementations (PrimeNG shipped; Bootstrap is the alpha's second prototype), is now part of the first-alpha bar. The remainder of the layer stays Phase 4.
+
+The **first alpha** — the first published, publicly deployed release — is defined in the project ROADMAP (2026-07-23): a large DTCG-speaking design system exports to rich component libraries (Bootstrap, PrimeNG) with all three tiers mapped — raw/option, semantic, and component tokens — proven on the Carbon and GOV.UK examples, plus a reference-docs rewrite and a diagnostics polish pass. Non-DTCG importers (Tailwind, Figma, CSS custom properties) are explicitly post-alpha.
 
 ## What is deliberately never coming
 
