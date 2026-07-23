@@ -16,7 +16,7 @@
  * of those authors a complete token set — exactly the shape that hides this
  * class of bug.
  *
- * Asserts, for every registered exporter:
+ * Asserts, for every registered exporter, across every mode SHAPE below:
  *   1. it compiles without throwing;
  *   2. no emitted file contains a leaked `undefined` / `null` / `NaN` value;
  *   3. every emitted file has content;
@@ -30,6 +30,16 @@
  * `provenance.kind` and "no entry" fell through to `native`, the strongest claim
  * available. Silence plus a coverage claim is worse than either alone: the
  * report is the artifact users audit.
+ *
+ * The **mode shapes** are the second axis of sparseness (the token set is the
+ * first). The original harness only ever tried `color-scheme: [light, dark]`;
+ * real configs also come light-only, dark-only, density-only (no color-scheme at
+ * all), three-valued, and multi-dimension. Sweeping the invariants above across
+ * all of them is how we know an exporter doesn't assume a particular mode layout
+ * — a light-only DS must not crash for want of a `dark` map, a density-only DS
+ * has no `modes.light` at all, and so on. Plus one negative-space case: a config
+ * that declares `color-scheme` after another dimension must raise TST1112,
+ * because the polarity axis has to be first or dark mode silently never ships.
  *
  * Run: node scripts/check-minimal-ds.mjs   (npm run check:minimal-ds)
  */
@@ -65,25 +75,42 @@ const MINIMAL_TOKENS = {
   },
 };
 
+/**
+ * Legal mode layouts a real config comes in. Each is the SAME 3-token design
+ * system under a different `modes` block. `light-dark` is the original harness;
+ * the rest are the shapes it never tried.
+ */
+const MODE_SHAPES = {
+  'light-dark': { 'color-scheme': { values: ['light', 'dark'], default: 'light' } },
+  'light-only': { 'color-scheme': { values: ['light'], default: 'light' } },
+  'dark-only': { 'color-scheme': { values: ['dark'], default: 'dark' } },
+  'density-only': { density: { values: ['comfortable', 'compact'], default: 'comfortable' } },
+  'three-scheme': { 'color-scheme': { values: ['light', 'dark', 'dim'], default: 'light' } },
+  'two-dimension': {
+    'color-scheme': { values: ['light', 'dark'], default: 'light' },
+    density: { values: ['comfortable', 'compact'], default: 'comfortable' },
+  },
+};
+
 const dir = mkdtempSync(join(tmpdir(), 'transtyle-minimal-'));
 mkdirSync(join(dir, 'tokens'));
 writeFileSync(join(dir, 'tokens', 'base.tokens.json'), JSON.stringify(MINIMAL_TOKENS, null, 2));
-writeFileSync(
-  join(dir, 'transtyle.config.json'),
-  JSON.stringify(
-    {
-      name: 'minimal',
-      tokens: ['tokens/*.tokens.json'],
-      modes: { 'color-scheme': { values: ['light', 'dark'], default: 'light' } },
-      derivation: { rules: 'standard@1' },
-      targets: Object.fromEntries(
-        Object.keys(EXPORTERS).map((n) => [n, { output: `dist/${n}` }]),
-      ),
-    },
-    null,
-    2,
-  ),
-);
+
+const writeConfig = (modes) =>
+  writeFileSync(
+    join(dir, 'transtyle.config.json'),
+    JSON.stringify(
+      {
+        name: 'minimal',
+        tokens: ['tokens/*.tokens.json'],
+        modes,
+        derivation: { rules: 'standard@1' },
+        targets: Object.fromEntries(Object.keys(EXPORTERS).map((n) => [n, { output: `dist/${n}` }])),
+      },
+      null,
+      2,
+    ),
+  );
 
 const errors = [];
 // `undefined` etc. as a whole word on the value side of a declaration. Matching
@@ -92,48 +119,65 @@ const errors = [];
 const LEAK = /(:|=>?)\s*(undefined|null|NaN)\b/;
 
 let files = 0;
-for (const [name, pkg] of Object.entries(EXPORTERS)) {
-  const loadExporter = async () => (await import(pkg)).default;
-  let result;
-  try {
-    result = await compile({ cwd: dir, targets: [name], emit: false, loadExporter });
-  } catch (e) {
-    errors.push(`${name}: threw instead of reporting — ${e.message}`);
-    continue;
-  }
-  const hardErrors = result.diagnostics.errors;
-  if (hardErrors.length) {
-    errors.push(`${name}: a minimal design system produced errors — ${hardErrors.map((d) => `${d.code} ${d.message}`).join('; ')}`);
-    continue;
-  }
-  const emitted = result.results.find((r) => r.target === name);
-  if (!emitted) {
-    errors.push(`${name}: produced no result`);
-    continue;
-  }
-  for (const f of emitted.emitted ?? []) {
-    files++;
-    const contents = f.contents ?? '';
-    if (!contents.trim()) errors.push(`${name}/${f.path}: emitted an empty file`);
-    contents.split('\n').forEach((line, i) => {
-      if (LEAK.test(line)) errors.push(`${name}/${f.path}:${i + 1} leaked a JS value into output: ${line.trim()}`);
-    });
-  }
+for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
+  writeConfig(modes);
+  for (const [name, pkg] of Object.entries(EXPORTERS)) {
+    const loadExporter = async () => (await import(pkg)).default;
+    const at = `${name} (${shape})`;
+    let result;
+    try {
+      result = await compile({ cwd: dir, targets: [name], emit: false, loadExporter });
+    } catch (e) {
+      errors.push(`${at}: threw instead of reporting — ${e.message}`);
+      continue;
+    }
+    const hardErrors = result.diagnostics.errors;
+    if (hardErrors.length) {
+      errors.push(`${at}: a minimal design system produced errors — ${hardErrors.map((d) => `${d.code} ${d.message}`).join('; ')}`);
+      continue;
+    }
+    const emitted = result.results.find((r) => r.target === name);
+    if (!emitted) {
+      errors.push(`${at}: produced no result`);
+      continue;
+    }
+    for (const f of emitted.emitted ?? []) {
+      files++;
+      const contents = f.contents ?? '';
+      if (!contents.trim()) errors.push(`${at}/${f.path}: emitted an empty file`);
+      contents.split('\n').forEach((line, i) => {
+        if (LEAK.test(line)) errors.push(`${at}/${f.path}:${i + 1} leaked a JS value into output: ${line.trim()}`);
+      });
+    }
 
-  // 4. Coverage honesty. Only rows whose `slot` is a single, complete IR path
-  //    are checkable — many rows legitimately carry a summary label instead
-  //    (`semantic.{font.sans, type.size.md}`, `semantic.color.primary.1–8`, or a
-  //    target's own namespace such as PrimeNG's `{primary.color}` runtime
-  //    reference). Those are skipped rather than guessed at.
-  const map = result.normalized.modes[result.normalized.defaultMode];
-  for (const c of emitted.coverage ?? []) {
-    if (!['native', 'derived'].includes(c.class)) continue;
-    const slot = String(c.slot ?? '');
-    if (!/^(semantic|component|option)\.[\w.-]+$/.test(slot)) continue;
-    if (map.get(slot)?.value === undefined) {
-      errors.push(`${name}: coverage row "${c.variable}" claims class ${c.class} from ${slot}, which does not resolve — absence is not coverage`);
+    // 4. Coverage honesty. Only rows whose `slot` is a single, complete IR path
+    //    are checkable — many rows legitimately carry a summary label instead
+    //    (`semantic.{font.sans, type.size.md}`, `semantic.color.primary.1–8`, or a
+    //    target's own namespace such as PrimeNG's `{primary.color}` runtime
+    //    reference). Those are skipped rather than guessed at.
+    const map = result.normalized.modes[result.normalized.defaultMode];
+    for (const c of emitted.coverage ?? []) {
+      if (!['native', 'derived'].includes(c.class)) continue;
+      const slot = String(c.slot ?? '');
+      if (!/^(semantic|component|option)\.[\w.-]+$/.test(slot)) continue;
+      if (map.get(slot)?.value === undefined) {
+        errors.push(`${at}: coverage row "${c.variable}" claims class ${c.class} from ${slot}, which does not resolve — absence is not coverage`);
+      }
     }
   }
+}
+
+// Negative-space case: the polarity axis MUST be the first dimension, or dark
+// mode silently never reaches an exporter (the values land in their combos, but
+// no `modes.dark` alias is created for a non-primary dimension). This must warn.
+writeConfig({
+  density: { values: ['comfortable', 'compact'], default: 'comfortable' },
+  'color-scheme': { values: ['light', 'dark'], default: 'light' },
+});
+const loadNoop = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
+const df = await compile({ cwd: dir, targets: [], emit: false, loadExporter: loadNoop });
+if (!df.diagnostics.items.some((d) => d.code === 'TST1112')) {
+  errors.push('color-scheme declared after another dimension must raise TST1112 (dark mode would silently never ship), but it did not');
 }
 
 rmSync(dir, { recursive: true, force: true });
@@ -141,9 +185,9 @@ rmSync(dir, { recursive: true, force: true });
 if (errors.length) {
   console.error(`✘ minimal-ds check: ${errors.length} problem(s)`);
   for (const e of errors) console.error('  - ' + e);
-  console.error('\n  A design system may author only a brand color, a surface, and a text color.');
-  console.error('  Exporters must read absent slots defensively and report them as coverage,');
-  console.error('  never crash and never write a JS value into a stylesheet.');
+  console.error('\n  A design system may author only a brand color, a surface, and a text color,');
+  console.error('  in any legal mode layout. Exporters must read absent slots and absent modes');
+  console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly (${files} files, no leaked values)`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes (${files} files, no leaks); polarity-axis-not-first warns`);

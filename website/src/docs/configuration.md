@@ -99,6 +99,7 @@ which resolves to four full token maps: `light+comfortable`, `light+compact`, `d
 
 Two constraints worth knowing:
 
+- **The first dimension carries light/dark.** Order matters: the first dimension listed is the _polarity axis_ — the one exporters bind as light/dark. So if you use `color-scheme`, list it first. Declaring it after another dimension (e.g. `density` first) makes dark mode silently never reach any exporter — the dark values still resolve into their combinations, but no target reads them — and Transtyle warns about exactly this (`TST1112`).
 - **One dimension per layer.** A mode-scoped token file targets `{ "color-scheme": "dark" }`, never two axes at once (`TST1110`). Compose combinations from single-axis layers; that is what keeps "which file set this value?" answerable.
 - **Exporters express what their target can express.** `color-scheme` maps everywhere; `density` has no Bootstrap or PrimeNG counterpart, so it appears in those reports as an honest `dropped` row naming the dimension, rather than being silently flattened.
 

@@ -27,6 +27,22 @@ export function normalize(tokenTrees, config, diagnostics) {
   const dimDefaults = new Map(dimEntries);
   const primaryDimName = dimEntries[0][0];
 
+  // AL5 mode-shape sweep: the FIRST dimension is the polarity axis — derive.js
+  // reads dark/light off it (`isDark` keys on `modeDimension`), and exporters
+  // bind the `modes.light`/`modes.dark` aliases, which only exist for the
+  // primary dimension's values. So `color-scheme` declared anywhere but first
+  // silently drops dark mode: the authored dark values still land in their
+  // combos, but no exporter can reach them, and nothing warned. Found by
+  // compiling a density-first config against every exporter — all emitted a
+  // dark block filled with light values.
+  if (dimEntries.length > 1 && dimDefaults.has('color-scheme') && primaryDimName !== 'color-scheme') {
+    diagnostics.warn(
+      'TST1112',
+      `"color-scheme" is declared but "${primaryDimName}" is the first mode dimension — light/dark is bound to the first dimension, so this design system's dark mode will not reach any exporter.`,
+      { hint: 'List "color-scheme" first in `modes`. Only the first dimension carries light/dark polarity; the others are extra axes exporters mostly drop.' },
+    );
+  }
+
   // Base layers merge into the token forest; mode-scoped layers inject values
   // into the same modeValues structure that inline $extensions produce — the
   // two authoring forms are equivalent by construction (ADR-0009).
