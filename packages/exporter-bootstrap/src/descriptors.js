@@ -25,9 +25,16 @@
  *                     (the plan's "bind the root decision" rule).
  *   follows-global  — aliases a global var(--bs-*) custom property, which the
  *                     semantic tier drives today.
- *   inherit-default — Bootstrap's `null`/`inherit`/`transparent`/`currentcolor`
+ *   inherits-driven — a cascade no-op marker on an *inherited* property whose
+ *                     effective value still comes from something we drive (see
+ *                     INHERITS_DRIVEN). Real coverage, exactly as PrimeNG's
+ *                     `inherited` reason is.
+ *   inherit-default — the remaining `null`/`inherit`/`transparent`/`currentcolor`
  *                     no-op markers; setting them would change cascade
  *                     semantics, not theme values.
+ *
+ * Recipe `part`: 'alpha' | 'opaque' for colors; a composite member name
+ * ('fontSize' | 'fontWeight' | 'lineHeight') for `semantic.type.role.*`.
  */
 
 // Shared honest notes (referenced by many entries — keep the wording in one place).
@@ -61,6 +68,10 @@ export const DESCRIPTORS = {
         cls: 'approximated',
         note: '1.5rem vs the 1.563rem scale rung — nearest meaning',
       },
+      // Bootstrap nulls the weight (inherit body 400), which is incoherent with
+      // the 1.5rem size it does set: a legend is a fieldset's title. Bound to
+      // the title role's weight so size and weight come from the same meaning.
+      'legend-font-weight': { sem: 'type.role.title.md', part: 'fontWeight' },
     },
   },
   mark: { emit: { 'mark-padding': { sem: 'space.1', cls: 'approximated', note: N_EM } } },
@@ -177,14 +188,26 @@ export const DESCRIPTORS = {
       'btn-close-opacity': { cls: 'unsupported', note: N_OPACITY },
       'btn-close-hover-opacity': { cls: 'unsupported', note: N_OPACITY },
       'btn-close-focus-opacity': { cls: 'unsupported', note: N_OPACITY },
-      'btn-close-disabled-opacity': { cls: 'unsupported', note: N_OPACITY },
+      'btn-close-disabled-opacity': {
+        cls: 'unsupported',
+        note: 'the same concept as `semantic.opacity.disabled`, but not bindable to it: Bootstrap composes this against the glyph\'s own resting alpha ($btn-close-opacity: .5), so writing the catalog value (0.6) here would make the disabled close button MORE visible than the enabled one. Needs a compositional recipe (catalog factor x the target\'s resting alpha) the cross-walk has no form for yet — a real AL2-style growth signal, unlike the other -opacity rows in this family.',
+      },
       'btn-close-white-filter': { cls: 'dropped', note: N_FILTER },
     },
   },
 
   // ---- forms ---------------------------------------------------------------
   'form-text': { emit: { 'form-text-margin-top': { sem: 'space.1' } } },
-  'form-label': { emit: { 'form-label-margin-bottom': { sem: 'space.2' } } },
+  'form-label': {
+    emit: {
+      'form-label-margin-bottom': { sem: 'space.2' },
+      // Bootstrap leaves these `null` (labels inherit body type). The IR's type
+      // roles say a label is its own role — and Bootstrap has the exact slots
+      // to say so, so this is a binding, not an invention.
+      'form-label-font-size': { sem: 'type.role.label.md', part: 'fontSize' },
+      'form-label-font-weight': { sem: 'type.role.label.md', part: 'fontWeight' },
+    },
+  },
   'form-color': { drop: { 'form-color-width': { cls: 'unsupported', note: N_BESPOKE } } },
   'form-check': {
     emit: {
@@ -550,6 +573,53 @@ export const DESCRIPTORS = {
 const INHERIT_MARKERS = new Set(['null', 'inherit', 'transparent', 'currentcolor']);
 
 /**
+ * The Bootstrap counterpart of PrimeNG's `inherited` reason (AL3,
+ * surface-coverage.js): a slot left at a cascade no-op whose EFFECTIVE value
+ * still comes from something this exporter drives. PrimeNG counts those as real
+ * coverage (`derived`) because that is how PrimeNG is designed to be themed;
+ * Bootstrap's `null` markers on inherited CSS properties work identically, and
+ * classifying them as `dropped` under-reported the same mechanism on the other
+ * target. Splitting them is a correction, not an inflation.
+ *
+ * Membership is per-name and deliberately conservative — the split is a real
+ * judgment (does this property inherit at all, and is the ancestor value one we
+ * drive?), so it is not inferred from the marker. Anything not listed here keeps
+ * falling through to `inherit-default` (dropped), which is the safe direction:
+ * a new upstream `null` variable is never silently claimed as covered.
+ *
+ * The two rejected shapes, for the record:
+ *   - non-inherited properties (box-shadow, background, border-radius, height,
+ *     margin, transition, filter): `null` means "no declaration", so nothing
+ *     reaches them — those stay dropped.
+ *   - inherited-but-structural (white-space, cursor): the value that reaches
+ *     them is real, but it is not a theme value.
+ */
+const INHERITS_DRIVEN = {
+  'hr-color': 'the body text color (driven) — the divider is currentColor at $hr-opacity',
+  'hr-border-color': 'currentColor via $hr-color, so it follows the driven body color per mode',
+  'input-btn-font-family': 'the driven body font stack',
+  'form-text-font-style': 'the driven body type',
+  'form-text-font-weight': 'the driven body type',
+  'form-label-font-style': 'the driven body type',
+  'form-label-color': 'the driven body text color',
+  'input-disabled-color': 'the driven $input-color (Bootstrap keeps the enabled color when disabled)',
+  'form-check-label-color': 'the driven body text color',
+  'form-select-disabled-color': 'the driven $form-select-color',
+  'nav-link-font-size': 'the driven body type',
+  'nav-link-font-weight': 'the driven body type',
+  'card-title-color': 'the driven card/body text color',
+  'card-subtitle-color': 'the driven card/body text color',
+  'card-cap-color': 'the driven card/body text color',
+  'card-color': 'the driven body text color',
+  'toast-color': 'the driven body text color',
+  'pre-color': 'the driven body text color',
+  'breadcrumb-font-size': 'the driven body type',
+  'form-feedback-tooltip-line-height': 'the driven body line height',
+  'tooltip-arrow-color': 'the driven --bs-tooltip-bg (Bootstrap points the arrow at the bubble color)',
+  'table-group-separator-color': 'currentColor — the driven table text color',
+};
+
+/**
  * Classify one inventory variable (scope === 'component').
  * Returns { emit } | { drop } | { mech: 'chained'|'follows-global'|'inherit-default' } | null.
  * null = unclassified — check-bootstrap-surface.mjs fails the build on it.
@@ -563,6 +633,9 @@ export function coverageForVariable(v) {
   if (drop) return { drop };
   if (v.refs.length > 0) return { mech: 'chained' };
   if (v.aliasesGlobalCssVar) return { mech: 'follows-global' };
-  if (INHERIT_MARKERS.has(v.value)) return { mech: 'inherit-default' };
+  if (INHERIT_MARKERS.has(v.value)) {
+    const from = INHERITS_DRIVEN[v.name];
+    return from ? { mech: 'inherits-driven', from } : { mech: 'inherit-default' };
+  }
   return null;
 }

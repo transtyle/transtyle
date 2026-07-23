@@ -27,6 +27,12 @@ const MECH = {
     slot: 'via global --bs-* vars',
     note: 'aliases a global custom property the semantic tier drives',
   },
+  'inherits-driven': {
+    class: 'derived',
+    slot: 'via the cascade',
+    // `from` is appended per variable — see the coverage walk below.
+    note: 'left at Bootstrap\'s cascade no-op so the value reaches it by inheritance from',
+  },
   'inherit-default': {
     class: 'dropped',
     slot: '—',
@@ -68,7 +74,12 @@ export function resolveEmits(light, ctx) {
           ? (entry.value.alpha ?? 1)
           : recipe.part === 'opaque'
             ? ctx.formatHex({ ...entry.value, alpha: 1 }).text
-            : entry.value;
+            : recipe.part
+              ? // A `semantic.type.role.*` composite: Bootstrap splits the role
+                // across separate $..-font-size / $..-font-weight variables, so
+                // each reads one member of the same composite.
+                entry.value[recipe.part]
+              : entry.value;
       slot = `semantic.${recipe.sem}${recipe.part ? ` (${recipe.part})` : ''}`;
       cls = recipe.cls ?? provCls(entry);
     } else if (recipe.trans) {
@@ -129,7 +140,12 @@ export function componentVariables(light, ctx) {
       coverage.push({ variable: `$${v.name}`, slot: '—', class: c.drop.cls, note: c.drop.note });
     } else {
       const m = MECH[c.mech];
-      coverage.push({ variable: `$${v.name}`, slot: m.slot, class: m.class, note: m.note });
+      coverage.push({
+        variable: `$${v.name}`,
+        slot: m.slot,
+        class: m.class,
+        note: c.from ? `${m.note} ${c.from}` : m.note,
+      });
     }
   }
   return { lines, coverage };

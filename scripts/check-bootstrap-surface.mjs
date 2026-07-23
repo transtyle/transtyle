@@ -84,6 +84,13 @@ if (existsSync(descPath)) {
       if (recipe.trans) paths.push(`semantic.${recipe.trans.duration}`, `semantic.${recipe.trans.easing}`);
       if (!paths.length) errors.push(`descriptor ${family}/$${name}: emit recipe has no sem/comp/trans source`);
       for (const p of paths) if (map.get(p)?.value === undefined) errors.push(`descriptor ${family}/$${name}: recipe path ${p} does not resolve in a real compile`);
+      // A composite `part` (type-role member) must exist on the resolved value —
+      // a typo'd 'fontsize' would otherwise emit `$var: undefined;`.
+      if (recipe.sem && recipe.part && !['alpha', 'opaque'].includes(recipe.part)) {
+        const val = map.get(`semantic.${recipe.sem}`)?.value;
+        if (val?.[recipe.part] === undefined)
+          errors.push(`descriptor ${family}/$${name}: part '${recipe.part}' does not exist on semantic.${recipe.sem}`);
+      }
     }
   }
 }
