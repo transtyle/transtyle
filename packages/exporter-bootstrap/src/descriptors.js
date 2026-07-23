@@ -460,16 +460,17 @@ export const DESCRIPTORS = {
     },
   },
   tooltip: {
+    emit: {
+      // Promoted by proposal 0004 on the strongest two-target evidence yet:
+      // PrimeNG constrains the same element the same way at the same measure
+      // (`tooltip.root.maxWidth: 12.5rem` — exactly Bootstrap's 200px), and it
+      // is one of only two `maxWidth` slots in its whole 2759-slot surface.
+      // The catalog slot has no default, so this only emits when authored;
+      // otherwise Bootstrap's own 200px stands (resolveEmits' absent-source
+      // path, AL5).
+      'tooltip-max-width': { comp: 'tooltip.max-width' },
+    },
     drop: {
-      // The one slot in this bucket that passed the two-target bar, and the
-      // strongest evidence the bar has seen: PrimeNG independently constrains
-      // the same element the same way at the same value (`tooltip.root.maxWidth:
-      // 12.5rem` = 200px), and it is one of only two `maxWidth` slots in its
-      // entire 2759-slot surface. Awaiting the catalog promotion in proposal 0004.
-      'tooltip-max-width': {
-        cls: 'unsupported',
-        note: 'a confirmed catalog-growth candidate, not a bespoke value: PrimeNG constrains the same element the same way at the same measure (tooltip.root.maxWidth 12.5rem = 200px), one of only two maxWidth slots in its whole surface. Promotion to `component.tooltip.max-width` is recommended in proposal 0004; until it lands, Bootstrap keeps its own default.',
-      },
       'tooltip-opacity': { cls: 'unsupported', note: N_OPACITY },
       'tooltip-arrow-width': { cls: 'dropped', note: N_STRUCT + ' (arrow geometry)' },
       'tooltip-arrow-height': { cls: 'dropped', note: N_STRUCT + ' (arrow geometry)' },

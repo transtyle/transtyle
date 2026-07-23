@@ -2,6 +2,9 @@
   "component": {
     "button": {
       "radius": { "$type": "dimension", "$value": "2px" }
+    },
+    "tooltip": {
+      "max-width": { "$type": "dimension", "$value": "18rem" }
     }
   }
 }

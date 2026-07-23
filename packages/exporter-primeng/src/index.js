@@ -327,6 +327,21 @@ export default {
       dialog: dialog.tokens,
     };
 
+    // The overlay measure (proposal 0004). The catalog slot has no default, so
+    // this only appears when the design system actually authors it — unauthored,
+    // Aura's own 12.5rem stands, which is already the same 200px Bootstrap uses.
+    // Emitting a `maxWidth` we didn't derive would be inventing a value.
+    const tooltipMaxWidth = light.get('component.tooltip.max-width')?.value;
+    if (tooltipMaxWidth !== undefined) {
+      components.tooltip = { root: { maxWidth: String(tooltipMaxWidth) } };
+      coverage.push({
+        variable: 'components.tooltip.root.maxWidth',
+        slot: 'component.tooltip.max-width',
+        class: 'native',
+        note: 'proposal 0004: the one geometry concept both reference targets model identically (Bootstrap $tooltip-max-width 200px ≡ Aura 12.5rem)',
+      });
+    }
+
     // AL3: measure this preset against PrimeNG's real theming surface
     // (surface-inventory.json, extracted from the Aura preset). Replaces the
     // hand-maintained STRUCTURAL_RESIDUE guess with per-family counts of what

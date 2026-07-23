@@ -85,6 +85,7 @@ It is deliberately tiny, and stays tiny by rule (below):
 | `component.control.padding-x` / `-y` | padding shared by controls    | `semantic.space.4` / `space.2` |
 | `component.button.radius`            | button shape                  | `component:control.radius`     |
 | `component.button.padding-x` / `-y`  | button padding                | `component:control.padding-*`  |
+| `component.tooltip.max-width`        | how wide a tooltip may grow   | _nothing — authored only_      |
 
 The `component:` prefix makes the tier **layered**, and that layering carries an authoring intent no flat vocabulary can express:
 
@@ -103,6 +104,14 @@ So nothing enters the component tier without **two independent exporters needing
 
 - **Accepted:** control padding/radius. Bootstrap and PrimeNG both treat "a control's box" as one shared decision, arrived at independently. That's architectural correspondence.
 - **Rejected:** the `sm`/`lg` size ladder. Both targets have one — and they disagree about which rungs it has. The disagreement _is_ the finding: a shared slot would have to pick a winner, so exporters keep deriving their own.
+
+The rule has since been run once more, over the whole of component **geometry** — 25 Bootstrap sizing variables against PrimeNG's 243 width/height/size slots. It rejected nine of the ten concepts and accepted one:
+
+- **Accepted:** `tooltip.max-width`. Both libraries constrain how wide a tooltip may grow, both with a `max-width` on the tooltip root, both at the same measure — Bootstrap `200px`, PrimeNG `12.5rem`, which is 200px. And both are selective about it: PrimeNG has exactly two `maxWidth` slots in 2759. Two libraries agreeing that _this specific element_ is the one needing a width ceiling.
+- **Rejected — false friend:** `$toast-max-width: 350px` against PrimeNG's `toast.root.width: 22rem` (352px). Nearly the same number, opposite box semantics: one grows to its content up to a ceiling, the other is fixed. The near-coincidence is exactly what a name-and-number comparison would have promoted.
+- **Rejected — one-sided:** spinner size, popover width, the modal size ladder, offcanvas dimensions. PrimeNG hard-codes every one of them; there is nothing to correspond with.
+
+The full ledger is in `docs/proposals/0004-component-geometry.md`. The point of writing down the rejections is that the next probe doesn't re-litigate them.
 
 Everything a target needs beyond the catalog stays inside that exporter, where it belongs. The measured result is that Bootstrap variables not bound to a catalog slot are overwhelmingly reached anyway — through the target's own `!default` chains and CSS custom properties — rather than left untouched.
 

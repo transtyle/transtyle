@@ -1,6 +1,6 @@
 # Proposal 0004 — Component geometry: does the catalog need a sizing vocabulary?
 
-**Status: evidence probe, 2026-07-23. Recommendation: promote one slot, reject the rest.**
+**Status: accepted, implemented 2026-07-23.** One slot promoted (`component.tooltip.max-width`), nine concepts rejected with reasons. The rejections are the larger half of the result and are recorded here so the next probe doesn't re-litigate them.
 
 `bespoke component geometry/sizing with no scale meaning` is the largest remaining `unsupported` bucket on Bootstrap — **25 of 657** slots, and the note has been carrying an explicit growth signal since AL1.2: _"the IR has no component-size vocabulary yet."_ This probe tests that signal against the second reference target under [proposal 0003](0003-component-catalog-generalization.md)'s bar.
 
@@ -64,3 +64,22 @@ The underlying decision is typographic: a tooltip is a short line of text, and ~
 2. **Rewrite the `N_BESPOKE` note.** It currently reads as one undifferentiated growth signal ("the IR has no component-size vocabulary yet"), which this probe shows is wrong: the bucket is six one-sided/false-friend concepts, two architecture-disagreements, and one genuine convergence. A note that promises a vocabulary nobody needs is the coverage-report equivalent of over-claiming.
 3. **Keep icon size as the named watch item**, pending a third target.
 4. **Do not add a component-geometry family.** The measured answer to "does PrimeNG need the same sizing vocabulary" is **no** — and that answer is worth as much as a promotion would have been, because it is what stops the catalog from growing to 243 slots shaped like one target.
+
+## Implementation (2026-07-23)
+
+All four recommendations landed.
+
+`COMPONENT_CATALOG` gains `tooltip: { 'max-width': { type: 'dimension' } }` — the **first slot with no `defaultFrom`**, which required one engine change: DERIVE now skips catalog entries that declare no default, since an authored value is already carried through by the generic token walk before derivation runs. The slot therefore exists only when authored, and both exporters keep their own default (the same 200px) when it isn't.
+
+Bindings: Bootstrap `$tooltip-max-width ← { comp: 'tooltip.max-width' }`, reaching stock-CSS users through the existing emit path; PrimeNG `components.tooltip.root.maxWidth`, emitted only when the slot resolves.
+
+Verified end-to-end, both directions:
+
+|           | unauthored                                                  | authored `18rem`                                      |
+| --------- | ----------------------------------------------------------- | ----------------------------------------------------- |
+| Bootstrap | not emitted; honest `dropped` row naming the slot to author | `$tooltip-max-width: 18rem;` · `native`               |
+| PrimeNG   | not emitted; Aura's `12.5rem` stands                        | `tooltip: { root: { maxWidth: "18rem" } }` · `native` |
+
+`check:component-tier` gained case (e), asserting both halves: the empty-tier compile must **not** conjure the slot (otherwise the exporters would emit a measure nobody chose, on one upstream's authority), and the authored fixture must carry it through with `authored` provenance. `check:bootstrap-surface`'s recipe-path typo guard learned that a no-`defaultFrom` catalog slot is legitimately absent from a compile — checked against the catalog rather than allow-listed by name, so `comp: 'tooltip.max-widht'` still fails.
+
+The `N_BESPOKE` note that started this probe ("the IR has no component-size vocabulary yet") is rewritten, and the bucket split into four honest ones: 17 genuinely bespoke, 4 architecture-disagreement, 3 icon-size watch item, 1 now bound.

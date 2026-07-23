@@ -78,6 +78,7 @@ Approximate OKLCH values in this table are produced by real color math in `packa
 | `component.button.radius`     | `component:control.radius`    | a button is a control — until you say otherwise |
 | `component.button.padding-x`  | `component:control.padding-x` | ″                                               |
 | `component.button.padding-y`  | `component:control.padding-y` | ″                                               |
+| `component.tooltip.max-width` | — (authored only)             | how wide a tooltip may grow                     |
 
 The `component:` prefix is what makes the tier **layered rather than flat**, and it is the difference between two authoring intentions that would otherwise be indistinguishable:
 
@@ -85,6 +86,8 @@ The `component:` prefix is what makes the tier **layered rather than flat**, and
 - Author `component.button.radius` → **only buttons move.** You made a button-specific decision, and inputs keep following the control default.
 
 That asymmetry is the whole point. One line expresses either intent, and the exporters reproduce it on targets that model the relationship completely differently — Bootstrap chains buttons and inputs through a shared `$input-btn-*` root, PrimeNG keeps `button.*` and `formField.*` fully separate, and the same authored token lands correctly in both.
+
+**A slot can have no default at all.** `component.tooltip.max-width` declares none, because the IR has no rung meaning "a readable measure" and synthesizing one would mean adopting a number on one library's authority. So it exists **only when you author it** — and when you don't, Bootstrap and PrimeNG each keep their own default, which happens to be the same 200px. That agreement is why the slot exists: both libraries independently constrain the same element the same way at the same measure, and PrimeNG carries only two `maxWidth` slots in its entire 2759-slot surface ([proposal 0004](https://github.com/julien-deramond/transtyle/blob/main/docs/proposals/0004-component-geometry.md)).
 
 **If the source doesn't exist, neither does the slot.** A design system that authors no radius scale has no `semantic.radius.control`, so `component.control.radius` is simply absent rather than present-and-empty — and an exporter with a binding for it emits nothing, reporting a `dropped` coverage row that names the slot to author. See [a three-token design system is valid](/docs/diagnostics/#a-three-token-design-system-is-valid-and-a-target-variable-just-goes-missing).
 

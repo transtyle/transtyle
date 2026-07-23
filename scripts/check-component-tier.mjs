@@ -90,12 +90,28 @@ async function main() {
   const fixtureRadiusProvenance = fixture.normalized.modes.light?.get('component.button.radius')?.provenance.kind;
   if (fixtureRadiusProvenance !== 'authored') errors.push(`fixture: component.button.radius provenance = "${fixtureRadiusProvenance}", expected "authored"`);
 
+  // (e) A catalog slot with no `defaultFrom` (proposal 0004:
+  // `tooltip.max-width`) exists ONLY when authored. Both halves matter: the
+  // empty-tier compile must not conjure it — otherwise the exporters would emit
+  // a measure nobody chose, on one upstream's authority — and the authored
+  // compile must carry it through with `authored` provenance.
+  for (const mode of Object.keys(cathode.normalized.modes)) {
+    const v = cathode.normalized.modes[mode]?.get('component.tooltip.max-width')?.value;
+    if (v !== undefined)
+      errors.push(`cathode ${mode}: component.tooltip.max-width must not exist unauthored (a no-defaultFrom slot has no default to give), got ${JSON.stringify(v)}`);
+  }
+  const authoredTooltip = fixture.normalized.modes.light?.get('component.tooltip.max-width');
+  if (authoredTooltip?.value !== '18rem')
+    errors.push(`fixture: component.tooltip.max-width = ${authoredTooltip?.value}, expected the authored "18rem"`);
+  if (authoredTooltip?.provenance.kind !== 'authored')
+    errors.push(`fixture: component.tooltip.max-width provenance = "${authoredTooltip?.provenance.kind}", expected "authored"`);
+
   if (errors.length) {
     console.error(`✖ check-component-tier failed — ${errors.length} issue(s):\n`);
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105');
+  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored');
 }
 
 main();

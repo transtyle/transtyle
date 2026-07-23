@@ -112,10 +112,18 @@ export function droppedDimensions(dimensionNames, expressed) {
  * upstreams already implement. Order matters: entries may only `component:`
  * -default from an EARLIER entry in this object.
  *
- * Deliberately NOT here (AL2 evidence pass, see the proposal): the sm/lg size
+ * `defaultFrom` is optional. A slot without one exists **only when authored** —
+ * appropriate when the meaning is real and shared but no semantic rung expresses
+ * it, so inventing a default would mean picking one target's number. That is the
+ * case for `tooltip.max-width` below.
+ *
+ * Deliberately NOT here (evidence passes, see the proposals): the sm/lg size
  * ladder (both targets have one, but they disagree on which rungs — the
- * disagreement is the finding), and nav/list/table item padding (correspondence
- * is nominal, not architectural; exporters derive them privately today).
+ * disagreement is the finding), nav/list/table item padding (correspondence is
+ * nominal, not architectural), and — after the 0004 geometry probe — component
+ * sizing generally: of ten geometry concepts Bootstrap tokenizes, six are
+ * one-sided or false friends and two more disagree architecturally. Exporters
+ * derive all of those privately today.
  */
 export const COMPONENT_CATALOG = {
   control: {
@@ -127,6 +135,26 @@ export const COMPONENT_CATALOG = {
     radius: { type: 'dimension', defaultFrom: 'component:control.radius' },
     'padding-x': { type: 'dimension', defaultFrom: 'component:control.padding-x' },
     'padding-y': { type: 'dimension', defaultFrom: 'component:control.padding-y' },
+  },
+  /**
+   * The overlay measure (proposal 0004). Promoted on the strongest evidence the
+   * two-target bar has seen: Bootstrap (`$tooltip-max-width: 200px`) and PrimeNG
+   * (`tooltip.root.maxWidth: 12.5rem` — *the same 200px*) independently constrain
+   * the same element the same way at the same measure, and PrimeNG carries only
+   * two `maxWidth` slots in its entire 2759-slot surface. Two libraries agreeing
+   * that this specific element is the one needing a width ceiling, rather than
+   * two libraries incidentally having numbers.
+   *
+   * The decision underneath is typographic — a tooltip is a short line of text
+   * and ~200px is roughly a readable measure — which is a design-system opinion,
+   * exactly what belongs in a design-system vocabulary.
+   *
+   * No `defaultFrom`: the IR has no "readable measure" rung, and synthesizing one
+   * from either target's number would be inventing catalog vocabulary on one
+   * upstream's authority. Unauthored, both exporters keep their own default.
+   */
+  tooltip: {
+    'max-width': { type: 'dimension' },
   },
 };
 

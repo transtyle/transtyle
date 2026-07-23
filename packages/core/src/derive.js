@@ -466,6 +466,12 @@ export function derive(normalized, config, diagnostics) {
     // stays local. Catalog order guarantees the source is already resolved.
     for (const [name, tokens] of Object.entries(COMPONENT_CATALOG)) {
       for (const [tokenName, { type, defaultFrom }] of Object.entries(tokens)) {
+        // A catalog slot may declare no `defaultFrom` (0004: `tooltip.max-width`),
+        // meaning "real, shared, but nothing in the semantic tier expresses it".
+        // Such a slot exists only when authored — and an authored value is
+        // already carried through by the generic collectTokens walk before DERIVE
+        // runs, so there is nothing to do here either way.
+        if (!defaultFrom) continue;
         const fromComponent = defaultFrom.startsWith('component:');
         const sourcePath = fromComponent ? defaultFrom.slice('component:'.length) : defaultFrom;
         const fullPath = `${fromComponent ? 'component' : 'semantic'}.${sourcePath}`;
