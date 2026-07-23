@@ -6,7 +6,9 @@ order: 6
 
 # Derivation engine
 
-Derivation fills every semantic slot you didn't author. It's the reason 11 tokens can produce a complete 33-variable theme — and it's built on three promises, because a tool that silently invents brand values deserves rejection:
+Derivation fills every semantic slot you didn't author. Concretely, on the [Acme example](/docs/examples/): **39 authored DTCG tokens produce 270 resolved slots per mode**, which the shadcn exporter alone turns into 103 CSS custom properties. The other 231 slots are the engine's work.
+
+It's built on three promises, because a tool that silently invents brand values deserves rejection:
 
 1. **Deterministic.** Pure functions over OKLCH color math. Same inputs, same outputs, forever, on every machine. No ML, nothing environment-dependent.
 2. **Explainable.** Every derived value records the rule that made it and the inputs it used — visible in `report.json` and in the generated CSS comments (`· derived`).
@@ -14,7 +16,24 @@ Derivation fills every semantic slot you didn't author. It's the reason 11 token
 
 ## Rules only fill holes
 
-The engine walks the semantic catalog; any slot with an authored or aliased value is untouched. Overriding a derived value = authoring that token. One line, visible in your token files, versioned with your design system.
+Derivation behaves like **water finding its level**: it fills what you left empty and flows around everything you placed. The engine walks the semantic catalog; any slot with an authored or aliased value is untouched. Overriding a derived value _is_ authoring that token — one line, visible in your token files, versioned with your design system.
+
+### Worked example: one value, traced
+
+`transtyle explain` prints the actual rule and the actual inputs, recursively, for any slot:
+
+```
+$ transtyle explain semantic.color.primary.tint --cwd examples/acme
+
+semantic.color.primary.tint = oklch(0.95 0.017 255)  [#e7effa]
+ └─ derived by rule mix-toward-surface(0.92)@standard@1
+    inputs: semantic.color.primary.solid = oklch(0.55 0.18 255)  [#026fd7]
+     └─ aliased → option.color.blue.600
+    inputs: semantic.color.elevation.1.surface = oklch(0.985 0.003 255)  [#f9fafc]
+     └─ aliased → option.color.gray.50
+```
+
+Read bottom-up, that is the whole story of a value nobody wrote: Acme authored a blue and a near-white gray, aliased them to `primary.solid` and `elevation.1.surface`, and the tint is those two mixed 92% toward the surface. Change the blue and this recomputes; author `semantic.color.primary.tint` yourself and the rule stops running for that slot. Nothing else in the chain changes either way.
 
 ## The standard@1 rule pack: the role grid
 
@@ -46,6 +65,28 @@ Every color role fills a **grid** — prominence × interaction state — not a 
 | `palette.categorical.1–8`                                                                                | data-viz palette: hues rotated from your brand anchor, lightness/chroma banded for adjacent distinguishability; feeds shadcn's `--chart-1…5` (first five, frozen) and [ECharts' `color[]`](/docs/exporter-echarts/) (all eight)                   |
 
 Approximate OKLCH values in this table are produced by real color math in `packages/core/src/color.js` — including proper OKLab↔sRGB conversion and WCAG 2.1 contrast ratios.
+
+## The component tier: defaults that layer
+
+`component.*` slots derive too, but by a different mechanism: each one declares a `defaultFrom` — the semantic slot it falls back to when you say nothing.
+
+| Slot                          | Defaults from                 | Meaning                                         |
+| ----------------------------- | ----------------------------- | ----------------------------------------------- |
+| `component.control.radius`    | `semantic.radius.control`     | the shared shape of form controls               |
+| `component.control.padding-x` | `semantic.space.4`            | horizontal padding shared by controls           |
+| `component.control.padding-y` | `semantic.space.2`            | vertical padding shared by controls             |
+| `component.button.radius`     | `component:control.radius`    | a button is a control — until you say otherwise |
+| `component.button.padding-x`  | `component:control.padding-x` | ″                                               |
+| `component.button.padding-y`  | `component:control.padding-y` | ″                                               |
+
+The `component:` prefix is what makes the tier **layered rather than flat**, and it is the difference between two authoring intentions that would otherwise be indistinguishable:
+
+- Author `component.control.radius` → **buttons and inputs both move.** You changed the shared control shape.
+- Author `component.button.radius` → **only buttons move.** You made a button-specific decision, and inputs keep following the control default.
+
+That asymmetry is the whole point. One line expresses either intent, and the exporters reproduce it on targets that model the relationship completely differently — Bootstrap chains buttons and inputs through a shared `$input-btn-*` root, PrimeNG keeps `button.*` and `formField.*` fully separate, and the same authored token lands correctly in both.
+
+**If the source doesn't exist, neither does the slot.** A design system that authors no radius scale has no `semantic.radius.control`, so `component.control.radius` is simply absent rather than present-and-empty — and an exporter with a binding for it emits nothing, reporting a `dropped` coverage row that names the slot to author. See [a three-token design system is valid](/docs/diagnostics/#a-three-token-design-system-is-valid-and-a-target-variable-just-goes-missing).
 
 ## Provenance classes
 

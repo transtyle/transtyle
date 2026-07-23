@@ -135,7 +135,12 @@ const DEAD_VOCAB = [
   { name: '.subtle color scale slot', re: /(?<!text)\.subtle\b/ },
   { name: 'surface-raised slot', re: /surface-raised/ },
   // ---- dotted-path forms (code, prose, config values) ----
-  { name: '<role>.base / .hover / .active / .contrast (old grid, dotted path)', re: /semantic\.color\.[a-z][\w-]*\.(base|hover|active|contrast)\b/ },
+  // The nested-JSON form of this pattern already excused `text.base` and the
+  // `link.*` cells as current vocabulary; the dotted form did not, so writing a
+  // real slot's fully-qualified path in prose tripped the guard (found in AL4,
+  // documenting `semantic.color.text.base` in a config example). Same two
+  // exceptions, now stated in both forms.
+  { name: '<role>.base / .hover / .active / .contrast (old grid, dotted path)', re: /semantic\.color\.(?!text\.base\b|link\.(base|hover)\b)[a-z][\w-]*\.(base|hover|active|contrast)\b/ },
   { name: 'background.base / surface.base / overlay.base (old surface slots, dotted path)', re: /semantic\.color\.(background|surface|overlay)\.base\b/ },
   { name: 'text-muted.base (old content slot, dotted path)', re: /semantic\.color\.text-muted\.base\b/ },
   // ---- nested-JSON forms (token files, docs code-fences) ----
@@ -149,7 +154,6 @@ const DEAD_VOCAB = [
 const DEAD_VOCAB_EXCLUDE_FILES = [
   // Explains the old->new mapping by name; excluded from the pattern guard,
   // reviewed by hand instead. Keep this list tiny.
-  'website/src/docs/language.md',
 ];
 const deadVocabHits = (text) => DEAD_VOCAB.some(({ re }) => re.test(text));
 function scanDeadVocab(relPath, text) {
@@ -183,6 +187,9 @@ const DEAD_VOCAB_MUST_NOT = [
   '"elevation": { "1": { "surface": { "$value": "x" } } }', // new elevation leaf
   '"carbon": { "background": { "$value": "x" } }',    // custom token, holds $value directly
   'semantic.color.text.subtle',                       // text.subtle is a real content rung
+  'semantic.color.text.base',                         // dotted form of the ladder rung above
+  'semantic.color.link.base',                         // dotted form of the link cells above
+  'semantic.color.link.hover',
 ];
 for (const s of DEAD_VOCAB_MUST_MATCH) {
   if (!deadVocabHits(s)) fail(`dead-vocab self-test: expected a pattern to catch ${JSON.stringify(s)} but none did (a pattern was weakened)`);
