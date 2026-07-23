@@ -158,6 +158,13 @@ export default {
       variable: 'semantic.colorScheme.*.mask.background',
       slot: 'semantic.color.scrim',
       class: 'native',
+      note: 'scrim carries its own alpha — the veil strength needs no separate slot (proposal 0003, overlay pass)',
+    });
+    coverage.push({
+      variable: 'semantic.mask.transitionDuration',
+      slot: 'semantic.duration.normal',
+      class: 'approximated',
+      note: "PrimeNG's own convention is 0.3s; the nearest motion-scale rung is used so the veil fade is authorable (was hardcoded)",
     });
 
     const semantic = {
@@ -185,7 +192,10 @@ export default {
         modal: oModalLight.structural,
         navigation: oNavLight.structural,
       },
-      mask: { transitionDuration: '0.3s' },
+      // Overlay pass (proposal 0003): was a hardcoded '0.3s'. The motion scale
+      // already expresses this — no promotion needed, just stop hardcoding.
+      // `mask.background` reads `color.scrim` (alpha included) below.
+      mask: { transitionDuration: get(light, 'duration.normal') },
       colorScheme: {
         light: {
           surface: surfaceRampLight.ramp,

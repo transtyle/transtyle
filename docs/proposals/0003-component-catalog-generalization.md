@@ -44,7 +44,14 @@ Promoted as **one slot, not an opacity ladder** — the semantic tier, since the
 
 **Component sizing** (dialog widths, tooltip max-widths, spinner/icon geometry — 20+ Bootstrap `unsupported` slots) and **icon/asset slots** (13 Bootstrap SVG data-URIs). Single-source; PrimeNG themes carry neither. Assets are additionally a likely permanent non-goal — they are not tokens. Recorded so a future pass rejects them deliberately rather than by omission.
 
-**Overlay/scrim veil strength + mask timing.** A genuine shared near-miss (PrimeNG hardcodes `mask.transitionDuration: '0.3s'`; Bootstrap's `$modal-backdrop-opacity` is `unsupported`). Deferred rather than rejected: `semantic.color.scrim` already carries the color, and the missing piece is an alpha convention that interacts with how scrim is derived. Worth one focused pass; not bundled into AL2.
+**Overlay/scrim veil strength + mask timing.** ~~A genuine shared near-miss… the missing piece is an alpha convention.~~ **Resolved 2026-07-23 by the follow-up overlay pass — with no catalog addition, because the premise was wrong.** `semantic.color.scrim` does not "carry the color but not the alpha": its value is a colour _with an alpha channel_ (`{l, c, h, alpha}`), so the veil strength was already in the IR and already authorable. Nothing needed promoting; two exporters needed fixing:
+
+- **Bootstrap** splits a veil into `$modal-backdrop-bg` + `$modal-backdrop-opacity` (never one rgba), which is why the alpha looked missing. Both halves now read `semantic.color.scrim` through a new `part: 'opaque' | 'alpha'` recipe form — a formatting concern in the exporter, not vocabulary. `$offcanvas-backdrop-*` chains from them, so the offcanvas veil follows for free.
+- **PrimeNG** hardcoded `mask.transitionDuration: '0.3s'`; it now reads `duration.normal` (`approximated`, nearest rung). Removing a hardcode, not promoting a slot.
+
+Verified: authoring `scrim: oklch(0.2 0.05 260 / 0.82)` yields Bootstrap `$modal-backdrop-bg: #08152c` + `$modal-backdrop-opacity: 0.82` and PrimeNG `mask.background: oklch(0.2 0.05 260 / 0.82)` — one authored token, each target's own native shape.
+
+**The lesson generalizes:** a "missing slot" is sometimes a missing _projection_. Before promoting, check whether the meaning is already carried by an existing value in a form the target simply needs decomposed. This is now the fourth cross-target study in a row (proposal 0001's role grid, C1's archetype groups, AL2's promotions, this pass) to conclude by adding less than it set out to.
 
 ## Consequences
 

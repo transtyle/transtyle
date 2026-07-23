@@ -41,7 +41,14 @@ const SHADOWS = [
   { name: 'lg', geometry: '0 12px 32px', light: 0.16, dark: 0.5 },
 ];
 /** Bootstrap's $spacers keys ← the engine's linear space scale (0.25rem base). */
-const SPACE_MAP = [['0', '0'], ['1', '1'], ['2', '2'], ['3', '4'], ['4', '6'], ['5', '12']];
+const SPACE_MAP = [
+  ['0', '0'],
+  ['1', '1'],
+  ['2', '2'],
+  ['3', '4'],
+  ['4', '6'],
+  ['5', '12'],
+];
 
 export default {
   name: 'bootstrap',
@@ -129,9 +136,19 @@ function resolve(light, dark, ctx) {
     cov(`$${name}`, `${S}${name}.solid`, cls(`${name}.solid`));
     cov(`$theme-colors-text.${name}`, `${S}${name}.on-tint`, cls(`${name}.on-tint`));
     cov(`$theme-colors-bg-subtle.${name}`, `${S}${name}.tint`, cls(`${name}.tint`));
-    cov(`$theme-colors-border-subtle.${name}`, `${S}${name}.outline`, cls(`${name}.outline`), 'promoted from a private mix to a first-class grid cell (F10)');
+    cov(
+      `$theme-colors-border-subtle.${name}`,
+      `${S}${name}.outline`,
+      cls(`${name}.outline`),
+      'promoted from a private mix to a first-class grid cell (F10)',
+    );
   }
-  cov('$light', `${S}neutral.tint`, cls('neutral.tint'), 'exporter convention: $light/$dark map from the neutral role (F12)');
+  cov(
+    '$light',
+    `${S}neutral.tint`,
+    cls('neutral.tint'),
+    'exporter convention: $light/$dark map from the neutral role (F12)',
+  );
   cov('$dark', `${S}neutral.text-strong`, cls('neutral.text-strong'), 'exporter convention (F12)');
   cov('$body-bg', `${S}elevation.0.surface`, cls('elevation.0.surface'));
   cov('$body-color', `${S}text.base`, cls('text.base'));
@@ -140,50 +157,129 @@ function resolve(light, dark, ctx) {
   cov('$body-secondary-bg', `${S}neutral.tint`, cls('neutral.tint'));
   cov('$body-tertiary-bg', `${S}elevation.1.surface`, cls('elevation.1.surface'));
   cov('$border-color', `${S}border`, cls('border'));
-  cov('$link-color', `${S}primary.solid`, cls('primary.solid'), 'exporter convention: link ← primary.solid (matches Bootstrap default)');
-  cov('$link-hover-color', `${S}primary.solid-hover`, cls('primary.solid-hover'), 'replaces Bootstrap sRGB shade-color(20%)');
-  cov('$focus-ring-color', `${S}ring`, cls('ring'), 'ring ← primary (F3) at Bootstrap conventional alpha .25');
-  for (const s of SHADOWS) cov(`$box-shadow${s.name && '-' + s.name}`, `${S}scrim`, 'derived', 'composed from scrim alpha ramp (F2)');
-  cov('$box-shadow-inset', '—', 'unsupported', 'no IR inset-shadow concept; Bootstrap default kept');
+  cov(
+    '$link-color',
+    `${S}primary.solid`,
+    cls('primary.solid'),
+    'exporter convention: link ← primary.solid (matches Bootstrap default)',
+  );
+  cov(
+    '$link-hover-color',
+    `${S}primary.solid-hover`,
+    cls('primary.solid-hover'),
+    'replaces Bootstrap sRGB shade-color(20%)',
+  );
+  cov(
+    '$focus-ring-color',
+    `${S}ring`,
+    cls('ring'),
+    'ring ← primary (F3) at Bootstrap conventional alpha .25',
+  );
+  for (const s of SHADOWS)
+    cov(
+      `$box-shadow${s.name && '-' + s.name}`,
+      `${S}scrim`,
+      'derived',
+      'composed from scrim alpha ramp (F2)',
+    );
+  cov(
+    '$box-shadow-inset',
+    '—',
+    'unsupported',
+    'no IR inset-shadow concept; Bootstrap default kept',
+  );
 
   const radius = (k) => light.get(`semantic.radius.${k}`);
   for (const k of ['md', 'sm', 'lg', 'xl']) {
     const e = radius(k);
-    if (e) cov(`$border-radius${k === 'md' ? '' : '-' + k}`, `semantic.radius.${k}`, e.provenance.kind === 'derived' ? 'derived' : 'native');
+    if (e)
+      cov(
+        `$border-radius${k === 'md' ? '' : '-' + k}`,
+        `semantic.radius.${k}`,
+        e.provenance.kind === 'derived' ? 'derived' : 'native',
+      );
   }
-  cov('$border-radius-xxl', 'semantic.radius.xl', 'approximated', 'exporter convention: xl × 2 — no IR 2xl slot (F8 watch item)');
-  cov('$border-radius-pill', 'semantic.radius.full', 'derived', 'emitted in Bootstrap idiom (50rem)');
+  cov(
+    '$border-radius-xxl',
+    'semantic.radius.xl',
+    'approximated',
+    'exporter convention: xl × 2 — no IR 2xl slot (F8 watch item)',
+  );
+  cov(
+    '$border-radius-pill',
+    'semantic.radius.full',
+    'derived',
+    'emitted in Bootstrap idiom (50rem)',
+  );
 
   const font = (k) => light.get(`semantic.font.${k}`);
   if (font('sans')) cov('$font-family-sans-serif', 'semantic.font.sans', 'native');
   if (font('mono')) cov('$font-family-monospace', 'semantic.font.mono', 'native');
 
   const typeProv = light.get('semantic.type.size.md')?.provenance.kind;
-  cov('$font-size-base…$h1-font-size', 'semantic.type.*', (typeProv === 'authored' || typeProv === 'aliased') ? 'native' : 'derived',
-    typeProv === 'defaulted' ? 'defaulted modular scale (base 1rem, ratio 1.25) — no authored type tokens' : undefined);
-  cov('$display-font-sizes', '—', 'unsupported', 'no IR concept of display sizes; Bootstrap defaults kept');
+  cov(
+    '$font-size-base…$h1-font-size',
+    'semantic.type.*',
+    typeProv === 'authored' || typeProv === 'aliased' ? 'native' : 'derived',
+    typeProv === 'defaulted'
+      ? 'defaulted modular scale (base 1rem, ratio 1.25) — no authored type tokens'
+      : undefined,
+  );
+  cov(
+    '$display-font-sizes',
+    '—',
+    'unsupported',
+    'no IR concept of display sizes; Bootstrap defaults kept',
+  );
 
   const spaceProv = light.get('semantic.space.4')?.provenance.kind;
-  cov('$spacer/$spacers', 'semantic.space.*', (spaceProv === 'authored' || spaceProv === 'aliased') ? 'native' : 'derived',
-    spaceProv === 'defaulted' ? 'defaulted linear scale (base 0.25rem)' : undefined);
-  cov('$grid-breakpoints/$container-max-widths', '—', 'unsupported', 'breakpoints are a known IR catalog candidate');
-  cov('motion ($transition-*)', '—', 'dropped', 'the global $transition-base/-fade stay Bootstrap defaults; per-component transitions are driven — see the component-tier rows');
-  cov('$component-active-color', `${S}primary.on-solid`, cls('primary.on-solid'), "review pickup (AL1.2 findings): Bootstrap hardcodes $white; $component-active-bg already chains from $primary");
+  cov(
+    '$spacer/$spacers',
+    'semantic.space.*',
+    spaceProv === 'authored' || spaceProv === 'aliased' ? 'native' : 'derived',
+    spaceProv === 'defaulted' ? 'defaulted linear scale (base 0.25rem)' : undefined,
+  );
+  cov(
+    '$grid-breakpoints/$container-max-widths',
+    '—',
+    'unsupported',
+    'breakpoints are a known IR catalog candidate',
+  );
+  cov(
+    'motion ($transition-*)',
+    '—',
+    'dropped',
+    'the global $transition-base/-fade stay Bootstrap defaults; per-component transitions are driven — see the component-tier rows',
+  );
+  cov(
+    '$component-active-color',
+    `${S}primary.on-solid`,
+    cls('primary.on-solid'),
+    'review pickup (AL1.2 findings): Bootstrap hardcodes $white; $component-active-bg already chains from $primary',
+  );
 
   // Component tier (AL1.3): the full per-variable walk replaces the old
   // blanket "reserved for v2" line. Sass lines + 657 coverage rows.
-  const component = componentVariables(light);
+  const component = componentVariables(light, ctx);
   coverage.push(...component.coverage);
   // CSS path (AL1.4): structural component vars + button variant state colors.
-  coverage.push(...componentCssBlocks(light).coverage);
-  cov('--bs-btn-* variant state colors (CSS path)', `${S}<role>.{solid,solid-hover,solid-active,on-solid}`, 'derived',
-    "grid state cells replace Bootstrap's shade/tint derivation for stock-CSS users; .btn-light/.btn-dark keep defaults (pseudo-roles have no grid)");
+  coverage.push(...componentCssBlocks(light, ctx).coverage);
+  cov(
+    '--bs-btn-* variant state colors (CSS path)',
+    `${S}<role>.{solid,solid-hover,solid-active,on-solid}`,
+    'derived',
+    "grid state cells replace Bootstrap's shade/tint derivation for stock-CSS users; .btn-light/.btn-dark keep defaults (pseudo-roles have no grid)",
+  );
 
   const typeScale = {
     base: raw(light, 'type.size.md'),
     leading: raw(light, 'type.leading.normal'),
-    h1: raw(light, 'type.size.4xl'), h2: raw(light, 'type.size.3xl'), h3: raw(light, 'type.size.2xl'),
-    h4: raw(light, 'type.size.xl'), h5: raw(light, 'type.size.lg'), h6: raw(light, 'type.size.md'),
+    h1: raw(light, 'type.size.4xl'),
+    h2: raw(light, 'type.size.3xl'),
+    h3: raw(light, 'type.size.2xl'),
+    h4: raw(light, 'type.size.xl'),
+    h5: raw(light, 'type.size.lg'),
+    h6: raw(light, 'type.size.md'),
   };
   const spaceScale = SPACE_MAP.map(([bsKey, catKey]) => {
     const v = raw(light, `space.${catKey}`);
@@ -206,6 +302,7 @@ function resolve(light, dark, ctx) {
     gridCell: (map) => (roleName, cellName) => hx(val(map, `${roleName}.${cellName}`)),
     lightMap: light,
     darkMap: dark,
+    ctx,
   };
 }
 
@@ -216,16 +313,17 @@ const rgbTriplet = (hex) => {
   const n = parseInt(hex.slice(1), 16);
   return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
 };
-const scssHeader = (ctx) => [
-  '// GENERATED by transtyle — do not edit; source: ' + ctx.projectName + ' token files',
-  '// Target: bootstrap (>=5.3 <6), Sass path · rules standard@1',
-  '//',
-  '// Import order (Sass path):',
-  '//   @import "variables.transtyle";  // this file — BEFORE bootstrap',
-  '//   @import "maps.transtyle";       // AFTER bootstrap variables, BEFORE the rest',
-  '//   (or with bootstrap.scss directly — see usage.md)',
-  '',
-].join('\n');
+const scssHeader = (ctx) =>
+  [
+    '// GENERATED by transtyle — do not edit; source: ' + ctx.projectName + ' token files',
+    '// Target: bootstrap (>=5.3 <6), Sass path · rules standard@1',
+    '//',
+    '// Import order (Sass path):',
+    '//   @import "variables.transtyle";  // this file — BEFORE bootstrap',
+    '//   @import "maps.transtyle";       // AFTER bootstrap variables, BEFORE the rest',
+    '//   (or with bootstrap.scss directly — see usage.md)',
+    '',
+  ].join('\n');
 
 const xxl = (radiusMd) => {
   // exporter convention: xl × 2 (F8 watch item), from the same dimension unit
@@ -237,10 +335,15 @@ const xxl = (radiusMd) => {
 
 function renderVariables(r, ctx) {
   const { hx } = r;
-  const L = r.light, D = r.dark;
+  const L = r.light,
+    D = r.dark;
   const lines = [scssHeader(ctx)];
   lines.push('// ---------------------------------------------------------------- theme colors');
-  for (const [name, sassVar] of [...ROLES.map((n) => [n, n]), ['light', 'light'], ['dark', 'dark']]) {
+  for (const [name, sassVar] of [
+    ...ROLES.map((n) => [n, n]),
+    ['light', 'light'],
+    ['dark', 'dark'],
+  ]) {
     lines.push(`$${sassVar}: ${hx(L.roles[name].base)};`);
   }
   lines.push('');
@@ -265,14 +368,22 @@ function renderVariables(r, ctx) {
   lines.push('');
   lines.push('// -------------------------------------------------------------- links / focus');
   lines.push('$link-color:       $primary;  // exporter convention: link ← primary.solid');
-  lines.push(`$link-hover-color: ${hx(L.primaryHover)};  // primary.solid-hover — replaces Bootstrap's sRGB shade-color(20%)`);
-  lines.push('// $link-color-dark intentionally NOT emitted: Bootstrap derives it from $primary (F13)');
+  lines.push(
+    `$link-hover-color: ${hx(L.primaryHover)};  // primary.solid-hover — replaces Bootstrap's sRGB shade-color(20%)`,
+  );
+  lines.push(
+    '// $link-color-dark intentionally NOT emitted: Bootstrap derives it from $primary (F13)',
+  );
   lines.push('$focus-ring-color: rgba($primary, .25);  // ring ← primary (F3)');
-  lines.push(`$component-active-color: ${r.componentActiveColor};  // primary.on-solid — Bootstrap hardcodes $white (AL1.2 review pickup); -bg already chains from $primary`);
+  lines.push(
+    `$component-active-color: ${r.componentActiveColor};  // primary.on-solid — Bootstrap hardcodes $white (AL1.2 review pickup); -bg already chains from $primary`,
+  );
   lines.push('');
   lines.push('// ---------------------------------------------------------------- typography');
-  if (r.fontSans) lines.push(`$font-family-sans-serif: ${fontList(r.fontSans.value)};  // font.sans`);
-  if (r.fontMono) lines.push(`$font-family-monospace:  ${fontList(r.fontMono.value)};  // font.mono`);
+  if (r.fontSans)
+    lines.push(`$font-family-sans-serif: ${fontList(r.fontSans.value)};  // font.sans`);
+  if (r.fontMono)
+    lines.push(`$font-family-monospace:  ${fontList(r.fontMono.value)};  // font.mono`);
   const ts = r.typeScale;
   lines.push(`$font-size-base:   ${ts.base};  // type.size.md`);
   lines.push(`$line-height-base: ${ts.leading};   // type.leading.normal`);
@@ -286,25 +397,39 @@ function renderVariables(r, ctx) {
   lines.push('// ------------------------------------------------------------------- spacing');
   lines.push(`$spacer: ${r.spaceScale[3][1]};  // space.4`);
   lines.push('$spacers: (');
-  lines.push(r.spaceScale.map(([k, v, slot]) => `  ${k}: ${v}${k === '5' ? '' : ','}   // ${slot}`).join('\n'));
+  lines.push(
+    r.spaceScale
+      .map(([k, v, slot]) => `  ${k}: ${v}${k === '5' ? '' : ','}   // ${slot}`)
+      .join('\n'),
+  );
   lines.push(');');
   lines.push('');
   lines.push('// ------------------------------------------------------------- radius / borders');
   const rad = r.radiusEntries;
   if (rad.md) lines.push(`$border-radius:      ${rad.md.value};  // radius.md`);
-  if (rad.sm) lines.push(`$border-radius-sm:   ${rad.sm.value};  // radius.sm · derived (F8: md × 0.5)`);
-  if (rad.lg) lines.push(`$border-radius-lg:   ${rad.lg.value};  // radius.lg · derived (F8: md × 1.5)`);
-  if (rad.xl) lines.push(`$border-radius-xl:   ${rad.xl.value};  // radius.xl · derived (F8: md × 2)`);
-  if (rad.md) lines.push(`$border-radius-xxl:  ${xxl(rad.md.value)};  // exporter convention: xl × 2 (F8 watch item)`);
-  lines.push('$border-radius-pill: 50rem;  // radius.full, in Bootstrap\'s own idiom');
+  if (rad.sm)
+    lines.push(`$border-radius-sm:   ${rad.sm.value};  // radius.sm · derived (F8: md × 0.5)`);
+  if (rad.lg)
+    lines.push(`$border-radius-lg:   ${rad.lg.value};  // radius.lg · derived (F8: md × 1.5)`);
+  if (rad.xl)
+    lines.push(`$border-radius-xl:   ${rad.xl.value};  // radius.xl · derived (F8: md × 2)`);
+  if (rad.md)
+    lines.push(
+      `$border-radius-xxl:  ${xxl(rad.md.value)};  // exporter convention: xl × 2 (F8 watch item)`,
+    );
+  lines.push("$border-radius-pill: 50rem;  // radius.full, in Bootstrap's own idiom");
   lines.push(`$border-color:       ${hx(L.border)};  // border`);
   lines.push('');
   lines.push('// ------------------------------------------------------------------- shadows');
   lines.push('// Composed from scrim at fixed alpha ramps (F2)');
   for (const s of SHADOWS) {
-    lines.push(`$box-shadow${s.name ? '-' + s.name : ''}: ${s.geometry} rgba(${hx(L.scrim)}, .${String(s.light * 100).padStart(2, '0')});`);
+    lines.push(
+      `$box-shadow${s.name ? '-' + s.name : ''}: ${s.geometry} rgba(${hx(L.scrim)}, .${String(s.light * 100).padStart(2, '0')});`,
+    );
   }
-  lines.push('// shadow.xl: dropped — Bootstrap has no -xl slot; $box-shadow-inset kept at Bootstrap default');
+  lines.push(
+    '// shadow.xl: dropped — Bootstrap has no -xl slot; $box-shadow-inset kept at Bootstrap default',
+  );
   lines.push('');
   lines.push(...r.componentLines);
   lines.push('');
@@ -326,7 +451,7 @@ function renderMaps(r, ctx) {
     '// GENERATED by transtyle — do not edit; source: ' + ctx.projectName + ' token files',
     '// Target: bootstrap (>=5.3 <6), Sass path · rules standard@1',
     '//',
-    '// These maps REPLACE Bootstrap\'s own tint-color()/shade-color() derivations',
+    "// These maps REPLACE Bootstrap's own tint-color()/shade-color() derivations",
     '// with OKLCH-derived values (perceptually consistent across roles) — the',
     '// mechanism that makes role.on-tint → -text-emphasis NATIVE (F9).',
     '',
@@ -340,7 +465,11 @@ function renderMaps(r, ctx) {
     mapBlock('theme-colors-border-subtle', (x) => x.borderSubtle, 'light'),
   ];
   if (r.dark) {
-    lines.push('', '// ------------------------------------------------- dark mode (data-bs-theme="dark")', '');
+    lines.push(
+      '',
+      '// ------------------------------------------------- dark mode (data-bs-theme="dark")',
+      '',
+    );
     lines.push(mapBlock('theme-colors-text-dark', (x) => x.text, 'dark'));
     lines.push('');
     lines.push(mapBlock('theme-colors-bg-subtle-dark', (x) => x.bgSubtle, 'dark'));
@@ -366,10 +495,14 @@ function renderCss(r, ctx) {
     }
     for (const name of [...ROLES, 'light', 'dark']) {
       const x = M.roles[name];
-      lines.push(`  --bs-${name}-text-emphasis: ${hx(x.text)};  --bs-${name}-bg-subtle: ${hx(x.bgSubtle)};  --bs-${name}-border-subtle: ${hx(x.borderSubtle)};`);
+      lines.push(
+        `  --bs-${name}-text-emphasis: ${hx(x.text)};  --bs-${name}-bg-subtle: ${hx(x.bgSubtle)};  --bs-${name}-border-subtle: ${hx(x.borderSubtle)};`,
+      );
     }
     lines.push('');
-    const bg = hx(M.bodyBg), color = hx(M.bodyColor), emph = hx(M.emphasis);
+    const bg = hx(M.bodyBg),
+      color = hx(M.bodyColor),
+      emph = hx(M.emphasis);
     lines.push(`  --bs-body-bg: ${bg};  --bs-body-bg-rgb: ${rgbTriplet(bg)};`);
     lines.push(`  --bs-body-color: ${color};  --bs-body-color-rgb: ${rgbTriplet(color)};`);
     lines.push(`  --bs-emphasis-color: ${emph};  --bs-emphasis-color-rgb: ${rgbTriplet(emph)};`);
@@ -383,12 +516,18 @@ function renderCss(r, ctx) {
     const link = isDark ? hx(M.ring) : hx(M.primary);
     const linkHover = isDark ? hx(M.ringHover) : hx(M.primaryHover);
     lines.push(`  --bs-link-color: ${link};  --bs-link-color-rgb: ${rgbTriplet(link)};`);
-    lines.push(`  --bs-link-hover-color: ${linkHover};  --bs-link-hover-color-rgb: ${rgbTriplet(linkHover)};`);
-    lines.push(`  --bs-focus-ring-color: rgba(${rgbTriplet(isDark ? hx(M.ring) : hx(M.primary))}, 0.25);`);
+    lines.push(
+      `  --bs-link-hover-color: ${linkHover};  --bs-link-hover-color-rgb: ${rgbTriplet(linkHover)};`,
+    );
+    lines.push(
+      `  --bs-focus-ring-color: rgba(${rgbTriplet(isDark ? hx(M.ring) : hx(M.primary))}, 0.25);`,
+    );
     lines.push('');
     for (const s of SHADOWS) {
       const alpha = isDark ? s.dark : s.light;
-      lines.push(`  --bs-box-shadow${s.name ? '-' + s.name : ''}: ${s.geometry} rgba(${rgbTriplet(hx(M.scrim))}, ${alpha});`);
+      lines.push(
+        `  --bs-box-shadow${s.name ? '-' + s.name : ''}: ${s.geometry} rgba(${rgbTriplet(hx(M.scrim))}, ${alpha});`,
+      );
     }
     return lines;
   };
@@ -401,7 +540,7 @@ function renderCss(r, ctx) {
     ' * LOWER-FIDELITY PATH, NARROWED BY AL1.4: this layer rethemes the token',
     ' * tier PLUS the per-component --bs-* variables Bootstrap 5.3 exposes',
     ' * (selector-scoped blocks below), including button variant state colors',
-    ' * from the role grid — which replaces the part of F13\'s gap that 5.3\'s',
+    " * from the role grid — which replaces the part of F13's gap that 5.3's",
     ' * component CSS vars made reachable. Still out of reach: values with no',
     ' * runtime variable (Sass-only expressions, responsive re-sets, and the',
     ' * state colors of components without per-variant CSS vars).',
@@ -430,14 +569,19 @@ function renderCss(r, ctx) {
 
   // ---- component tier, CSS path (AL1.4) ----
   lines.push('', '/* component structure (mode-invariant) — component tier, AL1.4 */');
-  lines.push(...componentCssBlocks(r.lightMap).lines);
-  lines.push('/* button variant state colors from the role grid — replaces Bootstrap\'s');
+  lines.push(...componentCssBlocks(r.lightMap, r.ctx).lines);
+  lines.push("/* button variant state colors from the role grid — replaces Bootstrap's");
   lines.push(' * shade/tint derivation on this path (the AL1.2 "knobs dropped, results');
   lines.push(' * driven" call). .btn-light/.btn-dark keep Bootstrap defaults (pseudo-roles');
   lines.push(' * have no grid state cells). */');
   lines.push(...buttonVariantBlocks(ROLES, r.gridCell(r.lightMap), rgbTriplet));
   if (r.darkMap) {
-    lines.push('', ...buttonVariantBlocks(ROLES, r.gridCell(r.darkMap), rgbTriplet, { darkPrefix: '[data-bs-theme="dark"] ' }));
+    lines.push(
+      '',
+      ...buttonVariantBlocks(ROLES, r.gridCell(r.darkMap), rgbTriplet, {
+        darkPrefix: '[data-bs-theme="dark"] ',
+      }),
+    );
   }
   lines.push('');
   return lines.join('\n');
@@ -448,7 +592,9 @@ function renderCss(r, ctx) {
 function renderUsage(ctx, coverage) {
   const counts = {};
   for (const c of coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
-  const summary = Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(' · ');
+  const summary = Object.entries(counts)
+    .map(([k, v]) => `${v} ${k}`)
+    .join(' · ');
   return `# Using this Bootstrap theme
 
 Generated from the **${ctx.projectName}** design system by transtyle (Bootstrap >=5.3 <6). Coverage: ${summary}.

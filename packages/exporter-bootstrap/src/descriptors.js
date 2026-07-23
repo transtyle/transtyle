@@ -389,14 +389,16 @@ export const DESCRIPTORS = {
         note: '1.75rem — between rungs; nearest meaning',
       },
       'modal-transition': { trans: { duration: 'duration.normal', easing: 'easing.enter' } },
+      // Overlay pass (proposal 0003): Bootstrap splits the veil into a colour
+      // and an opacity; the IR's `scrim` already carries BOTH (its value has an
+      // alpha channel), so this needs no new vocabulary — just the two halves
+      // read out separately. `$offcanvas-backdrop-*` chains from these, so the
+      // offcanvas veil follows for free. Was `unsupported` on the claim that
+      // "scrim covers the color, not the alpha" — that claim was wrong.
+      'modal-backdrop-bg': { sem: 'color.scrim', part: 'opaque' },
+      'modal-backdrop-opacity': { sem: 'color.scrim', part: 'alpha' },
     },
     drop: {
-      'modal-backdrop-opacity': {
-        cls: 'unsupported',
-        note:
-          N_OPACITY +
-          ' (the scrim veil strength — semantic.color.scrim covers the color, not the alpha)',
-      },
       'modal-sm': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)' },
       'modal-md': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)' },
       'modal-lg': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)' },
