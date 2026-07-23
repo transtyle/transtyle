@@ -15,24 +15,39 @@ const loadExporter = async () => ({ name: 'noop', optionsSchema: { type: 'object
 const errors = [];
 
 async function main() {
-  // (a) Empty tier: Acme authors no component.* tokens at all.
-  const acme = await compile({ cwd: 'examples/acme', targets: [], emit: false, loadExporter });
-  if (acme.diagnostics.errors.length) errors.push(`acme compile errors: ${acme.diagnostics.errors.map((e) => e.message).join('; ')}`);
-  for (const mode of ['light', 'dark']) {
-    const map = acme.normalized.modes[mode];
-    if (!map) { errors.push(`acme: mode "${mode}" missing`); continue; }
+  // (a) Empty tier: Cathode authors no component.* tokens at all. (Was Acme
+  // until AL1.5 made Acme the authored-wins example — see (c); the guarantee
+  // itself is unchanged, just proven on a different unauthored example.)
+  const cathode = await compile({ cwd: 'examples/cathode', targets: [], emit: false, loadExporter });
+  if (cathode.diagnostics.errors.length) errors.push(`cathode compile errors: ${cathode.diagnostics.errors.map((e) => e.message).join('; ')}`);
+  for (const mode of Object.keys(cathode.normalized.modes)) {
+    const map = cathode.normalized.modes[mode];
+    if (!map) { errors.push(`cathode: mode "${mode}" missing`); continue; }
     const radius = map.get('component.button.radius')?.value;
     const expectedRadius = map.get('semantic.radius.control')?.value;
-    if (radius === undefined) errors.push(`acme ${mode}: component.button.radius did not resolve — empty tier must still compile`);
-    else if (radius !== expectedRadius) errors.push(`acme ${mode}: component.button.radius = ${radius}, expected default from radius.control (${expectedRadius})`);
+    if (radius === undefined) errors.push(`cathode ${mode}: component.button.radius did not resolve — empty tier must still compile`);
+    else if (radius !== expectedRadius) errors.push(`cathode ${mode}: component.button.radius = ${radius}, expected default from radius.control (${expectedRadius})`);
 
     const paddingX = map.get('component.button.padding-x')?.value;
     const expectedPaddingX = map.get('semantic.space.4')?.value;
-    if (paddingX !== expectedPaddingX) errors.push(`acme ${mode}: component.button.padding-x = ${paddingX}, expected default from space.4 (${expectedPaddingX})`);
+    if (paddingX !== expectedPaddingX) errors.push(`cathode ${mode}: component.button.padding-x = ${paddingX}, expected default from space.4 (${expectedPaddingX})`);
 
     const paddingY = map.get('component.button.padding-y')?.value;
     const expectedPaddingY = map.get('semantic.space.2')?.value;
-    if (paddingY !== expectedPaddingY) errors.push(`acme ${mode}: component.button.padding-y = ${paddingY}, expected default from space.2 (${expectedPaddingY})`);
+    if (paddingY !== expectedPaddingY) errors.push(`cathode ${mode}: component.button.padding-y = ${paddingY}, expected default from space.2 (${expectedPaddingY})`);
+  }
+
+  // (c) Authored-by-alias wins (AL1.5): Acme authors component.button.* as
+  // aliases into the semantic scales — they must resolve to the alias target,
+  // not the catalog default, with 'aliased' provenance.
+  const acme = await compile({ cwd: 'examples/acme', targets: [], emit: false, loadExporter });
+  if (acme.diagnostics.errors.length) errors.push(`acme compile errors: ${acme.diagnostics.errors.map((e) => e.message).join('; ')}`);
+  const aMap = acme.normalized.modes.light;
+  for (const [token, target] of [['radius', 'radius.full'], ['padding-x', 'space.6'], ['padding-y', 'space.3']]) {
+    const got = aMap?.get(`component.button.${token}`);
+    const want = aMap?.get(`semantic.${target}`)?.value;
+    if (got?.value !== want) errors.push(`acme: component.button.${token} = ${got?.value}, expected the authored alias to ${target} (${want})`);
+    if (got && got.provenance.kind !== 'aliased' && got.provenance.kind !== 'authored') errors.push(`acme: component.button.${token} provenance = "${got.provenance.kind}", expected authored/aliased`);
   }
 
   // (b) Authored wins: the fixture overrides component.button.radius to "2px".

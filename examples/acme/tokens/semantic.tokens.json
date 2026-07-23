@@ -3,14 +3,20 @@
     "color": {
       "$type": "color",
       "primary": {
-        "solid": { "$value": "{option.color.blue.600}" }
+        "solid": {
+          "$value": "{option.color.blue.600}"
+        }
       },
       "elevation": {
         "0": {
           "surface": {
             "$value": "{option.color.white}",
             "$extensions": {
-              "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.950}" } }
+              "transtyle.modes": {
+                "color-scheme": {
+                  "dark": "{option.color.gray.950}"
+                }
+              }
             }
           }
         },
@@ -18,7 +24,11 @@
           "surface": {
             "$value": "{option.color.gray.50}",
             "$extensions": {
-              "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } }
+              "transtyle.modes": {
+                "color-scheme": {
+                  "dark": "{option.color.gray.900}"
+                }
+              }
             }
           }
         }
@@ -27,45 +37,108 @@
         "base": {
           "$value": "{option.color.gray.900}",
           "$extensions": {
-            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.50}" } }
+            "transtyle.modes": {
+              "color-scheme": {
+                "dark": "{option.color.gray.50}"
+              }
+            }
           }
         },
         "muted": {
           "$value": "{option.color.gray.500}",
           "$extensions": {
-            "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.400}" } }
+            "transtyle.modes": {
+              "color-scheme": {
+                "dark": "{option.color.gray.400}"
+              }
+            }
           }
         }
       },
       "border": {
         "$value": "{option.color.gray.200}",
         "$extensions": {
-          "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.800}" } }
+          "transtyle.modes": {
+            "color-scheme": {
+              "dark": "{option.color.gray.800}"
+            }
+          }
         }
       }
     },
     "radius": {
-      "md": { "$type": "dimension", "$value": "0.5rem" }
+      "md": {
+        "$type": "dimension",
+        "$value": "0.5rem"
+      }
     },
     "space": {
-      "$type": "dimension",
-      "0": { "$value": "0rem" },
-      "1": { "$value": "0.25rem" },
-      "2": { "$value": "0.5rem" },
-      "3": { "$value": "0.75rem" },
-      "4": { "$value": "1rem" },
-      "5": { "$value": "1.25rem" },
-      "6": { "$value": "1.5rem" },
-      "8": { "$value": "2rem" },
-      "10": { "$value": "2.5rem" },
-      "12": { "$value": "3rem" },
-      "16": { "$value": "4rem" },
-      "20": { "$value": "5rem" },
-      "24": { "$value": "6rem" }
+      "0": {
+        "$value": "0rem"
+      },
+      "1": {
+        "$value": "0.25rem"
+      },
+      "2": {
+        "$value": "0.5rem"
+      },
+      "3": {
+        "$value": "0.75rem"
+      },
+      "4": {
+        "$value": "1rem"
+      },
+      "5": {
+        "$value": "1.25rem"
+      },
+      "6": {
+        "$value": "1.5rem"
+      },
+      "8": {
+        "$value": "2rem"
+      },
+      "10": {
+        "$value": "2.5rem"
+      },
+      "12": {
+        "$value": "3rem"
+      },
+      "16": {
+        "$value": "4rem"
+      },
+      "20": {
+        "$value": "5rem"
+      },
+      "24": {
+        "$value": "6rem"
+      },
+      "$type": "dimension"
     },
     "font": {
-      "sans": { "$type": "fontFamily", "$value": "{option.font.sans}" },
-      "mono": { "$type": "fontFamily", "$value": "{option.font.mono}" }
+      "sans": {
+        "$type": "fontFamily",
+        "$value": "{option.font.sans}"
+      },
+      "mono": {
+        "$type": "fontFamily",
+        "$value": "{option.font.mono}"
+      }
+    }
+  },
+  "component": {
+    "button": {
+      "radius": {
+        "$type": "dimension",
+        "$value": "9999px"
+      },
+      "padding-x": {
+        "$type": "dimension",
+        "$value": "{semantic.space.6}"
+      },
+      "padding-y": {
+        "$type": "dimension",
+        "$value": "{semantic.space.3}"
+      }
     }
   }
 }

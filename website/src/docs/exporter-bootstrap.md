@@ -47,6 +47,16 @@ Bootstrap generates `-bg-subtle` / `-border-subtle` / `-text-emphasis` per theme
 | `$btn-*`, `$modal-*`, … (the 657-variable component tier) | `component.*` tokens + semantic defaults                                           | AL1: bound by meaning per the checked-in surface inventory — one coverage row per variable (driven, chained, or honestly dropped/unsupported) |
 | `$grid-breakpoints`, `$box-shadow-inset`                  | —                                                                                  | `unsupported`, reported honestly                                                                                                              |
 
+## Component theming
+
+Bootstrap 5.3's `_variables.scss` has 952 top-level variables; 657 are component-scoped, and **every one of them is classified** against a checked-in surface inventory (`packages/exporter-bootstrap/surface-inventory.json`, drift-guarded in CI). To answer "which `$btn-*` variables does Transtyle drive, and via which path?" for any variable:
+
+- **`report.json`** carries one coverage row per variable — its source slot (`component.button.radius`, `semantic.space.2`, …), its class (`native`/`derived`/`approximated`), or why it isn't driven (`dropped` structure and derivation knobs, `unsupported` IR gaps like icon assets and state opacities, each with a note).
+- **Sass path**: bound variables are emitted in the component section of `_variables.transtyle.scss`; everything else follows Bootstrap's own `!default` chains from the roots Transtyle drives.
+- **CSS path**: variables with a runtime `--bs-*` counterpart get selector-scoped overrides, and `.btn-<variant>` blocks carry state colors from the role grid.
+
+Authoring is optional refinement: an empty `component` tier compiles forever from semantic defaults (Carbon's buttons come out square because _its_ `radius.control` is `0`), and an authored token wins on both paths — Acme authors `component.button.{radius,padding-x,padding-y}` and gets pill buttons in the [demo](/docs/examples/). One coupling inherited from Bootstrap itself, documented rather than hidden: button and input padding share a single root (`$input-btn-padding-*`), so authored button padding moves form fields too — the same coupling PrimeNG's form-field theming expresses.
+
 Dark mode follows Bootstrap's own mechanism (`data-bs-theme="dark"`) on both paths. One Sass-path caveat inherited from Bootstrap itself: `$primary` is a single value, so brand colors don't flip per mode — exactly how Bootstrap's own dark mode behaves.
 
 See it running on real Bootstrap components: `npm run dev -w acme-demo-bootstrap` (or `cathode-demo-bootstrap` for the CRT version) in the [examples](/docs/examples/).
