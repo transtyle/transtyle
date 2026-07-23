@@ -44,8 +44,23 @@ const N_ASSET =
   'embedded SVG asset (icon/glyph) — the IR has no asset/icon vocabulary yet. AL2 growth signal: component icon slots.';
 const N_OPACITY =
   'opacity value with no shared meaning: AL2 promoted `semantic.opacity.disabled` (the one both reference targets needed) but this slot is a different concept — a veil strength, a shimmer range, or a glyph-specific alpha. Growth signal only if a second target needs the identical one.';
+// Probed against PrimeNG's real inventory in proposal 0004 — the earlier wording
+// ("the IR has no component-size vocabulary yet") promised a vocabulary the
+// evidence says nobody needs. Of the ten concepts in this bucket, six are
+// one-sided (PrimeNG hard-codes what Bootstrap tokenizes: spinner, popover,
+// modal ladder, offcanvas) or false friends ($toast-max-width 350px vs
+// PrimeNG's fixed `width: 22rem`; $dropdown-min-width is the menu, PrimeNG's
+// `dropdown.width` is the trigger), and two more share the concept while
+// disagreeing on its architecture. A note that names a growth signal that isn't
+// there is the coverage-report version of over-claiming.
 const N_BESPOKE =
-  'bespoke component geometry/sizing with no scale meaning — the IR has no component-size vocabulary yet. AL2 growth signal: component sizing.';
+  'bespoke component geometry with no shared meaning — measured against the second reference target (proposal 0004), this is a slot PrimeNG either hard-codes or models differently, not a gap in the IR. Not a growth signal.';
+// The two shapes proposal 0004 separated out of N_BESPOKE, because they are
+// genuinely different situations and a single note flattened them.
+const N_ARCH_DISAGREE =
+  'both reference targets have this concept and model it differently, so no single authored value satisfies both: Bootstrap sizes it in `em` (proportional to local font size, one dimension), PrimeNG in absolute `rem` with independent width/height and an sm/md/lg ladder. The disagreement is the finding (proposal 0004) — same shape as the size ladder AL2 rejected.';
+const N_ICON =
+  'component icon size. The strongest open catalog-growth signal, and still one-sided: PrimeNG models this systematically (50 `icon.size` slots across 31 families, with a shared value set), Bootstrap has three ad-hoc ones with no common root. Promoting today would export one target’s architecture into the catalog — revisit when a third target arrives with a systematic icon-size concept (proposal 0004).';
 const N_STRUCT =
   'structural/behavioral option (layout, cursor, transform, ordering, animation mechanics), not a theme value.';
 const N_FILTER = 'CSS filter trick — presentation mechanics, not a token meaning.';
@@ -182,7 +197,7 @@ export const DESCRIPTORS = {
   },
   'btn-close': {
     drop: {
-      'btn-close-width': { cls: 'unsupported', note: N_BESPOKE },
+      'btn-close-width': { cls: 'unsupported', note: N_ICON + ' (close glyph)' },
       'btn-close-padding-x': { cls: 'unsupported', note: N_BESPOKE + ' ' + N_EM },
       'btn-close-bg': { cls: 'unsupported', note: N_ASSET },
       'btn-close-opacity': { cls: 'unsupported', note: N_OPACITY },
@@ -227,7 +242,7 @@ export const DESCRIPTORS = {
     drop: {
       'form-check-input-width': {
         cls: 'unsupported',
-        note: N_BESPOKE + ' (checkbox glyph size, em-relative)',
+        note: N_ARCH_DISAGREE + ' (checkbox/radio box)',
       },
       'form-check-input-active-filter': { cls: 'dropped', note: N_FILTER },
       'form-check-radio-border-radius': {
@@ -242,7 +257,7 @@ export const DESCRIPTORS = {
   'form-switch': {
     emit: { 'form-switch-transition': T_FAST },
     drop: {
-      'form-switch-width': { cls: 'unsupported', note: N_BESPOKE + ' (track width, em-relative)' },
+      'form-switch-width': { cls: 'unsupported', note: N_ARCH_DISAGREE + ' (switch track)' },
       'form-switch-bg-image': { cls: 'unsupported', note: N_ASSET },
       'form-switch-focus-bg-image': { cls: 'unsupported', note: N_ASSET },
       'form-switch-checked-bg-image': { cls: 'unsupported', note: N_ASSET },
@@ -384,7 +399,7 @@ export const DESCRIPTORS = {
       },
     },
     drop: {
-      'accordion-icon-width': { cls: 'unsupported', note: N_BESPOKE + ' (chevron size)' },
+      'accordion-icon-width': { cls: 'unsupported', note: N_ICON + ' (chevron)' },
       'accordion-icon-transform': { cls: 'dropped', note: N_STRUCT },
       'accordion-button-icon': { cls: 'unsupported', note: N_ASSET },
       'accordion-button-active-icon': { cls: 'unsupported', note: N_ASSET },
@@ -446,7 +461,15 @@ export const DESCRIPTORS = {
   },
   tooltip: {
     drop: {
-      'tooltip-max-width': { cls: 'unsupported', note: N_BESPOKE },
+      // The one slot in this bucket that passed the two-target bar, and the
+      // strongest evidence the bar has seen: PrimeNG independently constrains
+      // the same element the same way at the same value (`tooltip.root.maxWidth:
+      // 12.5rem` = 200px), and it is one of only two `maxWidth` slots in its
+      // entire 2759-slot surface. Awaiting the catalog promotion in proposal 0004.
+      'tooltip-max-width': {
+        cls: 'unsupported',
+        note: 'a confirmed catalog-growth candidate, not a bespoke value: PrimeNG constrains the same element the same way at the same measure (tooltip.root.maxWidth 12.5rem = 200px), one of only two maxWidth slots in its whole surface. Promotion to `component.tooltip.max-width` is recommended in proposal 0004; until it lands, Bootstrap keeps its own default.',
+      },
       'tooltip-opacity': { cls: 'unsupported', note: N_OPACITY },
       'tooltip-arrow-width': { cls: 'dropped', note: N_STRUCT + ' (arrow geometry)' },
       'tooltip-arrow-height': { cls: 'dropped', note: N_STRUCT + ' (arrow geometry)' },
@@ -545,10 +568,10 @@ export const DESCRIPTORS = {
       'carousel-control-width': { cls: 'dropped', note: N_STRUCT },
       'carousel-control-opacity': { cls: 'unsupported', note: N_OPACITY },
       'carousel-control-hover-opacity': { cls: 'unsupported', note: N_OPACITY },
-      'carousel-indicator-width': { cls: 'unsupported', note: N_BESPOKE + ' (indicator geometry)' },
+      'carousel-indicator-width': { cls: 'unsupported', note: N_ARCH_DISAGREE + ' (PrimeNG has indicator width+height too, but 28x8 rounded vs Bootstrap 30x3 hairline — one value would give two differently-wrong carousels)' },
       'carousel-indicator-height': {
         cls: 'unsupported',
-        note: N_BESPOKE + ' (indicator geometry)',
+        note: N_ARCH_DISAGREE + ' (indicator, height axis)',
       },
       'carousel-indicator-hit-area-height': {
         cls: 'dropped',
@@ -556,12 +579,12 @@ export const DESCRIPTORS = {
       },
       'carousel-indicator-spacer': {
         cls: 'unsupported',
-        note: N_BESPOKE + ' (indicator geometry)',
+        note: N_BESPOKE + ' (gap between indicators — PrimeNG has no counterpart at all)',
       },
       'carousel-indicator-opacity': { cls: 'unsupported', note: N_OPACITY },
       'carousel-indicator-active-opacity': { cls: 'unsupported', note: N_OPACITY },
       'carousel-caption-width': { cls: 'dropped', note: N_STRUCT },
-      'carousel-control-icon-width': { cls: 'unsupported', note: N_BESPOKE + ' (icon size)' },
+      'carousel-control-icon-width': { cls: 'unsupported', note: N_ICON + ' (prev/next control)' },
       'carousel-control-prev-icon-bg': { cls: 'unsupported', note: N_ASSET },
       'carousel-control-next-icon-bg': { cls: 'unsupported', note: N_ASSET },
       'carousel-dark-control-icon-filter': { cls: 'dropped', note: N_FILTER },
