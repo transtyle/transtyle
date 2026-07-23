@@ -64,7 +64,7 @@ The [2026-07 strategic review](docs/plan/strategic-review-2026-07.md) audited th
 - [x] **B7** — Accept `rgb()`/`hsl()`/named CSS colors — **promoted by P4, done 2026-07-22.** The engine now parses `oklch()`, `#hex` (3/4/6/8-digit incl. alpha), `rgb()`/`rgba()`, `hsl()`/`hsla()` (modern + legacy comma, `deg`/`rad`/`grad`/`turn`), all CSS named colors, and `transparent`. Verified by re-running the P4 extraction with Miniflux's literal `red`/`purple` restored — builds clean. New `check:color` guards it against reference values (also chips at audit A3); existing output byte-identical.
 - [ ] **P5** — Browser playground
 - [x] **P6** — `transtyle diff` — done 2026-07-22 (semantic diff of the _resolved_ graph vs a git ref + **contrast-regression flagging** + per-target output impact; `--json`, `git diff`-style exit codes; [spec](docs/specs/diff.md), golden tests in `check:cli`). The a11y flag shares `runChecks`' pairs and threshold, and fixed a latent bug: `check.contrast.standard: wcag21-aaa` was accepted but silently compared against AA's 4.5:1. Built on the freeze-ready IR ([ADR-0011](docs/adr/0011-v0-freeze-readiness.md)); needs no publication, so unaffected by the R4/R5 parking.
-- [ ] **I1** — Tailwind config importer — **stays ahead of I2** per [P4](docs/findings/hostile-adoption.md): the codebase, not the design file, is where the median product's truth lives; also the cheaper build (audit D1)
+- [ ] **I1** — Tailwind config importer — **stays ahead of I2** per [P4](docs/findings/hostile-adoption.md): the codebase, not the design file, is where the median product's truth lives; also the cheaper build (audit D1). Built against the importer contract ([docs/plan/importer-contract.md](docs/plan/importer-contract.md), M3): ships with an import coverage report, provenance, and contested-binding surfacing — not just token output
 - [ ] **I2** — Figma variables importer
 - [ ] **I4 (candidate)** — CSS custom-property / stylesheet importer — raised by P4: the importer that would actually have automated the Miniflux extraction, since neither I1 nor I2 applies to a hand-rolled product. On one data point; competes with I1 at the next planning pass rather than jumping it
 - [ ] **I3** — Watch mode + CI recipe
@@ -90,7 +90,7 @@ Explicitly not scheduled this half: new exporters beyond the pilot's, catalog gr
 ## Phase 3 — Ecosystem translation (v1.x)
 
 - Importers: Bootstrap (Sass variables → IR), shadcn (globals.css → IR), MUI theme object → IR.
-- Round-trip fidelity reporting (import coverage, mirroring export coverage).
+- Round-trip fidelity reporting (import coverage, mirroring export coverage) — contract and provisional coverage classes defined in [docs/plan/importer-contract.md](docs/plan/importer-contract.md).
 - `transtyle doc <target>` experimental upstream-doc theming for targets whose exporters declare the capability.
 - Exporter registry metadata (`transtyle add` resolves community exporters).
 
