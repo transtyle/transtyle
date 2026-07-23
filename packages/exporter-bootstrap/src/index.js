@@ -63,10 +63,33 @@ export default {
     // no-op unless the compile actually declares one, e.g. `density`.
     r.coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
+    // AL5: a semantic slot an exporter reads can legitimately be unauthored and
+    // underivable — `semantic.color.border` is aliased in every example, but a
+    // minimal design system has none, and `$border-color: undefined;` is not a
+    // stylesheet. Dropping the declaration is right: Bootstrap's own default
+    // then applies, which is exactly what "we have nothing to say about this"
+    // should mean. Each dropped line becomes a coverage row, so it is visible
+    // rather than merely absent. Guarded repo-wide by check:minimal-ds.
+    const dropUndefined = (contents, file) =>
+      contents
+        .split('\n')
+        .filter((l) => {
+          if (!/:\s*undefined\s*[;,]/.test(l)) return true;
+          const slot = /^\s*(--?[\w-]+|\$[\w-]+)/.exec(l)?.[1] ?? l.trim();
+          r.coverage.push({
+            variable: slot,
+            slot: '—',
+            class: 'dropped',
+            note: `not emitted in ${file}: this design system provides no value for it, so Bootstrap's own default stands`,
+          });
+          return false;
+        })
+        .join('\n');
+
     const files = [
-      { path: '_variables.transtyle.scss', contents: renderVariables(r, ctx), kind: 'stylesheet' },
-      { path: '_maps.transtyle.scss', contents: renderMaps(r, ctx), kind: 'stylesheet' },
-      { path: 'bootstrap-theme.css', contents: renderCss(r, ctx), kind: 'stylesheet' },
+      { path: '_variables.transtyle.scss', contents: dropUndefined(renderVariables(r, ctx), '_variables.transtyle.scss'), kind: 'stylesheet' },
+      { path: '_maps.transtyle.scss', contents: dropUndefined(renderMaps(r, ctx), '_maps.transtyle.scss'), kind: 'stylesheet' },
+      { path: 'bootstrap-theme.css', contents: dropUndefined(renderCss(r, ctx), 'bootstrap-theme.css'), kind: 'stylesheet' },
       { path: 'usage.md', contents: renderUsage(ctx, r.coverage), kind: 'doc' },
     ];
     return { files, coverage: r.coverage };

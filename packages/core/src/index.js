@@ -12,6 +12,7 @@ import { normalize, resolveDeferredAliases } from './normalize.js';
 import { derive } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
+import { nearestName } from './nearest.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 
 export { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
@@ -22,7 +23,13 @@ export { diffResolved, contrastRegressions } from './diff.js';
  * Run the pipeline. `emit: false` = `transtyle check` (pipeline minus EMIT —
  * same code path by design, docs/architecture/pipeline.md).
  */
-export async function compile({ cwd, targets, emit = true, loadExporter }) {
+/**
+ * `knownExporters` (AL5) is the caller's list of exporter names it can resolve —
+ * the CLI's OFFICIAL_EXPORTERS keys. Core stays exporter-agnostic (it never
+ * imports one), but TST1301 can then tell "you typo'd" apart from "that
+ * exporter exists, you just haven't configured it", which are opposite fixes.
+ */
+export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [] }) {
   const diagnostics = new Diagnostics();
   const { config } = await loadConfig(cwd);
 
@@ -30,7 +37,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
   // error, not a silently-ignored field. Fail before touching tokens — a broken
   // config shape would only produce misleading downstream diagnostics.
   for (const { path: p, message } of validate(config, configSchema)) {
-    diagnostics.error('TST1010', `transtyle.config.json: ${p} ${message}`);
+    diagnostics.error('TST1010', `transtyle.config.json: ${p === '(root)' ? '' : p + ' '}${message}`);
   }
   if (diagnostics.errors.length > 0) {
     return { config, diagnostics, results: [], normalized: null };
@@ -43,6 +50,29 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
   // Authored aliases pointing at slots DERIVE materializes (e.g. a component
   // token aliasing `{semantic.radius.full}`) resolve here — see normalize.js.
   resolveDeferredAliases(normalized, diagnostics);
+
+  // The engine's one non-negotiable input (AL5 — see derive.js for why it moved
+  // here). Checked after every alias has had its chance to resolve, and only
+  // when nothing upstream already explains the absence: a dangling alias or an
+  // unparseable color makes this token missing as a *consequence*, and reporting
+  // both sends the user to fix the symptom.
+  const primaryMissing = Object.values(normalized.modes).some(
+    (m) => m.get('semantic.color.primary.solid')?.value === undefined,
+  );
+  const upstream = ['TST1002', 'TST1104', 'TST1105', 'TST1106'].some((c) => diagnostics.has(c));
+  if (primaryMissing && !upstream) {
+    diagnostics.error(
+      'TST1201',
+      'semantic.color.primary.solid is not authored — it is the one token the derivation engine cannot invent.',
+      {
+        // The old text blamed `config derivation.require`, which most configs
+        // (including `transtyle init`'s own scaffold) never set. It is an engine
+        // invariant, not a consequence of configuration.
+        hint: 'Author it as `semantic.color.primary.solid` (your brand color). A bare `semantic.color.primary` is a different path — the role grid anchors on the `.solid` cell.',
+      },
+    );
+  }
+
   runChecks(normalized, config, diagnostics);
 
   // derivation.require: listed slots must be authored, not derived. Color
@@ -62,7 +92,24 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
   for (const name of targetNames) {
     const targetConfig = config.targets?.[name];
     if (!targetConfig) {
-      diagnostics.error('TST1301', `Target "${name}" is not configured in transtyle.config.json`);
+      // AL5: two different mistakes reached the same dead-end message. A typo
+      // needs the near name; a correctly-spelled exporter that simply isn't in
+      // this config needs to be told to add it. Neither is "check instance
+      // names" with the names withheld.
+      const configured = Object.keys(config.targets ?? {});
+      const near = nearestName(name, configured);
+      const known = knownExporters.includes(name);
+      diagnostics.error(
+        'TST1301',
+        `Target "${name}" is not configured in transtyle.config.json`,
+        {
+          hint: near
+            ? `Did you mean "${near}"? Configured targets: ${configured.join(', ') || '(none)'}`
+            : known
+              ? `"${name}" is a known exporter but this config doesn't use it — add it under "targets" with an "output" directory.`
+              : `Configured targets: ${configured.join(', ') || '(none)'}`,
+        },
+      );
       continue;
     }
     if (diagnostics.errors.length > 0) break; // never emit with errors present

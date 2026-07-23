@@ -28,6 +28,10 @@ const diagnostic = {
     severity: { type: 'string', enum: ['error', 'warning', 'info'] },
     code: { type: 'string' },
     message: { type: 'string' },
+    // AL5: optional, and deliberately separate from `message` — what is wrong
+    // and what to change are different sentences, and tools consuming the
+    // report (editors, CI annotations) want to place them differently.
+    hint: { type: 'string' },
   },
 };
 

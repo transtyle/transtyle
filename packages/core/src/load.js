@@ -53,7 +53,12 @@ export async function loadTokenTrees(cwd, entries, diagnostics) {
     const modeScope = typeof entry === 'string' ? undefined : entry.mode;
     for (const g of globs) {
       const files = await expandGlob(cwd, g);
-      if (files.length === 0) diagnostics.warn('TST1001', `Token glob matched no files: ${g}`);
+      if (files.length === 0)
+        diagnostics.warn('TST1001', `Token glob matched no files: ${g}`, {
+          // AL5: this is usually the whole story behind every error that
+          // follows, so it should be the one that tells you where it looked.
+          hint: `Resolved relative to ${cwd}. Check the path in "tokens" in transtyle.config.json.`,
+        });
       for (const f of files) {
         try {
           const tree = JSON.parse(await readFile(f, 'utf8'));
@@ -61,7 +66,9 @@ export async function loadTokenTrees(cwd, entries, diagnostics) {
           validateTokenTree(tree, rel, diagnostics, seenExtensionNamespaces);
           trees.push({ file: rel, tree, modeScope });
         } catch (e) {
-          diagnostics.error('TST1002', `Failed to parse ${f}: ${e.message}`);
+          // Relative path (AL5): an absolute one buries the filename that
+          // matters at the end of a long, uninformative prefix.
+          diagnostics.error('TST1002', `Failed to parse ${path.relative(cwd, f)}: ${e.message}`);
         }
       }
     }

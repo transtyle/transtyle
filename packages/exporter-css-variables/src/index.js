@@ -163,12 +163,17 @@ function renderEntry(entry, ctx) {
   if (type === 'dimension' || type === 'duration' || type === 'cubicBezier') return [['', String(value)]];
   if (type === 'number') return [['', String(value)]];
   if (type === 'typography') {
+    // AL5: a composite member can be absent — a design system that authors no
+    // font family gets a type role with no `fontFamily`, and `String(undefined)`
+    // wrote `--type-role-body-md-family: undefined;` into the stylesheet. Emit
+    // the longhands that exist; a missing custom property is inert, a malformed
+    // one is not.
     return [
       ['-size', value.fontSize],
-      ['-weight', String(value.fontWeight)],
-      ['-leading', String(value.lineHeight)],
-      ['-family', Array.isArray(value.fontFamily) ? fontList(value.fontFamily) : String(value.fontFamily)],
-    ];
+      ['-weight', value.fontWeight === undefined ? undefined : String(value.fontWeight)],
+      ['-leading', value.lineHeight === undefined ? undefined : String(value.lineHeight)],
+      ['-family', Array.isArray(value.fontFamily) ? fontList(value.fontFamily) : value.fontFamily],
+    ].filter(([, v]) => v !== undefined);
   }
   if (type === 'shadow') {
     return [['', `${value.offsetX} ${value.offsetY} ${value.blur} ${value.spread} ${ctx.formatColor(value.color)}`]];

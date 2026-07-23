@@ -86,6 +86,17 @@ Options:
 `;
 
 const ICONS = { error: '✖', warning: '⚠', info: 'ℹ' };
+
+/**
+ * One diagnostic, rendered. The `hint` (AL5) goes on its own indented line
+ * rather than inside the message: what is wrong and what to change are
+ * different sentences, and running them together is how the old one-liners
+ * ended up saying neither well.
+ */
+function printDiagnostic(d) {
+  console.error(`${ICONS[d.severity] ?? '·'} ${d.code} ${d.message}`);
+  if (d.hint) console.error(`  ↳ ${d.hint}`);
+}
 const COMMANDS = ['build', 'check', 'explain', 'diff', 'init', 'add'];
 
 async function main() {
@@ -109,7 +120,7 @@ async function cmdBuildOrCheck(args) {
   const emit = args.command === 'build';
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter: makeLoadExporter(args.cwd) });
+    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter: makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS) });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
@@ -117,9 +128,7 @@ async function cmdBuildOrCheck(args) {
 
   const { diagnostics, results, config } = result;
 
-  for (const d of diagnostics.items) {
-    console.error(`${ICONS[d.severity] ?? '·'} ${d.code} ${d.message}`);
-  }
+  for (const d of diagnostics.items) printDiagnostic(d);
 
   for (const r of results) {
     const counts = {};
@@ -162,7 +171,7 @@ async function cmdExplain(args) {
     process.exit(2);
   }
   const { normalized, diagnostics } = result;
-  for (const d of diagnostics.items) console.error(`${ICONS[d.severity] ?? '·'} ${d.code} ${d.message}`);
+  for (const d of diagnostics.items) printDiagnostic(d);
 
   const useMode = args.mode ?? normalized.defaultMode;
   const map = normalized.modes[useMode];

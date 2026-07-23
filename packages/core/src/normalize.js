@@ -123,6 +123,28 @@ export function normalize(tokenTrees, config, diagnostics) {
  * then, if the target still doesn't exist, is it a real dangling alias.
  */
 const DEFERRED = Symbol('deferred-alias');
+/** Resolution failed because of an alias cycle, already reported as TST1104. */
+const CYCLE = Symbol('alias-cycle');
+
+/**
+ * Report one cycle once (AL5). The resolver reaches a two-token loop from both
+ * ends, so the same cycle was printed twice with the chain rotated — two
+ * different message strings describing one mistake, which de-duplication by
+ * message cannot catch. Keying on the sorted member set makes any rotation of
+ * the same loop a single report; the chain is still printed in traversal order,
+ * because that is what shows the user how the loop closes.
+ */
+const reportedCycles = new WeakMap();
+function reportCycle(diagnostics, chain) {
+  let seen = reportedCycles.get(diagnostics);
+  if (!seen) reportedCycles.set(diagnostics, (seen = new Set()));
+  const key = [...new Set(chain)].sort().join('|');
+  if (seen.has(key)) return;
+  seen.add(key);
+  diagnostics.error('TST1104', `Alias cycle: ${chain.join(' → ')}`, {
+    hint: 'Break the loop: one of these tokens has to hold a literal value.',
+  });
+}
 
 function resolveEntry(map, tokenPath, stack, diagnostics) {
   const entry = map.get(tokenPath);
@@ -130,8 +152,12 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
   if (entry.value !== undefined) return entry;
   if (entry.pendingAlias) return DEFERRED;
   if (stack.includes(tokenPath)) {
-    diagnostics.error('TST1104', `Alias cycle: ${[...stack, tokenPath].join(' → ')}`);
-    return undefined;
+    reportCycle(diagnostics, [...stack, tokenPath]);
+    // AL5: a distinct sentinel, not `undefined`. Returning `undefined` made the
+    // caller report TST1105 "dangling alias" on top of the cycle — which is
+    // false (the target exists; it just loops) and doubled the output on the
+    // exact error where the chain is already printed in full.
+    return CYCLE;
   }
   let raw = entry.rawValue;
   const target = aliasTarget(raw);
@@ -148,8 +174,11 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
       entry.pendingAlias = target;
       return DEFERRED;
     }
+    if (resolved === CYCLE) return CYCLE; // already reported as TST1104
     if (!resolved) {
-      diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`);
+      diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`, {
+        hint: `Nothing resolves to "${target}". Check the tier prefix (option./semantic./component.) and the spelling.`,
+      });
       return undefined;
     }
     entry.type = entry.type ?? resolved.type;
@@ -185,17 +214,20 @@ function resolvePending(map, tokenPath, stack, diagnostics) {
   const entry = map.get(tokenPath);
   if (!entry || !entry.pendingAlias) return entry;
   if (stack.includes(tokenPath)) {
-    diagnostics.error('TST1104', `Alias cycle: ${[...stack, tokenPath].join(' → ')}`);
+    reportCycle(diagnostics, [...stack, tokenPath]);
     delete entry.pendingAlias;
-    return undefined;
+    return CYCLE;
   }
   const target = entry.pendingAlias;
   const resolved = map.has(target)
     ? resolvePending(map, target, [...stack, tokenPath], diagnostics)
     : undefined;
   delete entry.pendingAlias;
+  if (resolved === CYCLE) return CYCLE; // already reported as TST1104
   if (!resolved || resolved.value === undefined) {
-    diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`);
+    diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`, {
+      hint: `Nothing resolves to "${target}" — not authored, and not produced by derivation. Check the tier prefix (option./semantic./component.) and the spelling.`,
+    });
     return undefined;
   }
   entry.type = entry.type ?? resolved.type;

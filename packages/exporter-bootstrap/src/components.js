@@ -59,6 +59,32 @@ export function resolveEmits(light, ctx) {
       note = recipe.note;
     const provCls = (entry) =>
       ['authored', 'aliased'].includes(entry.provenance.kind) ? 'native' : 'derived';
+    // AL5: a recipe's source can legitimately be absent. `semantic.radius.*`
+    // only exists once something authors `radius.md`, so a perfectly valid
+    // minimal design system (brand color + text + surface) made this function
+    // throw a bare `Cannot read properties of undefined (reading 'value')` with
+    // no code, no slot name, and no hint — the worst failure in the sweep,
+    // because the user did nothing wrong. `check:bootstrap-surface` never saw
+    // it: it validates recipe paths against Acme, which authors everything.
+    // An absent source is reported as an honest coverage row instead.
+    const sourcePath = recipe.comp
+      ? `component.${recipe.comp}`
+      : recipe.sem
+        ? `semantic.${recipe.sem}`
+        : recipe.trans
+          ? `semantic.${recipe.trans.duration}`
+          : null;
+    if (sourcePath && light.get(sourcePath)?.value === undefined) {
+      out.push({
+        v,
+        recipe,
+        value: undefined,
+        cls: 'dropped',
+        slot: '—',
+        note: `nothing to bind: this design system has no ${sourcePath}. The binding exists, its source does not — author that slot (or the scale it derives from) and this variable starts being driven.`,
+      });
+      continue;
+    }
     if (recipe.comp) {
       const entry = light.get(`component.${recipe.comp}`);
       value = entry.value;
@@ -112,6 +138,7 @@ export function componentVariables(light, ctx) {
 
   const byFamily = new Map();
   for (const e of emits) {
+    if (e.value === undefined) continue; // unbindable (source absent) — coverage row only
     if (!byFamily.has(e.v.family)) byFamily.set(e.v.family, []);
     byFamily.get(e.v.family).push(e);
   }
@@ -209,7 +236,7 @@ const CSS_EXTRAS = [
  */
 export function componentCssBlocks(light, ctx) {
   const emits = resolveEmits(light, ctx).filter(
-    (e) => e.v.cssVars.length > 0 && FAMILY_SELECTOR[e.v.family],
+    (e) => e.value !== undefined && e.v.cssVars.length > 0 && FAMILY_SELECTOR[e.v.family],
   );
   const bySelector = new Map();
   const seen = new Set();
@@ -219,8 +246,10 @@ export function componentCssBlocks(light, ctx) {
     if (!bySelector.has(sel)) bySelector.set(sel, []);
     bySelector.get(sel).push(`  --bs-${cssVar}: ${value};  /* ${slot} */`);
   };
-  for (const x of CSS_EXTRAS)
-    push(x.selector, x.cssVar, light.get(`component.${x.comp}`).value, `component.${x.comp}`);
+  for (const x of CSS_EXTRAS) {
+    const v = light.get(`component.${x.comp}`)?.value; // may be absent — see resolveEmits
+    if (v !== undefined) push(x.selector, x.cssVar, v, `component.${x.comp}`);
+  }
   for (const e of emits) {
     for (const cssVar of e.v.cssVars) {
       push(

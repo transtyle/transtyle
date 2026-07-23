@@ -13,6 +13,8 @@
  * exactly what our schemas need and no more — extend deliberately.
  */
 
+import { nearestName } from '../nearest.js';
+
 const typeOf = (v) =>
   v === null ? 'null'
   : Array.isArray(v) ? 'array'
@@ -65,7 +67,13 @@ export function validate(value, schema, path = '') {
       if (props[key]) {
         errors.push(...validate(v, props[key], childPath));
       } else if (addl === false) {
-        push(childPath, `unknown property "${key}"`);
+        // AL5: pushed at the PARENT path, not childPath — the message already
+        // names the key, and prefixing the child path rendered as
+        // `targts unknown property "targts"`. The near-miss suggestion is the
+        // whole point of rejecting unknown keys instead of ignoring them: a
+        // typo'd `targts` is otherwise a config that silently does nothing.
+        const near = nearestName(key, Object.keys(props));
+        push(path, `unknown property "${key}"${near ? ` — did you mean "${near}"?` : ''}`);
       } else if (addl && typeof addl === 'object') {
         errors.push(...validate(v, addl, childPath));
       }

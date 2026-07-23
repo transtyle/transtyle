@@ -107,6 +107,9 @@
           },
           "message": {
             "type": "string"
+          },
+          "hint": {
+            "type": "string"
           }
         }
       }

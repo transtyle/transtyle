@@ -32,14 +32,14 @@ export function derive(normalized, config, diagnostics) {
     const mode = combo; // kept for diagnostic messages below — the full combo key, more informative than just the primary dimension's value
     const dl = isDark ? 1 : -1;
 
+    // AL5: TST1201 is NOT raised here any more. This loop runs before deferred
+    // aliases resolve, so a dangling `{semantic.color.brand}` had not been
+    // diagnosed yet and "primary.solid is missing" printed *above* the actual
+    // cause — the user's eye lands on the first error, which was the symptom.
+    // The check now lives in compile(), after all alias resolution, where it can
+    // both see the root cause and stay silent when there is one.
     const primary = get(map, `${S}primary.solid`);
-    if (!primary) {
-      diagnostics.error(
-        'TST1201',
-        'semantic.color.primary.solid is required (config derivation.require).',
-      );
-      return;
-    }
+    if (!primary) return;
     const textBase = get(map, `${S}text.base`);
 
     // Custom archetyped roles (T7, docs/architecture/ir.md §archetypes) join the
@@ -408,12 +408,22 @@ export function derive(normalized, config, diagnostics) {
           ctx,
           `semantic.type.role.${role}.${size}`,
           'typography',
-          () => ({
-            fontFamily: get(map, familyPath),
-            fontSize: get(map, `semantic.type.size.${sizeKey}`),
-            fontWeight: get(map, `semantic.type.weight.${TYPE_ROLE_WEIGHT[role]}`),
-            lineHeight: get(map, `semantic.type.leading.${TYPE_ROLE_LEADING[role]}`),
-          }),
+          // AL5: members whose source doesn't resolve are OMITTED, not carried
+          // as `undefined`. A design system that authors no font family is
+          // ordinary, and every consumer of this composite — exporters, the
+          // Bootstrap `part` recipes — reads members by name; an explicit
+          // `fontFamily: undefined` reads as "there is a value" and reached
+          // stylesheets as `--type-role-body-md-family: undefined;` (18 of them
+          // in css-variables alone). An absent key is the truthful shape.
+          () =>
+            Object.fromEntries(
+              Object.entries({
+                fontFamily: get(map, familyPath),
+                fontSize: get(map, `semantic.type.size.${sizeKey}`),
+                fontWeight: get(map, `semantic.type.weight.${TYPE_ROLE_WEIGHT[role]}`),
+                lineHeight: get(map, `semantic.type.leading.${TYPE_ROLE_LEADING[role]}`),
+              }).filter(([, v]) => v !== undefined),
+            ),
           `type-role-composite(${role}.${size})`,
           [`type.size.${sizeKey}`],
           PROVENANCE.DEFAULTED,
@@ -459,6 +469,16 @@ export function derive(normalized, config, diagnostics) {
         const fromComponent = defaultFrom.startsWith('component:');
         const sourcePath = fromComponent ? defaultFrom.slice('component:'.length) : defaultFrom;
         const fullPath = `${fromComponent ? 'component' : 'semantic'}.${sourcePath}`;
+        // AL5: a `defaultFrom` whose source does not exist has no default to
+        // give. Materializing the slot anyway produced an entry with
+        // `value: undefined` and a `derived` provenance — which read as "this
+        // is covered" to every exporter and to the coverage report, then
+        // emitted `$btn-border-radius: undefined;`. Reachable from an ordinary
+        // sparse design system: nothing authors `semantic.radius.md`, so the
+        // whole radius family (and with it `radius.control`) never exists.
+        // Leaving the slot absent is the honest state — the catalog says the
+        // default comes from somewhere, and that somewhere isn't there.
+        if (get(map, fullPath) === undefined && !map.has(`component.${name}.${tokenName}`)) continue;
         resolve(
           ctx,
           `component.${name}.${tokenName}`,
