@@ -8,7 +8,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { loadConfig, loadTokenTrees } from './load.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
-import { normalize } from './normalize.js';
+import { normalize, resolveDeferredAliases } from './normalize.js';
 import { derive } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
@@ -40,6 +40,9 @@ export async function compile({ cwd, targets, emit = true, loadExporter }) {
   const trees = await loadTokenTrees(cwd, config.tokens, diagnostics);
   const normalized = normalize(trees, config, diagnostics);
   derive(normalized, config, diagnostics);
+  // Authored aliases pointing at slots DERIVE materializes (e.g. a component
+  // token aliasing `{semantic.radius.full}`) resolve here — see normalize.js.
+  resolveDeferredAliases(normalized, diagnostics);
   runChecks(normalized, config, diagnostics);
 
   // derivation.require: listed slots must be authored, not derived. Color

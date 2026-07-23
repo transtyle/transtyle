@@ -129,7 +129,7 @@
     "button": {
       "radius": {
         "$type": "dimension",
-        "$value": "9999px"
+        "$value": "{semantic.radius.full}"
       },
       "padding-x": {
         "$type": "dimension",

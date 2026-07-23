@@ -114,10 +114,21 @@ export function normalize(tokenTrees, config, diagnostics) {
   };
 }
 
+/**
+ * An alias whose target isn't in the map *yet*. Catalog slots the DERIVE stage
+ * materializes (`radius.full`, the role grid, the elevation ladder) don't exist
+ * at NORMALIZE time, so authoring `{semantic.radius.full}` — the very style
+ * ir.md's component-layer sketch uses — must not be judged dangling here.
+ * These entries are re-resolved by resolveDeferredAliases() after DERIVE; only
+ * then, if the target still doesn't exist, is it a real dangling alias.
+ */
+const DEFERRED = Symbol('deferred-alias');
+
 function resolveEntry(map, tokenPath, stack, diagnostics) {
   const entry = map.get(tokenPath);
   if (!entry) return undefined;
   if (entry.value !== undefined) return entry;
+  if (entry.pendingAlias) return DEFERRED;
   if (stack.includes(tokenPath)) {
     diagnostics.error('TST1104', `Alias cycle: ${[...stack, tokenPath].join(' → ')}`);
     return undefined;
@@ -125,7 +136,18 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
   let raw = entry.rawValue;
   const target = aliasTarget(raw);
   if (target) {
+    // Absent target: possibly derived later — defer rather than erroring.
+    // A target that IS present but failed to resolve (bad color syntax, cycle)
+    // is a genuine failure now, exactly as before.
+    if (!map.has(target)) {
+      entry.pendingAlias = target;
+      return DEFERRED;
+    }
     const resolved = resolveEntry(map, target, [...stack, tokenPath], diagnostics);
+    if (resolved === DEFERRED) {
+      entry.pendingAlias = target;
+      return DEFERRED;
+    }
     if (!resolved) {
       diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`);
       return undefined;
@@ -141,5 +163,43 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     diagnostics.error('TST1106', `${tokenPath}: ${e.message}`);
     return undefined;
   }
+  return entry;
+}
+
+/**
+ * Post-DERIVE pass: resolve every alias deferred at NORMALIZE time, now that
+ * the derived catalog slots exist. Still-missing targets are the real dangling
+ * aliases and get TST1105 here — same code, same message, just diagnosed after
+ * the stage that could legitimately have supplied the target.
+ */
+export function resolveDeferredAliases(normalized, diagnostics) {
+  const seen = new Set();
+  for (const map of Object.values(normalized.modes)) {
+    if (!map || seen.has(map)) continue; // modes.light/dark alias the combo maps
+    seen.add(map);
+    for (const tokenPath of [...map.keys()]) resolvePending(map, tokenPath, [], diagnostics);
+  }
+}
+
+function resolvePending(map, tokenPath, stack, diagnostics) {
+  const entry = map.get(tokenPath);
+  if (!entry || !entry.pendingAlias) return entry;
+  if (stack.includes(tokenPath)) {
+    diagnostics.error('TST1104', `Alias cycle: ${[...stack, tokenPath].join(' → ')}`);
+    delete entry.pendingAlias;
+    return undefined;
+  }
+  const target = entry.pendingAlias;
+  const resolved = map.has(target)
+    ? resolvePending(map, target, [...stack, tokenPath], diagnostics)
+    : undefined;
+  delete entry.pendingAlias;
+  if (!resolved || resolved.value === undefined) {
+    diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`);
+    return undefined;
+  }
+  entry.type = entry.type ?? resolved.type;
+  entry.value = resolved.value;
+  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode };
   return entry;
 }

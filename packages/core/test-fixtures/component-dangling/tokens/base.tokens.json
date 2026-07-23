@@ -1,0 +1,14 @@
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "blue": { "600": { "$value": "oklch(0.55 0.18 255)" } }
+    }
+  },
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "primary": { "solid": { "$value": "{option.color.blue.600}" } }
+    }
+  }
+}

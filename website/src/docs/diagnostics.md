@@ -37,6 +37,8 @@ Transtyle prefers surprising you _loudly_ over failing silently. This page colle
 
 `TST1303` isn't a separate code — an alias to a non-existent path is `TST1105` above; it's part of the same "authoring mistake" family the DTCG validation pass (T10) documents together.
 
+Aliasing a **derived** slot is fine and won't raise `TST1105`: `component.button.radius: "{semantic.radius.full}"` works even though nothing authors `radius.full`, because such aliases resolve right after derivation. `TST1105` means the target never exists — at any stage.
+
 ## Surprising-but-correct behaviors
 
 ### My dark-native system comes out light-first

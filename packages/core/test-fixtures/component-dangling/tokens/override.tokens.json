@@ -1,0 +1,10 @@
+{
+  "component": {
+    "button": {
+      "radius": {
+        "$type": "dimension",
+        "$value": "{semantic.radius.nope}"
+      }
+    }
+  }
+}

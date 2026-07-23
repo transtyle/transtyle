@@ -39,7 +39,10 @@ async function main() {
 
   // (c) Authored-by-alias wins (AL1.5): Acme authors component.button.* as
   // aliases into the semantic scales — they must resolve to the alias target,
-  // not the catalog default, with 'aliased' provenance.
+  // not the catalog default, with 'aliased' provenance. `radius.full` is the
+  // load-bearing case: it is materialized by DERIVE, so it only resolves
+  // because normalize.js defers such aliases past that stage (the AL1.5 wart
+  // fix). This is the authoring style ir.md's component-layer sketch uses.
   const acme = await compile({ cwd: 'examples/acme', targets: [], emit: false, loadExporter });
   if (acme.diagnostics.errors.length) errors.push(`acme compile errors: ${acme.diagnostics.errors.map((e) => e.message).join('; ')}`);
   const aMap = acme.normalized.modes.light;
@@ -47,8 +50,16 @@ async function main() {
     const got = aMap?.get(`component.button.${token}`);
     const want = aMap?.get(`semantic.${target}`)?.value;
     if (got?.value !== want) errors.push(`acme: component.button.${token} = ${got?.value}, expected the authored alias to ${target} (${want})`);
-    if (got && got.provenance.kind !== 'aliased' && got.provenance.kind !== 'authored') errors.push(`acme: component.button.${token} provenance = "${got.provenance.kind}", expected authored/aliased`);
+    if (got?.provenance.kind !== 'aliased') errors.push(`acme: component.button.${token} provenance = "${got?.provenance.kind}", expected "aliased"`);
   }
+
+  // (d) The deferral must not swallow real mistakes: an alias to a path that
+  // never materializes is still TST1105, just diagnosed after DERIVE.
+  const typo = await compile({ cwd: 'packages/core/test-fixtures/component-dangling', targets: [], emit: false, loadExporter });
+  const dangling = typo.diagnostics.errors.filter((e) => e.code === 'TST1105');
+  if (!dangling.length) errors.push('dangling fixture: an alias to a non-existent slot must still raise TST1105 after the deferred pass');
+  const typoRadius = typo.normalized?.modes.light?.get('component.button.radius')?.value;
+  if (typoRadius !== undefined) errors.push(`dangling fixture: component.button.radius resolved to ${typoRadius}; a dangling alias must not fall back to the catalog default`);
 
   // (b) Authored wins: the fixture overrides component.button.radius to "2px".
   const fixture = await compile({ cwd: 'packages/core/test-fixtures/component-tier', targets: [], emit: false, loadExporter });
@@ -63,7 +74,7 @@ async function main() {
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; an authored component.* token wins over its default');
+  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; authored wins over its default; an authored alias into a DERIVE-materialized slot resolves, while a truly dangling one still raises TST1105');
 }
 
 main();
