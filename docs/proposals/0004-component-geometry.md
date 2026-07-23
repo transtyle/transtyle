@@ -83,3 +83,25 @@ Verified end-to-end, both directions:
 `check:component-tier` gained case (e), asserting both halves: the empty-tier compile must **not** conjure the slot (otherwise the exporters would emit a measure nobody chose, on one upstream's authority), and the authored fixture must carry it through with `authored` provenance. `check:bootstrap-surface`'s recipe-path typo guard learned that a no-`defaultFrom` catalog slot is legitimately absent from a compile — checked against the catalog rather than allow-listed by name, so `comp: 'tooltip.max-widht'` still fails.
 
 The `N_BESPOKE` note that started this probe ("the IR has no component-size vocabulary yet") is rewritten, and the bucket split into four honest ones: 17 genuinely bespoke, 4 architecture-disagreement, 3 icon-size watch item, 1 now bound.
+
+### Type-checked and rendered
+
+The emitted PrimeNG shape is only proven when a demo compiles it — `ng build` type-checks every preset against PrimeNG's own `DesignTokens` types, which is the strongest verification any exporter gets from its demo. Acme now authors `component.tooltip.max-width: 18rem`, so both demos exercise the slot.
+
+The type-check is real, not incidental: a `maxWidthh` typo fails with
+
+```
+TS2561: Object literal may only specify known properties, but 'maxWidthh'
+does not exist in type 'Root'. Did you mean to write 'maxWidth'?
+```
+
+and a numeric `maxWidth: 18` fails with `TS2322: Type 'number' is not assignable to type 'string'`. Both the property name and the value type are checked against upstream's types.
+
+Rendered, measured in the running demos rather than asserted — a long-text tooltip added to each so the ceiling is observable:
+
+| Target    | Mechanism                                     | Computed                                                           |
+| --------- | --------------------------------------------- | ------------------------------------------------------------------ |
+| Bootstrap | `$tooltip-max-width` → `.tooltip-inner`       | `max-width: 288px`, wrapping at it (default would be 200px)        |
+| PrimeNG   | `--p-tooltip-max-width: 18rem` → `.p-tooltip` | `max-width: 288px`, wrapping at it (Aura's default would be 200px) |
+
+One authored line, two libraries that model overlays completely differently, the identical rendered constraint. No console errors in either.

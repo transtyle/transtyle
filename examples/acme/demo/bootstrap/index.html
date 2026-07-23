@@ -42,6 +42,17 @@
           <button class="btn btn-outline-primary">Outline</button>
           <button class="btn btn-link">Link</button>
           <button class="btn btn-primary" disabled>Disabled</button>
+          <!-- component.tooltip.max-width (proposal 0004) — the same authored
+               token drives tooltip.root.maxWidth in the PrimeNG demo. Long text
+               on purpose: the ceiling only shows when content wants to exceed it. -->
+          <button
+            class="btn btn-outline-primary"
+            data-bs-toggle="tooltip"
+            data-bs-placement="bottom"
+            data-bs-title="This tooltip wraps at the design system's own measure, not the component library's default — one authored token, honored by both targets."
+          >
+            Hover me
+          </button>
         </div>
         <div class="mt-3 d-flex flex-wrap gap-2">
           <span class="badge text-bg-primary">Badge</span>

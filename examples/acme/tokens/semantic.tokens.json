@@ -139,6 +139,12 @@
         "$type": "dimension",
         "$value": "{semantic.space.3}"
       }
+    },
+    "tooltip": {
+      "max-width": {
+        "$type": "dimension",
+        "$value": "18rem"
+      }
     }
   }
 }
