@@ -42,6 +42,11 @@ import {
 } from './descriptors.js';
 
 const get = (map, path) => map.get(`semantic.${path}`)?.value;
+/** DTCG fontFamily is a list; render it as a CSS stack, quoting names that need it. */
+const fontStack = (value) =>
+  Array.isArray(value)
+    ? value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ')
+    : (value ?? undefined);
 
 export default {
   name: 'primeng',
@@ -161,6 +166,12 @@ export default {
       note: 'scrim carries its own alpha — the veil strength needs no separate slot (proposal 0003, overlay pass)',
     });
     coverage.push({
+      variable: 'semantic.typography.{fontFamily,fontSize,fontWeight,lineHeight}',
+      slot: 'semantic.{font.sans, type.size.md, type.weight.regular, type.leading.normal}',
+      class: 'native',
+      note: "PrimeNG's semantic type base; 60 component slots reference it, so they follow the design system's typography instead of Aura's (AL3 follow-up)",
+    });
+    coverage.push({
       variable: 'semantic.mask.transitionDuration',
       slot: 'semantic.duration.normal',
       class: 'approximated',
@@ -168,6 +179,19 @@ export default {
     });
 
     const semantic = {
+      // AL3 follow-up: PrimeNG's semantic typography block was left on Aura's
+      // defaults, which the coverage bar exposed as a cascading gap — 60
+      // component slots reference {typography.font.size}/{typography.font.weight}
+      // and inherited Aura's values rather than the design system's. Mapped by
+      // meaning: PrimeNG's semantic base ← the IR's base body rungs.
+      typography: {
+        // No authored/derived font stack → leave Aura's `inherit` alone rather
+        // than inventing one; the rest of the block always resolves.
+        ...(get(light, 'font.sans') ? { fontFamily: fontStack(get(light, 'font.sans')) } : {}),
+        fontSize: get(light, 'type.size.md'),
+        fontWeight: String(get(light, 'type.weight.regular')),
+        lineHeight: String(get(light, 'type.leading.normal')),
+      },
       transitionDuration: get(light, 'duration.fast'),
       disabledOpacity: String(get(light, 'opacity.disabled')), // AL2: promoted to the catalog once Bootstrap independently needed it (was a hardcoded 0.6 here)
       iconSize: '1rem',
