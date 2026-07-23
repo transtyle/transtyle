@@ -27,9 +27,19 @@ PrimeNG's per-component color grid (`variant × severity × state × part`) is i
 
 A custom `semantic.color.<name>` role (declared via `$extensions.transtyle.role`) lands in Button's `extend.<name>.*` block — PrimeNG's own documented escape hatch for tokens outside its fixed severity schema (proposal 0002 §2.7). Proven on Cathode's `crt-amber` role archetype.
 
-## Structural residue
+## Surface coverage (AL3 — measured, not asserted)
 
-Components with no severity-colored surface and no builder yet (DataTable, Galleria, Tree, Splitter, Timeline, and 13 others) are left on Aura's own defaults — each gets an honest `unsupported` coverage entry, matching every other exporter's convention. Not silently dropped.
+The denominator is [surface-inventory.json](../../../packages/exporter-primeng/surface-inventory.json), extracted from the real Aura preset (`@primeuix/themes`) and drift-guarded in CI: **2759 slots across 98 families** (97 components + the semantic tier). Every one is classified in `report.json`, in three honest shapes — which exist because PrimeNG resolves `{token}` references at runtime, so "not emitted" is not the same as "not themed":
+
+| Reason           | Meaning                                                                                                                                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **driven**       | this exporter emits the slot itself (Button's grid, the ramps, formField/list/navigation/overlay/content)                                                                                                  |
+| **inherited**    | Aura's own default for the slot is a reference into a semantic path this exporter drives, so the component follows the theme without being named — real coverage, and how PrimeNG is designed to be themed |
+| **Aura default** | a literal we don't override, or a reference into a semantic path we don't drive. Honest `unsupported`, always with a note                                                                                  |
+
+Current split (identical across all four examples, since it depends on the exporter, not the design system): **75 driven · 1492 inherited · 1192 on Aura's default**. Matching is deliberately **exact**: a prefix rule ("we drive some `formField.*`, so `{form.field.font.size}` counts") was implemented, measured to over-claim 221 slots, and removed — inflating coverage is the one outcome this bar exists to prevent.
+
+Components with no builder yet (DataTable, Galleria, Tree, Splitter, Timeline, …) keep Aura's defaults. They are no longer listed from a hand-maintained array — the inventory measures them, so the list cannot go stale.
 
 ## Ground-truth testing
 

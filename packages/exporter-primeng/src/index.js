@@ -26,6 +26,7 @@
 import { droppedDimensions } from '@transtyle/ir';
 import { projectRamp } from './ramp.js';
 import { field, list, navigation, overlay, content } from './archetypes.js';
+import { coverageRows, INVENTORY } from './surface-coverage.js';
 import {
   buildButton,
   buildTag,
@@ -38,7 +39,6 @@ import {
   buildMenu,
   buildPopover,
   buildDialog,
-  STRUCTURAL_RESIDUE,
 } from './descriptors.js';
 
 const get = (map, path) => map.get(`semantic.${path}`)?.value;
@@ -287,14 +287,6 @@ export default {
       ...dialog.coverage,
     );
 
-    for (const name of STRUCTURAL_RESIDUE) {
-      coverage.push({
-        variable: `components.${name}`,
-        slot: '—',
-        class: 'unsupported',
-        note: "structural component with no severity-colored surface and no builder yet — inherits Aura's own default untouched (definePreset deep-merge)",
-      });
-    }
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     const components = {
@@ -310,6 +302,13 @@ export default {
       popover: popover.tokens,
       dialog: dialog.tokens,
     };
+
+    // AL3: measure this preset against PrimeNG's real theming surface
+    // (surface-inventory.json, extracted from the Aura preset). Replaces the
+    // hand-maintained STRUCTURAL_RESIDUE guess with per-family counts of what
+    // is driven, what follows our theme through PrimeNG's own token
+    // references, and what keeps Aura's default — every slot accounted for.
+    coverage.push(...coverageRows(INVENTORY, { semantic, components }));
 
     const ts = renderPreset(ctx, semantic, components);
     return {
