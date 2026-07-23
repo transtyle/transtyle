@@ -19,12 +19,20 @@
  */
 
 const get = (map, path) => map.get(`semantic.${path}`)?.value;
+/** Component-tier read (AL2) — the promoted shared interactive-control slots. */
+const comp = (map, path) => map.get(`component.${path}`)?.value;
 
 export function field(map) {
   return {
     structural: {
-      paddingX: get(map, 'space.4'), paddingY: get(map, 'space.2'),
-      borderRadius: get(map, 'radius.field'),
+      // AL2: the shared control geometry is catalog vocabulary now, so an
+      // authored `component.control.*` reaches PrimeNG's formField (and, via
+      // buildButton, its Button) exactly as it reaches Bootstrap's
+      // $input-btn-*. Unauthored, these resolve to the same space.4/space.2/
+      // radius.control this helper read directly before.
+      paddingX: comp(map, 'control.padding-x'),
+      paddingY: comp(map, 'control.padding-y'),
+      borderRadius: comp(map, 'control.radius'),
       transitionDuration: get(map, 'duration.fast'),
       sm: { paddingX: get(map, 'space.3'), paddingY: get(map, 'space.1') },
       lg: { paddingX: get(map, 'space.5'), paddingY: get(map, 'space.3') },
@@ -48,10 +56,14 @@ export function field(map) {
 export function list(map) {
   return {
     structural: {
-      padding: get(map, 'space.1'), gap: get(map, 'space.0'),
+      padding: get(map, 'space.1'),
+      gap: get(map, 'space.0'),
       header: { padding: get(map, 'space.2') },
       option: { padding: get(map, 'space.2'), borderRadius: get(map, 'radius.control') },
-      optionGroup: { padding: get(map, 'space.2'), fontWeight: String(get(map, 'type.weight.semibold')) },
+      optionGroup: {
+        padding: get(map, 'space.2'),
+        fontWeight: String(get(map, 'type.weight.semibold')),
+      },
     },
     colorScheme: {
       option: {
@@ -72,13 +84,23 @@ export function navigation(map) {
   return {
     structural: {
       list: { padding: get(map, 'space.1'), gap: get(map, 'space.0') },
-      item: { padding: get(map, 'space.2'), borderRadius: get(map, 'radius.control'), gap: get(map, 'space.2') },
-      submenuLabel: { padding: get(map, 'space.2'), fontWeight: String(get(map, 'type.weight.semibold')) },
+      item: {
+        padding: get(map, 'space.2'),
+        borderRadius: get(map, 'radius.control'),
+        gap: get(map, 'space.2'),
+      },
+      submenuLabel: {
+        padding: get(map, 'space.2'),
+        fontWeight: String(get(map, 'type.weight.semibold')),
+      },
     },
     colorScheme: {
       item: {
-        focusBackground: get(map, 'color.primary.tint'), activeBackground: get(map, 'color.primary.tint-active'),
-        color: get(map, 'color.text.base'), focusColor: get(map, 'color.text.base'), activeColor: get(map, 'color.text.base'),
+        focusBackground: get(map, 'color.primary.tint'),
+        activeBackground: get(map, 'color.primary.tint-active'),
+        color: get(map, 'color.text.base'),
+        focusColor: get(map, 'color.text.base'),
+        activeColor: get(map, 'color.text.base'),
         icon: { color: get(map, 'color.text.muted'), focusColor: get(map, 'color.text.base') },
       },
       submenuLabel: { background: 'transparent', color: get(map, 'color.text.muted') },
@@ -92,7 +114,9 @@ const OVERLAY_LEVEL = { select: 2, popover: 2, modal: 3, navigation: 2 };
 export function overlay(map, kind, ctx) {
   const n = OVERLAY_LEVEL[kind] ?? 2;
   const shadow = map.get(`semantic.color.elevation.${n}.shadow`)?.value;
-  const shadowStr = shadow ? `${shadow.offsetX} ${shadow.offsetY} ${shadow.blur} ${shadow.spread} ${ctx.formatColor(shadow.color)}` : undefined;
+  const shadowStr = shadow
+    ? `${shadow.offsetX} ${shadow.offsetY} ${shadow.blur} ${shadow.spread} ${ctx.formatColor(shadow.color)}`
+    : undefined;
   return {
     // borderRadius/shadow are mode-invariant at this position in PrimeNG's own
     // type (verified: aura/base's top-level `overlay.*` carries no background/color at
@@ -101,17 +125,25 @@ export function overlay(map, kind, ctx) {
     // `padding` is NOT part of this object — verified it belongs on each component's
     // own `content.padding` (Popover/Dialog), not on the shared semantic.overlay.* shape.
     structural: {
-      ...(kind !== 'navigation' && { borderRadius: get(map, kind === 'modal' ? 'radius.container' : 'radius.field') }),
+      ...(kind !== 'navigation' && {
+        borderRadius: get(map, kind === 'modal' ? 'radius.container' : 'radius.field'),
+      }),
       shadow: shadowStr,
     },
-    padding: kind === 'navigation' || kind === 'select' ? undefined : get(map, kind === 'modal' ? 'space.6' : 'space.3'),
+    padding:
+      kind === 'navigation' || kind === 'select'
+        ? undefined
+        : get(map, kind === 'modal' ? 'space.6' : 'space.3'),
     // navigation has no colorScheme-scoped entry in real PrimeNG (Menu's root reads
     // `content.*` for its own background/color instead) — callers skip this for 'navigation'.
-    colorScheme: kind === 'navigation' ? undefined : {
-      background: get(map, `color.elevation.${n}.surface`),
-      borderColor: get(map, 'color.neutral.outline'),
-      color: get(map, 'color.text.base'),
-    },
+    colorScheme:
+      kind === 'navigation'
+        ? undefined
+        : {
+            background: get(map, `color.elevation.${n}.surface`),
+            borderColor: get(map, 'color.neutral.outline'),
+            color: get(map, 'color.text.base'),
+          },
   };
 }
 

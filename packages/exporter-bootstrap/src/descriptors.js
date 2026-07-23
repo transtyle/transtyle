@@ -13,8 +13,6 @@
  *   { trans: { duration, easing } }         — transition shorthand recipe:
  *     AL1.3 keeps Bootstrap's default property list and substitutes timing —
  *     always classed `approximated` (one duration/easing for a compound value).
- *   optional `promote: '<suggested slot>'`  — AL2 promotion candidate marker
- *     (see docs/findings/bootstrap-component-crosswalk.md).
  *
  * `drop` entries: { cls: 'dropped' | 'unsupported', note } per
  * validation-and-coverage.md's class directions — `dropped` = has no token
@@ -38,7 +36,7 @@ const N_PARAM =
 const N_ASSET =
   'embedded SVG asset (icon/glyph) — the IR has no asset/icon vocabulary yet. AL2 growth signal: component icon slots.';
 const N_OPACITY =
-  'state-opacity value — the IR has no opacity ladder yet. AL2 growth signal: a state-opacity scale (cf. PrimeNG semantic disabledOpacity).';
+  'opacity value with no shared meaning: AL2 promoted `semantic.opacity.disabled` (the one both reference targets needed) but this slot is a different concept — a veil strength, a shimmer range, or a glyph-specific alpha. Growth signal only if a second target needs the identical one.';
 const N_BESPOKE =
   'bespoke component geometry/sizing with no scale meaning — the IR has no component-size vocabulary yet. AL2 growth signal: component sizing.';
 const N_STRUCT =
@@ -96,8 +94,8 @@ export const DESCRIPTORS = {
   // ---- table --------------------------------------------------------------
   table: {
     emit: {
-      'table-cell-padding-y': { sem: 'space.2', promote: 'table.cell-padding-y' },
-      'table-cell-padding-x': { sem: 'space.2', promote: 'table.cell-padding-x' },
+      'table-cell-padding-y': { sem: 'space.2' },
+      'table-cell-padding-x': { sem: 'space.2' },
       'table-cell-padding-y-sm': { sem: 'space.1' },
       'table-cell-padding-x-sm': { sem: 'space.1' },
     },
@@ -120,17 +118,23 @@ export const DESCRIPTORS = {
   // ---- buttons + the shared input-btn root --------------------------------
   input: {
     emit: {
-      // CONTESTED (recorded in docs/specs/exporters/bootstrap.md): Bootstrap's
-      // shared root couples button and field padding; binding it to the
-      // existing component.button.* slots drives both — the same coupling
-      // PrimeNG's formField archetype expresses. AL2 candidate: a shared
-      // field padding slot both exporters read.
-      'input-btn-padding-y': { comp: 'button.padding-y', promote: 'field.padding-y' },
-      'input-btn-padding-x': { comp: 'button.padding-x', promote: 'field.padding-x' },
-      'input-btn-padding-y-sm': { sem: 'space.1', promote: 'field.padding-y-sm' },
-      'input-btn-padding-x-sm': { sem: 'space.2', promote: 'field.padding-x-sm' },
-      'input-btn-padding-y-lg': { sem: 'space.2', promote: 'field.padding-y-lg' },
-      'input-btn-padding-x-lg': { sem: 'space.4', promote: 'field.padding-x-lg' },
+      // AL2 RESOLVED the AL1.2 contested call: Bootstrap's shared root now
+      // binds to the promoted `component.control.*` slots — the shared
+      // interactive-control geometry — and `$btn-padding-*` below binds to
+      // `component.button.*`, which defaults from control. That reproduces
+      // Bootstrap's own two-level model exactly ($btn-padding-y defaults to
+      // $input-btn-padding-y), so authoring `control.*` moves buttons and
+      // fields together while authoring `button.*` moves only buttons.
+      'input-btn-padding-y': { comp: 'control.padding-y' },
+      'input-btn-padding-x': { comp: 'control.padding-x' },
+      // The sm/lg ladder stays exporter-private: both targets have one, but
+      // they disagree on the rungs (PrimeNG sm-x = space.3, Bootstrap = space.2),
+      // so there is no convergent value to promote — proposal 0003 §deferred.
+      'input-btn-padding-y-sm': { sem: 'space.1' },
+      'input-btn-padding-x-sm': { sem: 'space.2' },
+      'input-btn-padding-y-lg': { sem: 'space.2' },
+      'input-btn-padding-x-lg': { sem: 'space.4' },
+      'input-border-radius': { comp: 'control.radius' },
       'input-transition': T_FAST,
     },
   },
@@ -142,10 +146,19 @@ export const DESCRIPTORS = {
       // silently ignored on Bootstrap. Bound; unauthored builds emit the
       // resolved default (≡ what the chain produced) — explicit, not drifted.
       'btn-border-radius': { comp: 'button.radius' },
+      // AL2: Bootstrap chains these from the shared $input-btn-* root by
+      // default; binding them explicitly to the button layer is what makes
+      // per-component authoring reach buttons without moving form fields.
+      'btn-padding-x': { comp: 'button.padding-x' },
+      'btn-padding-y': { comp: 'button.padding-y' },
+      'btn-disabled-opacity': {
+        sem: 'opacity.disabled',
+        cls: 'approximated',
+        note: "Bootstrap's own default is .65; the promoted catalog slot is the shared disabled-state opacity (AL2)",
+      },
       'btn-transition': T_FAST,
     },
     drop: {
-      'btn-disabled-opacity': { cls: 'unsupported', note: N_OPACITY },
       'btn-hover-bg-shade-amount': { cls: 'dropped', note: N_PARAM },
       'btn-hover-bg-tint-amount': { cls: 'dropped', note: N_PARAM },
       'btn-hover-border-shade-amount': { cls: 'dropped', note: N_PARAM },
@@ -182,6 +195,11 @@ export const DESCRIPTORS = {
       },
       'form-check-input-border-radius': { sem: 'radius.sm', cls: 'approximated', note: N_EM },
       'form-check-inline-margin-end': { sem: 'space.4' },
+      'form-check-input-disabled-opacity': {
+        sem: 'opacity.disabled',
+        cls: 'approximated',
+        note: "Bootstrap's own default is .5; unified onto the shared disabled-state opacity (AL2)",
+      },
     },
     drop: {
       'form-check-input-width': {
@@ -196,7 +214,6 @@ export const DESCRIPTORS = {
       'form-check-input-checked-bg-image': { cls: 'unsupported', note: N_ASSET },
       'form-check-radio-checked-bg-image': { cls: 'unsupported', note: N_ASSET },
       'form-check-input-indeterminate-bg-image': { cls: 'unsupported', note: N_ASSET },
-      'form-check-input-disabled-opacity': { cls: 'unsupported', note: N_OPACITY },
     },
   },
   'form-switch': {
@@ -274,8 +291,8 @@ export const DESCRIPTORS = {
   // ---- navigation -----------------------------------------------------------
   'nav-link': {
     emit: {
-      'nav-link-padding-y': { sem: 'space.2', promote: 'nav.item-padding-y' },
-      'nav-link-padding-x': { sem: 'space.4', promote: 'nav.item-padding-x' },
+      'nav-link-padding-y': { sem: 'space.2' },
+      'nav-link-padding-x': { sem: 'space.4' },
       'nav-link-transition': T_FAST,
     },
   },

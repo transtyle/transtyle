@@ -34,7 +34,10 @@ export function derive(normalized, config, diagnostics) {
 
     const primary = get(map, `${S}primary.solid`);
     if (!primary) {
-      diagnostics.error('TST1201', 'semantic.color.primary.solid is required (config derivation.require).');
+      diagnostics.error(
+        'TST1201',
+        'semantic.color.primary.solid is required (config derivation.require).',
+      );
       return;
     }
     const textBase = get(map, `${S}text.base`);
@@ -46,19 +49,55 @@ export function derive(normalized, config, diagnostics) {
 
     // --- Elevation ladder (E1): surfaces 0-5, shadows 1-4; scrim stays its own veil (F2) ---
     const elev = [];
-    elev[0] = rc(ctx, `${S}elevation.0.surface`, () => (isDark ? DARK_CANVAS : WHITE), 'default-canvas', [], PROVENANCE.DEFAULTED);
-    elev[1] = rc(ctx, `${S}elevation.1.surface`, () => ({ ...elev[0] }), 'alias(elevation.0.surface)', ['elevation.0.surface']);
+    elev[0] = rc(
+      ctx,
+      `${S}elevation.0.surface`,
+      () => (isDark ? DARK_CANVAS : WHITE),
+      'default-canvas',
+      [],
+      PROVENANCE.DEFAULTED,
+    );
+    elev[1] = rc(
+      ctx,
+      `${S}elevation.1.surface`,
+      () => ({ ...elev[0] }),
+      'alias(elevation.0.surface)',
+      ['elevation.0.surface'],
+    );
     for (let n = 2; n <= 5; n++) {
-      elev[n] = rc(ctx, `${S}elevation.${n}.surface`, () => raise(elev[n - 1], isDark), `raise(elevation.${n - 1}.surface)`, [`elevation.${n - 1}.surface`]);
+      elev[n] = rc(
+        ctx,
+        `${S}elevation.${n}.surface`,
+        () => raise(elev[n - 1], isDark),
+        `raise(elevation.${n - 1}.surface)`,
+        [`elevation.${n - 1}.surface`],
+      );
     }
     const surface = (n) => elev[n];
 
-    const scrim = rc(ctx, `${S}scrim`, () => ({ l: 0.1, c: 0, h: 0, alpha: 0.5 }), 'scrim-veil', []);
+    const scrim = rc(
+      ctx,
+      `${S}scrim`,
+      () => ({ l: 0.1, c: 0, h: 0, alpha: 0.5 }),
+      'scrim-veil',
+      [],
+    );
     for (const spec of SHADOW_LEVELS) {
       const alpha = isDark ? spec.dark : spec.light;
-      resolve(ctx, `${S}elevation.${spec.n}.shadow`, 'shadow',
-        () => ({ offsetX: '0', offsetY: spec.y, blur: spec.blur, spread: '0', color: { ...scrim, alpha } }),
-        `shadow-ramp(${spec.n})`, ['scrim']);
+      resolve(
+        ctx,
+        `${S}elevation.${spec.n}.shadow`,
+        'shadow',
+        () => ({
+          offsetX: '0',
+          offsetY: spec.y,
+          blur: spec.blur,
+          spread: '0',
+          color: { ...scrim, alpha },
+        }),
+        `shadow-ramp(${spec.n})`,
+        ['scrim'],
+      );
     }
 
     // --- Role grid (C1): solid/tint/outline/text x rest/hover/active/selected + on-colors ---
@@ -67,29 +106,71 @@ export function derive(normalized, config, diagnostics) {
       const solid = resolveRoleSolid(ctx, role, rp, primary);
       if (!solid) {
         if (normalized.roleArchetypes.has(role)) {
-          diagnostics.warn('TST1203', `${role}: has a role archetype but no authored ${role}.solid in ${mode} mode — grid not derived`);
+          diagnostics.warn(
+            'TST1203',
+            `${role}: has a role archetype but no authored ${role}.solid in ${mode} mode — grid not derived`,
+          );
         }
         continue; // built-ins: only reachable if primary itself were missing, already handled above
       }
 
-      const solidHover = rc(ctx, rp + 'solid-hover', () => ({ ...solid, l: clamp01(solid.l + 0.05 * dl) }), 'state-delta(hover)', [`${role}.solid`]);
-      const solidActive = rc(ctx, rp + 'solid-active', () => ({ ...solid, l: clamp01(solid.l + 0.07 * dl), c: solid.c * 0.9 }), 'state-delta(active)', [`${role}.solid`]);
-      rc(ctx, rp + 'solid-selected', () => ({ ...solidActive }), 'alias(solid-active)', [`${role}.solid-active`]);
+      const solidHover = rc(
+        ctx,
+        rp + 'solid-hover',
+        () => ({ ...solid, l: clamp01(solid.l + 0.05 * dl) }),
+        'state-delta(hover)',
+        [`${role}.solid`],
+      );
+      const solidActive = rc(
+        ctx,
+        rp + 'solid-active',
+        () => ({ ...solid, l: clamp01(solid.l + 0.07 * dl), c: solid.c * 0.9 }),
+        'state-delta(active)',
+        [`${role}.solid`],
+      );
+      rc(ctx, rp + 'solid-selected', () => ({ ...solidActive }), 'alias(solid-active)', [
+        `${role}.solid-active`,
+      ]);
 
       const s1 = surface(1);
-      rc(ctx, rp + 'tint', () => mix(solid, s1, 0.92), 'mix-toward-surface(0.92)', [`${role}.solid`, 'elevation.1.surface']);
-      rc(ctx, rp + 'tint-hover', () => mix(solid, s1, 0.88), 'mix-toward-surface(0.88)', [`${role}.solid`, 'elevation.1.surface']);
-      const tintActive = rc(ctx, rp + 'tint-active', () => mix(solid, s1, 0.84), 'mix-toward-surface(0.84)', [`${role}.solid`, 'elevation.1.surface']);
-      rc(ctx, rp + 'tint-selected', () => ({ ...tintActive }), 'alias(tint-active)', [`${role}.tint-active`]);
+      rc(ctx, rp + 'tint', () => mix(solid, s1, 0.92), 'mix-toward-surface(0.92)', [
+        `${role}.solid`,
+        'elevation.1.surface',
+      ]);
+      rc(ctx, rp + 'tint-hover', () => mix(solid, s1, 0.88), 'mix-toward-surface(0.88)', [
+        `${role}.solid`,
+        'elevation.1.surface',
+      ]);
+      const tintActive = rc(
+        ctx,
+        rp + 'tint-active',
+        () => mix(solid, s1, 0.84),
+        'mix-toward-surface(0.84)',
+        [`${role}.solid`, 'elevation.1.surface'],
+      );
+      rc(ctx, rp + 'tint-selected', () => ({ ...tintActive }), 'alias(tint-active)', [
+        `${role}.tint-active`,
+      ]);
 
-      rc(ctx, rp + 'outline', () => mix(solid, s1, 0.70), 'mix-toward-surface(0.70)', [`${role}.solid`, 'elevation.1.surface']);
-      rc(ctx, rp + 'outline-hover', () => mix(solid, s1, 0.55), 'mix-toward-surface(0.55)', [`${role}.solid`, 'elevation.1.surface']);
+      rc(ctx, rp + 'outline', () => mix(solid, s1, 0.7), 'mix-toward-surface(0.70)', [
+        `${role}.solid`,
+        'elevation.1.surface',
+      ]);
+      rc(ctx, rp + 'outline-hover', () => mix(solid, s1, 0.55), 'mix-toward-surface(0.55)', [
+        `${role}.solid`,
+        'elevation.1.surface',
+      ]);
 
       // on-solid: contrast-pick white/near-black (AA hard rule)
       const onSolidPick = contrastPick(solid, [WHITE, NEARBLACK]);
-      rc(ctx, rp + 'on-solid', () => ({ ...onSolidPick.color }), 'contrast-pick', [`${role}.solid`]);
+      rc(ctx, rp + 'on-solid', () => ({ ...onSolidPick.color }), 'contrast-pick', [
+        `${role}.solid`,
+      ]);
       if (onSolidPick.ratio < 4.5) {
-        diagnostics.warn('TST2101', `${role}.on-solid is ${onSolidPick.ratio.toFixed(1)}:1 against ${role}.solid in ${mode} mode (< 4.5:1 AA)`);
+        diagnostics.warn(
+          'TST2101',
+          `${role}.on-solid is ${onSolidPick.ratio.toFixed(1)}:1 against ${role}.solid in ${mode} mode (< 4.5:1 AA)`,
+        );
       }
 
       // on-tint: on-brand walk (F19) — start at solid-active, step away from tint until AA clears
@@ -99,35 +180,72 @@ export function derive(normalized, config, diagnostics) {
       rc(ctx, rp + 'on-tint', () => ({ ...onTint }), 'contrast-pick(subtle)', [`${role}.tint`]);
       const onTintRatio = contrastRatio(tint, get(map, rp + 'on-tint'));
       if (onTintRatio < 4.5) {
-        diagnostics.warn('TST2101', `${role}.on-tint is ${onTintRatio.toFixed(1)}:1 against ${role}.tint in ${mode} mode (< 4.5:1 AA)`);
+        diagnostics.warn(
+          'TST2101',
+          `${role}.on-tint is ${onTintRatio.toFixed(1)}:1 against ${role}.tint in ${mode} mode (< 4.5:1 AA)`,
+        );
       }
 
       // text: on-brand walk of solid against the page background (elevation.0.surface)
       const s0 = surface(0);
       const roleText = onBrandWalk(s0, solidActive, fallbacks);
-      rc(ctx, rp + 'text', () => ({ ...roleText }), 'contrast-pick(text)', [`${role}.solid`, 'elevation.0.surface']);
+      rc(ctx, rp + 'text', () => ({ ...roleText }), 'contrast-pick(text)', [
+        `${role}.solid`,
+        'elevation.0.surface',
+      ]);
       const textResolved = get(map, rp + 'text');
-      rc(ctx, rp + 'text-hover', () => ({ ...textResolved, l: clamp01(textResolved.l + 0.05 * dl) }), 'state-delta(hover)', [`${role}.text`]);
-      rc(ctx, rp + 'text-active', () => ({ ...textResolved, l: clamp01(textResolved.l + 0.07 * dl) }), 'state-delta(active)', [`${role}.text`]);
+      rc(
+        ctx,
+        rp + 'text-hover',
+        () => ({ ...textResolved, l: clamp01(textResolved.l + 0.05 * dl) }),
+        'state-delta(hover)',
+        [`${role}.text`],
+      );
+      rc(
+        ctx,
+        rp + 'text-active',
+        () => ({ ...textResolved, l: clamp01(textResolved.l + 0.07 * dl) }),
+        'state-delta(active)',
+        [`${role}.text`],
+      );
 
       // text-strong (F20): the role re-anchored at the content text ladder's lightness.
       // Full solid chroma at that lightness can fall outside sRGB (a vivid hue has
       // little gamut headroom near white/black) — reduce chroma at the same l/h
       // rather than let it clip unevenly per-channel downstream.
       if (textBase) {
-        rc(ctx, rp + 'text-strong', () => clampChromaToGamut({ l: textBase.l, c: solid.c, h: solid.h, alpha: 1 }), 'contrast-anchor(text)', [`${role}.solid`, 'text.base']);
+        rc(
+          ctx,
+          rp + 'text-strong',
+          () => clampChromaToGamut({ l: textBase.l, c: solid.c, h: solid.h, alpha: 1 }),
+          'contrast-anchor(text)',
+          [`${role}.solid`, 'text.base'],
+        );
       }
     }
 
     // --- Content hierarchy (X1): text.{strong,muted,subtle,disabled}; inverse is a cross-mode pass below ---
     if (textBase) {
-      rc(ctx, `${S}text.muted`, () => mix(textBase, surface(1), 0.35), 'mix-toward-surface(0.35)', ['text.base', 'elevation.1.surface']);
-      rc(ctx, `${S}text.subtle`, () => mix(textBase, surface(1), 0.55), 'mix-toward-surface(0.55)', ['text.base', 'elevation.1.surface']);
-      rc(ctx, `${S}text.disabled`, () => ({ ...textBase, alpha: 0.38 }), 'alpha(0.38)', ['text.base']);
+      rc(ctx, `${S}text.muted`, () => mix(textBase, surface(1), 0.35), 'mix-toward-surface(0.35)', [
+        'text.base',
+        'elevation.1.surface',
+      ]);
+      rc(
+        ctx,
+        `${S}text.subtle`,
+        () => mix(textBase, surface(1), 0.55),
+        'mix-toward-surface(0.55)',
+        ['text.base', 'elevation.1.surface'],
+      );
+      rc(ctx, `${S}text.disabled`, () => ({ ...textBase, alpha: 0.38 }), 'alpha(0.38)', [
+        'text.base',
+      ]);
     }
     const neutralTextStrong = get(map, `${S}neutral.text-strong`);
     if (neutralTextStrong) {
-      rc(ctx, `${S}text.strong`, () => ({ ...neutralTextStrong }), 'alias(neutral.text-strong)', ['neutral.text-strong']);
+      rc(ctx, `${S}text.strong`, () => ({ ...neutralTextStrong }), 'alias(neutral.text-strong)', [
+        'neutral.text-strong',
+      ]);
     }
 
     // --- Links: alias of primary's text cells (F3-adjacent: link is a role-text consumer) ---
@@ -137,17 +255,32 @@ export function derive(normalized, config, diagnostics) {
     }
     const primaryTextHover = get(map, `${S}primary.text-hover`);
     if (primaryTextHover) {
-      rc(ctx, `${S}link.hover`, () => ({ ...primaryTextHover }), 'alias(primary.text-hover)', ['primary.text-hover']);
+      rc(ctx, `${S}link.hover`, () => ({ ...primaryTextHover }), 'alias(primary.text-hover)', [
+        'primary.text-hover',
+      ]);
     }
     const linkBase = get(map, `${S}link.base`);
     if (linkBase) {
-      rc(ctx, `${S}link.visited`, () => ({ ...linkBase, h: (linkBase.h + 40 + 360) % 360 }), 'hue-shift(40)', ['link.base']);
+      rc(
+        ctx,
+        `${S}link.visited`,
+        () => ({ ...linkBase, h: (linkBase.h + 40 + 360) % 360 }),
+        'hue-shift(40)',
+        ['link.base'],
+      );
     }
 
     // --- Ring (F3): primary, lightened in dark for visibility ---
-    rc(ctx, `${S}ring`,
-      () => (isDark ? { ...primary, l: clamp01(primary.l + 0.07), c: Math.max(0, primary.c - 0.01) } : { ...primary }),
-      'ring-from-primary', ['primary.solid']);
+    rc(
+      ctx,
+      `${S}ring`,
+      () =>
+        isDark
+          ? { ...primary, l: clamp01(primary.l + 0.07), c: Math.max(0, primary.c - 0.01) }
+          : { ...primary },
+      'ring-from-primary',
+      ['primary.solid'],
+    );
 
     // --- Radius scale (F8) + family aliases ---
     const radiusMd = map.get('semantic.radius.md');
@@ -169,32 +302,122 @@ export function derive(normalized, config, diagnostics) {
 
     // --- New defaulted scales (S1/TY1/M1): catalog-default constants, authored always wins ---
     for (const k of SPACE_KEYS) {
-      rd(ctx, `semantic.space.${k}`, () => `${trimNum(k * 0.25)}rem`, 'linear-scale(0.25rem)', [], PROVENANCE.DEFAULTED);
+      rd(
+        ctx,
+        `semantic.space.${k}`,
+        () => `${trimNum(k * 0.25)}rem`,
+        'linear-scale(0.25rem)',
+        [],
+        PROVENANCE.DEFAULTED,
+      );
     }
-    for (const [k, v] of Object.entries(SIZE_CONTROL)) rd(ctx, `semantic.size.control.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(BORDER_WIDTH)) rd(ctx, `semantic.border-width.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(BREAKPOINT)) rd(ctx, `semantic.breakpoint.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(Z_INDEX)) resolve(ctx, `semantic.z.${k}`, 'number', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(TYPE_SIZE)) rd(ctx, `semantic.type.size.${k}`, () => v, 'modular-scale(1rem,1.25)', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(TYPE_WEIGHT)) resolve(ctx, `semantic.type.weight.${k}`, 'number', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(TYPE_LEADING)) resolve(ctx, `semantic.type.leading.${k}`, 'number', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(TYPE_TRACKING)) rd(ctx, `semantic.type.tracking.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(DURATION)) resolve(ctx, `semantic.duration.${k}`, 'duration', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
-    for (const [k, v] of Object.entries(EASING)) resolve(ctx, `semantic.easing.${k}`, 'cubicBezier', () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(SIZE_CONTROL))
+      rd(ctx, `semantic.size.control.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(BORDER_WIDTH))
+      rd(ctx, `semantic.border-width.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    // AL2 promotion: the one opacity meaning both reference component-heavy
+    // targets independently need (PrimeNG's `disabledOpacity` constant;
+    // Bootstrap's three `*-disabled-opacity` variables). Bootstrap's other
+    // opacity knobs (carousel indicators, placeholder shimmer) are single-source
+    // and stay exporter-private — this is a slot, not an opacity ladder.
+    for (const [k, v] of Object.entries(OPACITY))
+      resolve(
+        ctx,
+        `semantic.opacity.${k}`,
+        'number',
+        () => v,
+        'catalog-default',
+        [],
+        PROVENANCE.DEFAULTED,
+      );
+    for (const [k, v] of Object.entries(BREAKPOINT))
+      rd(ctx, `semantic.breakpoint.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(Z_INDEX))
+      resolve(
+        ctx,
+        `semantic.z.${k}`,
+        'number',
+        () => v,
+        'catalog-default',
+        [],
+        PROVENANCE.DEFAULTED,
+      );
+    for (const [k, v] of Object.entries(TYPE_SIZE))
+      rd(
+        ctx,
+        `semantic.type.size.${k}`,
+        () => v,
+        'modular-scale(1rem,1.25)',
+        [],
+        PROVENANCE.DEFAULTED,
+      );
+    for (const [k, v] of Object.entries(TYPE_WEIGHT))
+      resolve(
+        ctx,
+        `semantic.type.weight.${k}`,
+        'number',
+        () => v,
+        'catalog-default',
+        [],
+        PROVENANCE.DEFAULTED,
+      );
+    for (const [k, v] of Object.entries(TYPE_LEADING))
+      resolve(
+        ctx,
+        `semantic.type.leading.${k}`,
+        'number',
+        () => v,
+        'catalog-default',
+        [],
+        PROVENANCE.DEFAULTED,
+      );
+    for (const [k, v] of Object.entries(TYPE_TRACKING))
+      rd(ctx, `semantic.type.tracking.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    for (const [k, v] of Object.entries(DURATION))
+      resolve(
+        ctx,
+        `semantic.duration.${k}`,
+        'duration',
+        () => v,
+        'catalog-default',
+        [],
+        PROVENANCE.DEFAULTED,
+      );
+    for (const [k, v] of Object.entries(EASING))
+      resolve(
+        ctx,
+        `semantic.easing.${k}`,
+        'cubicBezier',
+        () => v,
+        'catalog-default',
+        [],
+        PROVENANCE.DEFAULTED,
+      );
 
     // Type role composites: project the primitive scales onto display/heading/title/body/label/code x sm/md/lg
     for (const role of Object.keys(TYPE_ROLE_SIZE)) {
-      const familyPath = role === 'code'
-        ? 'semantic.font.mono'
-        : (role === 'display' && get(map, 'semantic.font.display')) ? 'semantic.font.display' : 'semantic.font.sans';
+      const familyPath =
+        role === 'code'
+          ? 'semantic.font.mono'
+          : role === 'display' && get(map, 'semantic.font.display')
+            ? 'semantic.font.display'
+            : 'semantic.font.sans';
       for (const size of ['sm', 'md', 'lg']) {
         const sizeKey = TYPE_ROLE_SIZE[role][size];
-        resolve(ctx, `semantic.type.role.${role}.${size}`, 'typography', () => ({
-          fontFamily: get(map, familyPath),
-          fontSize: get(map, `semantic.type.size.${sizeKey}`),
-          fontWeight: get(map, `semantic.type.weight.${TYPE_ROLE_WEIGHT[role]}`),
-          lineHeight: get(map, `semantic.type.leading.${TYPE_ROLE_LEADING[role]}`),
-        }), `type-role-composite(${role}.${size})`, [`type.size.${sizeKey}`], PROVENANCE.DEFAULTED);
+        resolve(
+          ctx,
+          `semantic.type.role.${role}.${size}`,
+          'typography',
+          () => ({
+            fontFamily: get(map, familyPath),
+            fontSize: get(map, `semantic.type.size.${sizeKey}`),
+            fontWeight: get(map, `semantic.type.weight.${TYPE_ROLE_WEIGHT[role]}`),
+            lineHeight: get(map, `semantic.type.leading.${TYPE_ROLE_LEADING[role]}`),
+          }),
+          `type-role-composite(${role}.${size})`,
+          [`type.size.${sizeKey}`],
+          PROVENANCE.DEFAULTED,
+        );
       }
     }
 
@@ -206,12 +429,18 @@ export function derive(normalized, config, diagnostics) {
     const CHROMA = [primary.c, 0.15, 0.14, 0.13, 0.16, 0.13, 0.14, 0.13];
     const DARK_DL = [0.07, 0.06, 0.06, 0.03, 0.06, 0.05, 0.04, 0.06];
     for (let i = 0; i < 8; i++) {
-      rc(ctx, `semantic.palette.categorical.${i + 1}`, () => ({
-        l: clamp01(LIGHT_L[i] + (isDark ? DARK_DL[i] : 0)),
-        c: CHROMA[i],
-        h: (primary.h + HUE_OFFSETS[i] + 360) % 360,
-        alpha: 1,
-      }), 'categorical-palette', ['primary.solid']);
+      rc(
+        ctx,
+        `semantic.palette.categorical.${i + 1}`,
+        () => ({
+          l: clamp01(LIGHT_L[i] + (isDark ? DARK_DL[i] : 0)),
+          c: CHROMA[i],
+          h: (primary.h + HUE_OFFSETS[i] + 360) % 360,
+          alpha: 1,
+        }),
+        'categorical-palette',
+        ['primary.solid'],
+      );
     }
 
     // --- Component tier (C2, docs/plan/component-tier.md): resolve-or-fill
@@ -221,9 +450,23 @@ export function derive(normalized, config, diagnostics) {
     // `component.<name>.<token>` always wins: the generic collectTokens walk
     // (packages/ir) already carries it through untouched before DERIVE runs,
     // same as any other tier — nothing tier-specific needed for that half.
+    // A `component:`-prefixed defaultFrom layers one component slot on another
+    // (AL2: `button.padding-x` defaults from `control.padding-x`), so authoring
+    // the shared control moves buttons too while authoring the button alone
+    // stays local. Catalog order guarantees the source is already resolved.
     for (const [name, tokens] of Object.entries(COMPONENT_CATALOG)) {
       for (const [tokenName, { type, defaultFrom }] of Object.entries(tokens)) {
-        resolve(ctx, `component.${name}.${tokenName}`, type, () => get(map, `semantic.${defaultFrom}`), `alias(${defaultFrom})`, [defaultFrom]);
+        const fromComponent = defaultFrom.startsWith('component:');
+        const sourcePath = fromComponent ? defaultFrom.slice('component:'.length) : defaultFrom;
+        const fullPath = `${fromComponent ? 'component' : 'semantic'}.${sourcePath}`;
+        resolve(
+          ctx,
+          `component.${name}.${tokenName}`,
+          type,
+          () => get(map, fullPath),
+          `alias(${sourcePath})`,
+          [sourcePath],
+        );
       }
     }
   }
@@ -238,15 +481,18 @@ export function derive(normalized, config, diagnostics) {
     const here = values?.[primaryDim] ?? combo;
     const flipped = here === 'dark' ? 'light' : here === 'light' ? 'dark' : null;
     if (!flipped) continue;
-    const otherCombo = values && normalized.dimensionNames
-      ? comboKey(normalized.dimensionNames, { ...values, [primaryDim]: flipped })
-      : flipped;
+    const otherCombo =
+      values && normalized.dimensionNames
+        ? comboKey(normalized.dimensionNames, { ...values, [primaryDim]: flipped })
+        : flipped;
     if (!normalized.modes[otherCombo]) continue;
     const map = normalized.modes[combo];
     const otherTextBase = get(normalized.modes[otherCombo], `${S}text.base`);
     if (!otherTextBase) continue;
     const ctx = { map, isDark: here === 'dark', mode: combo, diagnostics };
-    rc(ctx, `${S}text.inverse`, () => ({ ...otherTextBase }), 'cross-mode(text.base)', ['text.base']);
+    rc(ctx, `${S}text.inverse`, () => ({ ...otherTextBase }), 'cross-mode(text.base)', [
+      'text.base',
+    ]);
   }
 }
 
@@ -254,13 +500,48 @@ export function derive(normalized, config, diagnostics) {
 
 function resolveRoleSolid(ctx, role, rp, primary) {
   if (role === 'primary') return get(ctx.map, rp + 'solid'); // required, authored — checked by caller
-  if (role === 'accent') return rc(ctx, rp + 'solid', () => ({ ...primary }), 'alias(primary.solid)', ['primary.solid']);
-  if (role === 'secondary') return rc(ctx, rp + 'solid', () => ({ l: 0.58, c: r3(primary.c * 0.35), h: primary.h, alpha: 1 }), 'desaturate-primary', ['primary.solid']);
-  if (role === 'danger') return rc(ctx, rp + 'solid', () => ({ l: primary.l, c: Math.min(primary.c + 0.01, 0.2), h: 25, alpha: 1 }), 'hue-anchor(25)', ['primary.solid']);
-  if (role === 'success') return rc(ctx, rp + 'solid', () => ({ l: 0.6, c: 0.14, h: 150, alpha: 1 }), 'hue-anchor(150)', ['primary.solid']);
-  if (role === 'warning') return rc(ctx, rp + 'solid', () => ({ l: 0.76, c: 0.14, h: 85, alpha: 1 }), 'hue-anchor(85)', ['primary.solid']);
-  if (role === 'info') return rc(ctx, rp + 'solid', () => ({ l: 0.58, c: 0.15, h: 230, alpha: 1 }), 'hue-anchor(230)', ['primary.solid']);
-  if (role === 'neutral') return rc(ctx, rp + 'solid', () => ({ l: 0.55, c: 0.012, h: primary.h, alpha: 1 }), 'neutral-from-primary-hue', ['primary.solid']);
+  if (role === 'accent')
+    return rc(ctx, rp + 'solid', () => ({ ...primary }), 'alias(primary.solid)', ['primary.solid']);
+  if (role === 'secondary')
+    return rc(
+      ctx,
+      rp + 'solid',
+      () => ({ l: 0.58, c: r3(primary.c * 0.35), h: primary.h, alpha: 1 }),
+      'desaturate-primary',
+      ['primary.solid'],
+    );
+  if (role === 'danger')
+    return rc(
+      ctx,
+      rp + 'solid',
+      () => ({ l: primary.l, c: Math.min(primary.c + 0.01, 0.2), h: 25, alpha: 1 }),
+      'hue-anchor(25)',
+      ['primary.solid'],
+    );
+  if (role === 'success')
+    return rc(ctx, rp + 'solid', () => ({ l: 0.6, c: 0.14, h: 150, alpha: 1 }), 'hue-anchor(150)', [
+      'primary.solid',
+    ]);
+  if (role === 'warning')
+    return rc(ctx, rp + 'solid', () => ({ l: 0.76, c: 0.14, h: 85, alpha: 1 }), 'hue-anchor(85)', [
+      'primary.solid',
+    ]);
+  if (role === 'info')
+    return rc(
+      ctx,
+      rp + 'solid',
+      () => ({ l: 0.58, c: 0.15, h: 230, alpha: 1 }),
+      'hue-anchor(230)',
+      ['primary.solid'],
+    );
+  if (role === 'neutral')
+    return rc(
+      ctx,
+      rp + 'solid',
+      () => ({ l: 0.55, c: 0.012, h: primary.h, alpha: 1 }),
+      'neutral-from-primary-hue',
+      ['primary.solid'],
+    );
   return get(ctx.map, rp + 'solid');
 }
 
@@ -293,16 +574,44 @@ function onBrandWalk(bg, active, fallbacks) {
 
 const SHADOW_LEVELS = [
   { n: 1, y: '1px', blur: '2px', light: 0.06, dark: 0.3 },
-  { n: 2, y: '4px', blur: '12px', light: 0.10, dark: 0.4 },
+  { n: 2, y: '4px', blur: '12px', light: 0.1, dark: 0.4 },
   { n: 3, y: '12px', blur: '32px', light: 0.16, dark: 0.5 },
-  { n: 4, y: '24px', blur: '48px', light: 0.20, dark: 0.55 },
+  { n: 4, y: '24px', blur: '48px', light: 0.2, dark: 0.55 },
 ];
 const SPACE_KEYS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
 const SIZE_CONTROL = { sm: '2rem', md: '2.25rem', lg: '2.5rem' };
 const BORDER_WIDTH = { thin: '1px', medium: '2px', thick: '4px' };
-const BREAKPOINT = { xs: '480px', sm: '640px', md: '768px', lg: '1024px', xl: '1280px', '2xl': '1536px' };
-const Z_INDEX = { hide: -1, base: 0, dropdown: 1000, sticky: 1020, banner: 1030, overlay: 1040, modal: 1050, popover: 1060, toast: 1080, tooltip: 1090 };
-const TYPE_SIZE = { xs: '0.64rem', sm: '0.8rem', md: '1rem', lg: '1.25rem', xl: '1.563rem', '2xl': '1.953rem', '3xl': '2.441rem', '4xl': '3.052rem' };
+const OPACITY = { disabled: 0.6 };
+const BREAKPOINT = {
+  xs: '480px',
+  sm: '640px',
+  md: '768px',
+  lg: '1024px',
+  xl: '1280px',
+  '2xl': '1536px',
+};
+const Z_INDEX = {
+  hide: -1,
+  base: 0,
+  dropdown: 1000,
+  sticky: 1020,
+  banner: 1030,
+  overlay: 1040,
+  modal: 1050,
+  popover: 1060,
+  toast: 1080,
+  tooltip: 1090,
+};
+const TYPE_SIZE = {
+  xs: '0.64rem',
+  sm: '0.8rem',
+  md: '1rem',
+  lg: '1.25rem',
+  xl: '1.563rem',
+  '2xl': '1.953rem',
+  '3xl': '2.441rem',
+  '4xl': '3.052rem',
+};
 const TYPE_WEIGHT = { regular: 400, medium: 500, semibold: 600, bold: 700 };
 const TYPE_LEADING = { tight: 1.25, normal: 1.5, loose: 1.75 };
 const TYPE_TRACKING = { tight: '-0.01em', normal: '0', wide: '0.02em' };
@@ -322,12 +631,28 @@ const TYPE_ROLE_SIZE = {
   label: { sm: 'xs', md: 'sm', lg: 'md' },
   code: { sm: 'xs', md: 'sm', lg: 'md' },
 };
-const TYPE_ROLE_WEIGHT = { display: 'bold', heading: 'semibold', title: 'semibold', body: 'regular', label: 'medium', code: 'regular' };
-const TYPE_ROLE_LEADING = { display: 'tight', heading: 'tight', title: 'normal', body: 'normal', label: 'normal', code: 'normal' };
+const TYPE_ROLE_WEIGHT = {
+  display: 'bold',
+  heading: 'semibold',
+  title: 'semibold',
+  body: 'regular',
+  label: 'medium',
+  code: 'regular',
+};
+const TYPE_ROLE_LEADING = {
+  display: 'tight',
+  heading: 'tight',
+  title: 'normal',
+  body: 'normal',
+  label: 'normal',
+  code: 'normal',
+};
 
 // ---------- helpers ----------
 
-function get(map, path) { return map.get(path)?.value; }
+function get(map, path) {
+  return map.get(path)?.value;
+}
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const r3 = (n) => Math.round(n * 1000) / 1000;
 const trimNum = (n) => String(Math.round(n * 1000) / 1000);
@@ -341,8 +666,14 @@ function resolve(ctx, path, type, compute, rule, inputs, kind = PROVENANCE.DERIV
   // it here would silently discard what the author wrote.
   if (existing?.pendingAlias) return undefined;
   const value = compute();
-  ctx.map.set(path, { type, value, provenance: { kind, rule: `${rule}@standard@1`, inputs, mode: ctx.mode } });
+  ctx.map.set(path, {
+    type,
+    value,
+    provenance: { kind, rule: `${rule}@standard@1`, inputs, mode: ctx.mode },
+  });
   return value;
 }
-const rc = (ctx, path, compute, rule, inputs, kind) => resolve(ctx, path, 'color', compute, rule, inputs, kind);
-const rd = (ctx, path, compute, rule, inputs, kind) => resolve(ctx, path, 'dimension', compute, rule, inputs, kind);
+const rc = (ctx, path, compute, rule, inputs, kind) =>
+  resolve(ctx, path, 'color', compute, rule, inputs, kind);
+const rd = (ctx, path, compute, rule, inputs, kind) =>
+  resolve(ctx, path, 'dimension', compute, rule, inputs, kind);

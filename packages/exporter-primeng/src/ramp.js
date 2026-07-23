@@ -16,10 +16,16 @@ const STEPS = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '90
 export function projectRamp(map, role, ctx, { includeZero = false } = {}) {
   const get = (cell) => map.get(`semantic.color.${role}.${cell}`)?.value;
   const cellFor = {
-    50: get('tint'), 100: get('tint-hover'), 200: get('tint-active'),
-    300: get('outline'), 400: get('outline-hover'),
-    500: get('solid'), 600: get('solid-hover'), 700: get('solid-active'),
-    900: get('text'), 950: get('text-strong'),
+    50: get('tint'),
+    100: get('tint-hover'),
+    200: get('tint-active'),
+    300: get('outline'),
+    400: get('outline-hover'),
+    500: get('solid'),
+    600: get('solid-hover'),
+    700: get('solid-active'),
+    900: get('text'),
+    950: get('text-strong'),
   };
   const solidActive = get('solid-active');
   const textStrong = get('text-strong');
@@ -39,7 +45,11 @@ export function projectRamp(map, role, ctx, { includeZero = false } = {}) {
     const value = cellFor[n];
     if (!value) continue;
     ramp[n] = value;
-    coverage.push({ step: n, class: n === 800 ? 'approximated' : 'native', slot: n === 800 ? '—' : `semantic.color.${role}.*` });
+    coverage.push({
+      step: n,
+      class: n === 800 ? 'approximated' : 'native',
+      slot: n === 800 ? '—' : `semantic.color.${role}.*`,
+    });
   }
   return { ramp, coverage };
 }

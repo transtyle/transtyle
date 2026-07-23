@@ -49,8 +49,8 @@ Identical inputs produce byte-identical outputs — no timestamps, no randomness
   <div class="tier-link" aria-hidden="true">↓ alias</div>
   <div class="tier">
     <span class="tier-name">component</span>
-    <span class="tier-ex">component.button.* (prototype)</span>
-    <span class="tier-desc">per-component refinement — defaults from semantic; reserved for v2</span>
+    <span class="tier-ex">component.control.*, component.button.*</span>
+    <span class="tier-desc">optional per-component refinement — layered, defaults from semantic</span>
   </div>
 </div>
 

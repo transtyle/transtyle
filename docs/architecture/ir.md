@@ -22,8 +22,10 @@ option tokens        color.blue.500, size.4, font.sans        raw palette; no me
    ↓ (alias / derive)
 semantic tokens      color.primary, color.surface, radius.interactive   meaning; framework-agnostic
    ↓ (alias / derive)                                                   ← exporters bind HERE
-component tokens     button.radius, tooltip.bg                RESERVED for v2 — parsed, carried, unused
+component tokens     control.padding-x, button.radius         optional refinement; layered, defaults from semantic
 ```
+
+**The component tier** ([proposal 0003](../proposals/0003-component-catalog-generalization.md)) is optional refinement, never a requirement: every slot has a `defaultFrom`, so an empty `component` tier compiles forever and authoring one is purely additive. Today's catalog is deliberately small — `control.{radius,padding-x,padding-y}` (the shared interactive-control geometry) and `button.*`, which **defaults from `control.*`** rather than from the semantic tier directly. That layering is not our invention: Bootstrap chains `$btn-padding-*` from the shared `$input-btn-padding-*` root, and PrimeNG's Button reads the same `formField` object its inputs do. Authoring `control.*` moves buttons and form fields together in both targets; authoring `button.*` moves only buttons. Slots enter this tier under the same rule as the semantic catalog — two independent exporters needing the identical meaning, architecturally and not just nominally.
 
 Tier is structural (top-level group name: `option.*`, `semantic.*`, `component.*`), not inferred — inference from naming conventions is fragile and unlocalizable.
 
@@ -77,6 +79,7 @@ strong         —                —               —                text-stro
 - **Typography primitives:** `font.{sans,serif,mono,display}`; `type.size.{xs,sm,md,lg,xl,2xl,3xl,4xl}`; `type.weight.{regular,medium,semibold,bold}`; `type.leading.{tight,normal,loose}`; `type.tracking.{tight,normal,wide}`.
 - **Typography roles** (DTCG `typography` composites, projecting the primitives): `type.role.{display,heading,title,body,label,code}.{sm,md,lg}`.
 - **Motion:** `duration.{instant,fast,normal,slow,slower}`; `easing.{standard,enter,exit,emphasized,spring}` (`enter` ≡ decelerate, `exit` ≡ accelerate; the old `bounce` renamed `spring`).
+- **Opacity:** `opacity.disabled` — a single slot, not a ladder, promoted by [proposal 0003](../proposals/0003-component-catalog-generalization.md) once both reference component-heavy targets independently needed the identical meaning (PrimeNG's `disabledOpacity` constant, Bootstrap's `*-disabled-opacity` variables). Other opacity knobs (veil strengths, shimmer ranges, glyph alphas) stay exporter-private until a second target needs the same one.
 
 ### Reserved mode dimensions
 

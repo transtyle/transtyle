@@ -23,13 +23,31 @@
  * beyond this one mapping.
  */
 
-const SEVERITY_ROLE = { primary: 'primary', secondary: 'secondary', success: 'success', info: 'info', warn: 'warning', danger: 'danger' };
+const SEVERITY_ROLE = {
+  primary: 'primary',
+  secondary: 'secondary',
+  success: 'success',
+  info: 'info',
+  warn: 'warning',
+  danger: 'danger',
+};
 export const SEVERITIES = [...Object.keys(SEVERITY_ROLE), 'contrast'];
-const BG_CELLS = new Set(['solid', 'solid-hover', 'solid-active', 'tint', 'tint-hover', 'tint-active', 'outline', 'outline-hover']);
+const BG_CELLS = new Set([
+  'solid',
+  'solid-hover',
+  'solid-active',
+  'tint',
+  'tint-hover',
+  'tint-active',
+  'outline',
+  'outline-hover',
+]);
 
 function resolveCell(map, severity, cellSuffix) {
   if (severity === 'contrast') {
-    const path = BG_CELLS.has(cellSuffix) ? 'semantic.color.neutral.text-strong' : 'semantic.color.elevation.0.surface';
+    const path = BG_CELLS.has(cellSuffix)
+      ? 'semantic.color.neutral.text-strong'
+      : 'semantic.color.elevation.0.surface';
     return { value: map.get(path)?.value, slot: path };
   }
   const role = SEVERITY_ROLE[severity];

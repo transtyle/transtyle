@@ -40,32 +40,94 @@ const get = (map, path) => map.get(`semantic.${path}`)?.value;
 function buildButtonColorScheme(map) {
   const g = mapSeverityGrid(map, {
     variants: [
-      { name: 'root', parts: { background: 'solid', hoverBackground: 'solid-hover', activeBackground: 'solid-active', borderColor: 'solid', hoverBorderColor: 'solid-hover', activeBorderColor: 'solid-active', color: 'on-solid', hoverColor: 'on-solid', activeColor: 'on-solid', focusRingColor: 'solid' } },
-      { name: 'outlined', parts: { hoverBackground: 'tint', activeBackground: 'tint-active', borderColor: 'outline', color: 'text' } },
-      { name: 'text', parts: { hoverBackground: 'tint', activeBackground: 'tint-active', color: 'text' } },
+      {
+        name: 'root',
+        parts: {
+          background: 'solid',
+          hoverBackground: 'solid-hover',
+          activeBackground: 'solid-active',
+          borderColor: 'solid',
+          hoverBorderColor: 'solid-hover',
+          activeBorderColor: 'solid-active',
+          color: 'on-solid',
+          hoverColor: 'on-solid',
+          activeColor: 'on-solid',
+          focusRingColor: 'solid',
+        },
+      },
+      {
+        name: 'outlined',
+        parts: {
+          hoverBackground: 'tint',
+          activeBackground: 'tint-active',
+          borderColor: 'outline',
+          color: 'text',
+        },
+      },
+      {
+        name: 'text',
+        parts: { hoverBackground: 'tint', activeBackground: 'tint-active', color: 'text' },
+      },
     ],
   });
   const scheme = { root: {}, outlined: {}, text: {} };
-  for (const severity of ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast']) {
+  for (const severity of [
+    'primary',
+    'secondary',
+    'success',
+    'info',
+    'warn',
+    'danger',
+    'contrast',
+  ]) {
     scheme.root[severity] = {
-      background: g.get('root', severity, 'background'), hoverBackground: g.get('root', severity, 'hoverBackground'), activeBackground: g.get('root', severity, 'activeBackground'),
-      borderColor: g.get('root', severity, 'borderColor'), hoverBorderColor: g.get('root', severity, 'hoverBorderColor'), activeBorderColor: g.get('root', severity, 'activeBorderColor'),
-      color: g.get('root', severity, 'color'), hoverColor: g.get('root', severity, 'hoverColor'), activeColor: g.get('root', severity, 'activeColor'),
+      background: g.get('root', severity, 'background'),
+      hoverBackground: g.get('root', severity, 'hoverBackground'),
+      activeBackground: g.get('root', severity, 'activeBackground'),
+      borderColor: g.get('root', severity, 'borderColor'),
+      hoverBorderColor: g.get('root', severity, 'hoverBorderColor'),
+      activeBorderColor: g.get('root', severity, 'activeBorderColor'),
+      color: g.get('root', severity, 'color'),
+      hoverColor: g.get('root', severity, 'hoverColor'),
+      activeColor: g.get('root', severity, 'activeColor'),
       focusRing: { color: g.get('root', severity, 'focusRingColor'), shadow: 'none' },
     };
-    scheme.outlined[severity] = { hoverBackground: g.get('outlined', severity, 'hoverBackground'), activeBackground: g.get('outlined', severity, 'activeBackground'), borderColor: g.get('outlined', severity, 'borderColor'), color: g.get('outlined', severity, 'color') };
-    scheme.text[severity] = { hoverBackground: g.get('text', severity, 'hoverBackground'), activeBackground: g.get('text', severity, 'activeBackground'), color: g.get('text', severity, 'color') };
+    scheme.outlined[severity] = {
+      hoverBackground: g.get('outlined', severity, 'hoverBackground'),
+      activeBackground: g.get('outlined', severity, 'activeBackground'),
+      borderColor: g.get('outlined', severity, 'borderColor'),
+      color: g.get('outlined', severity, 'color'),
+    };
+    scheme.text[severity] = {
+      hoverBackground: g.get('text', severity, 'hoverBackground'),
+      activeBackground: g.get('text', severity, 'activeBackground'),
+      color: g.get('text', severity, 'color'),
+    };
   }
-  return { scheme, coverage: g.coverage.map((c) => ({ ...c, variable: `button.colorScheme.${c.variable}` })) };
+  return {
+    scheme,
+    coverage: g.coverage.map((c) => ({ ...c, variable: `button.colorScheme.${c.variable}` })),
+  };
 }
 
 export function buildButton(light, dark, ctx) {
   const l = buildButtonColorScheme(light);
   const d = buildButtonColorScheme(dark);
   const f = field(light).structural;
+  // AL2 parity fix: Button reads the BUTTON layer (which defaults from
+  // control), not the shared field object directly. Before this, an authored
+  // `component.button.radius` moved Bootstrap but not PrimeNG — the two
+  // targets disagreed about what authoring a button token meant.
+  const btn = (t) => light.get(`component.button.${t}`)?.value;
   return {
     tokens: {
-      root: { borderRadius: f.borderRadius, paddingX: f.paddingX, paddingY: f.paddingY, gap: get(light, 'space.2'), transitionDuration: f.transitionDuration },
+      root: {
+        borderRadius: btn('radius'),
+        paddingX: btn('padding-x'),
+        paddingY: btn('padding-y'),
+        gap: get(light, 'space.2'),
+        transitionDuration: f.transitionDuration,
+      },
       colorScheme: { light: l.scheme, dark: d.scheme },
       ...(ctx.roleArchetypeExtend ? { extend: ctx.roleArchetypeExtend } : {}),
     },
@@ -78,20 +140,32 @@ function buildFlatSeverity(map, { variants, severities, path }) {
   const scheme = {};
   for (const severity of severities) {
     scheme[severity] = {};
-    for (const field of Object.keys(variants[0].parts)) scheme[severity][field] = g.get(variants[0].name, severity, field);
+    for (const field of Object.keys(variants[0].parts))
+      scheme[severity][field] = g.get(variants[0].name, severity, field);
   }
-  return { scheme, coverage: g.coverage.map((c) => ({ ...c, variable: `${path}.colorScheme.${c.variable}` })) };
+  return {
+    scheme,
+    coverage: g.coverage.map((c) => ({ ...c, variable: `${path}.colorScheme.${c.variable}` })),
+  };
 }
 
 export function buildTag(light, dark) {
-  const opts = { variants: [{ name: 'root', parts: { background: 'tint', color: 'text' } }], severities: ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast'], path: 'tag' };
+  const opts = {
+    variants: [{ name: 'root', parts: { background: 'tint', color: 'text' } }],
+    severities: ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast'],
+    path: 'tag',
+  };
   const l = buildFlatSeverity(light, opts);
   const d = buildFlatSeverity(dark, opts);
   return { tokens: { colorScheme: { light: l.scheme, dark: d.scheme } }, coverage: l.coverage };
 }
 
 export function buildBadge(light, dark) {
-  const opts = { variants: [{ name: 'root', parts: { background: 'solid', color: 'on-solid' } }], severities: ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast'], path: 'badge' };
+  const opts = {
+    variants: [{ name: 'root', parts: { background: 'solid', color: 'on-solid' } }],
+    severities: ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast'],
+    path: 'badge',
+  };
   const l = buildFlatSeverity(light, opts);
   const d = buildFlatSeverity(dark, opts);
   return { tokens: { colorScheme: { light: l.scheme, dark: d.scheme } }, coverage: l.coverage };
@@ -111,12 +185,20 @@ function buildMessageColorScheme(map) {
   for (const severity of ['info', 'success', 'warn', 'danger', 'secondary', 'contrast']) {
     const key = severity === 'danger' ? 'error' : severity; // real PrimeNG naming inconsistency (verified against source), not ours
     scheme[key] = {
-      background: g.get('filled', severity, 'background'), borderColor: g.get('filled', severity, 'borderColor'), color: g.get('filled', severity, 'color'),
-      outlined: { color: g.get('outlined', severity, 'color'), borderColor: g.get('outlined', severity, 'borderColor') },
+      background: g.get('filled', severity, 'background'),
+      borderColor: g.get('filled', severity, 'borderColor'),
+      color: g.get('filled', severity, 'color'),
+      outlined: {
+        color: g.get('outlined', severity, 'color'),
+        borderColor: g.get('outlined', severity, 'borderColor'),
+      },
       simple: { color: g.get('simple', severity, 'color') },
     };
   }
-  return { scheme, coverage: g.coverage.map((c) => ({ ...c, variable: `message.colorScheme.${c.variable}` })) };
+  return {
+    scheme,
+    coverage: g.coverage.map((c) => ({ ...c, variable: `message.colorScheme.${c.variable}` })),
+  };
 }
 
 export function buildMessage(light, dark) {
@@ -129,21 +211,47 @@ export function buildMessage(light, dark) {
 function buildInlineMessageColorScheme(map, ctx) {
   const g = mapSeverityGrid(map, {
     severities: ['info', 'success', 'warn', 'danger', 'secondary', 'contrast'],
-    variants: [{ name: 'root', parts: { background: 'tint', borderColor: 'outline', color: 'text' } }],
+    variants: [
+      { name: 'root', parts: { background: 'tint', borderColor: 'outline', color: 'text' } },
+    ],
   });
   const scheme = {};
   const coverage = [...g.coverage];
-  const roleFor = { info: 'info', success: 'success', warn: 'warning', danger: 'danger', secondary: 'secondary' };
+  const roleFor = {
+    info: 'info',
+    success: 'success',
+    warn: 'warning',
+    danger: 'danger',
+    secondary: 'secondary',
+  };
   for (const severity of ['info', 'success', 'warn', 'danger', 'secondary', 'contrast']) {
-    const solid = severity === 'contrast' ? map.get('semantic.color.neutral.text-strong')?.value : map.get(`semantic.color.${roleFor[severity]}.solid`)?.value;
+    const solid =
+      severity === 'contrast'
+        ? map.get('semantic.color.neutral.text-strong')?.value
+        : map.get(`semantic.color.${roleFor[severity]}.solid`)?.value;
     const key = severity === 'danger' ? 'error' : severity;
     scheme[key] = {
-      background: g.get('root', severity, 'background'), borderColor: g.get('root', severity, 'borderColor'), color: g.get('root', severity, 'color'),
+      background: g.get('root', severity, 'background'),
+      borderColor: g.get('root', severity, 'borderColor'),
+      color: g.get('root', severity, 'color'),
       shadow: solid ? `0px 4px 8px 0px ${ctx.formatColor({ ...solid, alpha: 0.04 })}` : undefined,
     };
-    if (solid) coverage.push({ variable: `inlinemessage.colorScheme.${severity}.shadow`, slot: '—', class: 'approximated', note: 'fixed low-alpha tint of the role solid color, matching PrimeNG\'s own color-mix(..., transparent 96%) convention — not a colorimetric shadow derivation' });
+    if (solid)
+      coverage.push({
+        variable: `inlinemessage.colorScheme.${severity}.shadow`,
+        slot: '—',
+        class: 'approximated',
+        note: "fixed low-alpha tint of the role solid color, matching PrimeNG's own color-mix(..., transparent 96%) convention — not a colorimetric shadow derivation",
+      });
   }
-  return { scheme, coverage: coverage.map((c) => (c.variable?.startsWith('inlinemessage') ? c : { ...c, variable: `inlinemessage.colorScheme.${c.variable}` })) };
+  return {
+    scheme,
+    coverage: coverage.map((c) =>
+      c.variable?.startsWith('inlinemessage')
+        ? c
+        : { ...c, variable: `inlinemessage.colorScheme.${c.variable}` },
+    ),
+  };
 }
 
 export function buildInlineMessage(light, dark, ctx) {
@@ -160,31 +268,81 @@ export function buildInlineMessage(light, dark, ctx) {
 
 export function buildProgressBar() {
   return {
-    tokens: { value: { background: '{primary.color}' }, label: { color: '{primary.contrastColor}' } },
-    coverage: [{ variable: 'progressbar.value.background', slot: 'semantic.primary.color (alias)', class: 'native' }],
+    tokens: {
+      value: { background: '{primary.color}' },
+      label: { color: '{primary.contrastColor}' },
+    },
+    coverage: [
+      {
+        variable: 'progressbar.value.background',
+        slot: 'semantic.primary.color (alias)',
+        class: 'native',
+      },
+    ],
   };
 }
 
 export function buildRating() {
   return {
-    tokens: { icon: { color: '{text.mutedColor}', hoverColor: '{primary.color}', activeColor: '{primary.color}' } },
-    coverage: [{ variable: 'rating.icon.hoverColor', slot: 'semantic.primary.color (alias)', class: 'native' }],
+    tokens: {
+      icon: {
+        color: '{text.mutedColor}',
+        hoverColor: '{primary.color}',
+        activeColor: '{primary.color}',
+      },
+    },
+    coverage: [
+      {
+        variable: 'rating.icon.hoverColor',
+        slot: 'semantic.primary.color (alias)',
+        class: 'native',
+      },
+    ],
   };
 }
 
 // ---------- archetype-consumer components (§4/§5, C5) ----------
 
 export function buildListbox(light, dark) {
-  const fl = field(light), fd = field(dark);
-  const ll = list(light), ld = list(dark);
+  const fl = field(light),
+    fd = field(dark);
+  const ll = list(light),
+    ld = list(dark);
   return {
     tokens: {
-      root: { borderRadius: fl.structural.borderRadius, transitionDuration: fl.structural.transitionDuration },
-      colorScheme: {
-        light: { root: { background: fl.colorScheme.background, disabledBackground: fl.colorScheme.disabledBackground, borderColor: fl.colorScheme.borderColor, invalidBorderColor: fl.colorScheme.invalidBorderColor, color: fl.colorScheme.color, disabledColor: fl.colorScheme.disabledColor }, option: ll.colorScheme.option },
-        dark: { root: { background: fd.colorScheme.background, disabledBackground: fd.colorScheme.disabledBackground, borderColor: fd.colorScheme.borderColor, invalidBorderColor: fd.colorScheme.invalidBorderColor, color: fd.colorScheme.color, disabledColor: fd.colorScheme.disabledColor }, option: ld.colorScheme.option },
+      root: {
+        borderRadius: fl.structural.borderRadius,
+        transitionDuration: fl.structural.transitionDuration,
       },
-      list: { padding: ll.structural.padding, gap: ll.structural.gap, header: ll.structural.header },
+      colorScheme: {
+        light: {
+          root: {
+            background: fl.colorScheme.background,
+            disabledBackground: fl.colorScheme.disabledBackground,
+            borderColor: fl.colorScheme.borderColor,
+            invalidBorderColor: fl.colorScheme.invalidBorderColor,
+            color: fl.colorScheme.color,
+            disabledColor: fl.colorScheme.disabledColor,
+          },
+          option: ll.colorScheme.option,
+        },
+        dark: {
+          root: {
+            background: fd.colorScheme.background,
+            disabledBackground: fd.colorScheme.disabledBackground,
+            borderColor: fd.colorScheme.borderColor,
+            invalidBorderColor: fd.colorScheme.invalidBorderColor,
+            color: fd.colorScheme.color,
+            disabledColor: fd.colorScheme.disabledColor,
+          },
+          option: ld.colorScheme.option,
+        },
+      },
+      list: {
+        padding: ll.structural.padding,
+        gap: ll.structural.gap,
+        header: ll.structural.header,
+      },
       option: ll.structural.option,
       optionGroup: ll.structural.optionGroup,
     },
@@ -196,41 +354,80 @@ export function buildListbox(light, dark) {
 }
 
 export function buildMenu(light, dark, ctx) {
-  const nl = navigation(light), nd = navigation(dark);
-  const cl = content(light), cd = content(dark);
+  const nl = navigation(light),
+    nd = navigation(dark);
+  const cl = content(light),
+    cd = content(dark);
   const shadow = light.get('semantic.color.elevation.2.shadow')?.value;
   return {
     tokens: {
-      root: { borderRadius: cl.structural.borderRadius, shadow: shadow ? `${shadow.offsetX} ${shadow.offsetY} ${shadow.blur} ${shadow.spread} ${ctx.formatColor(shadow.color)}` : undefined },
+      root: {
+        borderRadius: cl.structural.borderRadius,
+        shadow: shadow
+          ? `${shadow.offsetX} ${shadow.offsetY} ${shadow.blur} ${shadow.spread} ${ctx.formatColor(shadow.color)}`
+          : undefined,
+      },
       colorScheme: {
         // Menu's own component-level `item` type is narrower than the shared
         // semantic.navigation.item group (verified against source: no active*
         // fields at the component level — only focus, since Menu has no active state).
-        light: { root: { background: cl.colorScheme.background, borderColor: cl.colorScheme.borderColor, color: cl.colorScheme.color }, item: { focusBackground: nl.colorScheme.item.focusBackground, color: nl.colorScheme.item.color, focusColor: nl.colorScheme.item.focusColor, icon: nl.colorScheme.item.icon }, submenuLabel: nl.colorScheme.submenuLabel },
-        dark: { root: { background: cd.colorScheme.background, borderColor: cd.colorScheme.borderColor, color: cd.colorScheme.color }, item: { focusBackground: nd.colorScheme.item.focusBackground, color: nd.colorScheme.item.color, focusColor: nd.colorScheme.item.focusColor, icon: nd.colorScheme.item.icon }, submenuLabel: nd.colorScheme.submenuLabel },
+        light: {
+          root: {
+            background: cl.colorScheme.background,
+            borderColor: cl.colorScheme.borderColor,
+            color: cl.colorScheme.color,
+          },
+          item: {
+            focusBackground: nl.colorScheme.item.focusBackground,
+            color: nl.colorScheme.item.color,
+            focusColor: nl.colorScheme.item.focusColor,
+            icon: nl.colorScheme.item.icon,
+          },
+          submenuLabel: nl.colorScheme.submenuLabel,
+        },
+        dark: {
+          root: {
+            background: cd.colorScheme.background,
+            borderColor: cd.colorScheme.borderColor,
+            color: cd.colorScheme.color,
+          },
+          item: {
+            focusBackground: nd.colorScheme.item.focusBackground,
+            color: nd.colorScheme.item.color,
+            focusColor: nd.colorScheme.item.focusColor,
+            icon: nd.colorScheme.item.icon,
+          },
+          submenuLabel: nd.colorScheme.submenuLabel,
+        },
       },
       list: nl.structural.list,
       item: nl.structural.item,
       submenuLabel: nl.structural.submenuLabel,
     },
-    coverage: [{ variable: 'menu.item.*', slot: 'exporter-private: navigation()', class: 'derived' }],
+    coverage: [
+      { variable: 'menu.item.*', slot: 'exporter-private: navigation()', class: 'derived' },
+    ],
   };
 }
 
 export function buildPopover(light, dark, ctx) {
-  const ol = overlay(light, 'popover', ctx), od = overlay(dark, 'popover', ctx);
+  const ol = overlay(light, 'popover', ctx),
+    od = overlay(dark, 'popover', ctx);
   return {
     tokens: {
       root: { ...ol.structural },
       colorScheme: { light: { root: ol.colorScheme }, dark: { root: od.colorScheme } },
       content: { padding: ol.padding },
     },
-    coverage: [{ variable: 'popover.root.*', slot: 'exporter-private: overlay(popover)', class: 'derived' }],
+    coverage: [
+      { variable: 'popover.root.*', slot: 'exporter-private: overlay(popover)', class: 'derived' },
+    ],
   };
 }
 
 export function buildDialog(light, dark, ctx) {
-  const ol = overlay(light, 'modal', ctx), od = overlay(dark, 'modal', ctx);
+  const ol = overlay(light, 'modal', ctx),
+    od = overlay(dark, 'modal', ctx);
   return {
     tokens: {
       root: { ...ol.structural },
@@ -239,7 +436,9 @@ export function buildDialog(light, dark, ctx) {
       content: { padding: ol.padding },
       footer: { padding: ol.padding },
     },
-    coverage: [{ variable: 'dialog.root.*', slot: 'exporter-private: overlay(modal)', class: 'derived' }],
+    coverage: [
+      { variable: 'dialog.root.*', slot: 'exporter-private: overlay(modal)', class: 'derived' },
+    ],
   };
 }
 
@@ -249,6 +448,21 @@ export function buildDialog(light, dark, ctx) {
  * matching every other exporter's convention — not silently dropped.
  */
 export const STRUCTURAL_RESIDUE = [
-  'datatable', 'galleria', 'tree', 'treetable', 'splitter', 'timeline', 'organizationchart',
-  'carousel', 'dataview', 'orderlist', 'picklist', 'paginator', 'stepper', 'steps', 'tabs', 'tabview', 'accordion',
+  'datatable',
+  'galleria',
+  'tree',
+  'treetable',
+  'splitter',
+  'timeline',
+  'organizationchart',
+  'carousel',
+  'dataview',
+  'orderlist',
+  'picklist',
+  'paginator',
+  'stepper',
+  'steps',
+  'tabs',
+  'tabview',
+  'accordion',
 ];

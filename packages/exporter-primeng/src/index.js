@@ -27,8 +27,17 @@ import { droppedDimensions } from '@transtyle/ir';
 import { projectRamp } from './ramp.js';
 import { field, list, navigation, overlay, content } from './archetypes.js';
 import {
-  buildButton, buildTag, buildBadge, buildMessage, buildInlineMessage,
-  buildProgressBar, buildRating, buildListbox, buildMenu, buildPopover, buildDialog,
+  buildButton,
+  buildTag,
+  buildBadge,
+  buildMessage,
+  buildInlineMessage,
+  buildProgressBar,
+  buildRating,
+  buildListbox,
+  buildMenu,
+  buildPopover,
+  buildDialog,
   STRUCTURAL_RESIDUE,
 } from './descriptors.js';
 
@@ -48,11 +57,16 @@ export default {
     // unconstrained by PrimeNG's own types, so no mode-split is required here.
     const archetypeRoles = [...normalized.roleArchetypes.keys()];
     const roleArchetypeExtend = archetypeRoles.length
-      ? Object.fromEntries(archetypeRoles.map((r) => [r, {
-          color: get(light, `color.${r}.solid`),
-          contrastColor: get(light, `color.${r}.on-solid`),
-          hoverColor: get(light, `color.${r}.solid-hover`),
-        }]))
+      ? Object.fromEntries(
+          archetypeRoles.map((r) => [
+            r,
+            {
+              color: get(light, `color.${r}.solid`),
+              contrastColor: get(light, `color.${r}.on-solid`),
+              hoverColor: get(light, `color.${r}.solid-hover`),
+            },
+          ]),
+        )
       : undefined;
 
     // primary.{50..950}: PrimeNG's own type has this as a single, mode-invariant
@@ -61,67 +75,177 @@ export default {
     // (our own per-mode grid legitimately shifts these values slightly by mode,
     // but PrimeNG's architecture has no slot to express that at this position).
     const primaryRamp = projectRamp(light, 'primary', ctx);
-    coverage.push(...primaryRamp.coverage.map((c) => ({ variable: `semantic.primary.${c.step}`, slot: c.slot, class: c.class })));
+    coverage.push(
+      ...primaryRamp.coverage.map((c) => ({
+        variable: `semantic.primary.${c.step}`,
+        slot: c.slot,
+        class: c.class,
+      })),
+    );
 
     // surface.{0,50..950}: mode-scoped in real PrimeNG (verified: aura/base
     // defines a DIFFERENT ramp — slate family light, zinc family dark — under
     // colorScheme.light/dark.surface) — computed per mode, unlike primary above.
     const surfaceRampLight = projectRamp(light, 'neutral', ctx, { includeZero: true });
     const surfaceRampDark = projectRamp(dark, 'neutral', ctx, { includeZero: true });
-    coverage.push(...surfaceRampLight.coverage.map((c) => ({ variable: `semantic.colorScheme.light.surface.${c.step}`, slot: c.slot, class: c.class })));
+    coverage.push(
+      ...surfaceRampLight.coverage.map((c) => ({
+        variable: `semantic.colorScheme.light.surface.${c.step}`,
+        slot: c.slot,
+        class: c.class,
+      })),
+    );
 
-    const fLight = field(light), fDark = field(dark);
-    const lLight = list(light), lDark = list(dark);
-    const nLight = navigation(light), nDark = navigation(dark);
-    const cLight = content(light), cDark = content(dark);
-    const oSelectLight = overlay(light, 'select', ctx), oSelectDark = overlay(dark, 'select', ctx);
-    const oPopoverLight = overlay(light, 'popover', ctx), oPopoverDark = overlay(dark, 'popover', ctx);
-    const oModalLight = overlay(light, 'modal', ctx), oModalDark = overlay(dark, 'modal', ctx);
+    const fLight = field(light),
+      fDark = field(dark);
+    const lLight = list(light),
+      lDark = list(dark);
+    const nLight = navigation(light),
+      nDark = navigation(dark);
+    const cLight = content(light),
+      cDark = content(dark);
+    const oSelectLight = overlay(light, 'select', ctx),
+      oSelectDark = overlay(dark, 'select', ctx);
+    const oPopoverLight = overlay(light, 'popover', ctx),
+      oPopoverDark = overlay(dark, 'popover', ctx);
+    const oModalLight = overlay(light, 'modal', ctx),
+      oModalDark = overlay(dark, 'modal', ctx);
     const oNavLight = overlay(light, 'navigation', ctx);
-    coverage.push({ variable: 'semantic.formField.*', slot: 'exporter-private: field()', class: 'derived' });
-    coverage.push({ variable: 'semantic.list.*', slot: 'exporter-private: list()', class: 'derived' });
-    coverage.push({ variable: 'semantic.navigation.*', slot: 'exporter-private: navigation()', class: 'derived' });
-    coverage.push({ variable: 'semantic.overlay.*', slot: 'semantic.color.elevation.N.{surface,shadow} + radius.*', class: 'native' });
-    coverage.push({ variable: 'semantic.content.*', slot: 'semantic.color.elevation.1.surface + border + text.base', class: 'native' });
-    coverage.push({ variable: 'semantic.colorScheme.*.mask.background', slot: 'semantic.color.scrim', class: 'native' });
+    coverage.push({
+      variable: 'semantic.formField.{paddingX,paddingY,borderRadius}',
+      slot: 'component.control.{padding-x,padding-y,radius}',
+      class: 'native',
+      note: 'AL2-promoted shared control geometry (proposal 0003)',
+    });
+    coverage.push({
+      variable: 'semantic.formField.* (rest)',
+      slot: 'exporter-private: field()',
+      class: 'derived',
+    });
+    coverage.push({
+      variable: 'semantic.disabledOpacity',
+      slot: 'semantic.opacity.disabled',
+      class: 'native',
+      note: 'AL2 promotion — was a hardcoded PrimeNG constant',
+    });
+    coverage.push({
+      variable: 'components.button.root.{borderRadius,paddingX,paddingY}',
+      slot: 'component.button.{radius,padding-x,padding-y}',
+      class: 'native',
+      note: 'AL2 parity: the button layer, which defaults from component.control.*',
+    });
+    coverage.push({
+      variable: 'semantic.list.*',
+      slot: 'exporter-private: list()',
+      class: 'derived',
+    });
+    coverage.push({
+      variable: 'semantic.navigation.*',
+      slot: 'exporter-private: navigation()',
+      class: 'derived',
+    });
+    coverage.push({
+      variable: 'semantic.overlay.*',
+      slot: 'semantic.color.elevation.N.{surface,shadow} + radius.*',
+      class: 'native',
+    });
+    coverage.push({
+      variable: 'semantic.content.*',
+      slot: 'semantic.color.elevation.1.surface + border + text.base',
+      class: 'native',
+    });
+    coverage.push({
+      variable: 'semantic.colorScheme.*.mask.background',
+      slot: 'semantic.color.scrim',
+      class: 'native',
+    });
 
     const semantic = {
       transitionDuration: get(light, 'duration.fast'),
-      disabledOpacity: '0.6', // PrimeNG's own convention constant — no Transtyle equivalent to derive from
+      disabledOpacity: String(get(light, 'opacity.disabled')), // AL2: promoted to the catalog once Bootstrap independently needed it (was a hardcoded 0.6 here)
       iconSize: '1rem',
       // width/style/offset are PrimeNG conventions we deliberately don't have a composite
       // for yet (proposal 0002 gap #8) — `color` reuses PrimeNG's own alias mechanism
       // (`{primary.color}`) rather than a resolved value, exactly like Rating/ProgressBar.
-      focusRing: { width: '1px', style: 'solid', color: '{primary.color}', offset: '2px', shadow: 'none' },
+      focusRing: {
+        width: '1px',
+        style: 'solid',
+        color: '{primary.color}',
+        offset: '2px',
+        shadow: 'none',
+      },
       primary: primaryRamp.ramp,
       formField: fLight.structural,
       list: lLight.structural,
       navigation: nLight.structural,
       content: cLight.structural,
-      overlay: { select: oSelectLight.structural, popover: oPopoverLight.structural, modal: oModalLight.structural, navigation: oNavLight.structural },
+      overlay: {
+        select: oSelectLight.structural,
+        popover: oPopoverLight.structural,
+        modal: oModalLight.structural,
+        navigation: oNavLight.structural,
+      },
       mask: { transitionDuration: '0.3s' },
       colorScheme: {
         light: {
           surface: surfaceRampLight.ramp,
-          primary: { color: get(light, 'color.primary.solid'), contrastColor: get(light, 'color.primary.on-solid'), hoverColor: get(light, 'color.primary.solid-hover'), activeColor: get(light, 'color.primary.solid-active') },
-          highlight: { background: get(light, 'color.primary.tint'), focusBackground: get(light, 'color.primary.tint-hover'), color: get(light, 'color.primary.on-tint'), focusColor: get(light, 'color.primary.on-tint') },
+          primary: {
+            color: get(light, 'color.primary.solid'),
+            contrastColor: get(light, 'color.primary.on-solid'),
+            hoverColor: get(light, 'color.primary.solid-hover'),
+            activeColor: get(light, 'color.primary.solid-active'),
+          },
+          highlight: {
+            background: get(light, 'color.primary.tint'),
+            focusBackground: get(light, 'color.primary.tint-hover'),
+            color: get(light, 'color.primary.on-tint'),
+            focusColor: get(light, 'color.primary.on-tint'),
+          },
           mask: { background: get(light, 'color.scrim'), color: get(light, 'color.neutral.tint') },
           formField: fLight.colorScheme,
-          text: { color: get(light, 'color.text.base'), hoverColor: get(light, 'color.text.base'), mutedColor: get(light, 'color.text.muted'), hoverMutedColor: get(light, 'color.text.muted') },
+          text: {
+            color: get(light, 'color.text.base'),
+            hoverColor: get(light, 'color.text.base'),
+            mutedColor: get(light, 'color.text.muted'),
+            hoverMutedColor: get(light, 'color.text.muted'),
+          },
           content: cLight.colorScheme,
-          overlay: { select: oSelectLight.colorScheme, popover: oPopoverLight.colorScheme, modal: oModalLight.colorScheme },
+          overlay: {
+            select: oSelectLight.colorScheme,
+            popover: oPopoverLight.colorScheme,
+            modal: oModalLight.colorScheme,
+          },
           list: { option: lLight.colorScheme.option, optionGroup: lLight.colorScheme.optionGroup },
           navigation: nLight.colorScheme,
         },
         dark: {
           surface: surfaceRampDark.ramp,
-          primary: { color: get(dark, 'color.primary.solid'), contrastColor: get(dark, 'color.primary.on-solid'), hoverColor: get(dark, 'color.primary.solid-hover'), activeColor: get(dark, 'color.primary.solid-active') },
-          highlight: { background: get(dark, 'color.primary.tint'), focusBackground: get(dark, 'color.primary.tint-hover'), color: get(dark, 'color.primary.on-tint'), focusColor: get(dark, 'color.primary.on-tint') },
+          primary: {
+            color: get(dark, 'color.primary.solid'),
+            contrastColor: get(dark, 'color.primary.on-solid'),
+            hoverColor: get(dark, 'color.primary.solid-hover'),
+            activeColor: get(dark, 'color.primary.solid-active'),
+          },
+          highlight: {
+            background: get(dark, 'color.primary.tint'),
+            focusBackground: get(dark, 'color.primary.tint-hover'),
+            color: get(dark, 'color.primary.on-tint'),
+            focusColor: get(dark, 'color.primary.on-tint'),
+          },
           mask: { background: get(dark, 'color.scrim'), color: get(dark, 'color.neutral.tint') },
           formField: fDark.colorScheme,
-          text: { color: get(dark, 'color.text.base'), hoverColor: get(dark, 'color.text.base'), mutedColor: get(dark, 'color.text.muted'), hoverMutedColor: get(dark, 'color.text.muted') },
+          text: {
+            color: get(dark, 'color.text.base'),
+            hoverColor: get(dark, 'color.text.base'),
+            mutedColor: get(dark, 'color.text.muted'),
+            hoverMutedColor: get(dark, 'color.text.muted'),
+          },
           content: cDark.colorScheme,
-          overlay: { select: oSelectDark.colorScheme, popover: oPopoverDark.colorScheme, modal: oModalDark.colorScheme },
+          overlay: {
+            select: oSelectDark.colorScheme,
+            popover: oPopoverDark.colorScheme,
+            modal: oModalDark.colorScheme,
+          },
           list: { option: lDark.colorScheme.option, optionGroup: lDark.colorScheme.optionGroup },
           navigation: nDark.colorScheme,
         },
@@ -140,18 +264,41 @@ export default {
     const popover = buildPopover(light, dark, ctx);
     const dialog = buildDialog(light, dark, ctx);
     coverage.push(
-      ...button.coverage, ...tag.coverage, ...badge.coverage, ...message.coverage, ...inlinemessage.coverage,
-      ...progressbar.coverage, ...rating.coverage, ...listbox.coverage, ...menu.coverage, ...popover.coverage, ...dialog.coverage,
+      ...button.coverage,
+      ...tag.coverage,
+      ...badge.coverage,
+      ...message.coverage,
+      ...inlinemessage.coverage,
+      ...progressbar.coverage,
+      ...rating.coverage,
+      ...listbox.coverage,
+      ...menu.coverage,
+      ...popover.coverage,
+      ...dialog.coverage,
     );
 
     for (const name of STRUCTURAL_RESIDUE) {
-      coverage.push({ variable: `components.${name}`, slot: '—', class: 'unsupported', note: 'structural component with no severity-colored surface and no builder yet — inherits Aura\'s own default untouched (definePreset deep-merge)' });
+      coverage.push({
+        variable: `components.${name}`,
+        slot: '—',
+        class: 'unsupported',
+        note: "structural component with no severity-colored surface and no builder yet — inherits Aura's own default untouched (definePreset deep-merge)",
+      });
     }
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     const components = {
-      button: button.tokens, tag: tag.tokens, badge: badge.tokens, message: message.tokens, inlinemessage: inlinemessage.tokens,
-      progressbar: progressbar.tokens, rating: rating.tokens, listbox: listbox.tokens, menu: menu.tokens, popover: popover.tokens, dialog: dialog.tokens,
+      button: button.tokens,
+      tag: tag.tokens,
+      badge: badge.tokens,
+      message: message.tokens,
+      inlinemessage: inlinemessage.tokens,
+      progressbar: progressbar.tokens,
+      rating: rating.tokens,
+      listbox: listbox.tokens,
+      menu: menu.tokens,
+      popover: popover.tokens,
+      dialog: dialog.tokens,
     };
 
     const ts = renderPreset(ctx, semantic, components);
@@ -168,7 +315,13 @@ export default {
 // ---------- TS serialization ----------
 
 function isColor(v) {
-  return v && typeof v === 'object' && typeof v.l === 'number' && typeof v.c === 'number' && typeof v.h === 'number';
+  return (
+    v &&
+    typeof v === 'object' &&
+    typeof v.l === 'number' &&
+    typeof v.c === 'number' &&
+    typeof v.h === 'number'
+  );
 }
 
 function serialize(value, ctx, indent = 2) {
@@ -206,13 +359,19 @@ export default ${camel(ctx.projectName)}Preset;
 }
 
 function camel(name) {
-  return String(name).replace(/[^a-zA-Z0-9]+(.)?/g, (_, c) => (c ? c.toUpperCase() : '')).replace(/^[A-Z]/, (c) => c.toLowerCase()) || 'transtyle';
+  return (
+    String(name)
+      .replace(/[^a-zA-Z0-9]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
+      .replace(/^[A-Z]/, (c) => c.toLowerCase()) || 'transtyle'
+  );
 }
 
 function renderUsage(ctx, coverage) {
   const counts = {};
   for (const c of coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
-  const summary = Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(' · ');
+  const summary = Object.entries(counts)
+    .map(([k, v]) => `${v} ${k}`)
+    .join(' · ');
   return `# Using this PrimeNG preset
 
 Generated from the **${ctx.projectName}** design system by transtyle: a \`definePreset(Aura, { semantic, components })\` override — anything not listed here is inherited from PrimeNG's own Aura preset untouched. Coverage: ${summary}.

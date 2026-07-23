@@ -53,6 +53,27 @@ async function main() {
     if (got?.provenance.kind !== 'aliased') errors.push(`acme: component.button.${token} provenance = "${got?.provenance.kind}", expected "aliased"`);
   }
 
+  // (c2) AL2 layering (proposal 0003): `component.button.*` defaults FROM
+  // `component.control.*`, so an unauthored system resolves both to the same
+  // value via the control layer — and Acme, which authors only the button
+  // layer, must move buttons WITHOUT moving the shared control (the AL1.2
+  // contested call, now resolved by the catalog rather than documented away).
+  const cMap = cathode.normalized.modes[Object.keys(cathode.normalized.modes)[0]];
+  for (const t of ['radius', 'padding-x', 'padding-y']) {
+    const btn = cMap?.get(`component.button.${t}`);
+    const ctl = cMap?.get(`component.control.${t}`)?.value;
+    if (btn?.value !== ctl) errors.push(`cathode: unauthored component.button.${t} = ${btn?.value}, expected to default from control.${t} (${ctl})`);
+    if (btn && !String(btn.provenance.rule ?? '').startsWith(`alias(control.${t})`)) errors.push(`cathode: component.button.${t} rule = "${btn.provenance.rule}", expected alias(control.${t})`);
+  }
+  for (const t of ['radius', 'padding-x', 'padding-y']) {
+    const btn = aMap?.get(`component.button.${t}`)?.value;
+    const ctl = aMap?.get(`component.control.${t}`)?.value;
+    if (btn === ctl) errors.push(`acme: authoring component.button.${t} must not move component.control.${t} — both are ${btn}`);
+  }
+  // The one AL2 semantic-tier promotion must exist and be numeric.
+  const disabled = aMap?.get('semantic.opacity.disabled')?.value;
+  if (typeof disabled !== 'number') errors.push(`semantic.opacity.disabled = ${disabled} (${typeof disabled}), expected a number`);
+
   // (d) The deferral must not swallow real mistakes: an alias to a path that
   // never materializes is still TST1105, just diagnosed after DERIVE.
   const typo = await compile({ cwd: 'packages/core/test-fixtures/component-dangling', targets: [], emit: false, loadExporter });
@@ -74,7 +95,7 @@ async function main() {
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; authored wins over its default; an authored alias into a DERIVE-materialized slot resolves, while a truly dangling one still raises TST1105');
+  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105');
 }
 
 main();

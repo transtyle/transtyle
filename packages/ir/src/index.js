@@ -11,8 +11,14 @@ export const IR_SPEC = 'v0-draft';
  * interaction state (rest/hover/active/selected) + on-colors.
  */
 export const COLOR_ROLES = [
-  'primary', 'secondary', 'accent',
-  'success', 'warning', 'danger', 'info', 'neutral',
+  'primary',
+  'secondary',
+  'accent',
+  'success',
+  'warning',
+  'danger',
+  'info',
+  'neutral',
 ];
 
 /** Valid values for `$extensions.transtyle.role.archetype` (docs/architecture/ir.md §archetypes). */
@@ -20,11 +26,22 @@ export const ROLE_ARCHETYPES = ['brand', 'status', 'neutral'];
 
 /** Grid cell suffixes appended to `semantic.color.<role>.`, in derivation order. */
 export const GRID_CELLS = [
-  'solid', 'solid-hover', 'solid-active', 'solid-selected',
-  'tint', 'tint-hover', 'tint-active', 'tint-selected',
-  'outline', 'outline-hover',
-  'on-solid', 'on-tint',
-  'text', 'text-hover', 'text-active', 'text-strong',
+  'solid',
+  'solid-hover',
+  'solid-active',
+  'solid-selected',
+  'tint',
+  'tint-hover',
+  'tint-active',
+  'tint-selected',
+  'outline',
+  'outline-hover',
+  'on-solid',
+  'on-tint',
+  'text',
+  'text-hover',
+  'text-active',
+  'text-strong',
 ];
 
 /** Content hierarchy rungs under `semantic.color.text.<rung>` (docs/architecture/ir.md). */
@@ -35,7 +52,18 @@ export const ELEVATION_LEVELS = [0, 1, 2, 3, 4, 5];
 export const SHADOW_LEVELS = [1, 2, 3, 4];
 
 /** z-index ladder — key order is the contract; values are catalog defaults unless authored. */
-export const Z_LADDER = ['hide', 'base', 'dropdown', 'sticky', 'banner', 'overlay', 'modal', 'popover', 'toast', 'tooltip'];
+export const Z_LADDER = [
+  'hide',
+  'base',
+  'dropdown',
+  'sticky',
+  'banner',
+  'overlay',
+  'modal',
+  'popover',
+  'toast',
+  'tooltip',
+];
 
 /** Provenance kinds. */
 export const PROVENANCE = {
@@ -59,29 +87,57 @@ export const COVERAGE = ['native', 'derived', 'approximated', 'dropped', 'unsupp
 export function droppedDimensions(dimensionNames, expressed) {
   return (dimensionNames ?? [])
     .filter((d) => !expressed.includes(d))
-    .map((d) => ({ variable: `(mode:${d})`, slot: '—', class: 'dropped', note: `${d} mode dimension not expressed by this target` }));
+    .map((d) => ({
+      variable: `(mode:${d})`,
+      slot: '—',
+      class: 'dropped',
+      note: `${d} mode dimension not expressed by this target`,
+    }));
 }
 
 /**
- * Component tier (docs/plan/component-tier.md C2; docs/specs/component-layer.md).
- * Per component, per token: `defaultFrom` is a bare `semantic.*` path (no
- * `semantic.` prefix) the token aliases when unauthored — component tokens
- * default from semantic tokens, so an empty `component.*` tier still
- * compiles, exactly like every other resolve-or-fill slot in the catalog.
- * Scoped to `button` only for now (C2); extended per component as C4 proves
- * each one's real shape against source — this is deliberately not the full
- * `component-layer.md` 15-component sketch yet.
+ * Component tier (docs/plan/component-tier.md C2; docs/specs/component-layer.md;
+ * generalized by AL2 — docs/proposals/0003-component-catalog-generalization.md).
+ * Per component, per token: `defaultFrom` is a bare `semantic.*` path the token
+ * aliases when unauthored, or `component:<path>` to default from another
+ * component slot. Either way an empty `component.*` tier still compiles,
+ * exactly like every other resolve-or-fill slot in the catalog.
+ *
+ * `control` is the shared **interactive-control** geometry — the one component
+ * grouping both reference component-heavy targets converge on *architecturally*,
+ * not just nominally: Bootstrap chains `$btn-padding-*` from the shared
+ * `$input-btn-padding-*` root, and PrimeNG's Button reads the same `formField`
+ * object its inputs do. Buttons then layer on top (authoring `control.*` moves
+ * both; authoring `button.*` moves only buttons) — the two-level model both
+ * upstreams already implement. Order matters: entries may only `component:`
+ * -default from an EARLIER entry in this object.
+ *
+ * Deliberately NOT here (AL2 evidence pass, see the proposal): the sm/lg size
+ * ladder (both targets have one, but they disagree on which rungs — the
+ * disagreement is the finding), and nav/list/table item padding (correspondence
+ * is nominal, not architectural; exporters derive them privately today).
  */
 export const COMPONENT_CATALOG = {
-  button: {
+  control: {
     radius: { type: 'dimension', defaultFrom: 'radius.control' },
     'padding-x': { type: 'dimension', defaultFrom: 'space.4' },
     'padding-y': { type: 'dimension', defaultFrom: 'space.2' },
   },
+  button: {
+    radius: { type: 'dimension', defaultFrom: 'component:control.radius' },
+    'padding-x': { type: 'dimension', defaultFrom: 'component:control.padding-x' },
+    'padding-y': { type: 'dimension', defaultFrom: 'component:control.padding-y' },
+  },
 };
 
 /** Reserved mode dimension names (docs/architecture/ir.md §reserved-mode-dimensions) — names only, every dimension stays optional. */
-export const RESERVED_MODE_DIMENSIONS = ['color-scheme', 'density', 'contrast', 'motion', 'platform'];
+export const RESERVED_MODE_DIMENSIONS = [
+  'color-scheme',
+  'density',
+  'contrast',
+  'motion',
+  'platform',
+];
 
 /**
  * Combine one value per mode dimension into the compound key used to address
@@ -159,7 +215,10 @@ export function collectRoleArchetypes(tree, diagnostics) {
     const archetype = node?.$extensions?.['transtyle.role']?.archetype;
     if (!archetype) continue;
     if (!ROLE_ARCHETYPES.includes(archetype)) {
-      diagnostics?.warn('TST1111', `semantic.color.${name}: unknown role archetype "${archetype}" (expected one of ${ROLE_ARCHETYPES.join(', ')}) — role still joins the grid`);
+      diagnostics?.warn(
+        'TST1111',
+        `semantic.color.${name}: unknown role archetype "${archetype}" (expected one of ${ROLE_ARCHETYPES.join(', ')}) — role still joins the grid`,
+      );
     }
     out.set(name, archetype);
   }
@@ -173,7 +232,10 @@ export function mergeTrees(trees, onConflict = () => {}) {
     for (const [key, val] of Object.entries(src)) {
       if (val !== null && typeof val === 'object' && !Array.isArray(val) && !('$value' in val)) {
         if (!(key in dst)) dst[key] = {};
-        else if ('$value' in dst[key]) { onConflict([...path, key].join('.')); dst[key] = {}; }
+        else if ('$value' in dst[key]) {
+          onConflict([...path, key].join('.'));
+          dst[key] = {};
+        }
         mergeInto(dst[key], val, [...path, key]);
       } else {
         if (key in dst && !key.startsWith('$')) onConflict([...path, key].join('.'));
