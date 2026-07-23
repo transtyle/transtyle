@@ -69,6 +69,23 @@ if (existsSync(descPath)) {
       else if (v.family !== family) errors.push(`descriptor ${family} references $${name} which belongs to family ${v.family}`);
     }
   }
+
+  // 4. Every recipe path must resolve in a real compile (typo guard: a bad
+  //    `sem: 'space.7'` must fail here, not in AL1.3's emission).
+  const { compile } = await import('@transtyle/core');
+  const loadExporter = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
+  const acme = await compile({ cwd: join(root, 'examples', 'acme'), targets: [], emit: false, loadExporter });
+  const map = acme.normalized.modes.light;
+  for (const [family, d] of Object.entries(DESCRIPTORS)) {
+    for (const [name, recipe] of Object.entries(d.emit ?? {})) {
+      const paths = [];
+      if (recipe.sem) paths.push(`semantic.${recipe.sem}`);
+      if (recipe.comp) paths.push(`component.${recipe.comp}`);
+      if (recipe.trans) paths.push(`semantic.${recipe.trans.duration}`, `semantic.${recipe.trans.easing}`);
+      if (!paths.length) errors.push(`descriptor ${family}/$${name}: emit recipe has no sem/comp/trans source`);
+      for (const p of paths) if (map.get(p)?.value === undefined) errors.push(`descriptor ${family}/$${name}: recipe path ${p} does not resolve in a real compile`);
+    }
+  }
 }
 
 if (errors.length) {

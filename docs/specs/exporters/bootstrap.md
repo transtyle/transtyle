@@ -25,7 +25,13 @@ Two consumption paths, because the Bootstrap community is split between Sass bui
 - Typography roles → `$font-family-*`, `$font-size-base` + `$h*-font-size` from our type scale: `native`; `rem` conversion via config base: `approximated` if the base differs from Bootstrap's assumption.
 - Spacing scale → `$spacer` + `$spacers` map: `native` when our scale is linear; `approximated` when a non-linear scale is flattened onto Bootstrap's map.
 - Radius/shadows/borders → `$border-radius*`, `$box-shadow*`: `native`. Motion: Bootstrap themes almost none of it → mostly `dropped`.
-- `unsupported` examples we must report honestly: Bootstrap's grid/breakpoint variables (no IR concept yet — breakpoints are a known catalog-candidate), component-tier `$btn-*` variables (reserved for v2).
+- `unsupported` examples we must report honestly: Bootstrap's grid/breakpoint variables (no IR concept yet — breakpoints are a known catalog-candidate).
+
+## Component theming (AL1, docs/plan/bootstrap-component-tier.md)
+
+The component-theming surface is measured by a checked-in inventory ([surface-inventory.json](../../../packages/exporter-bootstrap/surface-inventory.json), regenerated-and-diffed by `check:bootstrap-surface`): **657 component-scoped variables** across 49 families out of 952 total in `_variables.scss` (bootstrap@5.3.8); the 295 excluded are feature flags, palette definitions, and foundations scales, each with its reason in the file. The binding table lives in [descriptors.js](../../../packages/exporter-bootstrap/src/descriptors.js) — per-family data, zero per-variable logic, the PrimeNG descriptor pattern. Classification (completeness machine-enforced): 79 bound to meanings (component slots, semantic slots, transition recipes), 287 chained (Bootstrap's own `!default` expressions derive them from roots we drive), 140 following global `--bs-*` custom properties the semantic tier drives, 43 `null`/`inherit` cascade no-ops left untouched, 51 `dropped` (structure, derivation knobs, filters), 57 `unsupported` (real slots the IR can't express yet — itemized as catalog-growth data in [the cross-walk findings](../../findings/bootstrap-component-crosswalk.md)).
+
+**The five contested calls** (full rationale in the findings doc): (1) the shared `$input-btn-padding-*` root binds to `component.button.padding-*`, so authoring button padding moves inputs too — Bootstrap's own coupling, documented, with a shared `field.*` slot as the AL2 resolution; (2) shade/tint/scale _derivation knobs_ are `dropped` — Transtyle drives derived _results_ (grid state cells) via the CSS-var path, never knob-to-knob; (3) em-relative paddings bind to rem rungs as `approximated`, trading proportional intent for themability; (4) `null` cascade markers are never overridden by default; (5) shape-identity numbers (radio `50%`, arrow geometry, float-label transform math) are structure, not theme.
 
 ## Ground-truth testing
 

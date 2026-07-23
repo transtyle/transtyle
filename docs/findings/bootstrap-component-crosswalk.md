@@ -1,0 +1,39 @@
+# Findings: the Bootstrap component cross-walk (AL1.2) — AL2 promotion candidates
+
+Per [docs/plan/bootstrap-component-tier.md](../plan/bootstrap-component-tier.md) AL1.2. The full binding table is code ([packages/exporter-bootstrap/src/descriptors.js](../../packages/exporter-bootstrap/src/descriptors.js), completeness-enforced by `check:bootstrap-surface`); this document records what the cross-walk _learned_ — specifically, every place Bootstrap needed a component meaning the shared catalog lacks, cross-referenced against what the PrimeNG exporter already does privately. That intersection is AL2's input: per the meta-language principle, only meanings **both** targets independently need are promotion candidates.
+
+## How the 657 in-inventory variables classified
+
+| Classification                      | Count | What it means                                                                                                                       |
+| ----------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `emit` (bound to a meaning)         | 79    | reads a `component.*` slot, a semantic slot, or a transition recipe                                                                 |
+| chained                             | 287   | Bootstrap's own `!default` expression derives it from roots we drive — the plan's "bind the root decision" rule working as designed |
+| follows-global                      | 140   | aliases a global `var(--bs-*)` custom property the semantic tier already drives                                                     |
+| inherit-default                     | 43    | Bootstrap `null`/`inherit`/`transparent`/`currentcolor` no-op markers; overriding would change cascade semantics, not theme values  |
+| `dropped` (no token meaning)        | 51    | structural options, derivation knobs, filters, glyphs                                                                               |
+| `unsupported` (IR gap, growth data) | 57    | real themable slots the IR has no vocabulary for — itemized below                                                                   |
+
+Net: **549 of 657 (84%) are driven or follow driven decisions**; 51 are honestly out of theming's domain; 57 are the IR's measured gap, each one now a named data point instead of a silent omission.
+
+## Promotion candidates for AL2 (both-targets evidence)
+
+1. **Shared field/control padding** (`field.padding-{x,y}` + size variants). Bootstrap's evidence is structural: `$input-btn-padding-*` is a _single shared root_ that buttons and inputs both chain from — the coupling is Bootstrap's own architecture, not our invention. PrimeNG's evidence: the exporter-private `field()` archetype ([archetypes.js](../../packages/exporter-primeng/src/archetypes.js)) already derives shared form-control padding from `space.*` for Button/InputText/Select/Checkbox. **Two independent consumers of the identical meaning — the strongest candidate on this list.** (The C1 study's verdict on `field` as a _grouping_ is unchanged; this is a narrower claim: two exporters need the same two padding meanings, not a shared named object.)
+2. **A state-opacity ladder** (`opacity.disabled`, `opacity.muted`-ish rungs). Bootstrap: 12 `unsupported` slots (`$btn-disabled-opacity`, `$btn-close-*-opacity` ×4, `$carousel-*-opacity` ×4, `$placeholder-opacity-*` ×2, `$form-check-input-disabled-opacity`, …). PrimeNG: `disabledOpacity: '0.6'` is hardcoded in [index.js:90](../../packages/exporter-primeng/src/index.js) with the comment "no Transtyle equivalent to derive from" — a want recorded before Bootstrap ever asked. **Two independent consumers; second-strongest candidate.**
+3. **Component transition timing** (already expressible: `duration.*` + `easing.*`). Both exporters read `duration.fast` today (Bootstrap via 12 transition recipes, PrimeNG via `transitionDuration`). Nothing to promote — recorded here as _confirmation_ that the motion scale carries real cross-target weight, plus one gap both share: PrimeNG hardcodes `mask.transitionDuration: '0.3s'` and Bootstrap's `$modal-backdrop-opacity` is unsupported — **overlay/scrim theming (veil strength + mask timing) is a shared near-miss** worth one AL2 conversation.
+4. **Component sizing** (`modal-sm/md/lg/xl`, `tooltip/popover/toast-max-width`, `offcanvas-*`, spinner/icon geometry — 20+ `unsupported` slots). PrimeNG side: no equivalent surfaced in the C3–C5 pass (Aura presets size via CSS, not tokens). **Single-source so far — not a candidate yet**; parked until a third component-heavy target weighs in.
+5. **Icon/asset slots** (13 `unsupported` SVG data-URIs: check marks, toggler icons, carousel chevrons, close glyph). PrimeNG themes carry no icon assets either. **Single-source; explicitly not a candidate** — and quite possibly a permanent non-goal (assets are not tokens; noted so AL2 rejects it deliberately rather than by omission).
+6. **`table.cell-padding-{x,y}` and `nav.item-padding-{x,y}`** — marked in the descriptors as candidates on Bootstrap's evidence; PrimeNG's DataTable landed in C5's _structural residue_ (no severity surface, dimensional tokens via private archetypes). Whether its `list`/`navigation` helpers read the _same_ meaning needs a deliberate AL2 look rather than a grep — **plausible, unconfirmed.**
+
+## Contested calls (the P4-style judgment record)
+
+The five calls a reviewer should challenge, mirrored in the spec's component-theming section ([docs/specs/exporters/bootstrap.md](../specs/exporters/bootstrap.md)):
+
+1. **`$input-btn-padding-*` → `component.button.padding-*`.** Authoring a button padding token moves inputs too, because Bootstrap couples them at the root. Alternative rejected: binding `$btn-padding-*` directly would orphan the shared root and fight Bootstrap's own chain. The coupling is documented, not hidden; AL2's `field.*` candidate is the clean resolution.
+2. **Derivation knobs are `dropped`, results are driven.** Bootstrap's `*-shade-amount`/`*-bg-scale` percentages parameterize _its_ state/subtle-color derivation; Transtyle's IR holds the derived results (grid `-hover`/`-active` cells, tint/outline prominences). Mapping knob→knob would mean reverse-engineering our derivation into percentages that can't express it. The state colors reach Bootstrap via the CSS-variable path (AL1.4) instead. Consequence accepted: the _Sass-compiled_ state colors of variant buttons keep Bootstrap's derivation shape (from our driven theme colors), not our grid's exact cells.
+3. **em-relative values bound to rem rungs, classed `approximated`** (badge, kbd, mark paddings; badge font-size). The proportional-to-context intent is real and lost in translation; the honest alternative (`unsupported`) would leave visibly themable paddings undriven. Approximation with a note won.
+4. **`null` markers are mechanical, not judgment.** 43 variables whose Bootstrap default is a cascade no-op are classified `inherit-default` wholesale. Overriding any of them is _possible_ but changes inheritance behavior — a decision an adopter should make deliberately downstream, never a compiler default.
+5. **Radio roundness (`50%`), float-label transform math, arrow geometry are `dropped` as structure**, even though each is technically a themable number. Test applied: would a design system ever _brand_ this value independently of rebuilding the component's mechanics? Where the answer was no, it's structure.
+
+## One out-of-inventory flag
+
+`$component-active-bg`/`$component-active-color` (cross-component active-state pair, shaped exactly like `primary.solid`/`on-solid`) sit _outside_ the component surface but are currently not driven by the semantic mapping either — a cheap, high-leverage addition for AL1.3 to pick up on the semantic side while it's in the file.
