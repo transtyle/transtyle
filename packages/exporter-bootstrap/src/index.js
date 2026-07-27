@@ -268,7 +268,7 @@ function resolve(light, dark, ctx) {
     '$display-font-sizes',
     '—',
     'unsupported',
-    'no IR concept of display sizes; Bootstrap defaults kept',
+    "the IR does have this concept — `semantic.type.role.display.{sm,md,lg}` — but the two ladders disagree: Bootstrap runs 6 rungs from 2.5rem to 5rem, the type-role scale 3 from 1.953rem to 3.052rem, so mapping either onto the other invents rungs or drops them. Same shape as AL2's size-ladder deferral; Bootstrap defaults kept",
   );
 
   const spaceProv = light.get('semantic.space.4')?.provenance.kind;
@@ -282,7 +282,7 @@ function resolve(light, dark, ctx) {
     '$grid-breakpoints/$container-max-widths',
     '—',
     'unsupported',
-    'breakpoints are a known IR catalog candidate',
+    "`semantic.breakpoint.*` ships (6 rungs), but only `md` (768px) agrees: Bootstrap's sm/lg/xl/xxl are 576/992/1200/1400 against the catalog's 640/1024/1280/1536, and its `xs` is `0` — the unqueried mobile-first base, not a boundary at all, where the catalog's is 480px. Rebinding would move every responsive boundary in the framework: a behavioral change, not a theming one. `$container-max-widths` has no IR counterpart at all. Bootstrap defaults kept",
   );
   cov(
     'motion ($transition-*)',

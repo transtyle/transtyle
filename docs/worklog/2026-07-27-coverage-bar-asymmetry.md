@@ -62,7 +62,7 @@ Where someone could read the two numbers as a ranking:
   existing "a build isn't done at 100% native" paragraph, pointing at
   `transtyle diff` as the right comparison.
 
-## Left open
+## Left open — then closed immediately after
 
 Two coverage notes are stale in the direction of understating the catalog, both
 the same defect class the earlier chase corrected once for
@@ -76,6 +76,42 @@ Neither is bindable as-is (Bootstrap's ladders disagree — 6 display rungs at
 would move every responsive boundary in the framework), so the classification is
 right and only the stated reason is wrong. They belong in the same bucket as
 AL2's size-ladder deferral: _both sides have the concept, they disagree on the
-rungs_. Not fixed here — this pass was scoped to recording the asymmetry.
+rungs_. Not fixed in the pass above, which was scoped to recording the asymmetry.
+
+**Both rewritten in the follow-up commit.** The class (`unsupported`) and the
+rows themselves were already right — worth stating why they exist at all, since
+both variables are scoped _out_ of the required 657: they are voluntary rows,
+emitted so that an exception inside an otherwise-driven group
+(`typography-foundation`, `layout-foundation`) doesn't disappear into the
+group's summary reason. That is the "no silent unsupported" bar working. Only
+the stated reasons changed:
+
+- `$display-font-sizes` now names `semantic.type.role.display.{sm,md,lg}` and
+  the ladder mismatch (6 rungs, 2.5–5rem vs 3 rungs, 1.953–3.052rem).
+- `$grid-breakpoints/$container-max-widths` now names `semantic.breakpoint.*`,
+  reports that only `md` (768px) agrees, and calls out the sharpest
+  disagreement: Bootstrap's `xs` is `0` — the unqueried mobile-first base,
+  not a boundary at all — where the catalog's is 480px. It also separates
+  `$container-max-widths`, which genuinely has no IR counterpart, from
+  `$grid-breakpoints`, which does.
+
+`website/src/docs/exporter-bootstrap.md`'s mapping table carried the same
+understatement (`$grid-breakpoints` → "—") and was split into two rows, so the
+"catalog has it, ladders disagree" case and the "no IR counterpart" case
+(`$box-shadow-inset`, `$container-max-widths`) no longer read as one thing.
+
+### One definitional tension, deliberately not resolved
+
+`unsupported` is spec'd as "target has a themable slot the IR doesn't cover
+yet", and `dropped` as "IR expresses it; this target cannot". The
+ladder-disagreement case is neither: **both** sides express the concept, and we
+decline to bind because the values disagree. The existing precedent is to file
+these under `unsupported` — proposal 0004's four "targets model it differently"
+rows already do — so these two follow it rather than inventing a class. But it
+does mean `unsupported` now covers two different situations, which matters
+because the [coverage spec](../specs/validation-and-coverage.md) treats
+`unsupported` across 3+ exporters as catalog-growth signal. A disagreement row
+is _not_ that signal. Left as a spec question rather than settled here, since
+changing a coverage class affects every exporter.
 
 `check:all` green at 63.

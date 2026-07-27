@@ -45,7 +45,8 @@ Bootstrap generates `-bg-subtle` / `-border-subtle` / `-text-emphasis` per theme
 | `$border-radius{,-sm,-lg,-xl,-pill}`                      | the `radius.*` scale                                                               | `sm/lg/xl` derived from your `md`                                                                                                             |
 | `$font-family-*`, type scale, `$spacers`, `$box-shadow*`  | fonts, the engine's `type.*`/`space.*` scales, scrim alpha ramps                   | scales report `derived` until you author them                                                                                                 |
 | `$btn-*`, `$modal-*`, … (the 657-variable component tier) | `component.*` tokens + semantic defaults                                           | AL1: bound by meaning per the checked-in surface inventory — one coverage row per variable (driven, chained, or honestly dropped/unsupported) |
-| `$grid-breakpoints`, `$box-shadow-inset`                  | —                                                                                  | `unsupported`, reported honestly                                                                                                              |
+| `$grid-breakpoints`, `$display-font-sizes`                | the catalog _has_ these concepts                                                   | `unsupported` anyway — the ladders disagree (only `md`/768px matches on breakpoints), and rebinding would move behavior, not theme it         |
+| `$box-shadow-inset`, `$container-max-widths`              | —                                                                                  | `unsupported`, reported honestly — no IR counterpart                                                                                          |
 
 ## Component theming
 
