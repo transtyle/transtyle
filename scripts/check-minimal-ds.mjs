@@ -37,9 +37,32 @@
  * all), three-valued, and multi-dimension. Sweeping the invariants above across
  * all of them is how we know an exporter doesn't assume a particular mode layout
  * — a light-only DS must not crash for want of a `dark` map, a density-only DS
- * has no `modes.light` at all, and so on. Plus one negative-space case: a config
- * that declares `color-scheme` after another dimension must raise TST1112,
- * because the polarity axis has to be first or dark mode silently never ships.
+ * has no `modes.light` at all, and so on.
+ *
+ * **Authored dark.** For every shape whose `color-scheme` carries a *non-default*
+ * dark value, the harness authors a distinct dark surface + text via a
+ * mode-scoped layer. The three-token floor is otherwise all-light: with
+ * `autoDark` off and no dark values authored, the dark map's *anchor* slots
+ * (surface, text) fall back to their light values, so the dark block an exporter
+ * emits carries a light canvas, and every value derived from that canvas
+ * (text-muted/subtle/inverse, the on-colors, contrast pairs) is computed against
+ * a light anchor even in dark mode. The `isDark` role grid runs regardless — but
+ * derivation against a genuinely dark *authored* canvas never did. Authoring a
+ * real dark surface + text exercises exactly that path, and any exporter that
+ * only emits a dark override when it differs from light (css-variables emits the
+ * dark block unconditionally; others may gate on a diff) gets its diff branch
+ * covered too. A fifth assertion checks the dark surface distinctly reached the
+ * dark map — so a future glob/layer regression that silently swallows the dark
+ * layer (making dark == light again) fails loudly rather than quietly turning
+ * the dark sweep back into a no-op. Shapes with no non-default dark (light-only,
+ * dark-only where dark IS the default, density-only) get no dark layer — a
+ * dark-scoped file there is a TST1109 or dead weight, not a test.
+ *
+ * Plus one negative-space case: a config that declares `color-scheme` after
+ * another dimension must raise TST1112 *as an error*, because the polarity axis
+ * has to be first or dark mode silently never ships — and shipping a dark block
+ * full of light values is exactly the AL5 failure class, too wrong to be a mere
+ * warning the default `failOn: error` waves through.
  *
  * Run: node scripts/check-minimal-ds.mjs   (npm run check:minimal-ds)
  */
@@ -92,17 +115,37 @@ const MODE_SHAPES = {
   },
 };
 
+/**
+ * A genuinely different dark surface + text, authored via a mode-scoped layer.
+ * Lives at the temp-dir ROOT, deliberately outside the `tokens/*.tokens.json`
+ * base glob (which matches only direct children of `tokens/`), so it is never
+ * picked up as a base layer — only when a shape's config references it as a
+ * `{ color-scheme: dark }` mode layer.
+ */
+const DARK_TOKENS = {
+  semantic: {
+    color: {
+      surface: { $type: 'color', $value: '#101114' },
+      text: { base: { $type: 'color', $value: '#f8f9fa' } },
+    },
+  },
+};
+
 const dir = mkdtempSync(join(tmpdir(), 'transtyle-minimal-'));
 mkdirSync(join(dir, 'tokens'));
 writeFileSync(join(dir, 'tokens', 'base.tokens.json'), JSON.stringify(MINIMAL_TOKENS, null, 2));
+writeFileSync(join(dir, 'dark.tokens.json'), JSON.stringify(DARK_TOKENS, null, 2));
 
-const writeConfig = (modes) =>
+const writeConfig = (modes, withDark = false) =>
   writeFileSync(
     join(dir, 'transtyle.config.json'),
     JSON.stringify(
       {
         name: 'minimal',
-        tokens: ['tokens/*.tokens.json'],
+        tokens: [
+          'tokens/*.tokens.json',
+          ...(withDark ? [{ files: 'dark.tokens.json', mode: { 'color-scheme': 'dark' } }] : []),
+        ],
         modes,
         derivation: { rules: 'standard@1' },
         targets: Object.fromEntries(Object.keys(EXPORTERS).map((n) => [n, { output: `dist/${n}` }])),
@@ -112,6 +155,13 @@ const writeConfig = (modes) =>
     ),
   );
 
+/** True when the shape has a `dark` color-scheme value that isn't the default —
+ *  i.e. there is a genuine non-default dark for the mode layer to override. */
+const hasNonDefaultDark = (modes) => {
+  const cs = modes['color-scheme'];
+  return Boolean(cs && cs.values.includes('dark') && cs.default !== 'dark');
+};
+
 const errors = [];
 // `undefined` etc. as a whole word on the value side of a declaration. Matching
 // the value side only keeps legitimate prose (a comment mentioning "undefined")
@@ -120,7 +170,8 @@ const LEAK = /(:|=>?)\s*(undefined|null|NaN)\b/;
 
 let files = 0;
 for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
-  writeConfig(modes);
+  const withDark = hasNonDefaultDark(modes);
+  writeConfig(modes, withDark);
   for (const [name, pkg] of Object.entries(EXPORTERS)) {
     const loadExporter = async () => (await import(pkg)).default;
     const at = `${name} (${shape})`;
@@ -164,20 +215,38 @@ for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
         errors.push(`${at}: coverage row "${c.variable}" claims class ${c.class} from ${slot}, which does not resolve — absence is not coverage`);
       }
     }
+
+    // 5. The authored dark anchor actually reached the dark map, distinct from
+    //    light. This guards the sweep's own premise: if a regression swallowed
+    //    the dark layer (dark == light), the dark canvas would silently be a
+    //    light one again and the authored-dark derivation path would stop being
+    //    exercised, while every invariant above still passed — a silent no-op
+    //    test. Checked at the IR boundary (not by grepping output) so it is
+    //    robust to each exporter's color rendering.
+    if (withDark) {
+      const lightSurface = map.get('semantic.color.surface')?.value;
+      const darkSurface = result.normalized.modes.dark?.get('semantic.color.surface')?.value;
+      if (darkSurface === undefined || JSON.stringify(darkSurface) === JSON.stringify(lightSurface)) {
+        errors.push(`${at}: authored dark surface did not distinctly reach modes.dark — the dark sweep degenerated to a light canvas`);
+      }
+    }
   }
 }
 
 // Negative-space case: the polarity axis MUST be the first dimension, or dark
 // mode silently never reaches an exporter (the values land in their combos, but
-// no `modes.dark` alias is created for a non-primary dimension). This must warn.
+// no `modes.dark` alias is created for a non-primary dimension). This must be an
+// ERROR — a warning would let the guaranteed-wrong output through the default
+// `failOn: error`. `color-scheme` here carries two values, so there is a real
+// non-default dark to drop (the single-value case is intentionally not flagged).
 writeConfig({
   density: { values: ['comfortable', 'compact'], default: 'comfortable' },
   'color-scheme': { values: ['light', 'dark'], default: 'light' },
 });
 const loadNoop = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
 const df = await compile({ cwd: dir, targets: [], emit: false, loadExporter: loadNoop });
-if (!df.diagnostics.items.some((d) => d.code === 'TST1112')) {
-  errors.push('color-scheme declared after another dimension must raise TST1112 (dark mode would silently never ship), but it did not');
+if (!df.diagnostics.errors.some((d) => d.code === 'TST1112')) {
+  errors.push('color-scheme declared after another dimension must raise TST1112 as an ERROR (dark mode would silently never ship, so the build must stop), but it did not');
 }
 
 rmSync(dir, { recursive: true, force: true });
@@ -190,4 +259,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes (${files} files, no leaks); polarity-axis-not-first warns`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes (${files} files, no leaks; authored dark distinctly emitted where declared); polarity-axis-not-first is a build error`);

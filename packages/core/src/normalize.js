@@ -35,8 +35,22 @@ export function normalize(tokenTrees, config, diagnostics) {
   // combos, but no exporter can reach them, and nothing warned. Found by
   // compiling a density-first config against every exporter — all emitted a
   // dark block filled with light values.
-  if (dimEntries.length > 1 && dimDefaults.has('color-scheme') && primaryDimName !== 'color-scheme') {
-    diagnostics.warn(
+  //
+  // This is an ERROR, not a warning: the output is guaranteed wrong (a dark
+  // block filled with light values), and a warning ships that under the default
+  // `failOn: error`. There is no coherent "make it work" fix — even a corrected
+  // alias would leave `isDark` false for a non-primary color-scheme, so derived
+  // dark values compute as light. Reordering `modes` is the only fix, so the
+  // build must stop. Gated on `color-scheme` carrying more than one value: with
+  // a single value there is no non-default scheme to drop, so nothing is wrong
+  // and erroring would be a false failure.
+  if (
+    dimEntries.length > 1 &&
+    dimDefaults.has('color-scheme') &&
+    dimDefaults.get('color-scheme').values.length > 1 &&
+    primaryDimName !== 'color-scheme'
+  ) {
+    diagnostics.error(
       'TST1112',
       `"color-scheme" is declared but "${primaryDimName}" is the first mode dimension — light/dark is bound to the first dimension, so this design system's dark mode will not reach any exporter.`,
       { hint: 'List "color-scheme" first in `modes`. Only the first dimension carries light/dark polarity; the others are extra axes exporters mostly drop.' },
