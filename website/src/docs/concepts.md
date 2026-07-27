@@ -96,4 +96,6 @@ And every emitted variable is classified in `report.json`:
 
 A build isn't "done" at 100% native — that's impossible across real ecosystems. It's done when the report matches your intent: your decisions authored, coherent derivation for the rest, every approximation known and accepted.
 
+For the same reason, **don't compare one target's coverage against another's**. Each percentage measures a different surface with a different ceiling, set by how that framework is themable rather than by how much of it we've mapped. A framework that resolves token references at runtime spreads one binding across many slots; one that needs each variable bound individually can't. Two targets at very different percentages can both be as complete as their architecture allows. Compare a target against its own previous build — which is exactly what [`transtyle diff`](/docs/cli/) does.
+
 This is the trust mechanism: Transtyle never pretends translation is lossless — it measures the loss and shows you.

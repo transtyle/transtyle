@@ -45,6 +45,28 @@ Produced per target in RESOLVE ([pipeline.md](../architecture/pipeline.md#4-reso
 
 `dropped` and `unsupported` are opposite directions of mismatch — reporting both keeps us honest about the IR's limits, not just the targets'. `unsupported` entries across exporters are the data that drives semantic-catalog growth (an `unsupported` slot appearing in 3+ exporters is a catalog candidate).
 
+### Coverage percentages are not comparable across targets
+
+A target's coverage percentage measures how much of _its_ surface we drive. It does **not** rank targets against each other, because the ceiling is set by the target's theming architecture, not by how much work we've done. Measured 2026-07-27 on the two component-heavy targets:
+
+|                                          | Bootstrap                            | PrimeNG                                   |
+| ---------------------------------------- | ------------------------------------ | ----------------------------------------- |
+| Surface                                  | 952 variables (657 component-scoped) | 2,759 slots across 98 families            |
+| Driven                                   | 551 rows (77%), +35 `approximated`   | 1,631 (59%) — 79 driven + 1,552 inherited |
+| Reachable without new catalog vocabulary | **~0**                               | **221**                                   |
+
+The 59% is the target with room to grow; the 77% is the one that has converged. The reason is architectural:
+
+- **PrimeNG resolves `{token.path}` references at runtime**, so driving one semantic path cascades to every component slot pointing at it — a multiplier. Driving `formField.paddingX` alone reaches Button plus every form component. 1,552 of its covered slots are `inherited` this way, and 221 more sit behind 100 semantic paths this exporter drives only partially (`form.field.*` 125, `navigation.item.*` 65, `list.*` 21, `overlay.*` 10) — all expressible with catalog vocabulary that already ships.
+- **Bootstrap's Sass path binds per variable**, with no multiplier. Its 127 undriven variables were measured group by group and every group fails for a structural reason, not for missing work: embedded SVG assets (16), structural/behavioral options like cursor and order (29), Bootstrap's own shade/tint derivation knobs (18, made redundant by our own state derivation), `null` cascade no-ops on non-inherited properties (18), and bespoke geometry already tested and rejected by [proposal 0004](../proposals/0004-component-geometry.md) (17).
+
+Two consequences for reading the bar:
+
+1. **Track a target against its own history, not against another target.** A drop in Bootstrap's number is a regression; Bootstrap being lower than a hypothetical 95% target says nothing.
+2. **A ref-resolving target rewards semantic-tier work; a per-variable target rewards exporter-tier work.** The same engineering hour buys very different coverage depending on which side of that line the target sits.
+
+A third consequence for the catalog: on a per-variable target, an `unsupported` slot is evidence the IR lacks a concept. On a ref-resolving target it may only mean the exporter hasn't driven a path it could — check which before reading it as catalog-growth signal.
+
 ## Report format
 
 `report.json` (schema-versioned) per build, plus terminal rendering:

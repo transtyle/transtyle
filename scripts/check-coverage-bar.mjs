@@ -17,6 +17,19 @@
  *   3. Both are checked on ALL FOUR examples, with the two real adopted design
  *      systems (Carbon, GOV.UK) as the big-DS proof.
  *
+ * READING THE NUMBERS: the two targets' percentages are NOT comparable to each
+ * other — the ceiling is set by the target's theming architecture, not by how
+ * much work we've done. PrimeNG resolves `{token.path}` refs at runtime, so one
+ * semantic binding cascades to many component slots (a multiplier); Bootstrap's
+ * Sass path binds per variable, with no multiplier. Measured 2026-07-27:
+ * Bootstrap's 77% has ~0 slots reachable without new catalog vocabulary (its
+ * 127 undriven are assets, structural options, Bootstrap's own derivation
+ * knobs, and geometry proposal 0004 already rejected), while PrimeNG's 59% has
+ * 221 — so the LOWER number is the target with headroom and the higher one has
+ * converged. Track each target against its own history, never against the
+ * other. Full analysis: the "Coverage percentages are not comparable across
+ * targets" section of docs/specs/validation-and-coverage.md.
+ *
  * Run: node scripts/check-coverage-bar.mjs (also: npm run check:coverage-bar).
  */
 import { execSync } from 'node:child_process';
@@ -141,6 +154,15 @@ for (const [example, target, surfaceSize, counts, note] of summary) {
   );
   if (note) console.log(`  ${''.padEnd(19)} ${note}`);
 }
+
+// Printed with the numbers, because this is where someone is most likely to
+// read them as a ranking. They are not one: the ceiling is architectural.
+console.log(
+  '\n  Not a ranking — the two surfaces have different ceilings. PrimeNG resolves refs at\n' +
+    '  runtime (one semantic binding cascades to many slots), Bootstrap binds per variable.\n' +
+    '  Bootstrap is at its floor (~0 slots reachable without new catalog vocabulary); PrimeNG\n' +
+    '  has ~221. Compare each target to its own history, not to the other one.',
+);
 
 if (errors.length) {
   console.error(`\n✖ check-coverage-bar failed — ${errors.length} issue(s):\n`);
