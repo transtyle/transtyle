@@ -42,14 +42,14 @@ Transtyle's design phase produced a complete blueprint before any code; the walk
 
 Design-complete in the repo's `docs/` (architecture specs + ADRs), waiting their turn:
 
-| Feature                                                                                             | Where the design lives                    |
-| --------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| CLI: `diff`, `import`, `preview`, `migrate`; richer `init` (interactive) and `explain` (`--target`) | `docs/specs/cli.md`                       |
-| Derivation `overrides`, user rule expressions, `autoDark` audit flow                                | `docs/architecture/derivation.md`         |
-| Importers (Figma variables, Tailwind config, Bootstrap Sass)                                        | ADR-0008                                  |
-| Plugin packaging, conformance kit, third-party exporters                                            | `docs/architecture/plugins.md`            |
-| Lockfile (`transtyle.lock`), `--frozen` CI mode                                                     | `docs/architecture/versioning.md`         |
-| Component theming layer (v2)                                                                        | `docs/specs/component-layer.md`, ADR-0003 |
+| Feature                                                                                                                                                      | Where the design lives                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| CLI: `diff`, `import`, `preview`, `migrate`; richer `init` (interactive) and `explain` (`--target`)                                                          | `docs/specs/cli.md`                       |
+| Derivation `overrides`, user rule expressions, `autoDark` color synthesis (`darkBrandAdjust` — open research question, `docs/exercises/phase0-shadcn.md` F7) | `docs/architecture/derivation.md`         |
+| Importers (Figma variables, Tailwind config, Bootstrap Sass)                                                                                                 | ADR-0008                                  |
+| Plugin packaging, conformance kit, third-party exporters                                                                                                     | `docs/architecture/plugins.md`            |
+| Lockfile (`transtyle.lock`), `--frozen` CI mode                                                                                                              | `docs/architecture/versioning.md`         |
+| Component theming layer (v2)                                                                                                                                 | `docs/specs/component-layer.md`, ADR-0003 |
 
 ## Sequencing (from the project ROADMAP)
 

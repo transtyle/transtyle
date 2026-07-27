@@ -106,8 +106,17 @@ export function normalize(tokenTrees, config, diagnostics) {
   // not a mistake — but until now nothing surfaced it except the docs page.
   // Reported once per (role, scheme value) regardless of how many OTHER
   // dimensions multiply the combos sharing that fact (e.g. `dark+comfortable`
-  // and `dark+compact` are the same carry-over, not two).
+  // and `dark+compact` are the same carry-over, not two). Fires whether or not
+  // `autoDark` is on: today autoDark does not compute a distinct color for
+  // this slot (docs/exercises/phase0-shadcn.md F7 — a `darkBrandAdjust` rule
+  // is a still-open, deliberately deferred research question across three
+  // exercise rounds, not something to invent unilaterally here) — the color
+  // genuinely is still the carried-over one either way. What autoDark changes
+  // is provenance: without it, the carry-over is misclassified `authored`;
+  // with it, it's correctly `derived`, so `report.json` shows synthetic
+  // dark-theme coverage honestly, per derivation.md's promise.
   const reportedCarryOver = new Set();
+  const autoDark = Boolean(config?.derivation?.autoDark);
 
   const combos = expandModeMatrix(dimEntries);
   const modes = {};
@@ -121,6 +130,7 @@ export function normalize(tokenTrees, config, diagnostics) {
       // the rare pathological pair the spec defers; last dimension wins there.
       let value = tok.value;
       let overriddenMode = null;
+      let autoDarkCarried = false;
       for (const [dimName] of dimEntries) {
         const v = values[dimName];
         if (v === dimDefaults.get(dimName).default) continue;
@@ -129,13 +139,16 @@ export function normalize(tokenTrees, config, diagnostics) {
         else if (dimName === 'color-scheme') {
           const role = tokenPath.match(ROLE_SOLID)?.[1];
           if (role && (COLOR_ROLES.includes(role) || roleArchetypes.has(role))) {
+            if (autoDark) autoDarkCarried = true;
             const dedupeKey = `${tokenPath}|${v}`;
             if (!reportedCarryOver.has(dedupeKey)) {
               reportedCarryOver.add(dedupeKey);
               diagnostics.info(
                 'TST1204',
                 `${tokenPath} has no authored value for color-scheme=${v} — the ${dimDefaults.get('color-scheme').default}-mode value carries over unchanged, and so does its whole derived grid`,
-                { hint: `Author ${tokenPath} for color-scheme=${v} if this role should differ in that mode. This is default behavior — nothing is broken.` },
+                autoDark
+                  ? { hint: `Author ${tokenPath} for color-scheme=${v} if this role should differ in that mode. \`derivation.autoDark\` is on, so this carry-over is now classified "derived" in coverage — but it does not yet compute a distinct color (that transform is still an open research question; see the roadmap).` }
+                  : { hint: `Author ${tokenPath} for color-scheme=${v} if this role should differ in that mode. This is default behavior — nothing is broken.` },
               );
             }
           }
@@ -144,7 +157,11 @@ export function normalize(tokenTrees, config, diagnostics) {
       map.set(tokenPath, {
         type: tok.type,
         rawValue: value,
-        provenance: { kind: PROVENANCE.AUTHORED, mode: overriddenMode ?? key },
+        provenance: {
+          kind: autoDarkCarried ? PROVENANCE.DERIVED : PROVENANCE.AUTHORED,
+          mode: overriddenMode ?? key,
+          ...(autoDarkCarried ? { rule: 'auto-dark-carry(constant)@standard@1' } : {}),
+        },
       });
     }
     // Resolve aliases with cycle detection, then parse values.
