@@ -18,7 +18,12 @@
  *                      "Implemented" section documents are the same set.
  *   4. diagnostics   — every TST code emitted anywhere in the packages'
  *                      src/ trees is documented in diagnostics.md; every code
- *                      listed as a table row in diagnostics.md exists in source.
+ *                      listed as a table row in diagnostics.md exists in source;
+ *                      and each code's documented Severity column matches the
+ *                      diagnostics.warn/.error/.info call that actually emits
+ *                      it (TST1112's warning→error promotion left the table
+ *                      saying "warning" until this was added — presence-only
+ *                      checking cannot see a severity drift, only a diff can).
  *
  * Run: node scripts/check-docs.mjs (also: npm run check:docs, part of
  * check:sync and check:all). Exits 1 with a list of violations. Extend it
@@ -133,21 +138,46 @@ for (const row of speccedSection.matchAll(/^\|\s*(`[^`]+`)\s*\|/gm)) {
 
 // ---------- 4. diagnostic codes ----------
 const sourceCodes = new Set();
+// Severity actually used at each call site: `diagnostics.warn('TSTxxxx', ...)`,
+// `.error(...)`, `.info(...)` — also matches the `diagnostics?.warn(` optional-
+// chaining form (packages/ir), which is why the method name is matched loosely
+// (`\.(warn|error|info)\(`) rather than anchored to a literal `diagnostics.`.
+const sourceSeverity = new Map(); // code -> Set<'warning'|'error'|'info'>
+const SEVERITY_NAME = { warn: 'warning', error: 'error', info: 'info' };
 for (const pkg of readdirSync(join(root, 'packages'), { withFileTypes: true })) {
   if (!pkg.isDirectory()) continue;
   const srcDir = join(root, 'packages', pkg.name, 'src');
   if (!existsSync(srcDir)) continue;
   for (const f of readdirSync(srcDir, { recursive: true })) {
     if (!String(f).endsWith('.js')) continue;
-    for (const m of readFileSync(join(srcDir, String(f)), 'utf8').matchAll(/TST\d{4}/g)) sourceCodes.add(m[0]);
+    const src = readFileSync(join(srcDir, String(f)), 'utf8');
+    for (const m of src.matchAll(/TST\d{4}/g)) sourceCodes.add(m[0]);
+    for (const m of src.matchAll(/\.(warn|error|info)\(\s*\n?\s*[`'"](TST\d{4})/g)) {
+      const [, method, code] = m;
+      if (!sourceSeverity.has(code)) sourceSeverity.set(code, new Set());
+      sourceSeverity.get(code).add(SEVERITY_NAME[method]);
+    }
   }
 }
 const diagPage = read(`${DOCS_DIR}/diagnostics.md`);
 for (const code of [...sourceCodes].sort()) {
   if (!diagPage.includes(code)) fail(`diagnostics: ${code} is emitted in packages/*/src but absent from diagnostics.md`);
 }
-for (const m of diagPage.matchAll(/^\|\s*`(TST\d{4})`/gm)) {
+const docSeverity = new Map(); // code -> severity string from the table
+for (const m of diagPage.matchAll(/^\|\s*`(TST\d{4})`\s*\|\s*(\w+)\s*\|/gm)) {
+  docSeverity.set(m[1], m[2]);
   if (!sourceCodes.has(m[1])) fail(`diagnostics: diagnostics.md lists ${m[1]} as a code table row, but nothing in packages/*/src emits it`);
+}
+for (const [code, severities] of sourceSeverity) {
+  if (severities.size > 1) {
+    fail(`diagnostics: ${code} is emitted with inconsistent severities in source (${[...severities].join(', ')}) — the docs table can't match a code with more than one severity`);
+    continue;
+  }
+  const [actual] = severities;
+  const documented = docSeverity.get(code);
+  if (documented && documented !== actual) {
+    fail(`diagnostics: ${code} is documented as "${documented}" in diagnostics.md but source emits it as "${actual}"`);
+  }
 }
 
 // ---------- 5. overview surfaces name every shipped exporter ----------
@@ -186,5 +216,5 @@ if (errors.length) {
 }
 console.log(
   `✔ docs check: ${slugs.length} pages all reachable; internal links + anchors resolve; ` +
-  `${commands.length} CLI commands and ${sourceCodes.size} diagnostic codes match the docs exactly`,
+  `${commands.length} CLI commands and ${sourceCodes.size} diagnostic codes (severity included) match the docs exactly`,
 );
