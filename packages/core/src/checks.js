@@ -38,16 +38,21 @@ export function runChecks(normalized, config, diagnostics) {
       const ratio = pairRatio(map, fg, bg);
       if (ratio === null) continue;
       if (ratio < min) {
-        // AL5: on a design system with no dark-mode values authored and
-        // `autoDark` off, the light values simply carry over — so a light-on-
-        // light pair is flagged in dark mode and the warning looks like a
-        // mystery about colors the user never wrote. When this mode's pair is
-        // byte-identical to the default mode's, that carry-over IS the reason,
-        // and saying so is the difference between an actionable warning and
-        // noise the user learns to ignore.
+        // AL5: on a design system with no dark-mode values authored, the
+        // light values simply carry over — so a light-on-light pair is
+        // flagged in dark mode and the warning looks like a mystery about
+        // colors the user never wrote. When this mode's pair is byte-identical
+        // to the default mode's, that carry-over IS the reason, and saying so
+        // is the difference between an actionable warning and noise the user
+        // learns to ignore.
+        //
+        // `derivation.autoDark` is NOT consulted here (or anywhere in the
+        // pipeline): it's specced (derivation.md) but not implemented, so the
+        // hint below must not suggest it as a working remedy — "opt into
+        // autoDark" used to be here and was accurate-sounding but false.
         const defaultMap = normalized.modes[normalized.defaultMode];
         const carried =
-          mode === normalized.defaultMode || config?.derivation?.autoDark
+          mode === normalized.defaultMode
             ? []
             : [fg, bg].filter(
                 (p) =>
@@ -59,7 +64,7 @@ export function runChecks(normalized, config, diagnostics) {
           `${fg} vs ${bg} is ${ratio.toFixed(1)}:1 in ${mode} mode (< ${min}:1 ${standard})`,
           carried.length
             ? {
-                hint: `${carried.join(' and ')} ${carried.length > 1 ? 'are' : 'is'} unchanged from ${normalized.defaultMode} mode — nothing authors a ${mode} value and \`derivation.autoDark\` is off, so ${carried.length > 1 ? 'they' : 'it'} carried over. Author the ${mode} value, or opt into autoDark.`,
+                hint: `${carried.join(' and ')} ${carried.length > 1 ? 'are' : 'is'} unchanged from ${normalized.defaultMode} mode — nothing authors a ${mode} value, so ${carried.length > 1 ? 'they' : 'it'} carried over. Author the ${mode} value.`,
               }
             : {},
         );

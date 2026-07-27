@@ -3,8 +3,12 @@
  * (docs/architecture/pipeline.md#2-normalize).
  */
 
-import { collectTokens, collectRoleArchetypes, mergeTrees, aliasTarget, comboKey, expandModeMatrix, PROVENANCE } from '@transtyle/ir';
+import { collectTokens, collectRoleArchetypes, mergeTrees, aliasTarget, comboKey, expandModeMatrix, PROVENANCE, COLOR_ROLES } from '@transtyle/ir';
 import { parseColor } from './color.js';
+
+/** Matches `semantic.color.<role>.solid` — the anchor cell an entire role grid
+ *  (hover/active/tint/outline/on-colors, ~16 slots) fans out from. */
+const ROLE_SOLID = /^semantic\.color\.([\w-]+)\.solid$/;
 
 /**
  * @returns {{ modes: Record<string, Map<string, Entry>>, modeDimension: string }}
@@ -92,6 +96,19 @@ export function normalize(tokenTrees, config, diagnostics) {
     }
   }
 
+  // TST1204: a role's `.solid` anchor drives its whole grid (~16 derived
+  // slots — hover/active/tint/outline/on-colors), so when it's authored in the
+  // default mode but not in a non-default `color-scheme` value, the ENTIRE
+  // grid silently carries the default-mode color into that scheme — not an
+  // absence (TST1201/1203 cover that), a value that's present and looks
+  // complete but never changed. This is documented, default behavior
+  // (`diagnostics.md` "My brand color is identical in dark mode") — `info`,
+  // not a mistake — but until now nothing surfaced it except the docs page.
+  // Reported once per (role, scheme value) regardless of how many OTHER
+  // dimensions multiply the combos sharing that fact (e.g. `dark+comfortable`
+  // and `dark+compact` are the same carry-over, not two).
+  const reportedCarryOver = new Set();
+
   const combos = expandModeMatrix(dimEntries);
   const modes = {};
   const comboDims = {};
@@ -109,6 +126,20 @@ export function normalize(tokenTrees, config, diagnostics) {
         if (v === dimDefaults.get(dimName).default) continue;
         const override = tok.modeValues?.[dimName]?.[v];
         if (override !== undefined) { value = override; overriddenMode = `${dimName}=${v}`; }
+        else if (dimName === 'color-scheme') {
+          const role = tokenPath.match(ROLE_SOLID)?.[1];
+          if (role && (COLOR_ROLES.includes(role) || roleArchetypes.has(role))) {
+            const dedupeKey = `${tokenPath}|${v}`;
+            if (!reportedCarryOver.has(dedupeKey)) {
+              reportedCarryOver.add(dedupeKey);
+              diagnostics.info(
+                'TST1204',
+                `${tokenPath} has no authored value for color-scheme=${v} — the ${dimDefaults.get('color-scheme').default}-mode value carries over unchanged, and so does its whole derived grid`,
+                { hint: `Author ${tokenPath} for color-scheme=${v} if this role should differ in that mode. This is default behavior — nothing is broken.` },
+              );
+            }
+          }
+        }
       }
       map.set(tokenPath, {
         type: tok.type,

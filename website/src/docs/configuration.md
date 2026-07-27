@@ -106,7 +106,7 @@ Two constraints worth knowing:
 ## `derivation`
 
 - `rules` — the rule pack, pinned with a version (`standard@1`). Pinning means upgrading Transtyle can never silently change your compiled theme.
-- `autoDark` — default `false`. When off, dark-mode values you didn't author fall back to default-mode values (brand colors stay identical across modes). Deliberate: synthetic dark themes are the least trustworthy derivation class, so they're opt-in.
+- `autoDark` — specced, not yet implemented (synthesizing dark values is planned as opt-in, since it's the least trustworthy derivation class). Today, regardless of this setting, dark-mode values you didn't author fall back to default-mode values (brand colors stay identical across modes) — deliberate, surfaced by `TST1204`.
 - `require` — tokens that must be **authored**, not derived. Build fails with `TST1202` otherwise. Use this to encode team policy ("nobody ships a derived brand color"). A color role may be named at the role (`semantic.color.primary`) or the anchor cell (`semantic.color.primary.solid`); both check the `.solid` cell, which is the one the grid is built from.
 - `overrides` — per-slot derivation rules (specced, not yet implemented; today, simply author the token — authored always wins).
 
