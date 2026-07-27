@@ -39,24 +39,29 @@
  * — a light-only DS must not crash for want of a `dark` map, a density-only DS
  * has no `modes.light` at all, and so on.
  *
- * **Authored dark.** For every shape whose `color-scheme` carries a *non-default*
- * dark value, the harness authors a distinct dark surface + text via a
- * mode-scoped layer. The three-token floor is otherwise all-light: with
- * `autoDark` off and no dark values authored, the dark map's *anchor* slots
- * (surface, text) fall back to their light values, so the dark block an exporter
- * emits carries a light canvas, and every value derived from that canvas
- * (text-muted/subtle/inverse, the on-colors, contrast pairs) is computed against
- * a light anchor even in dark mode. The `isDark` role grid runs regardless — but
- * derivation against a genuinely dark *authored* canvas never did. Authoring a
- * real dark surface + text exercises exactly that path, and any exporter that
- * only emits a dark override when it differs from light (css-variables emits the
- * dark block unconditionally; others may gate on a diff) gets its diff branch
- * covered too. A fifth assertion checks the dark surface distinctly reached the
- * dark map — so a future glob/layer regression that silently swallows the dark
- * layer (making dark == light again) fails loudly rather than quietly turning
- * the dark sweep back into a no-op. Shapes with no non-default dark (light-only,
- * dark-only where dark IS the default, density-only) get no dark layer — a
- * dark-scoped file there is a TST1109 or dead weight, not a test.
+ * **Authored extra scheme values.** For every shape whose `color-scheme`
+ * carries a value we have fixture data for (`dark`, and `three-scheme`'s third
+ * value `dim`), the harness authors a distinct surface + text via a
+ * mode-scoped layer — see `EXTRA_SCHEME_TOKENS`. The three-token floor is
+ * otherwise all-light: with `autoDark` off and no non-default values authored,
+ * those combos' *anchor* slots (surface, text) fall back to the light value, so
+ * everything derived from that canvas (text-muted/subtle/inverse, on-colors,
+ * contrast pairs) is computed against a light anchor even in a nominally
+ * non-light mode. The `isDark` role grid runs regardless — but derivation
+ * against a genuinely different *authored* canvas never did. `dim` specifically
+ * tests something `dark` can't: whether the ENGINE (normalize/derive) keeps a
+ * THIRD color-scheme value's data distinct through per-dimension resolution, or
+ * silently collapses it into light or dark somewhere in the pipeline — no
+ * exporter binds a third value structurally (every binding is `:root`/`.dark`,
+ * never data-driven off the value list), so this assertion lives at the IR
+ * boundary, not in emitted output. A fifth invariant checks every authored
+ * value's surface distinctly reached its own combo map, pairwise distinct from
+ * light and from every other authored value — so a future glob/layer
+ * regression, or a resolution bug that collapses two non-default values onto
+ * one slot, fails loudly rather than quietly turning the sweep into a no-op.
+ * Shapes with no fixture-backed non-default value (light-only, dark-only where
+ * dark IS the default, density-only) get no extra layer — a mode-scoped file
+ * there would be a TST1109 or dead weight, not a test.
  *
  * Plus one negative-space case: a config that declares `color-scheme` after
  * another dimension must raise TST1112 *as an error*, because the polarity axis
@@ -116,27 +121,57 @@ const MODE_SHAPES = {
 };
 
 /**
- * A genuinely different dark surface + text, authored via a mode-scoped layer.
- * Lives at the temp-dir ROOT, deliberately outside the `tokens/*.tokens.json`
- * base glob (which matches only direct children of `tokens/`), so it is never
- * picked up as a base layer — only when a shape's config references it as a
- * `{ color-scheme: dark }` mode layer.
+ * A genuinely different surface + text per NON-DEFAULT `color-scheme` value,
+ * each authored via its own mode-scoped layer. Lives at the temp-dir ROOT,
+ * deliberately outside the `tokens/*.tokens.json` base glob (which matches
+ * only direct children of `tokens/`), so a layer is never picked up as a base
+ * layer — only when a shape's config references it as a
+ * `{ color-scheme: <value> }` mode layer.
+ *
+ * `dark` covers the two-value shapes. `dim` covers `three-scheme`'s THIRD
+ * value — the one that is neither the default nor the polarity value `isDark`
+ * keys on (derive.js: `isDark = (... === 'dark')`). No exporter binds a
+ * color-scheme value beyond light/dark structurally (every binding is
+ * `:root`/`.dark`, never data-driven off the configured value list) — that is
+ * a known, current limitation, not a bug this sweep is trying to catch. What
+ * IS worth catching: whether the ENGINE (normalize/derive) keeps a third
+ * value's authored data distinct through the pipeline, or silently collapses
+ * it into light or dark somewhere in per-dimension resolution. Each value's
+ * color is chosen to be distinguishable from both light (#ffffff/#212529) and
+ * every other authored value.
  */
-const DARK_TOKENS = {
-  semantic: {
-    color: {
+const EXTRA_SCHEME_TOKENS = {
+  dark: {
+    semantic: { color: {
       surface: { $type: 'color', $value: '#101114' },
       text: { base: { $type: 'color', $value: '#f8f9fa' } },
-    },
+    } },
+  },
+  dim: {
+    semantic: { color: {
+      surface: { $type: 'color', $value: '#2b2417' },
+      text: { base: { $type: 'color', $value: '#f5ecd9' } },
+    } },
   },
 };
 
 const dir = mkdtempSync(join(tmpdir(), 'transtyle-minimal-'));
 mkdirSync(join(dir, 'tokens'));
 writeFileSync(join(dir, 'tokens', 'base.tokens.json'), JSON.stringify(MINIMAL_TOKENS, null, 2));
-writeFileSync(join(dir, 'dark.tokens.json'), JSON.stringify(DARK_TOKENS, null, 2));
+for (const [value, tree] of Object.entries(EXTRA_SCHEME_TOKENS)) {
+  writeFileSync(join(dir, `${value}.tokens.json`), JSON.stringify(tree, null, 2));
+}
 
-const writeConfig = (modes, withDark = false) =>
+/** Non-default `color-scheme` values this shape has, that we have authored
+ *  token data for — i.e. genuinely different from the default and worth a
+ *  mode-scoped layer, rather than a value the harness has no fixture for. */
+const extraSchemeValues = (modes) => {
+  const cs = modes['color-scheme'];
+  if (!cs) return [];
+  return cs.values.filter((v) => v !== cs.default && v in EXTRA_SCHEME_TOKENS);
+};
+
+const writeConfig = (modes) =>
   writeFileSync(
     join(dir, 'transtyle.config.json'),
     JSON.stringify(
@@ -144,7 +179,7 @@ const writeConfig = (modes, withDark = false) =>
         name: 'minimal',
         tokens: [
           'tokens/*.tokens.json',
-          ...(withDark ? [{ files: 'dark.tokens.json', mode: { 'color-scheme': 'dark' } }] : []),
+          ...extraSchemeValues(modes).map((v) => ({ files: `${v}.tokens.json`, mode: { 'color-scheme': v } })),
         ],
         modes,
         derivation: { rules: 'standard@1' },
@@ -155,13 +190,6 @@ const writeConfig = (modes, withDark = false) =>
     ),
   );
 
-/** True when the shape has a `dark` color-scheme value that isn't the default —
- *  i.e. there is a genuine non-default dark for the mode layer to override. */
-const hasNonDefaultDark = (modes) => {
-  const cs = modes['color-scheme'];
-  return Boolean(cs && cs.values.includes('dark') && cs.default !== 'dark');
-};
-
 const errors = [];
 // `undefined` etc. as a whole word on the value side of a declaration. Matching
 // the value side only keeps legitimate prose (a comment mentioning "undefined")
@@ -170,8 +198,8 @@ const LEAK = /(:|=>?)\s*(undefined|null|NaN)\b/;
 
 let files = 0;
 for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
-  const withDark = hasNonDefaultDark(modes);
-  writeConfig(modes, withDark);
+  const extraValues = extraSchemeValues(modes);
+  writeConfig(modes);
   for (const [name, pkg] of Object.entries(EXPORTERS)) {
     const loadExporter = async () => (await import(pkg)).default;
     const at = `${name} (${shape})`;
@@ -216,18 +244,32 @@ for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
       }
     }
 
-    // 5. The authored dark anchor actually reached the dark map, distinct from
-    //    light. This guards the sweep's own premise: if a regression swallowed
-    //    the dark layer (dark == light), the dark canvas would silently be a
-    //    light one again and the authored-dark derivation path would stop being
-    //    exercised, while every invariant above still passed — a silent no-op
-    //    test. Checked at the IR boundary (not by grepping output) so it is
-    //    robust to each exporter's color rendering.
-    if (withDark) {
-      const lightSurface = map.get('semantic.color.surface')?.value;
-      const darkSurface = result.normalized.modes.dark?.get('semantic.color.surface')?.value;
-      if (darkSurface === undefined || JSON.stringify(darkSurface) === JSON.stringify(lightSurface)) {
-        errors.push(`${at}: authored dark surface did not distinctly reach modes.dark — the dark sweep degenerated to a light canvas`);
+    // 5. Every authored extra scheme value's anchor actually reached its OWN
+    //    combo map, distinct from light AND from every other authored value.
+    //    This guards the sweep's own premise: if a regression swallowed a mode
+    //    layer (a value == light), or per-dimension resolution collapsed two
+    //    non-default values onto the same slot (`dim` == `dark`), the affected
+    //    derivation path would silently stop being exercised while every
+    //    invariant above still passed — a silent no-op test. `three-scheme`'s
+    //    `dim` is the one case testing the ENGINE keeps a THIRD color-scheme
+    //    value distinct through normalize/derive — not that any exporter binds
+    //    it (none structurally can; see EXTRA_SCHEME_TOKENS doc comment).
+    //    Checked at the IR boundary (not by grepping output) so it is robust to
+    //    each exporter's color rendering.
+    if (extraValues.length) {
+      const seen = new Map([['light', map.get('semantic.color.surface')?.value]]);
+      for (const value of extraValues) {
+        const surface = result.normalized.modes[value]?.get('semantic.color.surface')?.value;
+        if (surface === undefined) {
+          errors.push(`${at}: authored "${value}" surface did not reach modes.${value}`);
+          continue;
+        }
+        for (const [otherName, otherSurface] of seen) {
+          if (JSON.stringify(surface) === JSON.stringify(otherSurface)) {
+            errors.push(`${at}: authored "${value}" surface is indistinguishable from "${otherName}" — the sweep degenerated (values collapsed onto the same canvas)`);
+          }
+        }
+        seen.set(value, surface);
       }
     }
   }
@@ -259,4 +301,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes (${files} files, no leaks; authored dark distinctly emitted where declared); polarity-axis-not-first is a build error`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes (${files} files, no leaks; authored dark/dim distinctly reach the IR where declared); polarity-axis-not-first is a build error`);
