@@ -27,6 +27,17 @@
  *      `data-example` attribute. A matrix without that attribute is an error:
  *      an unlabeled diagram is a number nobody can re-derive.
  *
+ *   3. measured markers — the counts prose states in a thousand different
+ *      shapes ("40 authored tokens", "657 component-scoped variables"). A page
+ *      declares them next to the claim:
+ *
+ *          <!-- measured: acme.slots = 271 -->
+ *          …**40 authored DTCG tokens produce 271 resolved slots per mode**…
+ *
+ *      The declared value is recomputed from the repo, and the number must
+ *      still appear in the block the marker introduces, so neither half can
+ *      drift away from the other. See `measure()` for the metric list.
+ *
  * Both compare against the reports committed in the repo, which is the honest
  * question — "do the docs say what this repo's own output says?" — and stays
  * answerable without running a build.
@@ -52,6 +63,9 @@ const SURFACES = [
   ...readdirSync(join(root, 'website/src/docs')).filter((f) => f.endsWith('.md')).map((f) => `website/src/docs/${f}`),
   ...readdirSync(join(root, 'website/src/blog')).filter((f) => f.endsWith('.md')).map((f) => `website/src/blog/${f}`),
   'website/src/pages/index.astro',
+  'README.md',
+  'ROADMAP.md',
+  'CONTRIBUTING.md',
 ];
 
 /**
@@ -157,6 +171,150 @@ for (const surface of SURFACES) {
           );
         }
       }
+    }
+  }
+}
+
+// ---------- 3. measured markers ----------
+/**
+ * The counts a transcript-shaped regex can never find: "40 authored tokens",
+ * "271 resolved slots per mode", "657 component-scoped variables". Prose can
+ * say those in a thousand shapes, so instead of guessing at the prose, a page
+ * declares the claim next to it:
+ *
+ *   <!-- measured: acme.slots = 271 -->
+ *   …**40 authored DTCG tokens produce 271 resolved slots per mode**…
+ *
+ * Two things are then checked: the declared value still matches what the repo
+ * actually produces, and the number still appears in the paragraph the marker
+ * introduces — so a marker cannot quietly drift away from the sentence it
+ * certifies, and a sentence cannot be edited out from under its marker.
+ *
+ * Every metric below is computed from the repo, not from a second copy of the
+ * answer. Adding one is the cheap way to put a new prose number under guard.
+ */
+const cliSrc = read('packages/cli/src/main.js');
+const cache = new Map();
+const memo = (key, fn) => {
+  if (!cache.has(key)) cache.set(key, fn());
+  return cache.get(key);
+};
+
+const exampleNames = () =>
+  readdirSync(join(root, 'examples'), { withFileTypes: true })
+    .filter((d) => d.isDirectory() && existsSync(join(root, 'examples', d.name, 'transtyle.config.json')))
+    .map((d) => d.name);
+
+/** Compile an example (no emit) and count what the engine resolved. */
+const compiled = async (example) => {
+  const key = `compile:${example}`;
+  if (!cache.has(key)) {
+    const { compile } = await import('../packages/core/src/index.js');
+    const loadExporter = async (name) => (await import(`../packages/exporter-${name}/src/index.js`)).default;
+    const { normalized } = await compile({ cwd: join(root, 'examples', example), emit: false, loadExporter });
+    // The default mode carries every slot; per-mode counts are identical by
+    // construction (every slot resolves in every mode).
+    const map = normalized.modes[Object.keys(normalized.modes)[0]];
+    const slots = [...map.keys()];
+    const written = slots.filter((s) => ['authored', 'aliased'].includes(map.get(s).provenance?.kind));
+    const tier = (list, name) => list.filter((s) => s.startsWith(`${name}.`)).length;
+    cache.set(key, {
+      slots: slots.length,
+      authored: written.length,
+      engine: slots.length - written.length,
+      'authored.option': tier(written, 'option'),
+      'authored.semantic': tier(written, 'semantic'),
+      'authored.component': tier(written, 'component'),
+    });
+  }
+  return cache.get(key);
+};
+
+/** CSS custom-property declarations in an example's emitted files for a target. */
+const cssCounts = (example, target) => {
+  const dir = join(root, 'examples', example, 'dist', target);
+  if (!existsSync(dir)) return null;
+  const css = readdirSync(dir).filter((f) => f.endsWith('.css'));
+  const decls = css.flatMap((f) => readFileSync(join(dir, f), 'utf8').match(/^\s*--[\w-]+:/gm) ?? []);
+  return { decls: decls.length, distinct: new Set(decls.map((d) => d.trim())).size };
+};
+
+const surfaceInventory = (target) => {
+  const path = `packages/exporter-${target}/surface-inventory.json`;
+  return existsSync(join(root, path)) ? JSON.parse(read(path)) : null;
+};
+
+/** metric name → computed value (or null when the metric can't be resolved). */
+async function measure(metric) {
+  const parts = metric.split('.');
+
+  if (metric === 'exporters') {
+    return memo(metric, () => (cliSrc.match(/OFFICIAL_EXPORTERS\s*=\s*\{([\s\S]*?)\}/)?.[1].match(/^\s*['"]?[\w-]+['"]?:/gm) ?? []).length);
+  }
+  if (metric === 'examples') return memo(metric, () => exampleNames().length);
+  if (metric === 'demos') {
+    return memo(metric, () =>
+      exampleNames().reduce((n, ex) => {
+        const dir = join(root, 'examples', ex, 'demo');
+        return n + (existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).length : 0);
+      }, 0),
+    );
+  }
+
+  // <target>.surface.total | <target>.surface.component
+  if (parts[1] === 'surface') {
+    const inv = surfaceInventory(parts[0]);
+    if (!inv) return null;
+    if (parts[2] === 'total') return inv.counts.total;
+    if (parts[2] === 'component') return inv.counts.component ?? inv.counts.components ?? null;
+    return null;
+  }
+
+  const [example, ...rest] = parts;
+  if (!exampleNames().includes(example)) return null;
+
+  // <example>.<target>.decls | .distinct
+  if (rest.length === 2 && ['decls', 'distinct'].includes(rest[1])) {
+    return cssCounts(example, rest[0])?.[rest[1]] ?? null;
+  }
+
+  // <example>.slots | .authored | .engine | .authored.<tier>
+  const stats = await compiled(example);
+  return stats[rest.join('.')] ?? null;
+}
+
+const MARKER = /^[ \t]*<!--\s*measured:\s*([\w.-]+)\s*=\s*(\d+)\s*-->[ \t]*$/;
+
+for (const surface of SURFACES) {
+  const lines = read(surface).split('\n');
+  for (const [i, line] of lines.entries()) {
+    const m = MARKER.exec(line);
+    if (!m) continue;
+    const [, metric, declared] = m;
+    const actual = await measure(metric);
+    if (actual === null || actual === undefined) {
+      fail(`${surface}:${i + 1}: <!-- measured: ${metric} --> names a metric check-doc-numbers.mjs can't compute`);
+      continue;
+    }
+    if (Number(declared) !== actual) {
+      fail(`${surface}:${i + 1}: ${metric} is ${actual}, but the page claims ${declared} — update the marker and the sentence under it`);
+      continue;
+    }
+    // The marker must still sit on top of the sentence it certifies: look at
+    // the block it introduces (skipping further markers and blank lines).
+    let j = i + 1;
+    while (j < lines.length && (lines[j].trim() === '' || MARKER.test(lines[j]))) j++;
+    let block = '';
+    while (j < lines.length && lines[j].trim() !== '') block += lines[j++] + '\n';
+    // Prose spells small numbers ("eight exporters", "four examples"), so the
+    // claim counts either way — the marker is about the fact, not the glyph.
+    const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+    const spelled = WORDS[Number(declared)];
+    const said =
+      new RegExp(`(?<![\\d,.])${declared}(?![\\d,.])`).test(block.replace(/,/g, '')) ||
+      (spelled !== undefined && new RegExp(`\\b${spelled}\\b`, 'i').test(block));
+    if (!said) {
+      fail(`${surface}:${i + 1}: <!-- measured: ${metric} = ${declared} --> introduces a block that never says ${declared} — the marker has drifted off its claim`);
     }
   }
 }

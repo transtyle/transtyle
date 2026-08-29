@@ -98,6 +98,9 @@ One authored line, and the exporters reproduce the distinction on targets that m
 
 ### Why it isn't bigger
 
+<!-- measured: bootstrap.surface.component = 657 -->
+<!-- measured: primeng.surface.total = 2759 -->
+
 Both reference targets expose enormous component surfaces — 657 themable Bootstrap variables, 2759 PrimeNG slots — and it would be easy to mint a catalog slot for each. That would produce a vocabulary shaped like whichever target was read last, which is the failure mode this whole design exists to avoid.
 
 So nothing enters the component tier without **two independent exporters needing the identical thing, for architectural rather than nominal reasons**. Two examples of the rule doing work, both recorded in `docs/proposals/0003-component-catalog-generalization.md`:

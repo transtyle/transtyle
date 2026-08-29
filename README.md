@@ -2,6 +2,10 @@
 
 > A design system compiler. Describe your design system once; compile it to every ecosystem.
 
+<!-- measured: bootstrap.surface.component = 657 -->
+<!-- measured: exporters = 8 -->
+<!-- measured: examples = 4 -->
+
 **Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a working implementation: the core pipeline and eight exporters (shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, css-variables — the plugin-API reference implementation — Radix Colors/Themes, and PrimeNG), exercised end-to-end by four examples and their runnable demo projects — two invented ([Acme](examples/acme/), [Cathode](examples/cathode/)) and two real, independently-designed systems adopted via the binding-layer pattern ([GOV.UK](examples/govuk/), [Carbon](examples/carbon/)). The **component tier is live on two targets**: PrimeNG (severity grid + archetype helpers) and Bootstrap (all 657 component-scoped variables classified against a checked-in surface inventory — driven by `component.*` tokens with semantic defaults, chained through Bootstrap's own expressions, or honestly reported; both Sass and CSS-variable paths). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
 
 ## What it is
@@ -37,6 +41,9 @@ cd examples/acme
 npx transtyle build         # shadcn (both Tailwind eras) + daisyUI + Apache ECharts + Bootstrap + Storybook themes
 npx transtyle check         # pipeline without emit: validation + contrast + coverage
 ```
+
+<!-- measured: acme.authored = 40 -->
+<!-- measured: acme.slots = 271 -->
 
 The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project, `_variables.transtyle.scss`/`_maps.transtyle.scss` import around Bootstrap's own Sass build, and `theme.*-{light,dark}.json` registers straight into Apache ECharts — see each generated `usage.md`. Acme's 40 authored tokens — nine of them actual design decisions — produce 271 resolved slots per mode and the full variable set of every target; everything unauthored is derived deterministically with provenance recorded in `report.json`.
 

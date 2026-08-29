@@ -50,6 +50,9 @@ Bootstrap generates `-bg-subtle` / `-border-subtle` / `-text-emphasis` per theme
 
 ## Component theming
 
+<!-- measured: bootstrap.surface.total = 952 -->
+<!-- measured: bootstrap.surface.component = 657 -->
+
 Bootstrap 5.3's `_variables.scss` has 952 top-level variables; 657 are component-scoped, and **every one of them is classified** against a checked-in surface inventory (`packages/exporter-bootstrap/surface-inventory.json`, drift-guarded in CI). To answer "which `$btn-*` variables does Transtyle drive, and via which path?" for any variable:
 
 - **`report.json`** carries one coverage row per variable — its source slot (`component.button.radius`, `semantic.space.2`, …), its class (`native`/`derived`/`approximated`), or why it isn't driven (`dropped` structure and derivation knobs, `unsupported` IR gaps like icon assets and state opacities, each with a note).

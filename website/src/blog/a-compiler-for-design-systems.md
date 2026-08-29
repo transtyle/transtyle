@@ -3,6 +3,11 @@ title: 'A compiler for design systems'
 description: 'Theming is an N×M problem, and token pipelines only solve half of it. Here is what changes when you treat a design system as source code — and compile it.'
 date: '2026-08-29'
 author: 'Julien Déramond'
+# Pinned to the brand hue rather than the slug-derived rung: this is the post
+# that introduces the project, so its card should be unmistakably the project's
+# own colour. Later posts take their derived accent — delete this line and this
+# one does too.
+accentHue: 262
 ---
 
 Your brand blue lives in six places.

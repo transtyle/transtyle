@@ -10,7 +10,11 @@ Four example design systems live in the repo. Acme and Cathode are invented, cho
 
 ## Acme — the minimal example
 
-`examples/acme` authors **26 tokens above the raw palette**, and only nine of them are the design decisions: a brand blue, background/surface/text/text-muted/border (each with authored dark values), one radius, two font stacks. The other seventeen are an explicit 13-step space scale and four component-tier tokens, both there to exercise machinery rather than because the system needs them spelled out. Plus a 14-token option palette they alias into.
+<!-- measured: acme.authored.semantic = 22 -->
+<!-- measured: acme.authored.component = 4 -->
+<!-- measured: acme.authored.option = 14 -->
+
+`examples/acme` authors **22 semantic tokens and 4 component-tier ones**, and only nine of the semantic ones are design decisions: a brand blue, background/surface/text/text-muted/border (each with authored dark values), one radius, two font stacks. The remaining thirteen are an explicit space scale, spelled out to exercise the machinery rather than because the system needs it. Plus a 14-token option palette they alias into.
 
 ```bash
 cd examples/acme
@@ -19,7 +23,9 @@ npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, boo
 
 What to study:
 
-- **Derivation in action.** The other 20+ variables in the output are derived: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
+<!-- measured: acme.engine = 231 -->
+
+- **Derivation in action.** The other 231 slots per mode are the engine's: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
 - **One brand color drives everything.** Change `option.color.blue.600`, rebuild, and watch the accent tint, on-colors, and all five chart colors follow coherently.
 - **Both mode-authoring forms.** Acme uses inline `$extensions` for dark values — the compact form for hand-edited files.
 - **Target instances.** Its config builds the same design system for both shadcn eras side by side — plus [per-mode ECharts themes](/docs/exporter-echarts/) whose `color[]` palette shares its first five colors with shadcn's `--chart-*`: one brand, one data-viz palette, everywhere.
@@ -38,7 +44,7 @@ Acme is also the conformance fixture from the Phase 0 design exercise; `examples
 
 ```bash
 cd examples/cathode
-npx transtyle build          # same seven targets as Acme, radically different values
+npx transtyle build          # same eight targets as Acme, radically different values
 ```
 
 What to study:
@@ -55,7 +61,7 @@ What to study:
 
 ```bash
 cd examples/govuk
-npx transtyle build          # same seven targets as Acme/Cathode
+npx transtyle build          # same eight targets as Acme/Cathode
 ```
 
 What to study:
@@ -74,19 +80,21 @@ Full reasoning for every binding decision: [`docs/findings/govuk-adoption.md`](h
 
 ```bash
 cd examples/carbon
-npx transtyle build          # same seven targets
+npx transtyle build          # same eight targets
 ```
 
 What to study:
 
 - **Better native role coverage than GOV.UK.** Carbon has real, named tokens for `danger`/`success`/`warning`/`info` (its "Support" group) _and_ a real `secondary` (`$button-secondary`) — bound directly, not derived.
-- **Real per-mode tokens, not synthetic dark mode.** Carbon ships four themes (White, G10, G90, G100); this example binds White → light, G100 → dark, with every color's actual documented value in both modes via `$extensions.transtyle.modes` — `$focus`, `$link-primary`, and the four Support colors all have real, distinct light/dark values.
+- **Real per-mode tokens, not synthetic dark mode.** Carbon ships four themes (White, G10, G90, G100); this example binds White → light, G100 → dark, carrying each color's actual documented value in both modes via `$extensions."transtyle.modes"`. Nine of its fourteen colors have a distinct dark value — `$focus`, `$link-primary`, `$link-visited`, and three of the four Support colors among them. `$support-warning` and `$button-secondary` deliberately have none (see the flagged gap below), which is what an honest binding looks like: overrides where the source publishes one, silence where it doesn't.
 - **A genuinely open type system.** IBM Plex Sans/Mono are open-source and load for real in the demo projects — unlike GOV.UK's licensed font.
-- **A flagged, not guessed, gap.** `secondary`'s dark-mode value falls back to its light value because Carbon's G100 `$button-secondary` wasn't independently re-verified against the live source for this pass — the honest alternative to inventing a plausible-looking hex.
+- **A flagged, not guessed, gap.** `secondary` and `warning` fall back to their light values in dark mode, because Carbon's G100 `$button-secondary` and `$support-warning` weren't independently re-verified against the live source for this pass — the honest alternative to inventing a plausible-looking hex. The build says so out loud: `transtyle check` prints an informational `TST1204` for every role whose dark value is a carry-over.
 
 Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/julien-deramond/transtyle/blob/main/docs/findings/carbon-adoption.md).
 
 ## See the themes on real frameworks
+
+<!-- measured: demos = 32 -->
 
 Each example ships eight npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), and Angular [PrimeNG](/docs/exporter-primeng/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 32 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI. From the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4107, 6101; Cathode: 4201–4207, 6201; GOV.UK: 4301–4307, 6301; Carbon: 4401–4407, 6401).
 

@@ -25,10 +25,10 @@ Scope: **foundations only** — colors, typography, spacing, radius, shadows, bo
 ### Done
 
 - ✅ `@transtyle/core`: loader, normalizer, derivation engine — standard@1 now implements the full [role grid](docs/architecture/ir.md#color-the-role-grid) (prominence × state per color role), the elevation ladder + shadows, the content hierarchy, and the foundations scales (space/size/border-width/breakpoint/z/type/motion), landed 2026-07-20 as the catalog revision ([proposal 0001](docs/proposals/0001-universal-token-ir.md), [ADR-0010](docs/adr/0010-pre-release-breaking-changes.md)) — resolver host, emitter, diagnostics, coverage report (`report.json`; [docs/specs/validation-and-coverage.md](docs/specs/validation-and-coverage.md)).
-- ✅ `@transtyle/cli`: `build`, `check`, `--cwd`, target instances.
+- ✅ `@transtyle/cli`: `build`, `check`, `explain`, `init`, `add`, `diff`, `--cwd`, target instances, `check --json`.
 - ✅ **All four reference exporters** — **shadcn/ui** (both Tailwind eras), **ECharts** (per-mode themes, derived 8-color palette), **Bootstrap** (2026-07-20: Sass path `_variables`+`_maps` _and_ CSS-variable path; the IR stress test), **Storybook** (2026-07-20: chrome ThemeVars in the DS-native mode + sibling preview composition via the `ctx.siblings` manifest) — plus **daisyUI** (B3 pull-forward). Bootstrap and Storybook were accepted value-exact against their Phase 0 fixtures, closing the fixtures' purpose.
 - ✅ **Demo projects** ([docs/specs/demo-app.md](docs/specs/demo-app.md)): 32 npm projects (8 targets × 4 examples — Acme, Cathode, and, as of the T11 real-DS run, GOV.UK and Carbon) rendering the themes on each target's _real_ toolchain and components, consuming only `dist/`. This is the standing harness for the exit criterion's manual review.
-- ✅ DTCG files are valid input end-to-end (both examples are pure DTCG + config).
+- ✅ DTCG files are valid input end-to-end (all four examples are pure DTCG + config).
 
 ### Remaining — the catalog revision sequence
 
@@ -44,9 +44,9 @@ Direction set 2026-07-20: [proposal 0001](docs/proposals/0001-universal-token-ir
 - [x] **T8** — Multi-dimension modes + reserved dimensions (`density` worked example on Acme).
 - [x] **T9** — **Radix Themes exporter** — the grid's designated acceptance test (its 12 steps consume every grid column); shipped with zero catalog amendments, validating the grid as a real universal projection.
 - [x] **T10** — DTCG validation UX (new stable diagnostic codes + `check --json`).
-- [~] **T11** — The real-DS run: **engineering done, human sign-off pending.** Both [GOV.UK](examples/govuk/) and [Carbon](examples/carbon/) adopted via the binding-layer playbook — all seven targets build clean for both, zero diagnostics, demo projects verified in-browser (see [docs/findings/govuk-adoption.md](docs/findings/govuk-adoption.md), [docs/findings/carbon-adoption.md](docs/findings/carbon-adoption.md), [docs/findings/t11-review-checklist.md](docs/findings/t11-review-checklist.md)). What's left is the maintainer's own practitioner review pass — this line flips to `[x]` and Phase 1 formally exits once that checklist is signed, not before.
+- [~] **T11** — The real-DS run: **engineering done, human sign-off pending.** Both [GOV.UK](examples/govuk/) and [Carbon](examples/carbon/) adopted via the binding-layer playbook — all eight targets build clean for both — zero warnings or errors, demo projects verified in-browser (see [docs/findings/govuk-adoption.md](docs/findings/govuk-adoption.md), [docs/findings/carbon-adoption.md](docs/findings/carbon-adoption.md), [docs/findings/t11-review-checklist.md](docs/findings/t11-review-checklist.md)). What's left is the maintainer's own practitioner review pass — this line flips to `[x]` and Phase 1 formally exits once that checklist is signed, not before.
 
-**Exit:** a real design system compiles to all reference targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — _Progress: two real DSs (GOV.UK, Carbon) compile to all seven shipped targets, zero diagnostics, and render correctly in the demo projects (engine-side verification complete); `docs/findings/t11-review-checklist.md` is ready for the maintainer's own practitioner pass — Phase 1 exit is contingent on that sign-off, per the exit criterion's own wording._
+**Exit:** a real design system compiles to all reference targets; outputs pass manual review by a practitioner of each target framework; deterministic builds verified in CI. — _Progress: two real DSs (GOV.UK, Carbon) compile to all eight shipped targets with zero warnings or errors, and render correctly in the demo projects (engine-side verification complete); `docs/findings/t11-review-checklist.md` is ready for the maintainer's own practitioner pass — Phase 1 exit is contingent on that sign-off, per the exit criterion's own wording._
 
 ## 2026-H2 execution ledger
 
@@ -114,10 +114,10 @@ Explicitly not scheduled this half: new exporters beyond the pilot's, catalog gr
 
 ## Phase 2 — Trust and workflow (v1.0)
 
-- `transtyle diff`: semantic diff between two DS versions, per-target impact summary.
+- ~~`transtyle diff`: semantic diff between two DS versions, per-target impact summary.~~ **Shipped early** (Phase 1) — implemented, golden-tested in `check:cli`, documented in `docs/specs/diff.md`.
 - `transtyle preview`: our own themed preview site (see [ADR-0007](docs/adr/0007-doc-generation-scope.md) for why this precedes upstream-doc rebuilding).
-- Watch mode, CI recipes, JSON diagnostics output for tooling.
-- Plugin conformance test kit + third-party exporter tutorial; plugin API declared v1 (semver-stable).
+- Watch mode, CI recipes. (JSON diagnostics output for tooling shipped early as `check --json`, T10.)
+- ~~Plugin conformance test kit~~ **shipped early** (R2/P1 — `@transtyle/plugin-kit`, gating all eight exporters in CI) + third-party exporter tutorial; plugin API declared v1 (semver-stable).
 - Importers beyond DTCG: Tailwind config, Figma variables export.
 
 **Exit criterion for v1.0:** a third party has shipped a working exporter without touching core, using only public docs.
