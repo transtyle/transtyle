@@ -341,6 +341,76 @@ if (!df.diagnostics.errors.some((d) => d.code === 'TST1112')) {
 
 rmSync(dir, { recursive: true, force: true });
 
+// Binding-layer case: TST1204 must judge the RESOLVED value, not the slot's own
+// text. A design system adopted the way the docs recommend binds catalog slots
+// to its own vocabulary with one-line aliases, and the per-mode values live on
+// the alias TARGET — the alias string itself reads identically in every mode.
+// Judging it there called every such role a silent dark-mode carry-over: four
+// of Carbon's seven notes, and Cathode's `primary`, were wrong that way while
+// the emitted dark themes genuinely differed. One bound role with a dark value
+// on its target, one without: exactly one note, on the second.
+const bindDir = mkdtempSync(join(tmpdir(), 'transtyle-binding-'));
+mkdirSync(join(bindDir, 'tokens'));
+writeFileSync(
+  join(bindDir, 'tokens', 'base.tokens.json'),
+  JSON.stringify(
+    {
+      semantic: {
+        color: {
+          house: {
+            // Its own vocabulary — the design system's names, not ours.
+            brand: {
+              $type: 'color',
+              $value: '#1d70b8',
+              $extensions: { 'transtyle.modes': { 'color-scheme': { dark: '#66b2ff' } } },
+            },
+            alert: { $type: 'color', $value: '#ca3535' },
+          },
+          surface: { $type: 'color', $value: '#ffffff' },
+          text: { base: { $type: 'color', $value: '#212529' } },
+          // The binding layer: catalog meaning ← house name.
+          primary: { solid: { $value: '{semantic.color.house.brand}' } },
+          danger: { solid: { $value: '{semantic.color.house.alert}' } },
+        },
+      },
+    },
+    null,
+    2,
+  ),
+);
+writeFileSync(
+  join(bindDir, 'transtyle.config.json'),
+  JSON.stringify(
+    {
+      name: 'binding',
+      tokens: ['tokens/*.tokens.json'],
+      modes: { 'color-scheme': { values: ['light', 'dark'], default: 'light' } },
+      derivation: { rules: 'standard@1' },
+      targets: { 'css-variables': { output: 'dist/css-variables' } },
+    },
+    null,
+    2,
+  ),
+);
+const bound = await compile({
+  cwd: bindDir,
+  emit: false,
+  loadExporter: async () => (await import('@transtyle/exporter-css-variables')).default,
+});
+const carryOver = bound.diagnostics.items.filter((d) => d.code === 'TST1204').map((d) => d.message);
+const mentions = (slot) => carryOver.some((m) => m.includes(slot));
+if (mentions('semantic.color.primary.solid')) {
+  errors.push('binding layer: TST1204 fired on a role whose alias target HAS a dark value — the resolved colors differ, so nothing carried over');
+}
+if (!mentions('semantic.color.danger.solid')) {
+  errors.push('binding layer: TST1204 did not fire on a bound role whose alias target has no dark value — that carry-over is real and must be surfaced');
+}
+const boundPrimary = (mode) => JSON.stringify(bound.normalized.modes[mode].get('semantic.color.primary.solid')?.value);
+if (boundPrimary('light') === boundPrimary('dark')) {
+  errors.push('binding layer: the fixture degenerated — primary resolves identically in both modes, so the case proves nothing');
+}
+rmSync(bindDir, { recursive: true, force: true });
+
 if (errors.length) {
   console.error(`✘ minimal-ds check: ${errors.length} problem(s)`);
   for (const e of errors) console.error('  - ' + e);

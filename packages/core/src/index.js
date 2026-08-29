@@ -8,7 +8,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { loadConfig, loadTokenTrees } from './load.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
-import { normalize, resolveDeferredAliases } from './normalize.js';
+import { normalize, resolveDeferredAliases, reportModeCarryOver } from './normalize.js';
 import { derive } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
@@ -50,6 +50,12 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // Authored aliases pointing at slots DERIVE materializes (e.g. a component
   // token aliasing `{semantic.radius.full}`) resolve here — see normalize.js.
   resolveDeferredAliases(normalized, diagnostics);
+
+  // TST1204 (cross-mode carry-over) can only be judged once every alias has a
+  // value: the slot's own text is identical in both modes when the per-mode
+  // value lives on the alias target, which is exactly how the binding-layer
+  // adoption pattern works. See reportModeCarryOver.
+  reportModeCarryOver(normalized, config, diagnostics);
 
   // The engine's one non-negotiable input (AL5 — see derive.js for why it moved
   // here). Checked after every alias has had its chance to resolve, and only

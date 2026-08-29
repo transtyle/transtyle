@@ -6,6 +6,10 @@ Nothing is published to npm yet; entries under _Unreleased_ describe what exists
 
 ## [Unreleased]
 
+### Fixed
+
+- `TST1204` (dark-mode carry-over) no longer fires on roles bound through the binding layer whose alias target carries a per-mode value. It was emitted during NORMALIZE, testing whether the catalog slot's own text differed per mode — which it never does when the per-mode value lives on the alias target, i.e. for every design system adopted the way the docs recommend. It now runs after alias resolution and compares resolved colours, and only reports roles the user actually supplied (a derived role anchor carries over because the authored one did — one cause, not eight). Measured: Carbon 7 notes → 3, Cathode 4 → 3, Acme 1 → 1, GOV.UK 0 → 0; no emitted value changes. Guarded by a new binding-layer fixture in `check:minimal-ds`. See [the worklog](docs/worklog/2026-08-29-tst1204-aliased-roles.md).
+
 ### Changed
 
 - `<role>.contrast` is now derived (Phase 0 exercise finding F20): the role's hue/chroma re-anchored at the text lightness per mode. The catalog had guaranteed the slot since v0, but no rule filled it — caught by the Bootstrap re-run when the engine had nothing where the exercise's hand maps had consumed `neutral.contrast`. No existing exporter consumes the slot, so emitted outputs are unchanged.

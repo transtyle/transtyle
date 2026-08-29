@@ -96,26 +96,9 @@ export function normalize(tokenTrees, config, diagnostics) {
     }
   }
 
-  // TST1204: a role's `.solid` anchor drives its whole grid (~16 derived
-  // slots — hover/active/tint/outline/on-colors), so when it's authored in the
-  // default mode but not in a non-default `color-scheme` value, the ENTIRE
-  // grid silently carries the default-mode color into that scheme — not an
-  // absence (TST1201/1203 cover that), a value that's present and looks
-  // complete but never changed. This is documented, default behavior
-  // (`diagnostics.md` "My brand color is identical in dark mode") — `info`,
-  // not a mistake — but until now nothing surfaced it except the docs page.
-  // Reported once per (role, scheme value) regardless of how many OTHER
-  // dimensions multiply the combos sharing that fact (e.g. `dark+comfortable`
-  // and `dark+compact` are the same carry-over, not two). Fires whether or not
-  // `autoDark` is on: today autoDark does not compute a distinct color for
-  // this slot (docs/exercises/phase0-shadcn.md F7 — a `darkBrandAdjust` rule
-  // is a still-open, deliberately deferred research question across three
-  // exercise rounds, not something to invent unilaterally here) — the color
-  // genuinely is still the carried-over one either way. What autoDark changes
-  // is provenance: without it, the carry-over is misclassified `authored`;
-  // with it, it's correctly `derived`, so `report.json` shows synthetic
-  // dark-theme coverage honestly, per derivation.md's promise.
-  const reportedCarryOver = new Set();
+  // `autoDark` reclassifies a cross-mode carry-over's provenance (see
+  // reportModeCarryOver below for the diagnostic half, and the note there on
+  // why it can only be judged after aliases resolve).
   const autoDark = Boolean(config?.derivation?.autoDark);
 
   const combos = expandModeMatrix(dimEntries);
@@ -136,22 +119,9 @@ export function normalize(tokenTrees, config, diagnostics) {
         if (v === dimDefaults.get(dimName).default) continue;
         const override = tok.modeValues?.[dimName]?.[v];
         if (override !== undefined) { value = override; overriddenMode = `${dimName}=${v}`; }
-        else if (dimName === 'color-scheme') {
+        else if (dimName === 'color-scheme' && autoDark) {
           const role = tokenPath.match(ROLE_SOLID)?.[1];
-          if (role && (COLOR_ROLES.includes(role) || roleArchetypes.has(role))) {
-            if (autoDark) autoDarkCarried = true;
-            const dedupeKey = `${tokenPath}|${v}`;
-            if (!reportedCarryOver.has(dedupeKey)) {
-              reportedCarryOver.add(dedupeKey);
-              diagnostics.info(
-                'TST1204',
-                `${tokenPath} has no authored value for color-scheme=${v} — the ${dimDefaults.get('color-scheme').default}-mode value carries over unchanged, and so does its whole derived grid`,
-                autoDark
-                  ? { hint: `Author ${tokenPath} for color-scheme=${v} if this role should differ in that mode. \`derivation.autoDark\` is on, so this carry-over is now classified "derived" in coverage — but it does not yet compute a distinct color (that transform is still an open research question; see the roadmap).` }
-                  : { hint: `Author ${tokenPath} for color-scheme=${v} if this role should differ in that mode. This is default behavior — nothing is broken.` },
-              );
-            }
-          }
+          if (role && (COLOR_ROLES.includes(role) || roleArchetypes.has(role))) autoDarkCarried = true;
         }
       }
       map.set(tokenPath, {
@@ -190,6 +160,88 @@ export function normalize(tokenTrees, config, diagnostics) {
     allCombos: combos.map((c) => c.key),
     roleArchetypes,
   };
+}
+
+/** Structural equality for resolved values (colors are `{l,c,h,alpha}`). */
+const sameValue = (a, b) =>
+  a === b || (a !== null && b !== null && typeof a === 'object' && typeof b === 'object' && JSON.stringify(a) === JSON.stringify(b));
+
+/**
+ * TST1204: a role's `.solid` anchor drives its whole grid (~16 derived slots —
+ * hover/active/tint/outline/on-colors), so when the default-mode color reaches
+ * a non-default `color-scheme` value unchanged, the ENTIRE grid is that scheme's
+ * theme. Not an absence (TST1201/1203 cover that): a value that's present, looks
+ * complete, and never changed. Documented, default behavior (`diagnostics.md`,
+ * "My brand color is identical in dark mode") — `info`, not a mistake — but
+ * nothing surfaced it except the docs page.
+ *
+ * **Runs after aliases resolve, and compares resolved values.** It used to run
+ * inside NORMALIZE's per-mode loop, testing only whether the catalog slot itself
+ * carried a mode override — which is false for every design system adopted the
+ * way this project recommends. Carbon binds `semantic.color.danger.solid` to
+ * `{semantic.color.carbon.support-error}`, and it is the *alias target* that
+ * carries the dark value: the alias string is identical in both modes, so the
+ * old check called it a silent carry-over while the emitted dark theme was in
+ * fact a different red. Four of Carbon's seven notes were wrong that way. The
+ * condition is now both halves — no per-mode value authored ON the slot (so an
+ * explicit, deliberately identical dark value stays silent) AND the resolved
+ * colors actually being equal.
+ *
+ * Reported once per (role, scheme value) regardless of how many OTHER dimensions
+ * multiply the combos sharing that fact (`dark+comfortable` and `dark+compact`
+ * are one carry-over, not two). Fires whether or not `autoDark` is on: autoDark
+ * does not compute a distinct color for this slot (docs/exercises/
+ * phase0-shadcn.md F7 — `darkBrandAdjust` is a still-open research question),
+ * so the color genuinely is the carried-over one either way. What autoDark
+ * changes is provenance: without it the carry-over is misclassified `authored`;
+ * with it it's `derived`, so `report.json` shows synthetic dark-theme coverage
+ * honestly. (That reclassification only reaches non-aliased slots — an aliased
+ * carry-over stays `aliased`, which is accurate about where the value came from
+ * but doesn't get autoDark's coverage honesty. Separate question, left alone.)
+ */
+export function reportModeCarryOver(normalized, config, diagnostics) {
+  const DIM = 'color-scheme';
+  const dim = normalized.dimensions?.[DIM];
+  if (!dim) return;
+  const autoDark = Boolean(config?.derivation?.autoDark);
+  const reported = new Set();
+
+  for (const key of normalized.allCombos) {
+    const dims = normalized.comboDims[key];
+    const scheme = dims[DIM];
+    if (scheme === dim.default) continue;
+    const map = normalized.modes[key];
+    const base = normalized.modes[comboKey(normalized.dimensionNames, { ...dims, [DIM]: dim.default })];
+    if (!map || !base) continue;
+
+    for (const [tokenPath, entry] of map) {
+      const role = tokenPath.match(ROLE_SOLID)?.[1];
+      if (!role || !(COLOR_ROLES.includes(role) || normalized.roleArchetypes.has(role))) continue;
+      // Only roles the user actually supplied. Running after DERIVE means every
+      // derived role anchor (`accent.solid` aliasing primary, `danger.solid`
+      // hue-anchored from it) is in the map too, and each of them carries over
+      // for exactly one reason: the authored anchor did. Reporting them would
+      // print eight consequences of one cause — the noise AL5 removed
+      // everywhere else.
+      if (!['authored', 'aliased'].includes(entry.provenance?.kind)) continue;
+      // An explicit per-mode value on the slot itself is a decision, however it
+      // compares — never second-guessed here.
+      if (entry.provenance?.mode === `${DIM}=${scheme}`) continue;
+      const baseline = base.get(tokenPath);
+      if (!baseline || !sameValue(entry.value, baseline.value)) continue;
+
+      const dedupeKey = `${tokenPath}|${scheme}`;
+      if (reported.has(dedupeKey)) continue;
+      reported.add(dedupeKey);
+      diagnostics.info(
+        'TST1204',
+        `${tokenPath} has no authored value for ${DIM}=${scheme} — the ${dim.default}-mode value carries over unchanged, and so does its whole derived grid`,
+        autoDark
+          ? { hint: `Author ${tokenPath} for ${DIM}=${scheme} if this role should differ in that mode. \`derivation.autoDark\` is on, so this carry-over is now classified "derived" in coverage — but it does not yet compute a distinct color (that transform is still an open research question; see the roadmap).` }
+          : { hint: `Author ${tokenPath} for ${DIM}=${scheme} if this role should differ in that mode. This is default behavior — nothing is broken.` },
+      );
+    }
+  }
 }
 
 /**
