@@ -327,11 +327,20 @@ const emitted = async (example, target) => {
   const matchIn = (ext, re) =>
     result.emitted.filter((f) => f.path.endsWith(ext)).flatMap((f) => f.contents.match(re) ?? []);
   const decls = matchIn('.css', /^\s*--[\w-]+:/gm);
+  const byClass = {};
+  for (const c of result.coverage) byClass[c.class] = (byClass[c.class] ?? 0) + 1;
   return {
     decls: decls.length,
     distinct: new Set(decls.map((d) => d.trim())).size,
     sass: matchIn('.scss', /^\s*\$[\w-]+:/gm).length,
     rows: result.coverage.length,
+    // The two ways a slot goes unserved, together: the number the specs quote
+    // when they say how much of a surface is left on the table.
+    undriven: result.coverage.filter((c) => c.class === 'dropped' || c.class === 'unsupported').length,
+    // Per-class row counts, so a comparison table can guard its parts rather
+    // than a total — the Bootstrap classification split hid two cancelling
+    // errors behind a correct sum.
+    ...byClass,
   };
 };
 
@@ -385,6 +394,7 @@ async function measure(metric) {
     if (!inv) return null;
     if (parts[2] === 'total') return inv.counts.total;
     if (parts[2] === 'component') return inv.counts.component ?? inv.counts.components ?? null;
+    if (parts[2] === 'families') return Object.keys(inv.counts.families ?? {}).length;
     return null;
   }
 
@@ -411,7 +421,7 @@ async function measure(metric) {
   if (!exampleNames().includes(example)) return null;
 
   // <example>.<target>.decls | .distinct | .sass | .rows
-  if (rest.length === 2 && ['decls', 'distinct', 'sass', 'rows'].includes(rest[1])) {
+  if (rest.length === 2 && ['decls', 'distinct', 'sass', 'rows', 'undriven', ...CLASSES].includes(rest[1])) {
     return (await emitted(example, rest[0]))?.[rest[1]] ?? null;
   }
 

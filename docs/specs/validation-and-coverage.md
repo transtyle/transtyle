@@ -47,18 +47,34 @@ Produced per target in RESOLVE ([pipeline.md](../architecture/pipeline.md#4-reso
 
 ### Coverage percentages are not comparable across targets
 
-A target's coverage percentage measures how much of _its_ surface we drive. It does **not** rank targets against each other, because the ceiling is set by the target's theming architecture, not by how much work we've done. Measured 2026-07-27 on the two component-heavy targets:
+A target's coverage percentage measures how much of _its_ surface we drive. It does **not** rank targets against each other, because the ceiling is set by the target's theming architecture, not by how much work we've done. Re-measured 2026-08-29 on the two component-heavy targets, against `examples/acme` (every count below is re-derived on each `check:doc-numbers` run, and the parts are guarded rather than the totals — a sum can be right while both its halves are wrong):
 
-|                                          | Bootstrap                            | PrimeNG                                   |
-| ---------------------------------------- | ------------------------------------ | ----------------------------------------- |
-| Surface                                  | 952 variables (657 component-scoped) | 2,759 slots across 98 families            |
-| Driven                                   | 551 rows (77%), +35 `approximated`   | 1,631 (59%) — 79 driven + 1,552 inherited |
-| Reachable without new catalog vocabulary | **~0**                               | **221**                                   |
+<!-- measured: bootstrap.surface.total = 952 -->
+<!-- measured: bootstrap.surface.component = 657 -->
+<!-- measured: primeng.surface.total = 2759 -->
+<!-- measured: primeng.surface.families = 98 -->
+<!-- measured: acme.bootstrap.native = 59 -->
+<!-- measured: acme.bootstrap.derived = 493 -->
+<!-- measured: acme.bootstrap.approximated = 35 -->
+<!-- measured: acme.bootstrap.dropped = 71 -->
+<!-- measured: acme.bootstrap.unsupported = 56 -->
+<!-- measured: acme.primeng.driven = 80 -->
+<!-- measured: acme.primeng.inherited = 1552 -->
+<!-- measured: acme.primeng.base = 1127 -->
+
+|                                          | Bootstrap                                                               | PrimeNG                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                        |
+| Driven                                   | 59 native + 493 derived = 552 of 714 rows (77%), plus 35 `approximated` | 80 driven + 1552 inherited = 1632 (59%), 1127 left on Aura's default |
+| Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | see the family rows in `report.json`                                 |
+| Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                              |
 
 The 59% is the target with room to grow; the 77% is the one that has converged. The reason is architectural:
 
+<!-- measured: acme.bootstrap.undriven = 127 -->
+
 - **PrimeNG resolves `{token.path}` references at runtime**, so driving one semantic path cascades to every component slot pointing at it — a multiplier. Driving `formField.paddingX` alone reaches Button plus every form component. 1,552 of its covered slots are `inherited` this way, and 221 more sit behind 100 semantic paths this exporter drives only partially (`form.field.*` 125, `navigation.item.*` 65, `list.*` 21, `overlay.*` 10) — all expressible with catalog vocabulary that already ships.
-- **Bootstrap's Sass path binds per variable**, with no multiplier. Its 127 undriven variables were measured group by group and every group fails for a structural reason, not for missing work: embedded SVG assets (16), structural/behavioral options like cursor and order (29), Bootstrap's own shade/tint derivation knobs (18, made redundant by our own state derivation), `null` cascade no-ops on non-inherited properties (18), and bespoke geometry already tested and rejected by [proposal 0004](../proposals/0004-component-geometry.md) (17).
+- **Bootstrap's Sass path binds per variable**, with no multiplier. Its 127 undriven variables were measured group by group and every group fails for a structural reason, not for missing work. The five largest account for 98 of them: structural/behavioral options like cursor and order (29), Bootstrap's own shade/tint derivation knobs (18, made redundant by our own state derivation), `null` cascade no-ops on non-inherited properties (18), bespoke geometry already tested and rejected by [proposal 0004](../proposals/0004-component-geometry.md) (17), and embedded SVG assets (16). The remaining 29 sit in eleven smaller groups, the largest being per-component opacity values with no shared meaning (12) and concepts both reference targets model incompatibly (4).
 
 Two consequences for reading the bar:
 
