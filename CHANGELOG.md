@@ -21,4 +21,6 @@ Nothing is published to npm yet; entries under _Unreleased_ describe what exists
 - Examples: `examples/acme` (minimal, 11 authored tokens) and `examples/cathode` (hostile adoption exercise).
 - Documentation website (`website/`, Astro) with docs, roadmap ledger, and AI-agents page.
 - Website blog (`/blog/`, sources in `website/src/blog/`), opened by the release article "A compiler for design systems". Posts are listed in `llms.txt` and served as raw markdown at `/blog/<slug>.md`, and `check:docs` validates their frontmatter and internal links.
+- Full-content RSS feed at `/blog/rss.xml` (hand-rolled, no feed dependency), discoverable from every page's `<link rel="alternate">`.
+- Generated Open Graph cards, one per page (`/og/default.png`, `/og/docs-<slug>.png`, `/og/blog-<slug>.png`), rendered at build time by satori + resvg-wasm from the site's own dark palette, plus the `og:*`/`twitter:*`/canonical metadata that points at them.
 - Project meta: LICENSE (MIT), SECURITY.md, CODE_OF_CONDUCT.md, this changelog.

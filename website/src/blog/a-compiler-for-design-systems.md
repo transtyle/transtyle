@@ -20,15 +20,18 @@ The tax is not a discipline failure. It is arithmetic. With **N** design systems
 <svg id="nxm" viewBox="0 0 760 250" role="img" aria-label="Left: three design systems each connected by a separate line to four frameworks — twelve mappings. Right: the same three systems connected to one shared pivot, which connects to the four frameworks — seven mappings." style="max-width:100%;height:auto;margin:1.5rem 0">
   <style>
     /* Selectors are id-scoped on purpose: this is raw HTML inside markdown, so
-       a bare `.nl` here would be a global rule on whatever page includes it. */
-    #nxm .nl { stroke: var(--border); stroke-width: 1.4; fill: none; }
-    #nxm .nl.hi { stroke: var(--primary); stroke-width: 1.8; }
-    #nxm .nb { fill: var(--surface); stroke: var(--border); stroke-width: 1.2; }
-    #nxm .nb.hub { fill: var(--primary-soft); stroke: var(--primary); }
-    #nxm .nt { fill: var(--text); font: 600 11px 'JetBrains Mono Variable', monospace; }
-    #nxm .nt.hub { fill: var(--primary-strong); }
-    #nxm .nc { fill: var(--text-muted); font: 700 11px 'Inter Variable', system-ui, sans-serif; letter-spacing: 0.06em; }
-    #nxm .nn { fill: var(--text-muted); font: 400 11px 'Inter Variable', system-ui, sans-serif; }
+       a bare `.nl` here would be a global rule on whatever page includes it.
+       Every var() carries its light-theme fallback: this diagram also travels
+       in the RSS feed, where the site's stylesheet doesn't exist and an
+       unresolved var() would drop to the SVG default of solid black. */
+    #nxm .nl { stroke: var(--border, #dbdee3); stroke-width: 1.4; fill: none; }
+    #nxm .nl.hi { stroke: var(--primary, #2d69de); stroke-width: 1.8; }
+    #nxm .nb { fill: var(--surface, #ffffff); stroke: var(--border, #dbdee3); stroke-width: 1.2; }
+    #nxm .nb.hub { fill: var(--primary-soft, #e0ecff); stroke: var(--primary, #2d69de); }
+    #nxm .nt { fill: var(--text, #12161d); font: 600 11px 'JetBrains Mono Variable', monospace; }
+    #nxm .nt.hub { fill: var(--primary-strong, #0e4ec8); }
+    #nxm .nc { fill: var(--text-muted, #4f5661); font: 700 11px 'Inter Variable', system-ui, sans-serif; letter-spacing: 0.06em; }
+    #nxm .nn { fill: var(--text-muted, #4f5661); font: 400 11px 'Inter Variable', system-ui, sans-serif; }
   </style>
   <text class="nc" x="0" y="14">BY HAND — N × M</text>
   <text class="nn" x="0" y="238">3 systems × 4 frameworks = 12 mappings to maintain</text>

@@ -14,7 +14,14 @@ const headings = post.mod.getHeadings().filter((h) => h.depth === 2);
 const older = posts.filter((p) => p.date < post.date).slice(0, 2);
 ---
 
-<Base title={`${post.title} · Transtyle`} description={post.description} current="blog">
+<Base
+  title={`${post.title} · Transtyle`}
+  description={post.description}
+  current="blog"
+  image={`/og/blog-${slug}.png`}
+  publishedDate={post.date}
+  author={post.author}
+>
   <div class="post-layout">
     <main class="prose" id="main">
       <p class="crumb"><a href="/blog/">← Blog</a></p>

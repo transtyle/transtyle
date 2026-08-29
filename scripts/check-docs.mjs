@@ -92,7 +92,7 @@ const blogAnchorsOf = {};
 for (const s of blogSlugs) blogAnchorsOf[s] = headingAnchors(read(`${BLOG_DIR}/${s}.md`));
 
 // Non-/docs/ site routes that legitimately exist (pages/ + public/).
-const KNOWN_ROUTES = new Set(['/', '/docs/', '/blog/', '/llms.txt', '/llms-full.txt']);
+const KNOWN_ROUTES = new Set(['/', '/docs/', '/blog/', '/blog/rss.xml', '/llms.txt', '/llms-full.txt']);
 const publicFiles = readdirSync(join(root, 'website/public'), { recursive: true }).map((f) => '/' + String(f).replaceAll('\\', '/'));
 
 // Every markdown page the site publishes — docs and blog posts alike. A blog

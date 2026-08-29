@@ -25,7 +25,7 @@ const i = orderedSlugs.indexOf(slug);
 const prev = i > 0 ? orderedSlugs[i - 1] : null;
 const next = i < orderedSlugs.length - 1 ? orderedSlugs[i + 1] : null;
 ---
-<Base title={`${frontmatter.title} · Transtyle docs`} description={frontmatter.description} current="docs">
+<Base title={`${frontmatter.title} · Transtyle docs`} description={frontmatter.description} current="docs" image={`/og/docs-${slug}.png`}>
   <div class="docs-layout">
     <nav class="sidebar" aria-label="Documentation">
       {sections.map((section) => (
