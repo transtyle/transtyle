@@ -10,9 +10,15 @@
  *   1. nav ↔ files   — every website/src/docs/*.md page is reachable from
  *                      nav.js, and every nav slug has a page (no orphans,
  *                      no dead entries).
- *   2. links         — every internal link (/docs/<slug>/ and known site
- *                      routes) resolves; every #anchor points at a real
- *                      heading of the target page.
+ *   2. links         — every internal link (/docs/<slug>/, /blog/<slug>/ and
+ *                      known site routes) resolves; every #anchor points at a
+ *                      real heading of the target page. Blog posts are checked
+ *                      as link *sources* too — same promises, same checker.
+ *   2b. blog         — every website/src/blog/*.md post has the frontmatter
+ *                      the index, the post header and llms.txt render, and a
+ *                      URL-safe filename. Posts are deliberately exempt from
+ *                      check 6: a dated post records what was true when it was
+ *                      written, while a docs page must describe today.
  *   3. CLI           — the commands the CLI actually implements (COMMANDS in
  *                      packages/cli/src/main.js) and the commands cli.md's
  *                      "Implemented" section documents are the same set.
@@ -44,6 +50,11 @@ const slugs = readdirSync(join(root, DOCS_DIR))
   .filter((f) => f.endsWith('.md'))
   .map((f) => f.replace(/\.md$/, ''));
 
+const BLOG_DIR = 'website/src/blog';
+const blogSlugs = readdirSync(join(root, BLOG_DIR))
+  .filter((f) => f.endsWith('.md'))
+  .map((f) => f.replace(/\.md$/, ''));
+
 // ---------- 1. nav ↔ files ----------
 const navSrc = read('website/src/nav.js');
 const navSlugs = [...navSrc.matchAll(/slugs:\s*\[([^\]]*)\]/g)].flatMap((m) => [...m[1].matchAll(/'([\w-]+)'/g)].map((s) => s[1]));
@@ -72,44 +83,86 @@ const slugify = (text) =>
 
 const stripFences = (md) => md.replace(/```[\s\S]*?```/g, '');
 
+const headingAnchors = (body) =>
+  new Set([...stripFences(body).matchAll(/^#{1,6}\s+(.+)$/gm)].map((m) => slugify(m[1])));
+
 const anchorsOf = {};
-for (const s of slugs) {
-  const body = stripFences(read(`${DOCS_DIR}/${s}.md`));
-  anchorsOf[s] = new Set(
-    [...body.matchAll(/^#{1,6}\s+(.+)$/gm)].map((m) => slugify(m[1])),
-  );
-}
+for (const s of slugs) anchorsOf[s] = headingAnchors(read(`${DOCS_DIR}/${s}.md`));
+const blogAnchorsOf = {};
+for (const s of blogSlugs) blogAnchorsOf[s] = headingAnchors(read(`${BLOG_DIR}/${s}.md`));
 
 // Non-/docs/ site routes that legitimately exist (pages/ + public/).
-const KNOWN_ROUTES = new Set(['/', '/docs/', '/llms.txt', '/llms-full.txt']);
+const KNOWN_ROUTES = new Set(['/', '/docs/', '/blog/', '/llms.txt', '/llms-full.txt']);
 const publicFiles = readdirSync(join(root, 'website/public'), { recursive: true }).map((f) => '/' + String(f).replaceAll('\\', '/'));
 
-for (const s of slugs) {
-  const body = stripFences(read(`${DOCS_DIR}/${s}.md`));
+// Every markdown page the site publishes — docs and blog posts alike. A blog
+// post makes exactly the same promises a docs page does (its links resolve,
+// its anchors exist), so it goes through exactly the same checker.
+const markdownPages = [
+  ...slugs.map((s) => ({ label: `${s}.md`, file: `${DOCS_DIR}/${s}.md`, ownAnchors: anchorsOf[s] })),
+  ...blogSlugs.map((s) => ({ label: `blog/${s}.md`, file: `${BLOG_DIR}/${s}.md`, ownAnchors: blogAnchorsOf[s] })),
+];
+
+for (const page of markdownPages) {
+  const body = stripFences(read(page.file));
   for (const m of body.matchAll(/\]\(([^)\s]+)\)/g)) {
     const target = m[1];
     if (/^(https?:|mailto:)/.test(target)) continue;
     const [path_, anchor] = target.split('#');
     if (path_ === '') {
       // same-page anchor
-      if (anchor && !anchorsOf[s].has(anchor)) fail(`links: ${s}.md → "#${anchor}" matches no heading on the page`);
+      if (anchor && !page.ownAnchors.has(anchor)) fail(`links: ${page.label} → "#${anchor}" matches no heading on the page`);
       continue;
     }
     const docMatch = path_.match(/^\/docs\/(?:([\w-]+)(?:\/|\.md)?)?$/);
     if (docMatch) {
       const targetSlug = docMatch[1] ?? 'index';
       if (!slugs.includes(targetSlug)) {
-        fail(`links: ${s}.md → "${target}" — no such docs page`);
+        fail(`links: ${page.label} → "${target}" — no such docs page`);
         continue;
       }
       if (anchor && !anchorsOf[targetSlug].has(anchor)) {
-        fail(`links: ${s}.md → "${target}" — page exists but has no heading "#${anchor}"`);
+        fail(`links: ${page.label} → "${target}" — page exists but has no heading "#${anchor}"`);
+      }
+      continue;
+    }
+    const blogMatch = path_.match(/^\/blog\/([\w-]+)(?:\/|\.md)?$/);
+    if (blogMatch) {
+      const targetSlug = blogMatch[1];
+      if (!blogSlugs.includes(targetSlug)) {
+        fail(`links: ${page.label} → "${target}" — no such blog post`);
+        continue;
+      }
+      if (anchor && !blogAnchorsOf[targetSlug].has(anchor)) {
+        fail(`links: ${page.label} → "${target}" — post exists but has no heading "#${anchor}"`);
       }
       continue;
     }
     if (KNOWN_ROUTES.has(path_) || publicFiles.includes(path_)) continue;
-    fail(`links: ${s}.md → "${target}" — not a docs page, known route, or public/ file`);
+    fail(`links: ${page.label} → "${target}" — not a docs page, blog post, known route, or public/ file`);
   }
+}
+
+// ---------- 2b. blog frontmatter ----------
+// A post's filename is its published URL and its frontmatter is what the index
+// page, the post header, and llms.txt all render — a missing field is a broken
+// listing, not a cosmetic gap, so every field the templates read is required.
+const BLOG_FIELDS = ['title', 'description', 'date', 'author'];
+for (const s of blogSlugs) {
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(s)) {
+    fail(`blog: "${s}.md" — filename is the published URL; use lowercase-kebab-case`);
+  }
+  const front = read(`${BLOG_DIR}/${s}.md`).match(/^---\n([\s\S]*?)\n---/)?.[1];
+  if (!front) {
+    fail(`blog: ${s}.md has no frontmatter block`);
+    continue;
+  }
+  for (const field of BLOG_FIELDS) {
+    if (!new RegExp(`^${field}:\\s*\\S`, 'm').test(front)) fail(`blog: ${s}.md is missing frontmatter "${field}"`);
+  }
+  const date = front.match(/^date:\s*'?(\d{4}-\d{2}-\d{2})'?\s*$/m)?.[1];
+  if (!date) fail(`blog: ${s}.md — "date" must be a quoted YYYY-MM-DD string (posts sort and render on it)`);
+  else if (Number.isNaN(Date.parse(`${date}T00:00:00Z`))) fail(`blog: ${s}.md — "date: ${date}" is not a real date`);
 }
 
 // ---------- 3. CLI commands ----------
@@ -208,6 +261,52 @@ for (const s of slugs) {
   }
 }
 
+// The pattern above only sees the fully-qualified spelling. Real drift used the
+// bare one: `transtyle diff` shipped while the status callout on index.md said
+// "specced but not implemented: `diff`, `import`, `preview`" and the roadmap's
+// "Specced, not yet implemented" table still listed it — three surfaces
+// understating the product with a backtick and no "transtyle " in sight.
+//
+// So also scan the two places such a claim lives: any section whose HEADING
+// announces unimplemented work, and any single line that says so inline. A bare
+// backticked command name in either is a claim that it doesn't exist.
+// Qualified mentions are legitimate ("richer `init` (interactive)" describes a
+// future variant of a shipped command) and are exempted the same way cli.md's
+// own Specced table exempts them.
+const CLAIM_HEADING = /^#{2,6}\s+.*(?:specced|not (?:yet )?implemented)/i;
+const CLAIM_LINE = /not (?:yet )?implemented|remains? specced|specced but|still specced/i;
+const QUALIFIER = /richer|interactive|variant|mode\b|flag|option|--\w/i;
+
+/**
+ * The text that actually makes an "it doesn't exist yet" claim. Under a
+ * claim heading that's the whole line; inline it's only the sentence carrying
+ * the phrase — index.md's status callout says what IS real and what is NOT in
+ * one line, and scanning the whole thing would flag every shipped command it
+ * correctly advertises.
+ */
+const claimRegions = (body) => {
+  const regions = [];
+  let inClaimSection = false;
+  for (const line of body.split('\n')) {
+    if (/^#{2,6}\s+/.test(line)) inClaimSection = CLAIM_HEADING.test(line);
+    if (inClaimSection) regions.push(line);
+    else if (CLAIM_LINE.test(line)) regions.push(...line.split(/(?<=\.)\s+/).filter((s) => CLAIM_LINE.test(s)));
+  }
+  return regions;
+};
+
+for (const s of slugs) {
+  if (s === 'cli') continue;
+  for (const line of claimRegions(read(`${DOCS_DIR}/${s}.md`))) {
+    for (const m of line.matchAll(/`([\w-]+)`/g)) {
+      if (!commands.includes(m[1])) continue;
+      const around = line.slice(Math.max(0, m.index - 24), m.index + m[0].length + 24);
+      if (QUALIFIER.test(around)) continue; // a future variant of a shipped command
+      fail(`stale-claim: ${s}.md lists implemented command \`${m[1]}\` as specced/unimplemented — "${line.trim().slice(0, 90)}"`);
+    }
+  }
+}
+
 // ---------- verdict ----------
 if (errors.length) {
   console.error(`✖ docs check: ${errors.length} violation(s)\n`);
@@ -215,6 +314,6 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `✔ docs check: ${slugs.length} pages all reachable; internal links + anchors resolve; ` +
+  `✔ docs check: ${slugs.length} pages all reachable; ${blogSlugs.length} blog post(s) well-formed; internal links + anchors resolve; ` +
   `${commands.length} CLI commands and ${sourceCodes.size} diagnostic codes (severity included) match the docs exactly`,
 );

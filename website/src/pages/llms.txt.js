@@ -1,5 +1,6 @@
 /** llms.txt (https://llmstxt.org): compact, agent-oriented index of the documentation. */
 import { sections, docPath } from '../nav.js';
+import { posts } from '../blog.js';
 
 const mods = import.meta.glob('../docs/*.md', { eager: true });
 const bySlug = Object.fromEntries(
@@ -21,6 +22,13 @@ export function GET({ site }) {
     for (const slug of section.slugs) {
       const fm = bySlug[slug];
       lines.push(`- [${fm.title}](${base}${docPath(slug).replace(/\/$/, '')}.md): ${fm.description}`);
+    }
+    lines.push('');
+  }
+  if (posts.length) {
+    lines.push('## Blog', '');
+    for (const post of posts) {
+      lines.push(`- [${post.title}](${base}/blog/${post.slug}.md) — ${post.date}: ${post.description}`);
     }
     lines.push('');
   }

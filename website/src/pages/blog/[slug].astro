@@ -1,0 +1,127 @@
+---
+import Base from '../../layouts/Base.astro';
+import { posts, postPath, formatDate } from '../../blog.js';
+
+export async function getStaticPaths() {
+  const mods = import.meta.glob('../../blog/*.md', { eager: true });
+  return Object.keys(mods).map((p) => ({ params: { slug: p.split('/').pop().replace('.md', '') } }));
+}
+
+const { slug } = Astro.params;
+const post = posts.find((p) => p.slug === slug);
+const { Content } = post.mod;
+const headings = post.mod.getHeadings().filter((h) => h.depth === 2);
+const older = posts.filter((p) => p.date < post.date).slice(0, 2);
+---
+
+<Base title={`${post.title} · Transtyle`} description={post.description} current="blog">
+  <div class="post-layout">
+    <main class="prose" id="main">
+      <p class="crumb"><a href="/blog/">← Blog</a></p>
+      <h1>{post.title}</h1>
+      <p class="byline">
+        <time datetime={post.date}>{formatDate(post.date)}</time>
+        <span aria-hidden="true">·</span>
+        <span>{post.author}</span>
+        <span aria-hidden="true">·</span>
+        <a href={`/blog/${slug}.md`} title="This post as raw markdown">Markdown</a>
+      </p>
+      <p class="lede">{post.description}</p>
+
+      <Content />
+
+      <footer class="post-foot">
+        <p>
+          Transtyle is open source (MIT) and pre-1.0. If this post got something wrong, or if your
+          design system breaks it, that is the most useful thing you can send us —
+          <a href="https://github.com/transtyle" rel="noopener">the repository</a> is where that
+          conversation happens.
+        </p>
+        {
+          older.length > 0 && (
+            <ul class="more-posts">
+              {older.map((p) => (
+                <li>
+                  <a href={postPath(p.slug)}>{p.title}</a>
+                  <time datetime={p.date}>{formatDate(p.date)}</time>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </footer>
+    </main>
+
+    {
+      headings.length > 2 && (
+        <aside class="toc" aria-label="On this page">
+          <div class="toc-title">On this page</div>
+          {headings.map((h) => (
+            <a class="toc-link" href={`#${h.slug}`}>
+              {h.text}
+            </a>
+          ))}
+        </aside>
+      )
+    }
+  </div>
+
+  <script>
+    // Same scrollspy contract as the docs pages: highlight the entry of the
+    // last heading above the reading line (25% down the viewport).
+    const links = [...document.querySelectorAll('.toc-link')];
+    const targets = links
+      .map((a) => [document.getElementById(decodeURIComponent(a.hash.slice(1))), a])
+      .filter(([h]) => h);
+    if (targets.length) {
+      let active = null;
+      const update = () => {
+        const line = window.scrollY + window.innerHeight * 0.25;
+        let current = targets[0][1];
+        for (const [h, a] of targets) if (h.offsetTop <= line) current = a;
+        if (current !== active) {
+          active?.classList.remove('active');
+          active = current;
+          current.classList.add('active');
+        }
+      };
+      addEventListener('scroll', update, { passive: true });
+      update();
+    }
+  </script>
+
+  <style>
+    .post-layout { display: flex; gap: 3rem; max-width: 76rem; margin: 0 auto; padding: 0 clamp(1rem, 3vw, 2rem); }
+    main { padding: 1.8rem 0 3rem; flex: 1; min-width: 0; }
+    .crumb { font-size: 0.85rem; margin: 0 0 1rem; }
+    .crumb a { color: var(--text-muted); }
+    .prose h1 { font-size: 2.4rem; }
+    .byline {
+      display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+      font-size: 0.85rem; color: var(--text-muted); margin: -0.4rem 0 1.2rem;
+      font-family: 'JetBrains Mono Variable', monospace;
+    }
+    .lede {
+      font-size: 1.12rem; line-height: 1.6; color: var(--text-muted);
+      border-left: 3px solid var(--primary); padding-left: 1rem; margin: 0 0 2rem;
+    }
+    .post-foot { margin-top: 3rem; padding-top: 1.4rem; border-top: 1px solid var(--border-soft); font-size: 0.9rem; color: var(--text-muted); }
+    .more-posts { list-style: none; padding: 0; margin: 1rem 0 0; display: flex; flex-direction: column; gap: 0.4rem; }
+    .more-posts time { font-size: 0.78rem; margin-left: 0.6rem; }
+
+    .toc {
+      width: 14rem; flex-shrink: 0; padding: 2.6rem 0 1rem;
+      position: sticky; top: 3.4rem; height: calc(100vh - 3.4rem); overflow-y: auto;
+      font-size: 0.82rem;
+    }
+    .toc-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-muted); font-weight: 650; margin-bottom: 0.5rem; }
+    .toc-link { display: block; padding: 0.18rem 0 0.18rem 0.7rem; color: var(--text-muted); border-left: 2px solid var(--border-soft); }
+    .toc-link:hover { color: var(--text); text-decoration: none; }
+    .toc-link.active { color: var(--primary-strong); border-left-color: var(--primary); }
+
+    @media (max-width: 1080px) {
+      .toc { display: none; }
+      .post-layout { max-width: 52rem; }
+    }
+  </style>
+</Base>

@@ -20,4 +20,5 @@ Nothing is published to npm yet; entries under _Unreleased_ describe what exists
 - Exporters: `@transtyle/exporter-shadcn` (both Tailwind eras, light/dark modes), `@transtyle/exporter-echarts` (per-mode themes, brand-derived categorical palette), `@transtyle/exporter-daisyui` (v5 era).
 - Examples: `examples/acme` (minimal, 11 authored tokens) and `examples/cathode` (hostile adoption exercise).
 - Documentation website (`website/`, Astro) with docs, roadmap ledger, and AI-agents page.
+- Website blog (`/blog/`, sources in `website/src/blog/`), opened by the release article "A compiler for design systems". Posts are listed in `llms.txt` and served as raw markdown at `/blog/<slug>.md`, and `check:docs` validates their frontmatter and internal links.
 - Project meta: LICENSE (MIT), SECURITY.md, CODE_OF_CONDUCT.md, this changelog.

@@ -1,0 +1,58 @@
+---
+import Base from '../../layouts/Base.astro';
+import { posts, postPath, formatDate } from '../../blog.js';
+---
+
+<Base
+  title="Blog · Transtyle"
+  description="Writing from the Transtyle project — releases, design decisions, and findings from compiling real design systems to real ecosystems."
+  current="blog"
+>
+  <main class="blog-index" id="main">
+    <header class="blog-head">
+      <p class="eyebrow">Blog</p>
+      <h1>Notes from the compiler</h1>
+      <p class="sub">
+        Releases, design decisions, and findings from compiling real design systems into real
+        ecosystems. Every post is also available as
+        <a href="/llms.txt">raw markdown</a> — append <code>.md</code> to its URL.
+      </p>
+    </header>
+
+    <ol class="post-list">
+      {
+        posts.map((post) => (
+          <li class="post-item">
+            <a href={postPath(post.slug)}>
+              <time datetime={post.date}>{formatDate(post.date)}</time>
+              <h2>{post.title}</h2>
+              <p>{post.description}</p>
+              <span class="more">Read the post →</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </main>
+
+  <style>
+    .blog-index { max-width: 52rem; margin: 0 auto; padding: 2.5rem clamp(1rem, 4vw, 2rem) 2rem; }
+    .blog-head { border-bottom: 1px solid var(--border-soft); padding-bottom: 1.6rem; margin-bottom: 1.8rem; }
+    .eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); font-weight: 700; margin: 0 0 0.4rem; }
+    .blog-head h1 { font-size: 2.2rem; line-height: 1.15; letter-spacing: -0.03em; margin: 0 0 0.6rem; font-weight: 750; }
+    .sub { color: var(--text-muted); margin: 0; max-width: 40rem; }
+    .sub code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 5px; font-size: 0.85em; }
+
+    .post-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
+    .post-item a {
+      display: block; color: var(--text);
+      border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem 1.4rem;
+      background: var(--surface); box-shadow: var(--shadow);
+    }
+    .post-item a:hover { text-decoration: none; border-color: var(--primary); }
+    .post-item time { font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono Variable', monospace; }
+    .post-item h2 { font-size: 1.35rem; letter-spacing: -0.02em; margin: 0.3rem 0 0.4rem; font-weight: 700; color: var(--primary); }
+    .post-item p { margin: 0 0 0.7rem; color: var(--text-muted); font-size: 0.94rem; }
+    .more { font-size: 0.85rem; font-weight: 600; color: var(--primary); }
+  </style>
+</Base>

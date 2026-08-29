@@ -52,11 +52,13 @@ A second, deliberately hostile example lives in [examples/cathode/](examples/cat
 
 Two more examples adopt **real, published design systems** nobody on this project designed — [examples/govuk/](examples/govuk/) (the UK government's [GOV.UK Design System](https://design-system.service.gov.uk/styles/colour/)) and [examples/carbon/](examples/carbon/) (IBM's [Carbon Design System](https://carbondesignsystem.com/elements/color/tokens/)) — the same binding-layer pattern as Cathode, this time against systems with real published token values and real accessibility/branding constraints. See each example's README and [`docs/findings/`](docs/findings/) for what mapped cleanly and what needed a judgment call.
 
-The full design-target CLI is specced in [docs/specs/cli.md](docs/specs/cli.md); `build`, `check`, `explain`, `init`, and `add` are implemented today (`npx transtyle init` scaffolds a project, `npx transtyle explain <slot>` prints its provenance chain) — `diff`, `import`, `preview`, version pinning remain specced.
+The full design-target CLI is specced in [docs/specs/cli.md](docs/specs/cli.md); `build`, `check`, `explain`, `init`, `add`, and `diff` are implemented today (`npx transtyle init` scaffolds a project, `npx transtyle explain <slot>` prints its provenance chain, `npx transtyle diff` reports what a token change does to every compiled theme) — `import`, `preview`, version pinning remain specced.
 
 ## Documentation
 
 **User documentation lives on the website** (`website/` — Astro; `npm run site:dev` locally, deployable static output via `npm run site:build`): getting started, concepts, configuration reference, CLI, exporter guides, example walkthroughs, diagnostics, and a dedicated guide for [operating Transtyle with AI agents](website/src/docs/ai-agents.md). The site also serves `llms.txt`, `llms-full.txt`, and every page as raw markdown.
+
+The site also has a **blog** (`website/src/blog/`, one markdown file per post, published at `/blog/<filename>/`). The first post — [A compiler for design systems](website/src/blog/a-compiler-for-design-systems.md) — is the release article: what the project is, why it is (and isn't) new against the token-tooling landscape, how the pipeline works, and who it's for. `npm run check:docs` enforces post frontmatter and link resolution the same way it does for docs pages.
 
 Engineering documentation (architecture, specs, ADRs) lives in [docs/](docs/) — see the map below. The sync rule between code, specs, website, README, and examples is defined in [CONTRIBUTING.md](CONTRIBUTING.md).
 
