@@ -10,25 +10,28 @@ A plugin is an npm package. Official: `@transtyle/exporter-bootstrap`; community
 
 ```
 exporter-bootstrap/
-  package.json          # declares: transtyle plugin manifest (see below)
-  src/index.ts          # default export: the plugin object
-  mappings/5.x.json     # declarative mapping profiles, one per supported version line
-  test/                 # conformance kit + snapshot fixtures
+  package.json            # declares: transtyle plugin manifest (see below)
+  src/index.js            # default export: the plugin object
+  src/descriptors.js      # this exporter's own mapping data, applied by its own emit
+  surface-inventory.json  # the target's themable surface, for coverage measurement
 ```
 
 `package.json` carries the manifest — static metadata readable _without executing the plugin_ (needed for `transtyle add`, registry tooling, and trust review):
 
 ```jsonc
+// exporter-bootstrap's real manifest, verbatim
 "transtyle": {
   "kind": "exporter",                 // or "importer"
   "name": "bootstrap",
-  "irSpec": ">=0.1 <1",               // IR spec range it understands
-  "pluginApi": "^0",                  // plugin API range
-  "targets": { "bootstrap": [">=5.2 <6"] },   // framework version compat
+  "irSpec": "v0-draft",               // IR spec it understands
+  "pluginApi": "0",                   // plugin API line
+  "targets": { "bootstrap": [">=5.3 <6"] },   // framework version compat
   "modes": ["color-scheme"],          // mode dimensions it can express
-  "capabilities": ["build", "doc"]    // doc = optional doc-generation support
+  "capabilities": ["build"]
 }
 ```
+
+`irSpec` and `pluginApi` are plain markers rather than the semver ranges an earlier draft specified, because nothing consumes them as ranges yet — [ADR-0011](../adr/0011-v0-freeze-readiness.md) chose to keep the honest string over a range the loader would ignore. `plugin-kit` checks the fields are present; core does not read them ([versioning.md](versioning.md)).
 
 ## The exporter interface (v0, as implemented)
 
@@ -53,9 +56,9 @@ Constraints, enforced executably by the conformance kit rather than by conventio
 
 `ctx` carries the project config, this instance's `targetConfig` (with `options`), the color helpers (`formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`, `mix`), `projectName`, and `siblings`.
 
-**Version profiles:** an exporter supports version _ranges_ of its framework, expressed as mapping profiles plus conditional logic via `ctx.targetVersion` ([ADR-0006](../adr/0006-version-ranges.md)). Core selects the profile; the exporter never parses version strings itself.
+**Version profiles — specced.** The design is that an exporter supports version _ranges_ of its framework as mapping profiles, with conditional logic via `ctx.targetVersion`, and core selects the profile so the exporter never parses version strings ([ADR-0006](../adr/0006-version-ranges.md)). Today `ctx` carries no `targetVersion`: era selection is an explicit exporter option (shadcn's `tailwind-v3`/`v4`), and each exporter states the framework version it was built against.
 
-## Importer interface
+## Importer interface (specced — no importer exists yet)
 
 Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the _source format_ (DTCG superset), not IR internals ([pipeline.md](pipeline.md#1-load)). This keeps import materializable (`transtyle import --write` produces token files the user can adopt and edit) and keeps importers decoupled from IR internals. Importers also emit an import-coverage report (what the source expressed that the IR cannot yet represent).
 
@@ -79,7 +82,7 @@ Each check cites the spec line it enforces, so a failure points at the rule rath
 
 Its value is not theoretical: on its first run the kit caught `exporter-primeng` emitting `field` where the contract requires `variable` — a divergence that had also been silently producing `report.json` files violating the published report schema.
 
-The built-in `css-variables` exporter is intentionally trivial and serves as the living reference implementation.
+The built-in `css-variables` exporter is the living reference implementation — 241 lines, no target framework to satisfy, every slot `native`. Copy it before reading anything else.
 
 ```js
 import { conformance } from '@transtyle/plugin-kit';

@@ -1,5 +1,12 @@
 # Compilation pipeline
 
+> **Status (re-verified 2026-08-29):** the six stages, their order, the shared
+> diagnostics collector, provenance recording, coverage classification and the
+> `check` = pipeline-minus-EMIT identity are **implemented**. Marked inline
+> below: per-token source maps, core-evaluated mapping tables, target-version
+> compat ranges, atomic staged writes, and the emitted-file manifest — all
+> still specced, and all previously written here in the present tense.
+
 Six stages. Each stage has a single responsibility, a typed input/output, and emits diagnostics into a shared collector rather than throwing (all recoverable problems are gathered so users see everything in one run; only unrecoverable states abort).
 
 ## 1. LOAD
@@ -8,23 +15,23 @@ Discover and parse inputs: `transtyle.config.*`, token files it references, and 
 
 - Config discovery follows the cosmiconfig-style convention ([specs/configuration.md](../specs/configuration.md)).
 - Token files are parsed as DTCG JSON. Importers (Tailwind config, Figma export…) run here and must output _the same raw DTCG-superset structure_ as if the user had authored files — importers get no private path into the IR. This keeps `import` explainable: you can materialize what an importer produced (`transtyle import --write`) and inspect it.
-- Output: raw token forest + config object + source maps (file/line per token, for diagnostics).
+- Output: raw token forest + config object. Each tree remembers the file it came from and the mode layer it was scoped to; **specced:** per-token file/line source maps, and surfacing either in a diagnostic (today a message names the token path, not its location).
 
 ## 2. NORMALIZE
 
 Turn the raw forest into canonical IR:
 
-- validate against the IR schema (unknown `$type`s, malformed values, reserved-word collisions);
+- validate the DTCG structure per file at LOAD (unrecognized `$type` `TST1306`, a `$type` with no value `TST1302`, a top-level group that isn't a tier `TST1305`) and reject malformed values here (`TST1106`);
 - resolve `$ref`/alias chains (`{color.brand.500}`), detecting cycles;
 - expand mode definitions into the mode matrix ([ir.md](ir.md#modes));
-- canonicalize units and color spaces (colors → OKLCH internally, original form retained for provenance; dimensions → explicit units);
+- canonicalize colors to OKLCH internally, keeping the authored text alongside for provenance and for exporters that want it back in its original form. Dimensions are **not** canonicalized — `0.5rem` stays `0.5rem` all the way to the target, and unit conversion happens in the exporter that needs it (which is why `rem → px` shows up as an `approximated` row on ECharts rather than as a normalization step);
 - flatten group-level `$type` inheritance.
 
 Output: **authored IR** — complete graph of what the user actually said, with provenance `authored` or `aliased`.
 
 ## 3. DERIVE
 
-Fill what the user didn't say, using the deterministic rule system ([derivation.md](derivation.md)). Runs to fixpoint over the rule graph (rules are a DAG; cycles are a config error). Every derived token records `derived(rule, inputs)` provenance.
+Fill what the user didn't say, using the deterministic rule system ([derivation.md](derivation.md)). Rules run in a **fixed catalog order**, not to a fixpoint: the order is what guarantees a rule's inputs are already resolved when it runs, which is cheaper than iterating and makes the trace in `explain` a straight line rather than a settling process. Every derived token records `derived(rule, inputs)` provenance.
 
 Output: **complete IR** — the semantic surface exporters may rely on is now total: every required semantic slot has a value, every value knows its origin.
 
@@ -32,9 +39,9 @@ Output: **complete IR** — the semantic surface exporters may rely on is now to
 
 Per target. The exporter's mapping runs against the complete IR:
 
-- declarative mappings (`mapping` tables in the exporter) are evaluated by core — the exporter's code never re-implements token lookup;
-- programmatic resolvers run for anything tables can't express (e.g. ECharts categorical palette generation);
-- version selection happens here: the requested target version is matched against the exporter's compat ranges ([versioning.md](versioning.md)) and selects a mapping profile;
+- the exporter owns its mapping table and applies it in its own `emit` — an earlier draft had core evaluating declarative tables through a `resolve`/`emit` split, and [plugins.md](plugins.md) records why that was dropped: eight exporters were written against the single-hook interface and none needed it;
+- programmatic resolution handles what a table can't express (ECharts' categorical palette, PrimeNG's severity grid);
+- **specced:** version selection against the exporter's compat ranges ([versioning.md](versioning.md)). Today a target era is an explicit option (shadcn's `tailwind-v3`/`v4`, daisyUI's `v5`), not a range match;
 - each mapping decision is classified for the coverage report: `native | derived | approximated | dropped | unsupported`.
 
 Output: per-target **resolution** — a pure data structure, still no files.
@@ -43,9 +50,9 @@ Output: per-target **resolution** — a pure data structure, still no files.
 
 Exporters transform their resolution into file descriptions `{ path, contents, kind }`. Core (never plugins) writes them:
 
-- atomic: build to staging, then swap — a failed build leaves no half-written output;
+- **specced:** atomic staging and swap, so a failed build leaves no half-written output. Core writes each file directly today; the protection that does exist is upstream — no file is written at all if any `error`-level diagnostic was raised;
 - every generated file gets a marker header (`GENERATED by transtyle — do not edit; source: tokens/…`) where the format allows comments;
-- a `transtyle-manifest.json` lists every emitted file + content hash, enabling clean regeneration (delete orphans from previous builds) and drift detection (`transtyle check` warns if generated files were hand-edited);
+- **specced:** a `transtyle-manifest.json` of emitted files and content hashes, for orphan cleanup and drift detection. Nothing writes one today; `report.json` lists the files a build produced, and the marker header is the only thing telling a reader not to edit them;
 - deterministic serialization: stable key order, fixed number formatting, LF endings, trailing-newline policy — byte-identical rebuilds are a tested guarantee.
 
 ## 6. REPORT
@@ -57,4 +64,4 @@ Aggregate diagnostics + coverage into the build report: human rendering (termina
 - **`check` = pipeline minus EMIT.** Same code path, so validation can never drift from real builds.
 - **`explain` reads provenance recorded by stages 2–4;** it is a query over build output, not a separate analysis (cannot lie).
 - **Concurrency:** stages 1–3 are shared per build; stage 4–5 run per-target, parallelizable and independent by construction.
-- **Error philosophy:** never emit files for a target with `error`-level diagnostics; always continue analyzing other targets (one broken exporter must not block the rest).
+- **Error philosophy:** a build never half-succeeds. The target loop stops at the first `error`-level diagnostic and nothing is emitted for any target — deliberately stricter than the "carry on with the others" this line used to describe, because a partial set of theme files is harder to reason about than none. Diagnostics from every stage before that point are still reported together.

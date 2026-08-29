@@ -302,18 +302,27 @@ const CLAIM_LINE = /not (?:yet )?implemented|remains? specced|specced but|still 
 const QUALIFIER = /richer|interactive|variant|mode\b|flag|option|--\w/i;
 
 /**
- * The text that actually makes an "it doesn't exist yet" claim. Under a
- * claim heading that's the whole line; inline it's only the sentence carrying
- * the phrase — index.md's status callout says what IS real and what is NOT in
- * one line, and scanning the whole thing would flag every shipped command it
- * correctly advertises.
+ * The text that actually makes an "it doesn't exist yet" claim.
+ *
+ * Under a claim heading, only the **enumerating** lines — list items and table
+ * rows. That is where every real instance of this drift has lived (a roadmap
+ * table row, a bullet in a "specced" list), and prose under such a heading is
+ * where the false positives live: derivation.md's specced user-rules section
+ * explains that arbitrary JS "would make `explain` output unreadable", which is
+ * a sentence about a shipped command, not a claim it is missing.
+ *
+ * Inline, it's only the sentence carrying the phrase — index.md's status
+ * callout says what IS real and what is NOT in one line, and scanning the whole
+ * line would flag every shipped command it correctly advertises.
  */
+const ENUMERATING = /^\s*(?:[-*+]\s|\d+\.\s|\|)/;
+
 const claimRegions = (body) => {
   const regions = [];
   let inClaimSection = false;
   for (const line of body.split('\n')) {
     if (/^#{2,6}\s+/.test(line)) inClaimSection = CLAIM_HEADING.test(line);
-    if (inClaimSection) regions.push(line);
+    if (inClaimSection && ENUMERATING.test(line)) regions.push(line);
     else if (CLAIM_LINE.test(line)) regions.push(...line.split(/(?<=\.)\s+/).filter((s) => CLAIM_LINE.test(s)));
   }
   return regions;

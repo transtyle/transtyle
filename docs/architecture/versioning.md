@@ -1,5 +1,14 @@
 # Versioning and compatibility model
 
+> **Status (re-verified 2026-08-29):** the four-surface split is real — every
+> exporter ships a `transtyle` manifest declaring `irSpec`, `pluginApi`,
+> `targets` ranges and `modes`, and `plugin-kit` validates its shape in CI.
+> What does **not** exist yet is core reading any of it: no range is checked at
+> load time, no version can be requested, no profile is selected, and no
+> lockfile is written. [ADR-0011](../adr/0011-v0-freeze-readiness.md) recorded
+> that gap as the reason the plugin API freeze is deferred; this page now marks
+> it inline instead of describing the whole model in the present tense.
+
 Four independently-versioned surfaces. Conflating them is how ecosystems end up with "plugin works only with CLI 3.2.1" misery; separating them is how Babel and ESLint survived a decade of plugins.
 
 | Surface                 | Versioned as                     | Stability promise                                                                                                                                                                               |
@@ -9,9 +18,11 @@ Four independently-versioned surfaces. Conflating them is how ecosystems end up 
 | **CLI / core packages** | normal npm semver                | UX may evolve fast; `report.json` and other machine outputs get schema fields so CI consumers survive changes.                                                                                  |
 | **Each exporter**       | its own npm semver               | Independent release cadence — a Bootstrap 5.4 release must be shippable the same week without touching core.                                                                                    |
 
-Core checks declared ranges at load time (`irSpec`, `pluginApi` from the manifest) and refuses mismatches with an actionable diagnostic ("exporter-bootstrap 2.x requires IR spec v1; you are on v0 — upgrade the exporter or pin core") rather than producing subtly wrong output.
+**Specced:** core checking those declared ranges at load time and refusing a mismatch with an actionable diagnostic ("exporter-bootstrap 2.x requires IR spec v1; you are on v0 — upgrade the exporter or pin core"). The manifests exist and are shape-checked by `plugin-kit`; nothing in the compile path reads them, which [ADR-0011](../adr/0011-v0-freeze-readiness.md) §2 identifies as the concrete blocker on freezing plugin API v0. Until it lands, an incompatible exporter fails in whatever way its code happens to fail.
 
 ## Target framework versions ([ADR-0006](../adr/0006-version-ranges.md))
+
+**This whole section is specced.** Today an exporter's target era is chosen by an explicit option (shadcn's `era: tailwind-v3 | tailwind-v4`, daisyUI's `v5`) and every exporter documents the framework version it was built against; there is no version argument, no profile selection, and no `--force-profile`. The model below is what the manifests' `targets` ranges are there to support.
 
 The vision pitched `transtyle build bootstrap 5.3.8` — patch-level targeting. We deliberately weaken this to **range-based compatibility**:
 
@@ -30,7 +41,7 @@ The vision pitched `transtyle build bootstrap 5.3.8` — patch-level targeting. 
 
 ## Reproducibility
 
-`transtyle.lock` (generated) records: core/CLI versions, every plugin version, rule-pack version, IR spec version. Committed to the user's repo. `transtyle build --frozen` (default in CI) fails on any drift. This is the Terraform lockfile lesson applied to design systems: a theme regenerated two years later must either be identical or fail loudly asking to upgrade intentionally.
+**Specced.** `transtyle.lock` (generated) would record: core/CLI versions, every plugin version, rule-pack version, IR spec version. Committed to the user's repo. `transtyle build --frozen` (default in CI) fails on any drift. This is the Terraform lockfile lesson applied to design systems: a theme regenerated two years later must either be identical or fail loudly asking to upgrade intentionally.
 
 ## Deprecation policy
 
