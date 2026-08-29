@@ -10,8 +10,10 @@
  *   1. code      — packages/exporter-<name>/ exists and is wired in the CLI
  *   2. docs/     — docs/specs/exporters/<name>.md exists
  *   3. website   — website/src/docs/exporter-<name>.md exists, is in nav.js,
- *                  and the website roadmap's "Implemented today" section names it;
- *                  no page outside a status construct calls it "specced"
+ *                  the website roadmap's "Implemented today" section names it,
+ *                  and so does the examples page (which enumerates each
+ *                  example's targets and demo projects); no page outside a
+ *                  status construct calls it "specced"
  *   4. README    — README.md names it
  *   5. examples  — every example's transtyle.config.json configures it (or an
  *                  exception is declared below), and its demo project exists
@@ -82,6 +84,18 @@ for (const name of exporters) {
     if (!existsSync(join(root, `examples/${ex}/demo/${name}`))) {
       fail(`${name}: missing demo project examples/${ex}/demo/${name}/ (examples surface, docs/specs/demo-app.md)`);
     }
+  }
+}
+
+// 3a. the examples page enumerates what every example builds and ships a demo
+// for, so a shipped exporter missing from it understates the product the same
+// way a missing overview mention does. (This happened: PrimeNG shipped, gained
+// a demo project in all four examples, and the page still said "seven demo
+// projects" and never named it.)
+const examplesPage = read('website/src/docs/examples.md');
+for (const name of exporters) {
+  if (!mentions(examplesPage, name)) {
+    fail(`${name}: not named in website/src/docs/examples.md, which enumerates each example's targets and demos (website surface)`);
   }
 }
 

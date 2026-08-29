@@ -38,7 +38,7 @@ npx transtyle build         # shadcn (both Tailwind eras) + daisyUI + Apache ECh
 npx transtyle check         # pipeline without emit: validation + contrast + coverage
 ```
 
-The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project, `_variables.transtyle.scss`/`_maps.transtyle.scss` import around Bootstrap's own Sass build, and `theme.*-{light,dark}.json` registers straight into Apache ECharts — see each generated `usage.md`. 11 authored tokens produce the full variable set of every target; everything unauthored is derived deterministically with provenance recorded in `report.json`.
+The generated `globals.transtyle.css` (light + dark, `@theme inline`) drops into any Tailwind v4 shadcn project, `_variables.transtyle.scss`/`_maps.transtyle.scss` import around Bootstrap's own Sass build, and `theme.*-{light,dark}.json` registers straight into Apache ECharts — see each generated `usage.md`. Acme's 40 authored tokens — nine of them actual design decisions — produce 271 resolved slots per mode and the full variable set of every target; everything unauthored is derived deterministically with provenance recorded in `report.json`.
 
 To _see_ the themes on real framework components, each example ships npm-runnable demo projects (`examples/<example>/demo/<target>/`, one Vite/Storybook project per target, consuming only the compiled `dist/`):
 

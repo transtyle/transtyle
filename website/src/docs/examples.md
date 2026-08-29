@@ -10,11 +10,11 @@ Four example design systems live in the repo. Acme and Cathode are invented, cho
 
 ## Acme — the minimal example
 
-`examples/acme` authors exactly **11 semantic tokens**: a brand blue, background/surface/text/text-muted/border (each with authored dark values), one radius, two font stacks. Plus a 15-token option palette they alias into.
+`examples/acme` authors **26 tokens above the raw palette**, and only nine of them are the design decisions: a brand blue, background/surface/text/text-muted/border (each with authored dark values), one radius, two font stacks. The other seventeen are an explicit 13-step space scale and four component-tier tokens, both there to exercise machinery rather than because the system needs them spelled out. Plus a 14-token option palette they alias into.
 
 ```bash
 cd examples/acme
-npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook, css-variables, radix
+npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook, css-variables, radix, primeng
 ```
 
 What to study:
@@ -88,7 +88,7 @@ Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/julien-d
 
 ## See the themes on real frameworks
 
-Each example ships seven npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), and [`@radix-ui/themes`](/docs/exporter-radix/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. Every project consumes only the compiled `dist/` artifacts. From the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4106, 6101; Cathode: 4201–4206, 6201; GOV.UK: 4301–4306, 6301; Carbon: 4401–4406, 6401).
+Each example ships eight npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), and Angular [PrimeNG](/docs/exporter-primeng/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 32 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI. From the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4107, 6101; Cathode: 4201–4207, 6201; GOV.UK: 4301–4307, 6301; Carbon: 4401–4407, 6401).
 
 ## Using them as templates
 

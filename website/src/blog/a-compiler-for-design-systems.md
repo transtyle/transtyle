@@ -192,7 +192,7 @@ Every tool in this space faces that. Most respond by quietly emitting something 
 
 Here is the real GOV.UK Design System — a public system nobody on this project designed — compiled to all eight targets:
 
-<div class="covmatrix" role="img" aria-label="Coverage bars per target for the GOV.UK example: css-variables 100% native; primeng 69% native; storybook 61% native; shadcn 50% native, 47% derived; echarts 50% native; radix 42% native, 58% approximated; daisyui 32% native, 55% derived; bootstrap 2% native, 76% derived">
+<div class="covmatrix" data-example="govuk" role="img" aria-label="Coverage bars per target for the GOV.UK example: css-variables 100% native; primeng 69% native; storybook 61% native; shadcn 50% native, 47% derived; echarts 50% native; radix 42% native, 58% approximated; daisyui 32% native, 55% derived; bootstrap 2% native, 76% derived">
   <div class="cm-row"><span class="cm-name">css-variables</span><span class="cm-bar"><span class="cm-seg native" style="width:100%"></span></span></div>
   <div class="cm-row"><span class="cm-name">primeng</span><span class="cm-bar"><span class="cm-seg native" style="width:69%"></span><span class="cm-seg derived" style="width:19%"></span><span class="cm-seg approx" style="width:3%"></span><span class="cm-seg other" style="width:9%"></span></span></div>
   <div class="cm-row"><span class="cm-name">storybook</span><span class="cm-bar"><span class="cm-seg native" style="width:61%"></span><span class="cm-seg derived" style="width:16%"></span><span class="cm-seg approx" style="width:13%"></span><span class="cm-seg other" style="width:10%"></span></span></div>

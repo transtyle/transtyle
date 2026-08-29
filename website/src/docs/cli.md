@@ -17,7 +17,7 @@ Runs the full pipeline and writes artifacts. With no arguments, builds every tar
 ```bash
 npx transtyle build shadcn
 #
-# shadcn  43% native · 54% derived · 3% approximated
+# shadcn  42% native · 53% derived · 3% approximated · 3% dropped
 #   ↳ dist/shadcn/globals.transtyle.css
 #   ↳ dist/shadcn/usage.md
 #   ↳ dist/shadcn/report.json

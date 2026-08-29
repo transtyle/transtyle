@@ -40,13 +40,14 @@
     "check:demo-parity": "node scripts/check-demo-parity.mjs",
     "check:bootstrap-surface": "node scripts/check-bootstrap-surface.mjs",
     "check:component-tier": "node scripts/check-component-tier.mjs",
-    "check:all": "npm run check:sync && npm run check:encoding && npm run check:format && npm run check:color && npm run check:plugins && npm run check:grid && npm run check:fixtures && npm run check:determinism && npm run check:schemas && npm run check:cli && npm run check:component-tier && npm run check:bootstrap-surface && npm run check:coverage-bar && npm run check:minimal-ds && npm run check:demo-parity",
+    "check:all": "npm run check:sync && npm run check:doc-numbers && npm run check:encoding && npm run check:format && npm run check:color && npm run check:plugins && npm run check:grid && npm run check:fixtures && npm run check:determinism && npm run check:schemas && npm run check:cli && npm run check:component-tier && npm run check:bootstrap-surface && npm run check:coverage-bar && npm run check:minimal-ds && npm run check:demo-parity",
     "presite:build": "npm run check:sync",
     "site:dev": "npm run dev -w @transtyle/website",
     "site:build": "npm run build -w @transtyle/website",
     "site:preview": "npm run preview -w @transtyle/website",
     "check:plugins": "node scripts/check-plugins.mjs",
-    "check:color": "node scripts/check-color.mjs"
+    "check:color": "node scripts/check-color.mjs",
+    "check:doc-numbers": "node scripts/check-doc-numbers.mjs"
   },
   "license": "MIT",
   "devDependencies": {

@@ -39,7 +39,7 @@ daisyUI's `secondary` and `accent` are **true brand roles** — so this exporter
 | `--radius-{selector,field,box}`                                                | `radius.md`                                             | one radius feeds three families — `approximated`                                               |
 | `--depth`, `--noise`, `--size-*`                                               | —                                                       | `dropped`: stylistic effects without token semantics; daisyUI defaults apply                   |
 
-Because daisyUI wants every role authored-or-derived, coverage skews `derived` on minimal systems (Acme: 68% derived) — the report shows exactly which roles you might want to author. Both [examples](/docs/examples/) ship daisyUI targets.
+Because daisyUI wants every role authored-or-derived, coverage skews `derived` on minimal systems (Acme: 65% derived) — the report shows exactly which roles you might want to author. Both [examples](/docs/examples/) ship daisyUI targets.
 
 ## Custom roles (role archetypes)
 

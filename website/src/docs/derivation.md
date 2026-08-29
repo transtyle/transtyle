@@ -6,7 +6,7 @@ order: 6
 
 # Derivation engine
 
-Derivation fills every semantic slot you didn't author. Concretely, on the [Acme example](/docs/examples/): **39 authored DTCG tokens produce 270 resolved slots per mode**, which the shadcn exporter alone turns into 103 CSS custom properties. The other 231 slots are the engine's work.
+Derivation fills every semantic slot you didn't author. Concretely, on the [Acme example](/docs/examples/): **40 authored DTCG tokens produce 271 resolved slots per mode**, which the shadcn exporter alone turns into 103 CSS custom properties. The other 231 slots are the engine's work.
 
 It's built on three promises, because a tool that silently invents brand values deserves rejection:
 
@@ -93,7 +93,7 @@ That asymmetry is the whole point. One line expresses either intent, and the exp
 
 ## Provenance classes
 
-`derived` values track your brand: change `primary` and every derived value follows (hover tints, on-colors, the whole chart palette — see it live by editing the Acme example and rebuilding). `defaulted` values are catalog constants with no user input. The distinction matters for audits: the report can tell you "your theme is 43% authored, 54% derived, 3% approximated".
+`derived` values track your brand: change `primary` and every derived value follows (hover tints, on-colors, the whole chart palette — see it live by editing the Acme example and rebuilding). `defaulted` values are catalog constants with no user input. The distinction matters for audits: the report can tell you "on this target, your theme is 42% native, 53% derived, 3% approximated, 3% dropped".
 
 ## What derivation refuses to do
 

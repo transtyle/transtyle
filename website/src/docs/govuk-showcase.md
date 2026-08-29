@@ -92,7 +92,7 @@ Every one of these is inspectable after the fact — `npx transtyle explain warn
 
 Eight targets build with **zero diagnostics** — no contrast failures against WCAG 2.1 AA, no dangling aliases. But zero-diagnostics is not the same as lossless, and the report says so per target. This is the real split from `report.json` for each build:
 
-<div class="covmatrix">
+<div class="covmatrix" data-example="govuk">
   <div class="cm-row"><span class="cm-name">css-variables</span><span class="cm-bar"><span class="cm-seg native" style="width:100%"></span></span></div>
   <div class="cm-row"><span class="cm-name">primeng</span><span class="cm-bar"><span class="cm-seg native" style="width:69%"></span><span class="cm-seg derived" style="width:19%"></span><span class="cm-seg approx" style="width:3%"></span><span class="cm-seg other" style="width:9%"></span></span></div>
   <div class="cm-row"><span class="cm-name">storybook</span><span class="cm-bar"><span class="cm-seg native" style="width:61%"></span><span class="cm-seg derived" style="width:16%"></span><span class="cm-seg approx" style="width:13%"></span><span class="cm-seg other" style="width:10%"></span></span></div>
