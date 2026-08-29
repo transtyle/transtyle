@@ -1,5 +1,7 @@
 # Exporter spec: shadcn/ui
 
+> **Status: implemented** (`@transtyle/exporter-shadcn`), both eras — `tailwind-v4` (OKLCH values, `@theme inline`) and `tailwind-v3` (HSL channel triplets), selected via `options.era`. Verified against the emitted coverage rows 2026-08-29.
+
 **Why it's a reference exporter:** the semantic-token-native target — shadcn's theme _is_ a set of semantic CSS variables (`--background`, `--primary`, `--muted`, `--destructive`, `--radius`…), so it exercises the IR's semantic catalog almost 1:1 and is the cleanest test of mode handling (light/dark classes). Also the most-demanded target in the current ecosystem.
 
 ## Moving-target caveat
@@ -19,15 +21,15 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 
 - `elevation.{0,1,3}.surface` → `--background`, `--card`, `--popover`: `native` (the [role-grid/elevation-ladder catalog](../../architecture/ir.md#color-the-role-grid)). `text`/`text.muted` → `--foreground`, `--muted-foreground`: `native`.
 - `primary.solid` + `primary.on-solid` → `--primary`/`--primary-foreground`: `native` — shadcn's paired `-foreground` convention maps exactly to our `<role>.on-solid` grid cell; when the user authored no on-colors, the whole pairing arrives `derived` (with contrast diagnostics already run — a notable win over hand-built shadcn themes, which routinely ship failing contrast).
-- `danger.solid` → `--destructive`: `native` (name translation only). `neutral.tint` → `--muted`, `accent.tint` → `--accent`, `border/ring` → `--border`/`--input`/`--ring`: `native`.
+- `danger.solid` → `--destructive` (name translation only), `neutral.tint` → `--muted` and `--secondary`, `accent.tint` → `--accent`, `border` → `--border`: the mapping is exact, so the class each row lands in is whatever provenance the value arrived with — `native` for an authored border, `derived` for a role the engine filled. Two exceptions worth knowing: `--input` is `border` again and is classified `approximated`, because shadcn means the input's own border and the IR has one border colour; `--ring` comes from the `ring` slot, which derivation lightens in dark mode.
 - `radius.md` → `--radius` (shadcn derives sm/lg from it): `native`; if the user's radius scale isn't expressible via shadcn's single-var derivation, additional radius vars are emitted and classified `approximated`.
 - `color-scheme` mode → `.dark` class block: `native`. Density: `dropped` (no concept).
 - Sidebar/chart variable families (`--sidebar-*`, `--chart-1…5`): mapped when present; `--chart-*` uses the same categorical-palette derivation as the [ECharts exporter](echarts.md) — deliberate cross-exporter consistency (same rule, same palette).
-- `unsupported`: shadcn's font/tracking vars beyond our typography catalog get framework defaults, reported.
+- `--font-sans`/`--font-mono` map `native` from the font slots. There are no `unsupported` rows on this target today — an earlier draft predicted shadcn font/tracking variables beyond the typography catalog, and the variable set it ships does not have them.
 
 ## Ground-truth testing
 
-Fixture Vite app with a representative shadcn component set; CI applies generated `globals.transtyle.css`, builds with the era's Tailwind, headless-renders light and dark, and asserts computed styles for key component/variable pairs. Also validates emitted CSS parses under the era's toolchain.
+`examples/*/demo/shadcn/` — a real Vite + Tailwind v4 app built from shadcn's own registry components (`@radix-ui/react-*` primitives), consuming only the emitted `globals.transtyle.css`. CI builds all four, which proves the emitted CSS parses under the era's toolchain and that Tailwind resolves every `@theme inline` token. **Still aspirational:** headless-rendering light and dark and asserting computed styles per component/variable pair — nothing today catches a theme that builds cleanly and looks wrong.
 
 ## Out of scope
 

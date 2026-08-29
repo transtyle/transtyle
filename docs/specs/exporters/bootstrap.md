@@ -1,5 +1,7 @@
 # Exporter spec: Bootstrap
 
+> **Status: implemented** (`@transtyle/exporter-bootstrap`) — both consumption paths, plus the component tier (AL1/AL2). Declared range `>=5.3 <6`; the surface inventory and the demos are pinned to `bootstrap@5.3.x`. Coverage counts on this page are re-derived by `check:doc-numbers`.
+
 **Why it's a reference exporter:** hardest constraint set of the four — a Sass-compiled theming system with a partial CSS-variable layer bolted on in 5.2/5.3, an opinionated color model (`$theme-colors` + generated `-bg-subtle`/`-border-subtle`/`-text-emphasis` derivations), and its own dark-mode mechanism (`data-bs-theme`). If the IR survives Bootstrap, most targets are easy.
 
 ## Compatibility
@@ -49,7 +51,7 @@ The component-theming surface is measured by a checked-in inventory ([surface-in
 
 ## Ground-truth testing
 
-CI compiles real Bootstrap (each supported minor) with our emitted Sass; asserts compilation succeeds and spot-checks resolved CSS custom-property values in the built stylesheet. Headless render of a fixture page diffs key computed styles between Sass path and CSS-var path to keep the two paths' documented fidelity gap accurate.
+`examples/*/demo/bootstrap/` compiles real Bootstrap with the emitted Sass (`sass` + `bootstrap` in the demo's own dependencies), built in CI for all four examples — the strongest ground truth any target here has, since Bootstrap's own build fails loudly on a variable it cannot use. Every emitted value is also diffed key-by-key against the Phase 0 fixtures by `check:fixtures`. **Still aspirational:** compiling each supported minor rather than the pinned one, and spot-checking resolved CSS custom-property values in the built stylesheet. Headless render of a fixture page diffs key computed styles between Sass path and CSS-var path to keep the two paths' documented fidelity gap accurate.
 
 ## Doc capability (Tier 3, later)
 

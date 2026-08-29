@@ -1,5 +1,7 @@
 # Exporter spec: Storybook
 
+> **Status: implemented** (`@transtyle/exporter-storybook`) — chrome `ThemeVars` plus sibling preview composition. The declared range is `>=8 <10`; the demos build against `storybook@^9`, which is the major it is exercised against.
+
 **Why it's a reference exporter:** it's not a UI framework — it's a _meta-target_ that documents other targets. It stress-tests two things: theming a tool's own chrome, and composing with sibling exporters' outputs (the vision's "branded documentation" promise, Tier 2 in [doc-generation.md](../doc-generation.md)).
 
 ## Compatibility
@@ -32,4 +34,4 @@ Unique among exporters: Storybook options may reference other configured targets
 
 ## Ground-truth testing
 
-CI boots a fixture Storybook (each supported major) with generated manager/preview/theme files; asserts build succeeds, chrome renders themed (screenshot probes on manager UI), token stories render, and mode toolbar toggles sibling stylesheet behavior.
+`examples/*/demo/storybook/` builds a real Storybook (`@storybook/html-vite`) with the generated manager/preview/theme files, in CI, for all four examples — a build failure is how a bad `ThemeVars` shape surfaces. **Still aspirational:** booting each supported major rather than the pinned one, and screenshot probes on the manager UI), token stories render, and mode toolbar toggles sibling stylesheet behavior.

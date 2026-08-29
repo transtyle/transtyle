@@ -14,6 +14,6 @@ Base ramp `base-100/200/300` ← `elevation.0.surface`/`elevation.1.surface`/`bo
 
 **Role archetypes (T7):** daisyUI has an open color set — any `--color-<name>` custom property is a usable Tailwind utility color — so every role in `normalized.roleArchetypes` (custom `semantic.color.<name>` groups declaring `$extensions.transtyle.role`) gets `--color-<name>` + `--color-<name>-content` emitted alongside the built-in roles, `native`. This is the exporter the plan names for demonstrating the open-role-set path (contrast Bootstrap/shadcn's closed sets, which don't emit archetyped roles at all).
 
-## Ground-truth testing (pending)
+## Ground-truth testing
 
-CI should build a fixture Tailwind 4 + daisyUI app with the generated blocks and assert computed styles on a component sample, per the standard exporter testing pattern.
+`examples/*/demo/daisyui/` — a real Vite + Tailwind 4 + daisyUI app whose `@plugin "daisyui"` block names the generated themes, built in CI for all four examples. That proves the emitted blocks are accepted by daisyUI's own plugin and that both themes register. **Still aspirational:** asserting computed styles on a component sample.

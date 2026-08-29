@@ -6,7 +6,7 @@
 
 ## Compatibility
 
-`"targets": { "echarts": [">=5 <7"] }` — the theme object shape has been stable across 5.x; verify 6.x status at implementation time. Profiles per major.
+`"targets": { "echarts": [">=5 <7"] }` — the theme object shape has been stable across 5.x; 6.x is inside the declared range but untested — the demos pin `echarts@^5.5`, so that is the version this exporter is actually exercised against. Profiles per major.
 
 ## Emitted artifacts
 
@@ -41,4 +41,4 @@ The same rule feeds shadcn's `--chart-*` variables — one brand, one data-viz p
 
 ## Ground-truth testing
 
-Headless (node-canvas or Puppeteer) render of a fixture dashboard (line/bar/pie + axes + tooltip) per theme; pixel-samples assert background/text/palette colors; perceptual-distance property test on generated palettes across a corpus of random brand colors.
+**Aspirational, in full.** The intended shape: headless (node-canvas or Puppeteer) render of a fixture dashboard (line/bar/pie + axes + tooltip) per theme; pixel-samples assert background/text/palette colors; perceptual-distance property test on generated palettes across a corpus of random brand colors.
