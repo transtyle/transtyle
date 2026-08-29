@@ -154,26 +154,48 @@ const stripTags = (s) => s.replace(/<[^>]+>/g, '');
 // all correct.
 const LINE_TRANSCRIPT = new RegExp(TRANSCRIPT.source);
 
-for (const surface of SURFACES) {
-  const body = read(surface);
+/**
+ * Every transcript in a document, each tagged with the example it should be
+ * checked against.
+ *
+ * The hint is read from the raw line and the transcript from the stripped one,
+ * in that order: stripTags eats `<!-- … -->` whole (it is a `<…>`), so a hint
+ * tested after stripping can never match — which is how this escape hatch spent
+ * its whole life doing nothing.
+ */
+function scanTranscripts(body) {
   let example = DEFAULT_EXAMPLE;
-  const transcripts = [];
+  const found = [];
   for (const line of body.split('\n')) {
-    // The hint is read from the raw line and the transcript from the stripped
-    // one, in that order: stripTags eats `<!-- … -->` whole (it is a `<…>`),
-    // so a hint tested after stripping can never match. That silently disabled
-    // the hint entirely — found by testing that moving one above a transcript
-    // changed the result, and watching it not.
     const hint = EXAMPLE_HINT.exec(line);
     if (hint) {
       example = hint[1];
       continue;
     }
     const m = LINE_TRANSCRIPT.exec(stripTags(line));
-    if (m) transcripts.push({ example, target: m[1], bar: m[2] });
+    if (m) found.push({ example, target: m[1], bar: m[2] });
   }
+  return found;
+}
 
-  for (const { example, target, bar } of transcripts) {
+// Self-test, because nothing in the repository currently uses the hint: it was
+// added for a page that has not been written yet, was broken on arrival, and no
+// real document would have noticed. A guard's own escape hatch has to be
+// exercised by something. Two properties, both of which failed at some point:
+// the hint applies downward only, and it survives tag-stripping.
+{
+  const bar = '42% native · 53% derived';
+  const doc = ['<!-- example: govuk -->', `shadcn  ${bar}`, `bootstrap  ${bar}`, '<!-- example: carbon -->', `radix  ${bar}`].join('\n');
+  const got = scanTranscripts(doc).map((t) => `${t.target}:${t.example}`).join(' ');
+  const want = 'shadcn:govuk bootstrap:govuk radix:carbon';
+  if (got !== want) fail(`self-test: the example hint does not apply from its own line downward — got "${got}", expected "${want}"`);
+  if (scanTranscripts(`shadcn  ${bar}`)[0]?.example !== DEFAULT_EXAMPLE) {
+    fail(`self-test: a transcript with no hint above it must be checked against ${DEFAULT_EXAMPLE}`);
+  }
+}
+
+for (const surface of SURFACES) {
+  for (const { example, target, bar } of scanTranscripts(read(surface))) {
     if (!targetsOfDefault.has(target) && !configuredTargets(example).includes(target)) continue;
     const actual = await coveragePercentages(example, target);
     if (!actual) {
@@ -369,6 +391,20 @@ async function measure(metric) {
   // bootstrap.classified.<emit|chained|follows-global|inherits-driven|inherit-default|dropped|unsupported>
   if (metric.startsWith('bootstrap.classified.')) {
     return (await bootstrapClassified())[parts[2]] ?? null;
+  }
+
+  // <example>.primeng.<driven|inherited|base> — PrimeNG's three-way split, read
+  // off the totals row the exporter itself writes into its coverage report
+  // rather than recomputed here, so the docs are checked against what the tool
+  // reports rather than against a second implementation of the same tally.
+  // Example-qualified on purpose: the split used to be identical everywhere,
+  // and stopped being so when the component tier started reaching this target.
+  if (parts[1] === 'primeng' && ['driven', 'inherited', 'base'].includes(parts[2])) {
+    const result = await targetResult(parts[0], 'primeng');
+    const row = result?.coverage.find((c) => c.variable === 'PrimeNG surface totals');
+    const m = /(\d+) driven · (\d+) inherited · (\d+) Aura default/.exec(row?.slot ?? '');
+    if (!m) return null;
+    return Number({ driven: m[1], inherited: m[2], base: m[3] }[parts[2]]);
   }
 
   const [example, ...rest] = parts;
