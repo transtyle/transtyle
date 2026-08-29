@@ -10,7 +10,7 @@
  * its card via the `image` prop.
  */
 import { orderedSlugs } from '../../nav.js';
-import { posts, formatDate } from '../../blog.js';
+import { posts, formatDate, accentHue } from '../../blog.js';
 import { renderCard } from '../../og.js';
 
 const docs = import.meta.glob('../../docs/*.md', { eager: true });
@@ -28,9 +28,16 @@ export function getStaticPaths() {
       params: { slug: `docs-${slug}` },
       props: { kicker: 'Docs', title: docFrontmatter[slug].title, footer: docFrontmatter[slug].description },
     })),
+    // Posts carry a per-post accent hue (derived from the slug, or authored as
+    // `accentHue`); docs and the site card stay on the brand hue.
     ...posts.map((post) => ({
       params: { slug: `blog-${post.slug}` },
-      props: { kicker: 'Blog', title: post.title, footer: `${formatDate(post.date)} · ${post.author}` },
+      props: {
+        kicker: 'Blog',
+        title: post.title,
+        footer: `${formatDate(post.date)} · ${post.author}`,
+        hue: accentHue(post),
+      },
     })),
   ];
 }

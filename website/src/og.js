@@ -13,14 +13,17 @@
  * variable font's `fvar` table, and even when it doesn't, it renders every
  * weight at the default instance, which would silently flatten the bold title.
  *
- * Colours are the site's own dark-theme tokens, converted from OKLCH to hex
- * with Transtyle's own color module (satori has no OKLCH support). If
- * global.css's dark palette changes, these follow it by hand.
+ * Colors: satori has no OKLCH support, so every value is converted to hex —
+ * by Transtyle's own color module, the same code that compiles the themes this
+ * site is about. The OKLCH literals below mirror global.css's dark palette; a
+ * change there is a one-line change here, in the same notation, with no hand
+ * conversion in between.
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import satori from 'satori';
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
+import { formatHex, contrastRatio } from '@transtyle/core';
 
 const require = createRequire(import.meta.url);
 const font = (weight) =>
@@ -31,16 +34,42 @@ const FONTS = [
   { name: 'Inter', data: font(700), weight: 700, style: 'normal' },
 ];
 
-// oklch(0.16 0.014 262) etc. — see global.css [data-theme='dark'].
-const BG = '#0a0d13';
-const SURFACE = '#141821';
-const TEXT = '#e5e8ed';
-const MUTED = '#999fa8';
-const PRIMARY = '#6fa2ff';
-const VIOLET = '#ae8dfc';
+const oklch = (l, c, h) => ({ l, c, h, alpha: 1 });
+const hex = (color) => formatHex(color).text;
 
-/** The wordmark, as the header's own logo — embedded rather than redrawn. */
-const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${PRIMARY}"/><stop offset="1" stop-color="${VIOLET}"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M18 24h28M32 24v22" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/></svg>`;
+// global.css, [data-theme='dark'].
+const BG = oklch(0.16, 0.014, 262);
+const SURFACE = oklch(0.21, 0.018, 262);
+const TEXT = oklch(0.93, 0.008, 260);
+const MUTED = oklch(0.7, 0.015, 260);
+const BRAND_HUE = 262;
+
+// The dark theme's --primary, and the +34° step to --violet that the site's
+// gradients use. An accent hue moves the pair; the relationship is fixed.
+const ACCENT_L = 0.72;
+const ACCENT_C = 0.15;
+const ACCENT_STEP = 34;
+
+/**
+ * The accent pair for a hue, contrast-guarded against the card background.
+ *
+ * The kicker is small text on near-black, so it has to clear WCAG AA on its
+ * own terms rather than on the assumption that L=0.72 is bright enough at
+ * every hue. If a hue lands short, lightness steps up until it clears — the
+ * same "walk until AA clears" shape the derivation engine uses for on-colors.
+ */
+function accentPair(hue) {
+  let l = ACCENT_L;
+  while (l < 0.95 && contrastRatio(oklch(l, ACCENT_C, hue), BG) < 4.5) l += 0.02;
+  return {
+    from: hex(oklch(l, ACCENT_C, hue)),
+    to: hex(oklch(l, ACCENT_C + 0.01, (hue + ACCENT_STEP) % 360)),
+  };
+}
+
+/** The wordmark, as the header's own logo — always brand-hued: it is the mark, not the accent. */
+const BRAND = accentPair(BRAND_HUE);
+const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${BRAND.from}"/><stop offset="1" stop-color="${BRAND.to}"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M18 24h28M32 24v22" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/></svg>`;
 const LOGO_URI = `data:image/svg+xml;base64,${Buffer.from(LOGO).toString('base64')}`;
 
 let wasmReady;
@@ -55,10 +84,10 @@ const row = (style, children) => ({ type: 'div', props: { style: { display: 'fle
 const text = (style, content) => ({ type: 'div', props: { style: { display: 'flex', ...style }, children: content } });
 
 /**
- * @param {{kicker: string, title: string, footer?: string}} card
+ * @param {{kicker: string, title: string, footer?: string, hue?: number}} card
  * @returns {Promise<Buffer>} a 1200×630 PNG
  */
-export async function renderCard({ kicker, title, footer }) {
+export async function renderCard({ kicker, title, footer, hue = BRAND_HUE }) {
   // Long titles get a smaller size rather than a fourth line: three lines at
   // 62px is the most this layout holds without crowding the footer.
   const fontSize = title.length > 78 ? 46 : title.length > 46 ? 54 : 62;
@@ -66,6 +95,11 @@ export async function renderCard({ kicker, title, footer }) {
   // description would run off the edge, and satori clips rather than wraps it.
   const line = footer ?? 'One design system. Every ecosystem.';
   const footerText = line.length > 62 ? `${line.slice(0, 61).trimEnd()}…` : line;
+  const accent = accentPair(hue);
+  // A wash of the accent behind the top-left corner, so the tint reads even at
+  // the thumbnail size a timeline renders. Mixed toward the surface, not the
+  // accent itself: a saturated corner would fight the title.
+  const glow = hex(oklch(0.26, 0.05, hue));
 
   const card = {
     type: 'div',
@@ -77,34 +111,36 @@ export async function renderCard({ kicker, title, footer }) {
         width: '100%',
         height: '100%',
         padding: '64px 72px',
-        backgroundColor: BG,
-        backgroundImage: `radial-gradient(circle at 12% 0%, ${SURFACE} 0%, ${BG} 55%)`,
+        backgroundColor: hex(BG),
+        backgroundImage: `radial-gradient(circle at 12% 0%, ${glow} 0%, ${hex(SURFACE)} 28%, ${hex(BG)} 62%)`,
         fontFamily: 'Inter',
-        color: TEXT,
+        color: hex(TEXT),
       },
       children: [
         row({ alignItems: 'center', gap: 20 }, [
           { type: 'img', props: { src: LOGO_URI, width: 64, height: 64 } },
           text({ fontSize: 34, fontWeight: 700, letterSpacing: '-0.03em' }, 'transtyle'),
           text(
-            {
-              marginLeft: 'auto',
-              fontSize: 20,
-              fontWeight: 700,
-              letterSpacing: '0.14em',
-              color: PRIMARY,
-            },
+            { marginLeft: 'auto', fontSize: 20, fontWeight: 700, letterSpacing: '0.14em', color: accent.from },
             kicker.toUpperCase(),
           ),
         ]),
         text({ fontSize, fontWeight: 700, lineHeight: 1.14, letterSpacing: '-0.03em' }, title),
         row({ flexDirection: 'column', gap: 22 }, [
-          // The brand bar: the same primary→violet gradient as the site's headline.
+          // The brand bar, in this card's accent — the site's headline gradient.
           {
             type: 'div',
-            props: { style: { display: 'flex', width: 240, height: 6, borderRadius: 3, backgroundImage: `linear-gradient(90deg, ${PRIMARY}, ${VIOLET})` } },
+            props: {
+              style: {
+                display: 'flex',
+                width: 240,
+                height: 6,
+                borderRadius: 3,
+                backgroundImage: `linear-gradient(90deg, ${accent.from}, ${accent.to})`,
+              },
+            },
           },
-          row({ alignItems: 'center', gap: 14, fontSize: 24, color: MUTED }, [
+          row({ alignItems: 'center', gap: 14, fontSize: 24, color: hex(MUTED) }, [
             text({}, footerText),
             text({ marginLeft: 'auto' }, 'transtyle.dev'),
           ]),

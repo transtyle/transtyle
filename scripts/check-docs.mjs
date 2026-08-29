@@ -163,6 +163,16 @@ for (const s of blogSlugs) {
   const date = front.match(/^date:\s*'?(\d{4}-\d{2}-\d{2})'?\s*$/m)?.[1];
   if (!date) fail(`blog: ${s}.md — "date" must be a quoted YYYY-MM-DD string (posts sort and render on it)`);
   else if (Number.isNaN(Date.parse(`${date}T00:00:00Z`))) fail(`blog: ${s}.md — "date: ${date}" is not a real date`);
+
+  // Optional: pins the social card's accent instead of deriving it from the
+  // slug (website/src/blog.js). A typo here doesn't fail the build — it just
+  // silently paints the card with NaN's fallback — so it's checked.
+  if (/^accentHue:/m.test(front)) {
+    const hue = front.match(/^accentHue:\s*(\d+(?:\.\d+)?)\s*$/m)?.[1];
+    if (hue === undefined || Number(hue) < 0 || Number(hue) > 360) {
+      fail(`blog: ${s}.md — "accentHue" must be a number between 0 and 360 (OKLCH degrees)`);
+    }
+  }
 }
 
 // ---------- 3. CLI commands ----------

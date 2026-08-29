@@ -21,6 +21,23 @@ export const posts = Object.entries(modules)
 export const postPath = (slug) => `/blog/${slug}/`;
 
 /**
+ * The hue a post's social card is tinted with, in OKLCH degrees.
+ *
+ * Derived from the slug unless the post authors `accentHue`, which is the
+ * compiler's own bargain applied to its blog: a deterministic rule fills what
+ * you didn't decide, and authoring beats the rule. The eight rungs are 45°
+ * apart starting at the brand hue, so consecutive posts land far enough apart
+ * to be told apart in a feed, and every post keeps the same hue forever.
+ */
+const BRAND_HUE = 262;
+export const accentHue = (post) => {
+  if (post.accentHue !== undefined) return post.accentHue;
+  let hash = 0;
+  for (const ch of post.slug) hash = (hash * 31 + ch.charCodeAt(0)) % 100000;
+  return (BRAND_HUE + 45 * (hash % 8)) % 360;
+};
+
+/**
  * Dates are authored as plain `YYYY-MM-DD` strings and formatted in UTC —
  * a local-timezone render of a bare date lands on the previous day west of
  * Greenwich, which is a silly way to misdate a release post.
