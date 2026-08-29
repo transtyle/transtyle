@@ -18,7 +18,8 @@ The system is structured as a classic multi-stage compiler ([ADR-0001](../adr/00
                     │  REPORT    coverage + diags  │
                     └──────────────┬───────────────┘
             ┌─────────────── backends (exporters) ─────────────┐
-  Bootstrap      shadcn/ui      ECharts      Storybook      css-variables
+  Bootstrap   shadcn/ui   daisyUI   ECharts   Storybook   Radix   PrimeNG
+                          css-variables (reference implementation)
             └──────────────────────────────────────────────────┘
 ```
 

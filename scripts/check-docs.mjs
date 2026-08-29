@@ -31,9 +31,21 @@
  *                      saying "warning" until this was added — presence-only
  *                      checking cannot see a severity drift, only a diff can).
  *
+ *   5. overviews    — every shipped exporter is named on each surface that
+ *                     enumerates "what ships today": the docs overview, the
+ *                     homepage, and the engineering overview's own pipeline
+ *                     diagram.
+ *   6. stale claims — no page describes an implemented CLI command as specced
+ *                     or unimplemented. Covers the website docs plus
+ *                     docs/specs/ and docs/architecture/, which make the same
+ *                     claims about the same CLI and drift the same way. Dated
+ *                     records (worklogs, exercises, proposals, findings, ADRs,
+ *                     plans) are deliberately excluded: they state what was
+ *                     true on their date, and "fixing" them rewrites history.
+ *
  * Run: node scripts/check-docs.mjs (also: npm run check:docs, part of
  * check:sync and check:all). Exits 1 with a list of violations. Extend it
- * whenever a new class of website drift is discovered — same contract as
+ * whenever a new class of docs drift is discovered — same contract as
  * check-sync.mjs: this file exists because real drift was possible.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -246,11 +258,13 @@ for (const [code, severities] of sourceSeverity) {
 // ---------- 5. overview surfaces name every shipped exporter ----------
 // The docs overview and the homepage both enumerate "what ships today"; a new
 // exporter that misses either page understates the product (this happened:
-// both pages said 5 exporters while 8 were registered).
+// both pages said 5 exporters while 8 were registered — and again in the
+// engineering overview's own pipeline diagram, which still drew five backends
+// long after three more shipped, which is why it is checked here too).
 const registry = cliSrc.match(/OFFICIAL_EXPORTERS\s*=\s*\{([\s\S]*?)\}/)?.[1] ?? '';
 const exporters = [...registry.matchAll(/^\s*['"]?([\w-]+)['"]?:/gm)].map((m) => m[1]);
 const squash = (s) => s.toLowerCase().replace(/[\s/-]/g, '');
-for (const surface of ['website/src/docs/index.md', 'website/src/pages/index.astro']) {
+for (const surface of ['website/src/docs/index.md', 'website/src/pages/index.astro', 'docs/architecture/overview.md']) {
   const text = squash(read(surface));
   for (const name of exporters) {
     if (!text.includes(squash(name))) fail(`overview: ${surface} does not name shipped exporter "${name}"`);
@@ -305,14 +319,33 @@ const claimRegions = (body) => {
   return regions;
 };
 
-for (const s of slugs) {
-  if (s === 'cli') continue;
-  for (const line of claimRegions(read(`${DOCS_DIR}/${s}.md`))) {
+// The engineering docs make the same claims about the same CLI, and drift the
+// same way — docs/specs/cli.md's status banner went on calling `diff` specced
+// for as long as the website's did. Dated records (worklogs, exercises,
+// proposals, findings, ADRs, plans) are deliberately NOT scanned: they say what
+// was true on their date, and editing them would be rewriting history.
+const claimSurfaces = [
+  ...slugs.filter((s) => s !== 'cli').map((s) => `${DOCS_DIR}/${s}.md`),
+  ...['docs/specs', 'docs/architecture'].flatMap((dir) =>
+    readdirSync(join(root, dir))
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => `${dir}/${f}`),
+  ),
+];
+
+for (const surface of claimSurfaces) {
+  for (const line of claimRegions(read(surface))) {
+    // Qualification is judged on the comma/semicolon-delimited segment the
+    // command sits in, not on a fixed character window: in a list like
+    // "`--dry-run`, `import`, `diff`, `migrate` remain specced" a window wide
+    // enough to see a real qualifier also sees the neighbouring item's flag,
+    // and every entry in the list goes quietly unchecked.
+    const segments = line.split(/[,;]/);
     for (const m of line.matchAll(/`([\w-]+)`/g)) {
       if (!commands.includes(m[1])) continue;
-      const around = line.slice(Math.max(0, m.index - 24), m.index + m[0].length + 24);
-      if (QUALIFIER.test(around)) continue; // a future variant of a shipped command
-      fail(`stale-claim: ${s}.md lists implemented command \`${m[1]}\` as specced/unimplemented — "${line.trim().slice(0, 90)}"`);
+      const segment = segments.find((s) => s.includes(`\`${m[1]}\``)) ?? line;
+      if (QUALIFIER.test(segment)) continue; // a future variant of a shipped command
+      fail(`stale-claim: ${surface} lists implemented command \`${m[1]}\` as specced/unimplemented — "${line.trim().slice(0, 90)}"`);
     }
   }
 }
