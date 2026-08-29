@@ -8,6 +8,11 @@ order: 8
 
 The first reference exporter. shadcn's theme _is_ a set of semantic CSS variables, so it exercises the semantic catalog almost 1:1 — which made it the right target to build first and the cleanest to learn from.
 
+<!-- measured: acme.shadcn.decls = 103 -->
+<!-- measured: acme.shadcn.distinct = 71 -->
+
+On the [Acme example](/docs/examples/) that is 103 custom-property declarations across `:root` and `.dark` — 71 distinct variables, each one classified in `report.json`.
+
 ## Era profiles
 
 shadcn isn't a versioned library; its theming convention shifted with the Tailwind v3 → v4 transition. The exporter ships two **profiles**, selected in config via `options.era` (see [target instances](/docs/configuration/#targets--instances-not-just-names)):

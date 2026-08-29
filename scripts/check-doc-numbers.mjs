@@ -230,13 +230,26 @@ const compiled = async (example) => {
   return cache.get(key);
 };
 
-/** CSS custom-property declarations in an example's emitted files for a target. */
-const cssCounts = (example, target) => {
+/**
+ * What an example's build actually emitted for one target: CSS custom-property
+ * declarations (`decls`, and `distinct` names among them), Sass variables
+ * (`sass`), and classified coverage rows (`rows`) — the three shapes the
+ * exporter pages quote when they say how much output a theme is.
+ */
+const emitted = (example, target) => {
   const dir = join(root, 'examples', example, 'dist', target);
   if (!existsSync(dir)) return null;
-  const css = readdirSync(dir).filter((f) => f.endsWith('.css'));
-  const decls = css.flatMap((f) => readFileSync(join(dir, f), 'utf8').match(/^\s*--[\w-]+:/gm) ?? []);
-  return { decls: decls.length, distinct: new Set(decls.map((d) => d.trim())).size };
+  const files = readdirSync(dir);
+  const matchIn = (ext, re) =>
+    files.filter((f) => f.endsWith(ext)).flatMap((f) => readFileSync(join(dir, f), 'utf8').match(re) ?? []);
+  const decls = matchIn('.css', /^\s*--[\w-]+:/gm);
+  const report = files.includes('report.json') ? JSON.parse(read(`examples/${example}/dist/${target}/report.json`)) : null;
+  return {
+    decls: decls.length,
+    distinct: new Set(decls.map((d) => d.trim())).size,
+    sass: matchIn('.scss', /^\s*\$[\w-]+:/gm).length,
+    rows: report ? Object.values(report.coverage.counts).reduce((a, b) => a + b, 0) : null,
+  };
 };
 
 const surfaceInventory = (target) => {
@@ -273,9 +286,9 @@ async function measure(metric) {
   const [example, ...rest] = parts;
   if (!exampleNames().includes(example)) return null;
 
-  // <example>.<target>.decls | .distinct
-  if (rest.length === 2 && ['decls', 'distinct'].includes(rest[1])) {
-    return cssCounts(example, rest[0])?.[rest[1]] ?? null;
+  // <example>.<target>.decls | .distinct | .sass | .rows
+  if (rest.length === 2 && ['decls', 'distinct', 'sass', 'rows'].includes(rest[1])) {
+    return emitted(example, rest[0])?.[rest[1]] ?? null;
   }
 
   // <example>.slots | .authored | .engine | .authored.<tier>

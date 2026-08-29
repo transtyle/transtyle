@@ -8,6 +8,11 @@ order: 14
 
 Radix's 12-step-per-color model is, cell for cell, [the role grid](/docs/language/#color-roles-the-role-grid) — numbered instead of named. That makes this exporter the grid's own acceptance test: only 2 of 12 steps need a fresh mix (steps 2 and 6), everything else is a direct grid cell.
 
+<!-- measured: acme.radix.decls = 450 -->
+<!-- measured: acme.radix.rows = 203 -->
+
+On [Acme](/docs/examples/) that is 450 declarations — 12 steps plus a 12-step alpha ramp per role, in both modes — over 203 classified rows.
+
 ```json
 "targets": { "radix": { "output": "dist/radix" } }
 ```

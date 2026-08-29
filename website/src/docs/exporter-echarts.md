@@ -8,6 +8,10 @@ order: 9
 
 The second reference exporter, and proof that Transtyle is not a CSS generator: the output is a **JSON theme object** for `echarts.registerTheme()`, colors are hex (canvas rendering), and the star of the show is a derivation problem no UI-framework target has — the **categorical data palette**.
 
+<!-- measured: acme.echarts.rows = 11 -->
+
+It is also the smallest surface any target exposes — 11 classified theme keys on [Acme](/docs/examples/) — which is why the palette is the whole story here.
+
 ## The palette problem
 
 ECharts' most important themable value is `color: [...]` — series colors that must be _mutually distinguishable_, not just on-brand. Design systems define roles, not ten distinct hues. Transtyle derives an **8-color palette** from your brand: hues rotated in OKLCH around your primary's anchor, lightness and chroma held in bands tuned for adjacent distinguishability, re-tuned per mode for dark surfaces.

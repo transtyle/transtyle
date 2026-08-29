@@ -8,6 +8,10 @@ order: 15
 
 Every other reference exporter binds at the semantic tier only. PrimeNG ships its own explicit three-tier design-token system (`primitive` → `semantic` → `components`), so this exporter overrides an existing preset (`Aura`) rather than authoring one from zero — anything it doesn't emit is inherited from Aura untouched.
 
+<!-- measured: acme.primeng.rows = 349 -->
+
+On [Acme](/docs/examples/) the emitted preset carries 349 classified slots, against the 2759-slot Aura surface the [coverage bar](/docs/concepts/#5-provenance-and-coverage) reconciles them with.
+
 ```json
 "targets": { "primeng": { "output": "dist/primeng" } }
 ```

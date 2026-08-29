@@ -8,6 +8,10 @@ order: 12
 
 Storybook isn't a UI framework — it's the tool that documents your other targets. This exporter themes **Storybook itself** (Storybook 8–9) and wires your sibling targets into its preview. All emitted files are **additive fragments**: you import them from your own `.storybook/` config; we never overwrite user files.
 
+<!-- measured: acme.storybook.rows = 32 -->
+
+The themable surface is small and almost entirely native: 32 classified ThemeVars on [Acme](/docs/examples/).
+
 | File                   | What it does                                                                                                                                                                                                                              |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `theme.transtyle.ts`   | `create()` ThemeVars objects, one per color-scheme mode (hex output — Storybook's theming pipeline doesn't parse `oklch()`)                                                                                                               |
