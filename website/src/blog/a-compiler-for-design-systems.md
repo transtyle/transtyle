@@ -210,6 +210,8 @@ Here is the real GOV.UK Design System — a public system nobody on this project
 
 <p class="covmatrix-legend"><span><i class="native"></i>native — lossless</span><span><i class="derived"></i>derived — computed by a rule</span><span><i class="approx"></i>approximated — meaning bent, reason recorded</span><span><i class="other"></i>dropped / unsupported — this target can't say it</span></p>
 
+<!-- measured: govuk.bootstrap.rows = 712 -->
+
 Read the shape, not a single number — and never compare one target's bar to another's. Each measures a different surface with a different ceiling. `css-variables` is 100% native because it is the conformance dump: it has a slot for everything by construction. `radix` is 58% approximated because its 12-step alpha ramps are a fixed projection rather than a colorimetric reconstruction — a compromise stated out loud. And `bootstrap` is 2% native / 76% derived across **712 classified rows** because GOV.UK authored a handful of colors and the standard rules coherently filled a very large variable surface from them. A high derived share is not a weakness; it is the compiler doing the work you did not want to do by hand, and telling you it did.
 
 And the compromises are not summarized away into a percentage. Each one carries its reason, verbatim, in `report.json`:
@@ -230,6 +232,10 @@ The last difference is the least glamorous and the most load-bearing: what lands
 
 A generic pipeline emits variables and leaves you to wire them up. Transtyle emits `_variables.transtyle.scss` and `_maps.transtyle.scss` that import around Bootstrap's own Sass build the way Bootstrap's docs tell you to; a `globals.transtyle.css` with `@theme inline` that drops into a Tailwind v4 shadcn project; an ECharts theme JSON that registers directly. Delete Transtyle afterwards and the files still work — there is **no runtime**, nothing shipped into your application, no dependency to audit.
 
+<!-- measured: bootstrap.surface.total = 952 -->
+<!-- measured: bootstrap.surface.component = 657 -->
+<!-- measured: primeng.surface.total = 2759 -->
+
 That extends past the color-role layer into component theming, which is where "themed" usually stops being true. Bootstrap exposes 952 themable Sass variables, 657 of them component-scoped; PrimeNG's Aura preset exposes 2,759 design-token slots across 98 families. Both inventories are checked into the repository and drift-guarded in CI, and every single slot is accounted for in the coverage report — driven by a token, inherited through the target's own chaining, left on its default, or honestly reported as a gap with a note.
 
 The component tier is also where a distinction most token formats cannot express becomes one authored line:
@@ -247,7 +253,7 @@ The catalog does not grow to swallow all of that, and the rule for when it may i
 
 Honest launch posts include the parts that could fail.
 
-The catalog is a **bet** that these meanings are genuinely universal. It survived two real, independently-designed systems ([GOV.UK](/docs/govuk-showcase/) and IBM Carbon) compiling to eight targets with zero catalog amendments and zero diagnostics — but two is not many, and the systems that will break it are the ones we have not seen. Translation stays lossy no matter how good the reports get; if you need pixel-identical rendering across frameworks, no tool can give you that, and we say so rather than implying otherwise. The DTCG spec has not settled modes and theming upstream, so our extensions have to be deletable when it does. And the risk is not primarily engineering: it is whether an ecosystem that has been re-implementing themes by hand for a decade wants to stop.
+The catalog is a **bet** that these meanings are genuinely universal. It survived two real, independently-designed systems ([GOV.UK](/docs/govuk-showcase/) and IBM Carbon) compiling to eight targets with zero catalog amendments and no warnings or errors — Carbon draws a few informational notes where its dark theme reuses a light value, which is the compiler saying so rather than hiding it. But two systems is not many, and the ones that will break this are the ones we have not seen. Translation stays lossy no matter how good the reports get; if you need pixel-identical rendering across frameworks, no tool can give you that, and we say so rather than implying otherwise. The DTCG spec has not settled modes and theming upstream, so our extensions have to be deletable when it does. And the risk is not primarily engineering: it is whether an ecosystem that has been re-implementing themes by hand for a decade wants to stop.
 
 ## How it works, in five schemas
 
@@ -370,6 +376,8 @@ Scope discipline is the survival strategy of a project like this, so the boundar
 ## Where it stands, honestly
 
 This is a **v0** release. Here is the actual state, with no rounding up.
+
+<!-- measured: demos = 32 -->
 
 **Real today:** the full pipeline; the derivation engine (role grids, elevation ladder, scales, modes); `build`, `check`, `explain`, `init`, `add`, and `diff` — the last one comparing the compiled themes against a git ref, so a token change arrives in review as "here is what moved, in every target"; eight exporters — shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, and plain CSS variables — all on the same public plugin API, with a conformance kit gating them in CI; four example systems, two of them real and independently designed, with 32 runnable demo projects rendering the compiled themes on each target's actual components; component-tier theming on Bootstrap and PrimeNG; JSON schemas for config and reports; zero runtime dependencies; byte-identical rebuilds verified on every commit.
 

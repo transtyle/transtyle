@@ -146,11 +146,34 @@ const EXAMPLE_HINT = /<!--\s*example:\s*([\w-]+)\s*-->/;
 // markup carrying it.
 const stripTags = (s) => s.replace(/<[^>]+>/g, '');
 
+// The hint applies from its own line downward, not to the whole file. It was
+// file-global at first and immediately mis-fired: the release post shows an
+// Acme transcript near the top and a GOV.UK coverage matrix much further down,
+// and one `<!-- example: govuk -->` anywhere in it repointed the Acme lines at
+// the wrong example — reporting five wrong numbers in a post whose numbers were
+// all correct.
+const LINE_TRANSCRIPT = new RegExp(TRANSCRIPT.source);
+
 for (const surface of SURFACES) {
   const body = read(surface);
-  const example = EXAMPLE_HINT.exec(body)?.[1] ?? DEFAULT_EXAMPLE;
-  for (const m of stripTags(body).matchAll(TRANSCRIPT)) {
-    const [, target, bar] = m;
+  let example = DEFAULT_EXAMPLE;
+  const transcripts = [];
+  for (const line of body.split('\n')) {
+    // The hint is read from the raw line and the transcript from the stripped
+    // one, in that order: stripTags eats `<!-- … -->` whole (it is a `<…>`),
+    // so a hint tested after stripping can never match. That silently disabled
+    // the hint entirely — found by testing that moving one above a transcript
+    // changed the result, and watching it not.
+    const hint = EXAMPLE_HINT.exec(line);
+    if (hint) {
+      example = hint[1];
+      continue;
+    }
+    const m = LINE_TRANSCRIPT.exec(stripTags(line));
+    if (m) transcripts.push({ example, target: m[1], bar: m[2] });
+  }
+
+  for (const { example, target, bar } of transcripts) {
     if (!targetsOfDefault.has(target) && !configuredTargets(example).includes(target)) continue;
     const actual = await coveragePercentages(example, target);
     if (!actual) {
