@@ -13,8 +13,17 @@
  *  4. A real emitted report.json validates against the report schema — the
  *     published report schema matches what core actually writes.
  *
+ * Assertion 4 builds the examples itself. It used to read whatever was already
+ * in `examples/<name>/dist/`, which is gitignored: on a fresh clone there was
+ * nothing to validate (caught, but only by a "build an example first" error at
+ * the end), and on a working copy it validated whatever build happened to be
+ * lying around — possibly from before the change under test. Building here
+ * costs about a second and makes the check answer for the current code, the
+ * same way check-fixtures and check-coverage-bar already do.
+ *
  * Run: node scripts/check-schemas.mjs (also: npm run check:schemas; part of check:all).
  */
+import { execSync } from 'node:child_process';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,6 +70,8 @@ for (const { why, cfg } of mustReject) {
 // shadcn report was validated (found by the P1 conformance kit). Scan them all.
 let reportsChecked = 0;
 for (const ex of examples) {
+  // Fresh, not whatever is on disk — see the header note.
+  execSync(`npx transtyle build --cwd examples/${ex}`, { cwd: root, stdio: 'pipe' });
   const distDir = join(root, `examples/${ex}/dist`);
   if (!existsSync(distDir)) continue;
   for (const target of readdirSync(distDir)) {

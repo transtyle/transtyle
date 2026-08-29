@@ -1,4 +1,6 @@
-# Keeps the SHA-pinned actions in ci.yml current.
+# Keeps the SHA-pinned actions in ci.yml current. Kept in place ahead of the
+# repository going public, when a stale pinned action stops being a private
+# inconvenience and starts being a supply-chain surface anyone can read.
 #
 # Pinning by commit SHA is what stops a moved tag from silently changing what
 # runs in CI, but a pin with no update path is its own hazard: it freezes the
