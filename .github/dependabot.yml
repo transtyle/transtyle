@@ -1,0 +1,21 @@
+# Keeps the SHA-pinned actions in ci.yml current.
+#
+# Pinning by commit SHA is what stops a moved tag from silently changing what
+# runs in CI, but a pin with no update path is its own hazard: it freezes the
+# action at whatever it was the day it was written, security fixes included.
+# Dependabot understands the `# v7.0.1` comment next to each SHA and rewrites
+# both the hash and the comment together.
+#
+# Actions only, monthly, one PR at a time — the npm tree is deliberately left
+# alone here: the compiler packages have zero runtime dependencies, and the
+# demo projects pin their frameworks on purpose so the themes are tested
+# against a known version.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: ci

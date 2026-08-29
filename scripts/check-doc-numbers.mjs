@@ -12,18 +12,18 @@
  * shadcn split the CLI had not produced in months. Nothing failed, because
  * nothing was checking.
  *
- * A number copied out of a build is a promise, so the two shapes that carry
- * them verbatim are re-derived from the committed reports on every run:
+ * A number copied out of a build is a promise, so the three shapes that carry
+ * them are re-derived from a fresh compile on every run:
  *
  *   1. coverage transcripts — a line shaped like the CLI's own output,
  *      `<target>  42% native · 53% derived · …`, in any docs page, blog post,
- *      or the homepage. Checked against examples/<example>/dist/<target>/
- *      report.json, recomputed with the CLI's own rounding. The example is
+ *      or the homepage. Recomputed from a fresh in-process compile of the
+ *      example, with the CLI's own rounding. The example is
  *      `acme` unless the surrounding block declares another one (see
  *      EXAMPLE_HINT) — the docs' worked example throughout.
  *
  *   2. coverage matrices — the `.covmatrix` diagram's segment widths, which
- *      must equal the report percentages for the example named by the block's
+ *      must equal the compiled coverage for the example named by the block's
  *      `data-example` attribute. A matrix without that attribute is an error:
  *      an unlabeled diagram is a number nobody can re-derive.
  *
@@ -38,9 +38,10 @@
  *      still appear in the block the marker introduces, so neither half can
  *      drift away from the other. See `measure()` for the metric list.
  *
- * Both compare against the reports committed in the repo, which is the honest
- * question — "do the docs say what this repo's own output says?" — and stays
- * answerable without running a build.
+ * Every number is re-derived by compiling the examples in-process (emit off),
+ * never by reading their `dist/` trees — those are gitignored, so they are
+ * absent on a fresh clone and stale everywhere else. The question this asks is
+ * "do the docs match the code?", which is the one worth failing a build over.
  *
  * Run: node scripts/check-doc-numbers.mjs (also: npm run check:doc-numbers,
  * part of check:all). Exits 1 with a list of violations. Extend it when a new
@@ -69,26 +70,55 @@ const SURFACES = [
 ];
 
 /**
+ * Every example is compiled in-process, `emit: false`, and every number below
+ * comes out of that run.
+ *
+ * Not out of an example's `dist/`, which was the first implementation and
+ * failed in CI on its first run: that tree is gitignored, so a fresh checkout
+ * has no reports to compare against and every check reported "no report"
+ * instead of "wrong number". Compiling is also the stronger question — it asks
+ * whether the docs match the *code*, not whether they match whatever build
+ * happens to be sitting on this machine. The result's `emitted` array carries
+ * each file's path and contents even with emit off (core keeps it for
+ * `transtyle diff`), so the CSS/Sass counts need no disk either.
+ */
+const examples = new Map();
+async function compiledExample(example) {
+  if (!examples.has(example)) {
+    const { compile } = await import('../packages/core/src/index.js');
+    examples.set(
+      example,
+      await compile({
+        cwd: join(root, 'examples', example),
+        emit: false,
+        loadExporter: async (name) => (await import(`../packages/exporter-${name}/src/index.js`)).default,
+      }),
+    );
+  }
+  return examples.get(example);
+}
+
+const targetResult = async (example, target) =>
+  (await compiledExample(example)).results.find((r) => r.target === target) ?? null;
+
+/**
  * Percentages exactly as the CLI prints them (packages/cli/src/main.js): count
- * over the report's total, rounded half-up per class. Rounding independently
+ * over the target's row total, rounded half-up per class. Rounding independently
  * per class is why a row can sum to 101 — that is the CLI's behavior, and the
  * docs quote the CLI, so it is reproduced rather than corrected.
  */
-const reportPercentages = (example, target) => {
-  const path = `examples/${example}/dist/${target}/report.json`;
-  if (!existsSync(join(root, path))) return null;
-  const counts = JSON.parse(read(path)).coverage.counts;
-  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
-  return Object.fromEntries(
-    Object.entries(counts).map(([k, v]) => [k, Math.round((v / total) * 100)]),
-  );
+const coveragePercentages = async (example, target) => {
+  const result = await targetResult(example, target);
+  if (!result) return null;
+  const counts = {};
+  for (const c of result.coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
+  const total = result.coverage.length || 1;
+  return Object.fromEntries(Object.entries(counts).map(([k, v]) => [k, Math.round((v / total) * 100)]));
 };
 
-const knownTargets = (example) => {
-  const dir = join(root, 'examples', example, 'dist');
-  return existsSync(dir) ? readdirSync(dir) : [];
-};
-const targetsOfAcme = new Set(knownTargets(DEFAULT_EXAMPLE));
+const configuredTargets = (example) =>
+  Object.keys(JSON.parse(read(`examples/${example}/transtyle.config.json`)).targets ?? {});
+const targetsOfDefault = new Set(configuredTargets(DEFAULT_EXAMPLE));
 
 // ---------- 1. coverage transcripts ----------
 // `shadcn  42% native · 53% derived · 3% approximated · 3% dropped`, with the
@@ -110,10 +140,10 @@ for (const surface of SURFACES) {
   const example = EXAMPLE_HINT.exec(body)?.[1] ?? DEFAULT_EXAMPLE;
   for (const m of stripTags(body).matchAll(TRANSCRIPT)) {
     const [, target, bar] = m;
-    if (!targetsOfAcme.has(target) && !knownTargets(example).includes(target)) continue;
-    const actual = reportPercentages(example, target);
+    if (!targetsOfDefault.has(target) && !configuredTargets(example).includes(target)) continue;
+    const actual = await coveragePercentages(example, target);
     if (!actual) {
-      fail(`${surface}: quotes coverage for "${target}", which has no report in examples/${example}/dist/`);
+      fail(`${surface}: quotes coverage for "${target}", which examples/${example} does not configure`);
       continue;
     }
     const claimed = Object.fromEntries(
@@ -124,7 +154,7 @@ for (const surface of SURFACES) {
       const got = claimed[cls] ?? 0;
       if (want !== got) {
         fail(
-          `${surface}: "${target}" transcript says ${got}% ${cls}, but examples/${example}/dist/${target}/report.json says ${want}% ` +
+          `${surface}: "${target}" transcript says ${got}% ${cls}, but compiling examples/${example} gives ${want}% ` +
             `— rewrite the line as: ${target}  ${CLASSES.map((c) => (actual[c] ? `${actual[c]}% ${c}` : null)).filter(Boolean).join(' · ')}`,
         );
         break; // one line, one message: the fix rewrites the whole bar
@@ -148,9 +178,9 @@ for (const surface of SURFACES) {
     }
     for (const row of inner.matchAll(ROW)) {
       const [, target, segments] = row;
-      const actual = reportPercentages(example, target);
+      const actual = await coveragePercentages(example, target);
       if (!actual) {
-        fail(`${surface}: covmatrix row "${target}" has no report in examples/${example}/dist/`);
+        fail(`${surface}: covmatrix row "${target}" is not a configured target of examples/${example}`);
         continue;
       }
       // The diagram merges dropped + unsupported into one grey `other` segment.
@@ -205,13 +235,11 @@ const exampleNames = () =>
     .filter((d) => d.isDirectory() && existsSync(join(root, 'examples', d.name, 'transtyle.config.json')))
     .map((d) => d.name);
 
-/** Compile an example (no emit) and count what the engine resolved. */
+/** What the engine resolved for an example, from the shared compile. */
 const compiled = async (example) => {
-  const key = `compile:${example}`;
+  const key = `slots:${example}`;
   if (!cache.has(key)) {
-    const { compile } = await import('../packages/core/src/index.js');
-    const loadExporter = async (name) => (await import(`../packages/exporter-${name}/src/index.js`)).default;
-    const { normalized } = await compile({ cwd: join(root, 'examples', example), emit: false, loadExporter });
+    const { normalized } = await compiledExample(example);
     // The default mode carries every slot; per-mode counts are identical by
     // construction (every slot resolves in every mode).
     const map = normalized.modes[Object.keys(normalized.modes)[0]];
@@ -231,24 +259,23 @@ const compiled = async (example) => {
 };
 
 /**
- * What an example's build actually emitted for one target: CSS custom-property
+ * What an example's build emits for one target: CSS custom-property
  * declarations (`decls`, and `distinct` names among them), Sass variables
- * (`sass`), and classified coverage rows (`rows`) — the three shapes the
- * exporter pages quote when they say how much output a theme is.
+ * (`sass`), and classified coverage rows (`rows`) — the shapes the exporter
+ * pages quote when they say how much output a theme is. Read off the in-memory
+ * file specs, so this needs no `dist/` on disk.
  */
-const emitted = (example, target) => {
-  const dir = join(root, 'examples', example, 'dist', target);
-  if (!existsSync(dir)) return null;
-  const files = readdirSync(dir);
+const emitted = async (example, target) => {
+  const result = await targetResult(example, target);
+  if (!result) return null;
   const matchIn = (ext, re) =>
-    files.filter((f) => f.endsWith(ext)).flatMap((f) => readFileSync(join(dir, f), 'utf8').match(re) ?? []);
+    result.emitted.filter((f) => f.path.endsWith(ext)).flatMap((f) => f.contents.match(re) ?? []);
   const decls = matchIn('.css', /^\s*--[\w-]+:/gm);
-  const report = files.includes('report.json') ? JSON.parse(read(`examples/${example}/dist/${target}/report.json`)) : null;
   return {
     decls: decls.length,
     distinct: new Set(decls.map((d) => d.trim())).size,
     sass: matchIn('.scss', /^\s*\$[\w-]+:/gm).length,
-    rows: report ? Object.values(report.coverage.counts).reduce((a, b) => a + b, 0) : null,
+    rows: result.coverage.length,
   };
 };
 
@@ -288,7 +315,7 @@ async function measure(metric) {
 
   // <example>.<target>.decls | .distinct | .sass | .rows
   if (rest.length === 2 && ['decls', 'distinct', 'sass', 'rows'].includes(rest[1])) {
-    return emitted(example, rest[0])?.[rest[1]] ?? null;
+    return (await emitted(example, rest[0]))?.[rest[1]] ?? null;
   }
 
   // <example>.slots | .authored | .engine | .authored.<tier>
@@ -338,4 +365,6 @@ if (errors.length) {
   for (const e of errors) console.error('  - ' + e);
   process.exit(1);
 }
-console.log('✔ doc numbers: every coverage transcript and matrix in the docs matches the committed reports');
+console.log(
+  `✔ doc numbers: every coverage transcript, matrix and measured marker matches a fresh compile of ${examples.size} example(s)`,
+);
