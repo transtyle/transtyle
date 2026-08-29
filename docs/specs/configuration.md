@@ -15,9 +15,13 @@ Rationale: token files stay valid, portable DTCG that Figma/Tokens Studio/Style 
 
 ## Manifest shape (v0)
 
+Every key below is accepted by the shipped schema — this block validates clean against `config/v0`, which is checked rather than assumed:
+
+<!-- validates: config -->
+
 ```jsonc
 {
-  "$schema": "https://…/transtyle.config/v0.json",
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
   "name": "acme-design-system",
   "tokens": ["tokens/**/*.tokens.json"], // ordered; later files may override earlier (explicit, warned)
 
@@ -29,12 +33,11 @@ Rationale: token files stay valid, portable DTCG that Figma/Tokens Studio/Style 
     "rules": "standard@1", // pinned rule pack (see architecture/derivation.md)
     "autoDark": false,
     "require": ["semantic.color.primary"], // must be authored, not derived
-    "overrides": {/* per-slot rules */},
   },
 
   "targets": {
-    "bootstrap": { "version": "5.3", "output": "dist/bootstrap", "options": { "emitSass": true } },
-    "shadcn": { "version": "latest-profile", "output": "dist/shadcn" },
+    "bootstrap": { "output": "dist/bootstrap" },
+    "shadcn": { "output": "dist/shadcn", "options": { "era": "tailwind-v4" } },
     "echarts": { "output": "dist/echarts" },
     "storybook": {
       "output": "dist/storybook",
@@ -49,7 +52,12 @@ Rationale: token files stay valid, portable DTCG that Figma/Tokens Studio/Style 
 }
 ```
 
-Target-specific `options` are defined and schema-validated by each exporter (the exporter manifest ships its options schema; unknown options are errors, not silent ignores).
+Two keys an earlier draft of this page showed are **specced, and rejected today** — a config carrying either fails to load with `TST1010: unknown property`:
+
+- `derivation.overrides` — per-slot rule overrides ([derivation.md](../architecture/derivation.md#user-defined-rules-specced--not-implemented)). Author the token instead; authored always wins.
+- `targets.<t>.version` — requesting a framework version so core can select a compat profile ([versioning.md](../architecture/versioning.md)). Where a target has more than one shape, it is an explicit option today: shadcn's `era`.
+
+Target-specific `options` are defined and schema-validated by each exporter (the exporter ships its options schema; unknown options are errors, not silent ignores). An exporter that declares none — Bootstrap, ECharts, css-variables — rejects any `options` object at all.
 
 ### Target instances
 

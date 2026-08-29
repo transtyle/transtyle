@@ -23,7 +23,7 @@ Fully deterministic, fully ours, one site to maintain. This is what most compani
 
 ## Tier 2 — Themed Storybook (Phase 1, via the Storybook exporter)
 
-For teams with their own Storybook, the [Storybook exporter](exporters/storybook.md) themes manager + preview and can scaffold token-reference stories. Their components, our theme — the highest-value "branded documentation" with none of the upstream-rebuild cost.
+For teams with their own Storybook, the [Storybook exporter](exporters/storybook.md) themes manager + preview. (**Specced:** scaffolding token-reference stories — it emits theme, manager and preview fragments only, and the demo writes its own single story.) Their components, our theme — the highest-value "branded documentation" with none of the upstream-rebuild cost.
 
 ## Tier 3 — Upstream doc rebuild (`transtyle doc <target>`, Phase 3, experimental, capability-gated)
 

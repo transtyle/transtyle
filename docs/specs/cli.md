@@ -57,8 +57,8 @@ An unknown slot exits 2 and lists the 5 closest catalog names (Levenshtein dista
 - **Output streams:** human logs → stderr; requested data (`--json`, `explain`) → stdout. Pipeable by construction.
 - **Non-interactive by default** when not a TTY; anything interactive has a flag equivalent.
 - **No telemetry.** If ever proposed, opt-in only, and it gets its own ADR and public schema.
-- **Respects** `NO_COLOR`, `--quiet`, `--verbose`.
+- **Specced:** `NO_COLOR`, `--quiet` and `--verbose` — none is read today. Output volume is fixed, and an unknown flag exits 2 rather than being ignored, so a script passing one of these fails loudly instead of silently getting the same output.
 
 ## Programmatic parity
 
-Every command is a thin wrapper over `@transtyle/core` public API (`compile()`, `check()`, `explainToken()`, `diff()`). Guaranteed parity — the CLI never contains logic a build-tool integration can't reach.
+The goal is that every command be a thin wrapper over `@transtyle/core`'s public API, so the CLI never holds logic a build-tool integration cannot reach. Where it stands: `build` and `check` are `compile({ emit })`, and `diff` is `compile()` twice plus `diffResolved()`/`contrastRegressions()` — all exported. `explain`, `init` and `add` are **CLI-only** today: the provenance walk lives in `packages/cli/src/main.js` rather than behind an exported `explainToken()`, so an integration wanting it would have to re-walk the IR itself. Closing that gap is the parity promise's remaining debt, not a detail.

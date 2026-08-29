@@ -12,6 +12,8 @@ The `$schema` line at the top is a real, published [JSON Schema](https://transty
 
 Full annotated example:
 
+<!-- validates: config -->
+
 ```json
 {
   "$schema": "https://transtyle.dev/schemas/config/v0.json",

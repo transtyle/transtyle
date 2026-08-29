@@ -12,6 +12,8 @@
  *     actually catches unknown keys, bad enums, wrong types, missing required.
  *  4. A real emitted report.json validates against the report schema — the
  *     published report schema matches what core actually writes.
+ *  5. Every config example the docs mark `<!-- validates: config -->` parses and
+ *     validates — a reference manifest a reader copies must actually load.
  *
  * Assertion 4 builds the examples itself. It used to read whatever was already
  * in `examples/<name>/dist/`, which is gitignored: on a fresh clone there was
@@ -84,9 +86,45 @@ for (const ex of examples) {
 }
 if (reportsChecked === 0) fail('no emitted report.json found — build an example first so report-schema conformance can be checked');
 
+// 5. Config examples in the docs actually load.
+//
+// The manifest example in docs/specs/configuration.md carried three keys the
+// schema rejects — `derivation.overrides`, `targets.<t>.version`, and an
+// `options` object on an exporter that declares no options schema. A reader
+// copying the reference example got TST1010. Any fenced json/jsonc block
+// preceded by `<!-- validates: config -->` is parsed and validated here, so a
+// documented config that would not load fails the build instead of a user.
+const CONFIG_EXAMPLE = /<!--\s*validates:\s*config\s*-->\s*\n+```jsonc?\n([\s\S]*?)```/g;
+const docSurfaces = [
+  ...readdirSync(join(root, 'website/src/docs')).filter((f) => f.endsWith('.md')).map((f) => `website/src/docs/${f}`),
+  ...readdirSync(join(root, 'docs/specs')).filter((f) => f.endsWith('.md')).map((f) => `docs/specs/${f}`),
+];
+let examplesChecked = 0;
+for (const surface of docSurfaces) {
+  for (const [, block] of read(surface).matchAll(CONFIG_EXAMPLE)) {
+    // jsonc: line comments and trailing commas are legal in the docs, not in JSON.
+    const json = block.replace(/^\s*\/\/.*$/gm, '').replace(/\/\/[^"\n]*$/gm, '').replace(/,(\s*[}\]])/g, '$1');
+    let cfg;
+    try {
+      cfg = JSON.parse(json);
+    } catch (e) {
+      fail(`${surface}: a <!-- validates: config --> block is not parseable JSON (${e.message})`);
+      continue;
+    }
+    examplesChecked++;
+    for (const { path: p_, message } of validate(cfg, configSchema)) {
+      fail(`${surface}: documented config example is invalid — ${p_ === '(root)' ? '' : p_ + ' '}${message}`);
+    }
+  }
+}
+if (examplesChecked === 0) fail('no <!-- validates: config --> example found — the reference manifest must be checked, not assumed');
+
 if (errors.length) {
   console.error(`✖ schema check: ${errors.length} problem(s)\n`);
   for (const e of errors) console.error('  - ' + e);
   process.exit(1);
 }
-console.log(`✔ schema check: published schemas current; ${examples.length} example configs valid; ${mustReject.length} bad-config cases rejected; ${reportsChecked} emitted reports conform`);
+console.log(
+  `✔ schema check: published schemas current; ${examples.length} example configs valid; ${examplesChecked} documented config example(s) load; ` +
+    `${mustReject.length} bad-config cases rejected; ${reportsChecked} emitted reports conform`,
+);
