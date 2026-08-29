@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege for the whole workflow: these jobs read the repository and
+# build it. Nothing writes to the repo, publishes a package, posts a comment,
+# or requests an OIDC token — so the default write-capable token is handed back
+# down to read-only, and a job that starts needing more has to say so out loud.
+permissions:
+  contents: read
+
 jobs:
   checks:
     name: Sync, catalog, fixtures, determinism, site

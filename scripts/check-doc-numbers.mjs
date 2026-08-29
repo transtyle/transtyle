@@ -60,10 +60,21 @@ const DEFAULT_EXAMPLE = 'acme';
 const CLASSES = ['native', 'derived', 'approximated', 'dropped', 'unsupported'];
 
 /** The surfaces that quote build numbers in prose or in a diagram. */
+const mdIn = (dir) =>
+  readdirSync(join(root, dir))
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => `${dir}/${f}`);
+
 const SURFACES = [
-  ...readdirSync(join(root, 'website/src/docs')).filter((f) => f.endsWith('.md')).map((f) => `website/src/docs/${f}`),
-  ...readdirSync(join(root, 'website/src/blog')).filter((f) => f.endsWith('.md')).map((f) => `website/src/blog/${f}`),
+  ...mdIn('website/src/docs'),
+  ...mdIn('website/src/blog'),
   'website/src/pages/index.astro',
+  // The engineering specs quote the same measurements the website does — the
+  // Bootstrap spec's classification split sat two variables wrong for weeks
+  // because its numbers still summed to 657 and nothing re-derived the parts.
+  ...mdIn('docs/specs'),
+  ...mdIn('docs/specs/exporters'),
+  ...mdIn('docs/architecture'),
   'README.md',
   'ROADMAP.md',
   'CONTRIBUTING.md',
@@ -284,6 +295,28 @@ const surfaceInventory = (target) => {
   return existsSync(join(root, path)) ? JSON.parse(read(path)) : null;
 };
 
+/**
+ * How Bootstrap's exporter classifies each of its component-scoped variables,
+ * counted by running its own classifier over its own inventory — the split the
+ * exporter spec quotes. Written after two of those seven numbers were found
+ * wrong: the parts had been edited without re-adding them, and because the
+ * errors cancelled, the total still came to 657 and read as verified.
+ */
+const bootstrapClassified = () =>
+  memo('bootstrap.classified', async () => {
+    const { coverageForVariable } = await import('../packages/exporter-bootstrap/src/descriptors.js');
+    const tally = {};
+    const bump = (k) => (tally[k] = (tally[k] ?? 0) + 1);
+    for (const v of surfaceInventory('bootstrap').variables.filter((x) => x.scope === 'component')) {
+      const c = coverageForVariable(v);
+      if (!c) bump('unclassified');
+      else if (c.emit) bump('emit');
+      else if (c.drop) bump(c.drop.cls); // 'dropped' | 'unsupported'
+      else bump(c.mech); // 'chained' | 'follows-global' | 'inherits-driven' | 'inherit-default'
+    }
+    return tally;
+  });
+
 /** metric name → computed value (or null when the metric can't be resolved). */
 async function measure(metric) {
   const parts = metric.split('.');
@@ -308,6 +341,11 @@ async function measure(metric) {
     if (parts[2] === 'total') return inv.counts.total;
     if (parts[2] === 'component') return inv.counts.component ?? inv.counts.components ?? null;
     return null;
+  }
+
+  // bootstrap.classified.<emit|chained|follows-global|inherits-driven|inherit-default|dropped|unsupported>
+  if (metric.startsWith('bootstrap.classified.')) {
+    return (await bootstrapClassified())[parts[2]] ?? null;
   }
 
   const [example, ...rest] = parts;
