@@ -51,9 +51,10 @@ Then cut the first alpha exactly as described in [Releasing an alpha](#releasing
 ```bash
 npm run check:release-tag    # must print the alpha dist-tag before you continue
 
-# Publish all 12 under that tag. `--access public` is not needed: every
-# package carries publishConfig.access = public.
-for d in packages/*/; do npm publish -w "$d" --tag alpha; done
+# Publish all 12 under that tag, in dependency order. No --access flag is
+# needed: every package carries publishConfig.access = public.
+# One command rather than a shell loop, so it works in bash, zsh and fish alike.
+npm publish --tag alpha -w packages/ir -w packages/core -w packages/exporter-shadcn -w packages/exporter-echarts -w packages/exporter-daisyui -w packages/exporter-bootstrap -w packages/exporter-storybook -w packages/exporter-css-variables -w packages/exporter-radix -w packages/exporter-primeng -w packages/plugin-kit -w packages/cli
 
 v=$(node -p "require('./packages/core/package.json').version")
 git tag -a "v$v" -m "v$v" && git push origin "v$v"
@@ -192,7 +193,7 @@ The workflow will now refuse to publish, by design. To go through with it, run t
 
 ```bash
 CONFIRM_STABLE_RELEASE=arm-the-freeze npm run check:release-tag
-for d in packages/*/; do npm publish -w "$d" --tag latest; done
+npm publish --tag latest -w packages/ir -w packages/core -w packages/exporter-shadcn -w packages/exporter-echarts -w packages/exporter-daisyui -w packages/exporter-bootstrap -w packages/exporter-storybook -w packages/exporter-css-variables -w packages/exporter-radix -w packages/exporter-primeng -w packages/plugin-kit -w packages/cli
 ```
 
 The same release should update ADR-0010 and [ADR-0011](docs/adr/0011-v0-freeze-readiness.md) to record that the freeze is now armed, and drop the alpha banners from the README, the website layout and the docs index.
