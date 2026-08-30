@@ -1,5 +1,10 @@
 # Vision
 
+Why this project exists, what it is betting on, and the boundaries it will not cross — the long
+form of the README's opening. [README.md](README.md) is the short version, and
+[ROADMAP.md](ROADMAP.md) is the authority on what exists today; nothing on this page is a claim
+about what is built.
+
 ## The problem
 
 Every team that builds a design system pays the same tax repeatedly: the system is defined once (in Figma, in a brand book, in someone's head) and then re-implemented by hand for every technology it touches — a Tailwind config, a Bootstrap Sass override file, an ECharts theme, a Storybook theme, a Material UI theme object. Each re-implementation drifts. Each framework upgrade breaks one of them. Nobody knows which copy is current.
@@ -34,7 +39,7 @@ These are explicit, permanent boundaries. Scope discipline is the project's surv
 
 ## Long-term direction (beyond v2)
 
-- **Component abstraction layer** (v2, specced in [docs/specs/component-layer.md](docs/specs/component-layer.md)): map semantic component intents (Button, Modal, Combobox) across ecosystems.
+- **Component theming, at full breadth** ([docs/specs/component-layer.md](docs/specs/component-layer.md)): the core of this shipped early — Bootstrap and PrimeNG are driven at the component tier from a small shared catalog — but the breadth described in the sketch (a component catalog, variant models, state tokens) is not built. We theme components; we will never generate them.
 - **Bidirectional sync**: importers become good enough that a target's theme edits can be lifted back into the IR with provenance.
 - **Registry**: a public index of exporters/importers with compatibility metadata, so `transtyle add <anything>` just works.
 - **CI-native workflows**: design-system diffs on pull requests ("this change reduces contrast on `danger` in dark mode; 3 targets affected").

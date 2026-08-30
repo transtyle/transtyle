@@ -43,9 +43,10 @@ const showcaseTokens = `{
   }
 }`;
 
-const startCommands = `git clone https://github.com/transtyle/transtyle && cd transtyle
-npm install
-cd examples/acme && npx transtyle build`;
+const startCommands = `npm i -D @transtyle/cli
+npx transtyle init            # config + starter tokens
+npx transtyle add bootstrap   # …or shadcn, echarts, storybook, …
+npx transtyle build`;
 ---
 <Base title="Transtyle — the design system compiler" current="home">
   <main id="main">
@@ -62,10 +63,14 @@ cd examples/acme && npx transtyle build`;
         <a class="btn primary" href={withBase('/docs/getting-started/')}>Get started</a>
         <a class="btn" href={withBase('/docs/')}>Read the docs</a>
       </div>
+      <p class="hero-status">
+        <span class="pill">Alpha</span> On npm as <code>@transtyle/cli@alpha</code> — published so it
+        can be tried, not because it is finished. Breaking changes ship without a deprecation cycle.
+      </p>
       <p class="hero-post">
-        New — <a href={withBase('/blog/a-compiler-for-design-systems/')}>A compiler for design systems</a>: why
+        Read <a href={withBase('/blog/a-compiler-for-design-systems/')}>A compiler for design systems</a> — why
         theming is an N×M problem, and what changes when a design system is compiled rather than
-        copied.
+        copied — or <a href={withBase('/blog/the-first-alpha/')}>what this alpha is and isn't</a>.
       </p>
 
       <div class="terminal">
@@ -242,7 +247,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band final" aria-labelledby="h-start">
       <h2 id="h-start">Start compiling</h2>
-      <p class="band-sub">Not yet on npm — you run it from the repository. Four real examples ship with it, including two independently-designed systems (GOV.UK, Carbon).</p>
+      <p class="band-sub">On npm as an alpha — <code>@transtyle/cli@alpha</code>. Prefer to look before you install? The <a href={withBase('/docs/examples/')}>four examples</a> in the repository compile end to end, two of them real systems nobody here designed (GOV.UK, Carbon).</p>
       <div class="start"><Code code={startCommands} lang="bash" {...shiki} /></div>
       <div class="cta center">
         <a class="btn primary" href={withBase('/docs/getting-started/')}>Getting started guide</a>
@@ -267,7 +272,18 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .sub { max-width: 46rem; margin: 0 auto 1.6rem; font-size: 1.1rem; color: var(--text-muted); }
     .sub strong { color: var(--text); }
     .cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
-    .hero-post { font-size: 0.9rem; color: var(--text-muted); margin: 1.4rem auto 0; max-width: 40rem; }
+    .hero-post { font-size: 0.9rem; color: var(--text-muted); margin: 1rem auto 0; max-width: 40rem; }
+    /* The status line sits between the CTAs and the terminal on purpose: the
+       hero makes eight promises, and the reader should learn what they are
+       worth before scrolling into the proof, not after installing. */
+    .hero-status { font-size: 0.9rem; color: var(--text-muted); margin: 1.5rem auto 0; max-width: 40rem; }
+    .hero-status .pill {
+      display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--primary); border: 1px solid var(--primary-soft); background: var(--primary-soft);
+      padding: 0.1rem 0.5rem; border-radius: 99px; margin-right: 0.35rem; vertical-align: 0.05em;
+      font-family: 'JetBrains Mono Variable', monospace;
+    }
+    .hero-status code { font-size: 0.85em; }
     .cta.center { margin-top: 1.4rem; }
     .btn {
       display: inline-block; padding: 0.6rem 1.3rem; border-radius: 10px; font-weight: 600; font-size: 0.95rem;

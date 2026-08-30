@@ -1,59 +1,29 @@
 ---
 title: 'Getting started'
-description: 'From clone to a compiled theme in four steps.'
+description: 'From npm install to a compiled theme in four steps.'
 order: 2
 ---
 
 # Getting started
 
-Transtyle is not yet published to npm, so you run it from the monorepo. Node ≥ 18 is the only requirement — the compiler has **zero external dependencies**, so `npm install` just links the workspace packages.
+Transtyle is on npm as an alpha: `@transtyle/cli`. Node ≥ 22.12 is the only requirement — the compiler has **zero external dependencies**, so installing it brings nothing else with it.
 
 <div class="callout"><span class="callout-title">Already have a design system?</span>
 
 This page builds a project from scratch. The more common path — keeping your existing names and values and binding them to the catalog — is [You already have a design system](/docs/adopt-existing/).
+
 </div>
 
-## 1. Clone and link
+## 1. Install
 
 ```bash
-git clone https://github.com/transtyle/transtyle
-cd transtyle
-npm install
+npm i -D @transtyle/cli
+npx transtyle --version
 ```
 
-## 2. Compile an example
+Pin the exact version while the project is in alpha: the token vocabulary, the generated output and the CLI surface can each change between alpha releases. Rather look before you install? The repository ships [four complete design systems](#5-or-start-from-the-examples) you can compile without authoring a token.
 
-```bash
-cd examples/acme
-npx transtyle build shadcn
-```
-
-Output lands in `dist/shadcn/`:
-
-- `globals.transtyle.css` — the complete shadcn theme (light + dark + `@theme inline`)
-- `usage.md` — generated paste-in instructions for your target project
-- `report.json` — coverage classification and provenance for every variable
-
-Two commands to know before anything else:
-
-```bash
-npx transtyle check                    # same pipeline, no files written:
-                                       # validation, alias cycles, WCAG contrast, coverage
-npx transtyle explain primary.tint     # why does this value exist? full derivation chain
-```
-
-## 3. Use the theme in a real project
-
-For a Tailwind v4 shadcn app: copy `globals.transtyle.css` next to your global stylesheet and import it after Tailwind:
-
-```css
-@import 'tailwindcss';
-@import './globals.transtyle.css';
-```
-
-Dark mode uses the standard shadcn class strategy — toggle `dark` on `<html>`. Details for the Tailwind v3 era are in the [shadcn exporter page](/docs/exporter-shadcn/). Every target works the same way: build, then follow the generated `usage.md`. To _see_ a theme on real components first, each example ships [runnable demo projects](/docs/examples/) per target.
-
-## 4. Create your own design system
+## 2. Scaffold your design system
 
 ```bash
 mkdir my-ds && cd my-ds
@@ -98,7 +68,7 @@ In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
 
 Note the two tiers: `option.color.brand.500` is _your_ name for _your_ value; `primary.solid` is the catalog slot that aliases it. Dark-mode values go in a separate mode-scoped DTCG file (the recommended layout) or inline per token — see [Authoring tokens](/docs/authoring-tokens/#modes).
 
-Then build, and add targets as you need them:
+## 3. Add targets and build
 
 ```bash
 npx transtyle build             # starts with css-variables
@@ -107,14 +77,48 @@ npx transtyle add bootstrap     # …any of the eight official exporters
 npx transtyle build
 ```
 
+Each target gets a directory under `dist/` holding its native artifacts, a generated `usage.md` telling you how to wire them into that ecosystem, and a `report.json` recording where every value came from.
+
 Everything you didn't author — hover states, on-colors, `secondary`, the full role grids, the chart palette — is <span class="prov derived">derived</span> deterministically, and `report.json` says so per variable, so you can override selectively: author any slot and derivation yields to you.
 
-Run it from inside the monorepo (`npx` resolves the workspace binary from any subdirectory), or link the CLI globally to use it anywhere:
+Two more commands to know early:
 
 ```bash
-cd packages/cli && npm link     # once
-transtyle build --cwd ~/anywhere/my-ds
+npx transtyle check                    # same pipeline, no files written:
+                                       # validation, alias cycles, WCAG contrast, coverage
+npx transtyle explain primary.tint     # why does this value exist? full derivation chain
 ```
+
+## 4. Use the theme in a real project
+
+For a Tailwind v4 shadcn app: copy `globals.transtyle.css` next to your global stylesheet and import it after Tailwind:
+
+```css
+@import 'tailwindcss';
+@import './globals.transtyle.css';
+```
+
+Dark mode uses the standard shadcn class strategy — toggle `dark` on `<html>`. Details for the Tailwind v3 era are in the [shadcn exporter page](/docs/exporter-shadcn/). Every target works the same way: build, then follow the generated `usage.md`. To _see_ a theme on real components first, each example ships [runnable demo projects](/docs/examples/) per target.
+
+## 5. Or start from the examples
+
+Nothing beats reading a design system that already compiles. The monorepo ships four, with runnable demos for every target:
+
+```bash
+git clone https://github.com/transtyle/transtyle
+cd transtyle
+npm install                  # zero external dependencies — this just links the workspaces
+cd examples/acme
+npx transtyle build shadcn
+```
+
+Output lands in `dist/shadcn/`:
+
+- `globals.transtyle.css` — the complete shadcn theme (light + dark + `@theme inline`)
+- `usage.md` — generated paste-in instructions for your target project
+- `report.json` — coverage classification and provenance for every variable
+
+[Your first build](/docs/your-first-build/) walks through that output line by line.
 
 ## Where next
 

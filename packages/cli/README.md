@@ -4,7 +4,9 @@
 
 # @transtyle/cli
 
-The command line for **[Transtyle](https://transtyle.github.io/transtyle/)**, a design system compiler: describe a design system once as W3C (DTCG) design tokens, compile native theme artifacts for every ecosystem.
+The command line for **[Transtyle](https://transtyle.github.io/transtyle/)**, a design system compiler.
+
+"Our brand color is `#4f46e5`" is one decision. In a real product it lives in a Bootstrap Sass variable, a `--primary` in shadcn's `globals.css`, a JSON key in an ECharts theme, and a knob in Storybook's manager — maintained four times, by hand. Transtyle makes it one input: describe your design system once as W3C (DTCG) design tokens, and compile native, idiomatic theme artifacts for every ecosystem you ship in. Nothing you ship depends on Transtyle at runtime.
 
 > [!WARNING]
 > **Alpha — experimental.** Breaking changes ship without a deprecation cycle: the token
