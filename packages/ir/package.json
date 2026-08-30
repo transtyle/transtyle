@@ -1,11 +1,15 @@
 {
   "name": "@transtyle/ir",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "Transtyle IR: semantic catalog, provenance constants, token-tree helpers. Zero dependencies.",
   "type": "module",
   "main": "./src/index.js",
-  "exports": { ".": "./src/index.js" },
-  "files": ["src"],
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

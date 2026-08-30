@@ -1,21 +1,35 @@
 {
   "name": "@transtyle/exporter-daisyui",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "Transtyle exporter for daisyUI themes (v5, Tailwind 4 era).",
   "type": "module",
   "main": "./src/index.js",
-  "exports": { ".": "./src/index.js" },
-  "dependencies": { "@transtyle/ir": "*" },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.0"
+  },
   "transtyle": {
     "kind": "exporter",
     "name": "daisyui",
     "irSpec": "v0-draft",
     "pluginApi": "0",
-    "targets": { "daisyui": [">=5 <6"] },
-    "modes": ["color-scheme"],
-    "capabilities": ["build"]
+    "targets": {
+      "daisyui": [
+        ">=5 <6"
+      ]
+    },
+    "modes": [
+      "color-scheme"
+    ],
+    "capabilities": [
+      "build"
+    ]
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

@@ -1,21 +1,36 @@
 {
   "name": "@transtyle/exporter-shadcn",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "Transtyle exporter for shadcn/ui (tailwind-v4 era).",
   "type": "module",
   "main": "./src/index.js",
-  "exports": { ".": "./src/index.js" },
-  "dependencies": { "@transtyle/ir": "*" },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.0"
+  },
   "transtyle": {
     "kind": "exporter",
     "name": "shadcn",
     "irSpec": "v0-draft",
     "pluginApi": "0",
-    "targets": { "shadcn": ["tailwind-v3", "tailwind-v4"] },
-    "modes": ["color-scheme"],
-    "capabilities": ["build"]
+    "targets": {
+      "shadcn": [
+        "tailwind-v3",
+        "tailwind-v4"
+      ]
+    },
+    "modes": [
+      "color-scheme"
+    ],
+    "capabilities": [
+      "build"
+    ]
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

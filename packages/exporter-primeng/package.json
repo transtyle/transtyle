@@ -1,21 +1,36 @@
 {
   "name": "@transtyle/exporter-primeng",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "Transtyle exporter for PrimeNG design-token presets (definePreset over Aura). Not yet registered in the CLI — see docs/plan/component-tier.md C6.",
   "type": "module",
   "main": "./src/index.js",
-  "exports": { ".": "./src/index.js" },
-  "dependencies": { "@transtyle/ir": "*" },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.0"
+  },
   "transtyle": {
     "kind": "exporter",
     "name": "primeng",
     "irSpec": "v0-draft",
     "pluginApi": "0",
-    "targets": { "primeng": ["*"] },
-    "modes": ["color-scheme"],
-    "capabilities": ["build"]
+    "targets": {
+      "primeng": [
+        "*"
+      ]
+    },
+    "modes": [
+      "color-scheme"
+    ],
+    "capabilities": [
+      "build"
+    ]
   },
-  "files": ["src", "surface-inventory.json"],
+  "files": [
+    "src",
+    "surface-inventory.json"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

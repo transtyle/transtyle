@@ -1,12 +1,18 @@
 {
   "name": "@transtyle/core",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "Transtyle core: compilation pipeline (load, normalize, derive, resolve, emit, report).",
   "type": "module",
   "main": "./src/index.js",
-  "exports": { ".": "./src/index.js" },
-  "dependencies": { "@transtyle/ir": "*" },
-  "files": ["src"],
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.0"
+  },
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

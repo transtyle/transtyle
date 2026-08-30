@@ -1,21 +1,36 @@
 {
   "name": "@transtyle/exporter-storybook",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "Transtyle exporter for Storybook chrome theming and preview composition (SB 8–9).",
   "type": "module",
   "main": "./src/index.js",
-  "exports": { ".": "./src/index.js" },
-  "dependencies": { "@transtyle/ir": "*" },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.0"
+  },
   "transtyle": {
     "kind": "exporter",
     "name": "storybook",
     "irSpec": "v0-draft",
     "pluginApi": "0",
-    "targets": { "storybook": [">=8 <10"] },
-    "modes": ["color-scheme"],
-    "capabilities": ["build", "compose"]
+    "targets": {
+      "storybook": [
+        ">=8 <10"
+      ]
+    },
+    "modes": [
+      "color-scheme"
+    ],
+    "capabilities": [
+      "build",
+      "compose"
+    ]
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

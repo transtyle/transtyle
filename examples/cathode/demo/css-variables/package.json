@@ -11,7 +11,7 @@
     "preview": "vite preview --port 4205"
   },
   "devDependencies": {
-    "@transtyle/cli": "*",
+    "@transtyle/cli": "0.1.0-alpha.0",
     "vite": "^6.0.0"
   }
 }
