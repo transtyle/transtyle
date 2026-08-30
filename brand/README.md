@@ -54,10 +54,25 @@ a `<picture>`, which GitHub honours:
 | `transtyle-mark-1024.png`        | Slides, talks, a GitHub repo social-preview upload.                  |
 
 The site's `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`,
-`icon-192.png` and `icon-512.png` come out of the same generator into
-`website/public/`. The Apple and PWA icons are deliberately **full-bleed
-squares**: both platforms apply their own rounded mask, and masking an
-already-rounded tile clips its corners twice.
+`icon-192.png`, `icon-512.png` and `feed-icon-144.png` come out of the same
+generator into `website/public/`, and so does a `public/favicon.svg` for each
+of the thirty-two example demo projects.
+
+Two of those shapes are deliberate. The Apple and PWA icons are **full-bleed
+squares**, because both platforms apply their own rounded mask and masking an
+already-rounded tile clips its corners twice. The feed icon is **144px**,
+because that is the widest RSS 2.0 allows for a channel `<image>`.
+
+The demo copies look like the drift this generator exists to prevent, and are
+not: they are generated outputs, so `gen:brand` rewrites all thirty-two and
+`check:brand` compares every byte. What the duplication buys is zero
+configuration — `public/` is already what Vite serves at `/`, what Angular's
+assets glob points at, and what Storybook takes as a `staticDirs` entry, so one
+`<link rel="icon" href="/favicon.svg">` works across all three toolchains in
+both dev and build. The obvious alternative — one shared file behind a relative
+path — was tried and rejected: Vite rewrites `link[href]` into a hashed asset at
+build time but leaves it alone in dev, so the icon resolved in `npm run build`
+and 404'd in `npm run dev`, which is the only way anyone opens a demo.
 
 ## Colors
 
@@ -72,6 +87,20 @@ The glyph gradient is **fixed**. The site and the Open Graph cards re-hue their
 accents per page and per post; the mark never moves with them. It is the logo,
 not the accent.
 
+The site's brand pair, however, _is_ the mark's. Read back in OKLCH the two
+ends of the gradient are hue **269** and hue **315**, and that is what
+`global.css` sets `--primary` and `--violet` to — so the headline sweep and the
+primary button run the same 46° arc as the logo above them, in the same
+direction. `og.js` and `blog.js` hold the same two numbers for the social cards
+and the per-post accent ladder, and `check:brand` recomputes all three from the
+gradient rather than trusting them.
+
+Only the hues were taken. Lightness and chroma stay where they were, because
+those are what the contrast holds on: the move cost at most 0.1 of a contrast
+point anywhere, and every pair still clears AA. The neutrals stay at hue
+260/262 — retinting every surface toward the tile is a larger decision, and it
+would work against the on-dark ring.
+
 ## Where the mark appears
 
 - **Site header** — inlined in `website/src/layouts/Base.astro` from
@@ -82,6 +111,10 @@ not the accent.
   `Base.astro` and listed in `website/src/pages/site.webmanifest.js`.
 - **Open Graph cards** — the badge on every generated card
   (`website/src/og.js`), on-dark variant.
+- **The RSS feed** — the channel `<image>`, on-dark and 144px per the spec.
+- **All thirty-two example demos** — a generated `public/favicon.svg` each,
+  linked from `index.html` (Vite, Angular) or served via `staticDirs`
+  (Storybook).
 - **Root README** — `<picture>`, both variants.
 - **All twelve package READMEs** — on-dark variant, by absolute URL, because
   npm renders them outside the repository.

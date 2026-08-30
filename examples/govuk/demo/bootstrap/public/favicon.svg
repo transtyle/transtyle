@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img" aria-label="Transtyle">
+  <title>Transtyle</title>
+  <defs>
+    <linearGradient id="transtyle-mark" x1="58" y1="110" x2="342" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D77BFF" />
+      <stop offset="0.45" stop-color="#C77CFF" />
+      <stop offset="1" stop-color="#6B8DFF" />
+    </linearGradient>
+  </defs>
+  <path d="M376 0H24C10.7452 0 0 10.7452 0 24V376C0 389.255 10.7452 400 24 400H376C389.255 400 400 389.255 400 376V24C400 10.7452 389.255 0 376 0Z" fill="#080A24" />
+  <path d="M58 121H200V194H58V121Z" fill="url(#transtyle-mark)" />
+  <path d="M200 194L272 121H342V194H200Z" fill="url(#transtyle-mark)" />
+  <path d="M200 194L129 265V339H200V194Z" fill="url(#transtyle-mark)" />
+</svg>

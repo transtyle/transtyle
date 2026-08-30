@@ -6,5 +6,8 @@ import type { StorybookConfig } from '@storybook/html-vite';
 const config: StorybookConfig = {
   stories: ['../stories/**/*.stories.@(js|ts)'],
   framework: { name: '@storybook/html-vite', options: {} },
+  // Storybook picks the manager's favicon out of a static dir; public/ is the
+  // same folder the Vite demos serve theirs from (scripts/gen-brand.mjs).
+  staticDirs: ['../public'],
 };
 export default config;

@@ -18,6 +18,17 @@ const compiledBySlug = Object.fromEntries(
 const escapeXml = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]);
 
+/**
+ * The channel `<image>` is the brand mark at 144px — RSS 2.0 caps `<image>`
+ * width at 144 (default 88), so this is the largest the spec allows, and the
+ * `<width>`/`<height>` are declared because a reader that honours them should
+ * not have to guess. The on-dark variant, since a feed reader's chrome is
+ * someone else's background and usually a dark one.
+ *
+ * Every URL in it is absolutized the same way the items are: a feed is read
+ * far from the page it came from.
+ */
+
 /** RFC 822, which is what RSS 2.0 requires — not ISO 8601. */
 const rfc822 = (date) => new Date(`${date}T00:00:00Z`).toUTCString();
 
@@ -58,6 +69,13 @@ export async function GET({ site }) {
     <atom:link href="${base}${withBase('/blog/rss.xml')}" rel="self" type="application/rss+xml"/>
     <description>Releases, design decisions, and findings from compiling real design systems into real ecosystems.</description>
     <language>en</language>
+    <image>
+      <url>${base}${withBase('/feed-icon-144.png')}</url>
+      <title>Transtyle</title>
+      <link>${base}${withBase('/blog/')}</link>
+      <width>144</width>
+      <height>144</height>
+    </image>
     <docs>https://www.rssboard.org/rss-specification</docs>
 ${items}
   </channel>

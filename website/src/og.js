@@ -43,13 +43,17 @@ const BG = oklch(0.16, 0.014, 262);
 const SURFACE = oklch(0.21, 0.018, 262);
 const TEXT = oklch(0.93, 0.008, 260);
 const MUTED = oklch(0.7, 0.015, 260);
-const BRAND_HUE = 262;
+// The two ends of the mark's own gradient, in OKLCH: #6B8DFF is hue 269 and
+// #D77BFF is 315. The site's --primary/--violet are the same pair, and
+// check-brand.mjs recomputes both from brand/transtyle-mark.svg.
+const BRAND_HUE = 269;
 
-// The dark theme's --primary, and the +34° step to --violet that the site's
-// gradients use. An accent hue moves the pair; the relationship is fixed.
+// The dark theme's --primary, and the 46° step to --violet that the site's
+// gradients — and the mark — span. An accent hue moves the pair; the
+// relationship is the logo's, and fixed.
 const ACCENT_L = 0.72;
 const ACCENT_C = 0.15;
-const ACCENT_STEP = 34;
+const ACCENT_STEP = 46;
 
 /**
  * The accent pair for a hue, contrast-guarded against the card background.
@@ -136,7 +140,9 @@ export async function renderCard({ kicker, title, footer, hue = BRAND_HUE }) {
         ]),
         text({ fontSize, fontWeight: 700, lineHeight: 1.14, letterSpacing: '-0.03em' }, title),
         row({ flexDirection: 'column', gap: 22 }, [
-          // The brand bar, in this card's accent — the site's headline gradient.
+          // The brand bar, in this card's accent — the site's headline
+          // gradient, and like it swept `to` → `from` so it runs the same
+          // direction as the mark in the corner above.
           {
             type: 'div',
             props: {
@@ -145,7 +151,7 @@ export async function renderCard({ kicker, title, footer, hue = BRAND_HUE }) {
                 width: 240,
                 height: 6,
                 borderRadius: 3,
-                backgroundImage: `linear-gradient(90deg, ${accent.from}, ${accent.to})`,
+                backgroundImage: `linear-gradient(90deg, ${accent.to}, ${accent.from})`,
               },
             },
           },

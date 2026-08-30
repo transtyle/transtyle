@@ -30,8 +30,12 @@ export const postPath = (slug) => withBase(`/blog/${slug}/`);
  * you didn't decide, and authoring beats the rule. The eight rungs are 45°
  * apart starting at the brand hue, so consecutive posts land far enough apart
  * to be told apart in a feed, and every post keeps the same hue forever.
+ *
+ * The brand hue is the blue end of the mark's gradient (#6B8DFF) in OKLCH —
+ * the same number global.css and og.js hold, and the one check-brand.mjs
+ * recomputes from brand/transtyle-mark.svg to keep all three honest.
  */
-const BRAND_HUE = 262;
+const BRAND_HUE = 269;
 export const accentHue = (post) => {
   if (post.accentHue !== undefined) return post.accentHue;
   let hash = 0;

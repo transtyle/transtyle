@@ -6,6 +6,20 @@
  * site, GREEN means native/authored, BLUE means derived, AMBER means
  * approximated. Mono type is the compiler's voice (tokens, slots, output);
  * Inter is the explaining voice.
+ *
+ * The brand pair — `--primary` at hue 269 and `--violet` at 315 — is not a
+ * taste call. Those are the two ends of the logo's own gradient (#6B8DFF and
+ * #D77BFF) read back in OKLCH, so the headline sweep and the primary button
+ * run the same 46° arc as the mark sitting in the header above them.
+ * scripts/check-brand.mjs recomputes both hues from brand/transtyle-mark.svg
+ * and fails if this file, src/og.js or src/blog.js drifts from it.
+ *
+ * Only the *hues* were taken from the mark. Lightness and chroma stay where
+ * they were, because those are what the contrast holds on: every pair moved
+ * by at most 0.1 of a contrast point (links 4.88 → 4.94 on light, 7.70 → 7.63
+ * on dark), and all of them still clear AA. The neutrals stay at 260/262 on
+ * purpose — retinting every surface toward the tile is a different, larger
+ * decision, and it would work against the on-dark ring the mark relies on.
  */
 
 :root {
@@ -14,10 +28,10 @@
   --surface: oklch(1 0 0);
   --text: oklch(0.2 0.015 260);
   --text-muted: oklch(0.45 0.02 260);
-  --primary: oklch(0.55 0.19 262);
-  --primary-strong: oklch(0.47 0.2 262);
-  --violet: oklch(0.55 0.2 296);
-  --primary-soft: oklch(0.94 0.03 262);
+  --primary: oklch(0.55 0.19 269);
+  --primary-strong: oklch(0.47 0.2 269);
+  --violet: oklch(0.55 0.2 315);
+  --primary-soft: oklch(0.94 0.03 269);
   --border: oklch(0.9 0.008 260);
   --border-soft: oklch(0.94 0.006 260);
   --code-bg: oklch(0.965 0.006 260);
@@ -25,7 +39,7 @@
   --terminal-text: oklch(0.92 0.01 260);
   /* the coverage/provenance trio — the site's pedagogical color code */
   --cov-native: oklch(0.55 0.14 150);
-  --cov-derived: oklch(0.55 0.17 262);
+  --cov-derived: oklch(0.55 0.17 269);
   --cov-approx: oklch(0.66 0.13 78);
   --ok: oklch(0.55 0.14 150);
   --warn: oklch(0.66 0.13 78);
@@ -37,16 +51,16 @@
   --surface: oklch(0.21 0.018 262);
   --text: oklch(0.93 0.008 260);
   --text-muted: oklch(0.7 0.015 260);
-  --primary: oklch(0.72 0.15 262);
-  --primary-strong: oklch(0.78 0.13 262);
-  --violet: oklch(0.72 0.16 296);
-  --primary-soft: oklch(0.29 0.06 262);
+  --primary: oklch(0.72 0.15 269);
+  --primary-strong: oklch(0.78 0.13 269);
+  --violet: oklch(0.72 0.16 315);
+  --primary-soft: oklch(0.29 0.06 269);
   --border: oklch(0.31 0.02 262);
   --border-soft: oklch(0.26 0.018 262);
   --code-bg: oklch(0.23 0.018 262);
   --terminal-bg: oklch(0.14 0.014 262);
   --cov-native: oklch(0.72 0.14 150);
-  --cov-derived: oklch(0.72 0.15 262);
+  --cov-derived: oklch(0.72 0.15 269);
   --cov-approx: oklch(0.78 0.13 82);
   --ok: oklch(0.72 0.14 150);
   --warn: oklch(0.78 0.13 82);

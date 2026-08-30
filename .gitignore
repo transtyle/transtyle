@@ -1,6 +1,7 @@
 node_modules/
 dist/
 examples/*/dist/
+storybook-static/
 .angular/
 *.log
 .DS_Store

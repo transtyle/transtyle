@@ -33,7 +33,7 @@
  * Run: node scripts/gen-brand.mjs   (also: npm run gen:brand).
  * scripts/check-brand.mjs fails if the committed files drift from this output.
  */
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -49,8 +49,15 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** The tile. Also the site's dark `theme-color` and the OG card's ground. */
 export const TILE = '#080A24';
 
-/** The glyph gradient, magenta → blue across the mark's own diagonal. */
-const GRADIENT = [
+/**
+ * The glyph gradient, magenta → blue across the mark's own diagonal.
+ *
+ * Exported because it is also the site's brand pair: read back in OKLCH these
+ * two ends are hue 315 and hue 269, which is exactly what global.css sets
+ * `--violet` and `--primary` to. check-brand.mjs recomputes them from here and
+ * fails if the stylesheet, the OG renderer or the blog's accent ladder drifts.
+ */
+export const GRADIENT = [
   { offset: '0', color: '#D77BFF' },
   { offset: '0.45', color: '#C77CFF' },
   { offset: '1', color: '#6B8DFF' },
@@ -162,7 +169,56 @@ export const OUTPUTS = [
   { rel: 'website/public/apple-touch-icon.png', from: FULL_BLEED, size: 180 },
   { rel: 'website/public/icon-192.png', from: FULL_BLEED, size: 192 },
   { rel: 'website/public/icon-512.png', from: FULL_BLEED, size: 512 },
+
+  // The RSS channel image. 144px because that is the widest RSS 2.0 permits
+  // for <image> (default 88, max width 144, max height 400), and on-dark
+  // because a feed reader's chrome is somebody else's background — usually
+  // dark, never ours to know.
+  { rel: 'website/public/feed-icon-144.png', from: ON_DARK, size: 144 },
+
+  ...demoFavicons(),
 ];
+
+/**
+ * A `public/favicon.svg` for every example demo project.
+ *
+ * The demos are thirty-two separate applications — six Vite ones, an Angular
+ * one and a Storybook per example — and every one of them ran with the
+ * browser's default blank page icon. A tab that says "· transtyle demo"
+ * deserves the mark next to it.
+ *
+ * A copy per project rather than one shared file, which sounds like exactly
+ * the drift this script exists to prevent — except these copies are OUTPUTS,
+ * so they cannot drift: `gen:brand` rewrites all of them and `check:brand`
+ * compares every byte. What that buys is zero configuration. `public/` is
+ * already what Vite serves at `/` (in dev *and* in the build), what Angular's
+ * assets glob points at, and what Storybook takes as a `staticDirs` entry, so
+ * one `<link rel="icon" href="/favicon.svg">` works identically across all
+ * three toolchains, in dev and in a production build.
+ *
+ * The alternative — one shared file referenced by a relative path — was tried
+ * and rejected: Vite rewrites `link[href]` into a hashed asset at build time
+ * but leaves it untouched in dev, so the icon resolved in `npm run build` and
+ * 404'd in `npm run dev`, which is the only way anyone actually opens a demo.
+ *
+ * Derived by scanning rather than listed, so a new example or a new target
+ * gets its favicon — and its check — without anyone remembering to add it.
+ */
+function demoFavicons() {
+  const examplesDir = join(root, 'examples');
+  return readdirSync(examplesDir, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && existsSync(join(examplesDir, e.name, 'transtyle.config.json')))
+    .flatMap((e) => {
+      const demoDir = join(examplesDir, e.name, 'demo');
+      if (!existsSync(demoDir)) return [];
+      return readdirSync(demoDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => ({
+          rel: `examples/${e.name}/demo/${d.name}/public/favicon.svg`,
+          svg: ROUNDED,
+        }));
+    });
+}
 
 /** @returns {Promise<Buffer>} the exact bytes `rel` should contain. */
 export async function render(output) {
