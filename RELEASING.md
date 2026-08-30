@@ -162,8 +162,11 @@ npx changeset pre enter alpha
    ```
 
 3. **Publish.** GitHub → Actions → **Release** → **Run workflow**.
-   - Leave **dry run** checked the first time. It runs the full check suite, resolves the dist-tag, and packs every tarball without publishing.
+   - Leave **dry run** checked the first time. It runs the full check suite, resolves the dist-tag, and packs every tarball — the same `npm publish` command as a real release, with `--dry-run` added and nothing else changed.
    - Re-run with **dry run** unchecked to publish for real.
+
+   > [!IMPORTANT]
+   > **A green dry run does not prove trusted publishing works.** Nothing is published, so the OIDC exchange never happens and the npm trusted-publisher configuration is never exercised. The first real publish is the only test of it. If it is misconfigured, that publish fails at the publish step having changed nothing on the registry, and you can fall back to publishing locally while you fix the settings.
 
 The workflow runs `npm run check:all` before it publishes anything, so a release cannot ship a build that fails its own guards.
 

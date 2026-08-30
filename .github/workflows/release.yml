@@ -61,13 +61,12 @@ jobs:
         id: guard
         run: node scripts/check-release-tag.mjs
 
-      - name: Pack (dry run)
-        if: ${{ inputs.dry_run }}
-        run: |
-          echo "Dry run — would publish to dist-tag '${{ steps.guard.outputs.dist-tag }}'"
-          # --workspaces would also walk the 33 private demo/website workspaces.
-          for d in packages/*/; do npm publish --dry-run -w "$d"; done
-
+      # ONE step for both modes, differing only by --dry-run. They were two
+      # steps, and the dry run drifted: it omitted --tag, which npm 10 tolerated
+      # locally but npm 11 (installed above) rejects outright for a prerelease.
+      # A dry run whose command differs from the real one is not a rehearsal, so
+      # the flag is the only difference now.
+      #
       # `changeset publish` is deliberately NOT used. It refuses --tag while in
       # pre mode, and with no tag its getReleaseTag() sends an alpha series to
       # `latest` from the second release onward: once every published version is
@@ -75,11 +74,19 @@ jobs:
       # "latest". That would strand the `alpha` tag on alpha.0 and silently point
       # bare installs at each new alpha. `npm publish` takes the guard's resolved
       # tag every time, which is the behaviour ADR-0010's exemption relies on.
+      #
+      # The loop is over packages/* because --workspaces would also walk the 33
+      # private demo and website workspaces.
       - name: Publish to npm
-        if: ${{ !inputs.dry_run }}
         run: |
+          DRY=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY="--dry-run"
+            echo "DRY RUN — nothing will reach the registry."
+          fi
+          echo "Publishing to dist-tag '${{ steps.guard.outputs.dist-tag }}'"
           for d in packages/*/; do
-            npm publish -w "$d" --tag "${{ steps.guard.outputs.dist-tag }}"
+            npm publish $DRY -w "$d" --tag "${{ steps.guard.outputs.dist-tag }}"
           done
 
       # One annotated tag per release rather than twelve identical ones: the
