@@ -46,6 +46,7 @@ const satoriMod = await import('satori');
 const satori = typeof satoriMod.default === 'function' ? satoriMod.default : satoriMod.default.default;
 const resvgMod = await import('@resvg/resvg-wasm');
 const { initWasm, Resvg } = resvgMod.initWasm ? resvgMod : resvgMod.default;
+const core = await import(join(repo, 'packages/core/src/index.js'));
 const outDir = process.argv[2] ?? join(repo, 'brand/social');
 
 const font = (weight) =>
@@ -58,7 +59,6 @@ const FONTS = [
 
 /** Compile Acme and read the slots the card claims to show. */
 async function acme() {
-  const core = await import(join(repo, 'packages/core/src/index.js'));
   const result = await core.compile({
     cwd: join(repo, 'examples/acme'),
     emit: false,
@@ -84,6 +84,7 @@ async function acme() {
     dark: {
       primary: hex('dark', 'semantic.color.primary.solid'),
       onPrimary: hex('dark', 'semantic.color.primary.on-solid'),
+      danger: hex('dark', 'semantic.color.danger.solid'),
       surface: hex('dark', 'semantic.color.elevation.0.surface'),
       raised: hex('dark', 'semantic.color.elevation.1.surface'),
       text: hex('dark', 'semantic.color.text.base'),
@@ -99,24 +100,31 @@ async function acme() {
       return { slots: slots.length, authored: authored.length, targets: result.results.length };
     })(),
     // The ECharts categorical palette, derived from the one brand colour.
+    // Dark theme file, to match the card's own dark ground.
     chart: (() => {
       const echarts = result.results.find((r) => r.target === 'echarts');
-      const file = echarts?.emitted?.find((f) => /theme\..*light\.json$/.test(f.path));
+      const file = echarts?.emitted?.find((f) => /theme\..*dark\.json$/.test(f.path));
       return JSON.parse(file.contents).color.slice(0, 5);
     })(),
   };
 }
 
 // ---------- card ----------------------------------------------------------
-// Card chrome uses the site's dark palette (global.css [data-theme='dark']),
-// converted to hex because satori has no OKLCH.
-const BG = '#12151c';
-const PANEL = '#1b1f27';
-const LINE = '#2c313b';
-const TEXT = '#eceef2';
-const MUTED = '#a5abb6';
-const VIOLET = '#d77bff';
-const BRAND = '#6b8dff';
+// Card chrome mirrors the site's own dark theme — computed the same way
+// src/og.js computes its OG card colors: OKLCH in, hex out, via Transtyle's
+// own color module (satori has no OKLCH support). Values are
+// global.css's [data-theme='dark'] custom properties, so a re-theme of the
+// site moves this card too, rather than leaving a hand-picked hex behind.
+const oklch = (l, c, h) => ({ l, c, h, alpha: 1 });
+const hex = (color) => core.formatHex(color).text;
+
+const BG = hex(oklch(0.16, 0.03, 275)); // --bg
+const PANEL = hex(oklch(0.21, 0.034, 275)); // --surface
+const LINE = hex(oklch(0.31, 0.034, 275)); // --border
+const TEXT = hex(oklch(0.93, 0.01, 275)); // --text
+const MUTED = hex(oklch(0.7, 0.018, 275)); // --text-muted
+const BRAND = hex(oklch(0.72, 0.15, 269)); // --primary
+const VIOLET = hex(oklch(0.72, 0.16, 315)); // --violet
 
 const el = (type, props, ...children) => ({
   type,
@@ -125,6 +133,14 @@ const el = (type, props, ...children) => ({
 const div = (style, ...children) => el('div', { style }, ...children);
 const row = (style, ...children) => div({ display: 'flex', ...style }, ...children);
 const text = (style, value) => div({ display: 'flex', ...style }, value);
+const img = (src, width, height) => el('img', { src, width, height });
+
+// The mark, inlined from the same brand/ source the site and package READMEs
+// render from, so the card can never carry a logo the rest of the repo has
+// moved on from. On-dark variant: the card's own ground is near-black, and
+// the plain mark's tile would dissolve into it (see brand/README.md).
+const logoSvg = readFileSync(join(repo, 'brand/transtyle-mark-on-dark.svg'), 'utf8');
+const LOGO_URI = `data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}`;
 
 /** A miniature framework frame: caption plus a body of fake components. */
 const frame = (label, bg, borderColor, body) =>
@@ -190,10 +206,10 @@ function card(v) {
     // header
     row(
       { alignItems: 'baseline', gap: 16 },
-      text({ fontSize: 42, fontWeight: 700, color: TEXT, letterSpacing: '-0.02em' }, 'One definition.'),
+      text({ fontSize: 42, fontWeight: 700, color: TEXT, letterSpacing: '-0.02em' }, 'One design system.'),
       text({ fontSize: 42, fontWeight: 700, color: VIOLET, letterSpacing: '-0.02em' }, 'Every ecosystem.'),
     ),
-    text({ fontSize: 19, color: MUTED, marginTop: 10 }, 'Your tokens on the left. What four ecosystems get on the right — real compiled output, not a mockup.'),
+    text({ fontSize: 19, color: MUTED, marginTop: 10 }, 'Describe your design system once. Transtyle compiles native, idiomatic themes for every ecosystem — real compiled output, not a mockup.'),
 
     // body: tokens | frames
     row(
@@ -236,22 +252,22 @@ function card(v) {
         text({ fontSize: 13, fontWeight: 700, color: BRAND, letterSpacing: '0.1em' }, 'YOU SHIP'),
         row(
           { gap: 14 },
-          frame('Bootstrap', v.light.surface, v.light.border, [
-            pill(v.light.primary, v.light.onPrimary, 'Primary'),
-            pill('transparent', v.light.primary, 'Secondary', { border: `1px solid ${v.light.primary}` }),
+          frame('Bootstrap', v.dark.surface, v.dark.border, [
+            pill(v.dark.primary, v.dark.onPrimary, 'Primary'),
+            pill('transparent', v.dark.primary, 'Secondary', { border: `1px solid ${v.dark.primary}` }),
           ]),
-          frame('shadcn/ui · dark', v.dark.surface, v.dark.border, [
+          frame('shadcn/ui', v.dark.surface, v.dark.border, [
             pill(v.dark.primary, v.dark.onPrimary, 'Continue'),
             pill('transparent', v.dark.muted, 'Cancel'),
           ]),
         ),
         row(
           { gap: 14 },
-          frame('daisyUI', v.light.raised, v.light.border, [
-            pill(v.light.primary, v.light.onPrimary, 'Accept'),
-            pill(v.light.danger, '#ffffff', 'error', { borderRadius: 99, fontSize: 13 }),
+          frame('daisyUI', v.dark.raised, v.dark.border, [
+            pill(v.dark.primary, v.dark.onPrimary, 'Accept'),
+            pill(v.dark.danger, '#ffffff', 'error', { borderRadius: 99, fontSize: 13 }),
           ]),
-          frame('Apache ECharts', v.light.surface, v.light.border, [
+          frame('Apache ECharts', v.dark.surface, v.dark.border, [
             // The derived categorical palette, drawn as the bar chart it becomes.
             div(
               { display: 'flex', alignItems: 'flex-end', gap: 11, height: 56 },
@@ -276,7 +292,7 @@ function card(v) {
       ...[
         [`${v.stats.authored} authored tokens`, `· ${v.stats.slots} resolved slots per mode`],
         ['Everything else', 'derived by rules you can read'],
-        ['0 runtime dependencies', 'files out, nothing in'],
+        ['Zero runtime', 'files out, nothing in'],
       ].map(([head, tail]) =>
         row(
           { alignItems: 'baseline', gap: 8 },
@@ -289,9 +305,9 @@ function card(v) {
     // footer
     row(
       { marginTop: 'auto', alignItems: 'center', gap: 14, paddingTop: 22 },
-      div({ display: 'flex', width: 44, height: 5, borderRadius: 3, background: VIOLET }),
+      img(LOGO_URI, 40, 40),
       text({ fontSize: 20, fontWeight: 700, color: TEXT }, 'Transtyle'),
-      text({ fontSize: 19, color: MUTED }, '— a compiler for design systems'),
+      text({ fontSize: 19, color: MUTED }, '— the design system compiler'),
       text({ fontSize: 17, color: MUTED, marginLeft: 'auto' }, 'transtyle.github.io/transtyle'),
     ),
   );
