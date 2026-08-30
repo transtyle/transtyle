@@ -18,7 +18,8 @@
     "@transtyle/exporter-primeng": "0.1.0-alpha.2"
   },
   "files": [
-    "src"
+    "src",
+    "CHANGELOG.md"
   ],
   "publishConfig": {
     "access": "public"

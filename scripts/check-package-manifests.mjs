@@ -21,7 +21,8 @@
  *     not; all twelve shipped their first alpha blank
  *   - files — the allowlist must exist, and everything the package needs to
  *     RUN must be inside it (entry points are checked; runtime data files are
- *     the reason `files` is reviewed by hand)
+ *     the reason `files` is reviewed by hand), plus CHANGELOG.md, which npm
+ *     does not add for you the way it adds README and LICENSE
  *   - bin — must resolve, live inside `files`, carry a shebang, and be written
  *     in the form npm normalizes to, so npm never has to "correct" anything
  *
@@ -88,6 +89,14 @@ for (const d of readdirSync(pkgDir)) {
   }
   for (const f of files) {
     if (!existsSync(join(dir, f))) fail(name, `"files" lists ${f}, which does not exist`);
+  }
+  // npm always publishes README and LICENSE whatever "files" says, but NOT the
+  // changelog — so the first three alphas shipped with no version history on
+  // the npm page at all, which is the one place a stranger looks to find out
+  // what changed before upgrading. `changeset version` writes it; the
+  // allowlist has to let it out.
+  if (!coveredByFiles(files, 'CHANGELOG.md')) {
+    fail(name, '"files" does not include CHANGELOG.md — npm does not add it for you, so the published package has no version history');
   }
 
   // --- entry points must resolve AND be inside the allowlist ----------------

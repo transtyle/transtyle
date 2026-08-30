@@ -29,7 +29,8 @@
   },
   "files": [
     "src",
-    "surface-inventory.json"
+    "surface-inventory.json",
+    "CHANGELOG.md"
   ],
   "publishConfig": {
     "access": "public"

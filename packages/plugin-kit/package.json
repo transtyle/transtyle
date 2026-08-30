@@ -12,7 +12,8 @@
   },
   "files": [
     "src",
-    "fixture"
+    "fixture",
+    "CHANGELOG.md"
   ],
   "publishConfig": {
     "access": "public"
