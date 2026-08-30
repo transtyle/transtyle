@@ -1,8 +1,21 @@
 /**
  * The chrome that turns 32 separate builds into one browsable exhibit.
  *
- * Every hosted demo gets a small pill in its bottom-left corner that opens a
- * switcher: jump to the same page in another design system (Acme → Carbon,
+ * Two things are injected into every hosted demo, and they serve the same end
+ * by opposite means:
+ *
+ *   a **switcher** — a pill in the bottom-left corner that jumps to the same
+ *   page in another design system or another target;
+ *   a **bridge** — a mute agent, no UI at all, that lets the compare view
+ *   (website/src/pages/compare/index.astro) drive this demo's own mode toggle
+ *   and relay its scroll position to the demo beside it.
+ *
+ * The switcher is for a visitor looking at one demo; the bridge is for a
+ * visitor looking at two. A framed demo gets only the bridge — inside a
+ * compare pane the pill is both redundant (the pane has its own pickers) and
+ * in the way (it floats over a column half the width it was designed for).
+ *
+ * The switcher: jump to the same page in another design system (Acme → Carbon,
  * Bootstrap stays), or to another target in the same design system. That
  * cross-axis move is the whole argument of the demo harness — the markup is
  * byte-identical across examples (scripts/check-demo-parity.mjs proves it), so
@@ -86,6 +99,11 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
 (function () {
   var D = ${embed(data)};
   var MARK = ${embed(markSvg(root))};
+
+  // Only the compare view frames a demo, and inside it the switcher is
+  // replaced by that page's own pickers.
+  var framed = window.top !== window.self;
+
   var host = document.createElement('div');
   host.id = 'transtyle-demo-chrome';
   // The host is the only thing this widget adds to the page's own DOM, and
@@ -172,6 +190,13 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
   var has = function (ex, tg) { return D.built.indexOf(ex + '/' + tg) !== -1; };
   var esc = function (t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
 
+  // The design system the compare link opens beside this one: the first that
+  // is not this one and has this target built, so the link is never a 404 and
+  // never a comparison of a demo with itself.
+  var neighbour = D.examples.filter(function (e) { return e.id !== D.example && has(e.id, D.target); })[0];
+  var other = neighbour ? neighbour.id : D.example;
+  var otherTitle = neighbour ? neighbour.title : D.exampleTitle;
+
   var opts = function (list, kind) {
     return list.map(function (item) {
       var ex = kind === 'example' ? item.id : D.example;
@@ -198,6 +223,12 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
         ? '<div class="note">An independent demonstration of Transtyle. Not affiliated with, endorsed by, or produced by ' + esc(D.unaffiliated) + '.</div>'
         : '') +
       '<div class="foot">' +
+        // The same page against the nearest design system that is not this
+        // one — the switcher's move, but without losing sight of where you
+        // started.
+        '<a href="' + site('compare/?left=' + D.example + '.' + D.target +
+          '&right=' + other + '.' + D.target + '&mode=light') +
+          '">⇄ Compare with ' + esc(otherTitle) + ' side by side</a>' +
         '<a href="' + site('demo/') + '">← All 32 demos</a>' +
         (D.doc ? '<a href="' + site('docs/' + D.doc + '/') + '">How the ' + esc(D.targetTitle) + ' target works →</a>' : '') +
         '<a href="https://github.com/transtyle/transtyle/tree/main/examples/' + D.example + '/demo/' + D.target + '" rel="noopener">Source of this demo →</a>' +
@@ -226,7 +257,108 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
     if (e.key === 'Escape' && !panel.hidden) { open(false); pill.focus(); }
   });
 
-  document.body.appendChild(host);
+  if (!framed) document.body.appendChild(host);
+
+  // ---------- the compare view's bridge ----------
+
+  /**
+   * How this demo's mode gets driven from outside, without reaching inside it.
+   *
+   * The compare page and the demos are same-origin, so that page *could* walk
+   * this document itself. It deliberately does not: every target encodes the
+   * mode its own way (\`data-bs-theme\`, \`.dark\`, \`data-theme\`, a re-\`init\`ed
+   * ECharts instance, an Angular signal), and a parent reaching in would have
+   * to learn all eight and re-learn the ninth. The demos already agree on
+   * something better — every one of them puts the mode on a real button in its
+   * chrome bar, labelled with the mode it will switch *to* — so the bridge
+   * presses that button and lets each demo do its own thing. What is checked
+   * (scripts/check-demos.mjs) is exactly that agreement.
+   *
+   * Storybook is the exception and is handled by the compare page instead: the
+   * demo there *is* Storybook's chrome, whose scheme lives in a toolbar global
+   * rather than in the page, so it takes the mode through its own URL.
+   */
+  var SUN = '\\u2600'; // ☀ — shown while the demo is dark, offering light
+  var toggle = function () {
+    var nodes = document.querySelectorAll('button, [role="button"]');
+    for (var i = 0; i < nodes.length; i++) {
+      var text = nodes[i].textContent || '';
+      if (text.indexOf(SUN) !== -1 || text.indexOf('\\u263E') !== -1) return nodes[i];
+    }
+    return null;
+  };
+
+  if (framed) {
+    var suppressUntil = 0;
+    var maxScroll = function () {
+      return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    };
+    // Nothing here is private — a demo id and a scroll ratio — and a framed
+    // page cannot read its embedder's origin to name it, so '*' is the honest
+    // target rather than a guess. The compare page checks the origin on its side.
+    var tell = function (message) {
+      message.source = 'transtyle-demo';
+      window.parent.postMessage(message, '*');
+    };
+
+    window.addEventListener('message', function (event) {
+      var m = event.data;
+      if (!m || m.source !== 'transtyle-compare') return;
+      if (m.type === 'mode') {
+        var btn = toggle();
+        if (btn && ((btn.textContent || '').indexOf(SUN) !== -1 ? 'dark' : 'light') !== m.mode) {
+          btn.click();
+        }
+      } else if (m.type === 'scroll-to') {
+        // Without this window the two panes ping-pong: each scroll we apply
+        // fires our own scroll listener, which tells the other pane to move.
+        suppressUntil = Date.now() + 150;
+        // \`'instant'\`, not \`'auto'\`: "auto" means *defer to the element's
+        // computed scroll-behavior*, and Bootstrap's reboot sets
+        // \`:root { scroll-behavior: smooth }\`, so an auto scroll here animates.
+        // That animates for longer than the window above, restarting exactly
+        // the feedback loop it is there to stop — and it does not animate at
+        // all while the tab is in the background, where a smooth scroll has no
+        // frames to run on and the pane simply never moves.
+        window.scrollTo({ top: Math.round(m.ratio * maxScroll()), behavior: 'instant' });
+      }
+    });
+
+    var queued = false;
+    window.addEventListener(
+      'scroll',
+      function () {
+        if (queued || Date.now() < suppressUntil) return;
+        queued = true;
+        // A timer rather than requestAnimationFrame: rAF is paused in a
+        // document the browser considers hidden, and a compare pane counts as
+        // hidden whenever the window is behind something — the sync would come
+        // back only once you looked at it, which is not when you need it.
+        setTimeout(function () {
+          queued = false;
+          var max = maxScroll();
+          // A ratio, not an offset: the same page is a different height in
+          // Bootstrap and in Radix, and pixels drift a screenful apart by the
+          // bottom of a long comparison.
+          tell({ type: 'scroll', ratio: max ? window.scrollY / max : 0 });
+        }, 16);
+      },
+      { passive: true },
+    );
+
+    // React, Angular and ECharts all mount their chrome bar after this script
+    // runs, so announcing immediately would announce a page with no toggle in
+    // it. Wait for the button, but not forever — a demo that never grows one
+    // should still say hello and be told about it.
+    var tries = 0;
+    (function waitForToggle() {
+      if (toggle() || tries++ > 60) {
+        tell({ type: 'ready', example: D.example, target: D.target, canToggle: !!toggle() });
+        return;
+      }
+      setTimeout(waitForToggle, 50);
+    })();
+  }
 })();
 </script>
 `;

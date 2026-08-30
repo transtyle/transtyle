@@ -24,6 +24,9 @@
  *                       project in its directory, with its port.
  *   6. CI matrix      — .github/workflows/ci.yml builds exactly the demo
  *                       workspaces that exist, and pages.yml publishes them.
+ *   7. compare view   — /compare/ exists and is reachable, the injected bridge
+ *                       it drives the demos with is still there, and every demo
+ *                       still carries the mode toggle that bridge presses.
  *
  * Run: node scripts/check-demos.mjs (also: npm run check:demos, part of
  * check:all). Exits 1 with a list of violations.
@@ -142,6 +145,58 @@ const pages = read('.github/workflows/pages.yml');
 for (const script of ['demos:build', 'demos:assemble']) {
   if (!pages.includes(script)) {
     fail(`.github/workflows/pages.yml does not run \`npm run ${script}\` — the site would deploy with 32 dead links`);
+  }
+}
+
+// ---------- 7. the compare view ----------
+// website/src/pages/compare/ puts two demos in iframes and drives both from one
+// mode control. It does that by pressing each demo's own toggle button, found
+// by its label — every demo's chrome bar renders "☀ light" while dark and
+// "☾ dark" while light. That is a convention across 28 files that nothing was
+// comparing: rename the button's label in one target and the compare view stops
+// syncing that pane, silently and only in the hosted build.
+const COMPARE_PAGE = 'website/src/pages/compare/index.astro';
+if (!existsSync(join(root, COMPARE_PAGE))) {
+  fail(`${COMPARE_PAGE} does not exist — the gallery and the footer link to /compare/`);
+} else {
+  if (!read(COMPARE_PAGE).includes("withBase('/demo/')")) {
+    fail(`${COMPARE_PAGE} does not link back to the gallery`);
+  }
+  if (!read('website/src/pages/demo/index.astro').includes("withBase('/compare/')")) {
+    fail('website/src/pages/demo/index.astro does not link to /compare/ — the compare view is unreachable from the gallery');
+  }
+  if (!read('scripts/lib/demo-chrome.mjs').includes("'transtyle-demo'")) {
+    fail(
+      'scripts/lib/demo-chrome.mjs no longer injects the compare bridge — /compare/ would show two ' +
+        'frames it cannot drive',
+    );
+  }
+}
+
+// The mode toggle each demo must keep, so the bridge has something to press.
+// Storybook is exempt for a reason rather than by omission: that demo *is*
+// Storybook's chrome, its scheme lives in a toolbar global, and the compare
+// view passes it through the manager URL instead.
+const TOGGLE_EXEMPT = new Set(['storybook']);
+const sourceFiles = (dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    if (['node_modules', 'dist', 'storybook-static', 'public'].includes(entry.name)) return [];
+    const path = join(dir, entry.name);
+    return entry.isDirectory()
+      ? sourceFiles(path)
+      : /\.(html|js|jsx|ts|tsx)$/.test(entry.name)
+        ? [path]
+        : [];
+  });
+for (const demo of demos) {
+  if (TOGGLE_EXEMPT.has(demo.target)) continue;
+  const labelled = sourceFiles(demo.dir).some((file) => readFileSync(file, 'utf8').includes('☀'));
+  if (!labelled) {
+    fail(
+      `examples/${demo.example}/demo/${demo.target}/ has no "☀ light" mode toggle — the compare ` +
+        "view finds each demo's toggle by that label (scripts/lib/demo-chrome.mjs); without it that " +
+        'pane stops following the shared mode control',
+    );
   }
 }
 

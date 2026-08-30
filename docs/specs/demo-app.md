@@ -55,3 +55,53 @@ Every prior project shares a Vite-based toolchain; PrimeNG is Angular-only, so `
 ## Adding a target or an example
 
 A new **target** = one new project directory per example (same fake page, that target's idiom) once its exporter ships. A new **example** = copy an existing example's `demo/`, rewrite the `ds.config` files and package names/ports, run `transtyle build`. Anything else that needs touching is a spec violation to fix.
+
+## The hosted exhibit
+
+Everything above describes the demo _projects_ — what a contributor clones and runs. Publishing the
+same 32 projects as one browsable exhibit needs two things the projects deliberately do not carry,
+both injected at assembly time (`scripts/lib/demo-chrome.mjs`, called from `scripts/assemble-demos.mjs`)
+rather than checked in. A navigation widget for a website the demos know nothing about has no
+business in a file a reader is meant to copy, and it could not be byte-identical across four examples
+while naming the one it is in — which is the parity rule above. Hosting concern, hosting layer.
+
+- **The switcher.** A pill in the bottom-left corner of every hosted demo, in a shadow root (these
+  pages already ship Bootstrap, Tailwind, PrimeNG and Storybook's own CSS; `.btn` and `.panel` are
+  spoken for several times over). It moves along either axis — same page, other design system; same
+  design system, other target — and links onward to the gallery, the target's docs page, the demo's
+  source, and the compare view.
+- **The bridge.** No UI at all: a message listener that lets the compare view drive this demo's mode
+  and relay its scroll position. A framed demo gets the bridge and not the switcher — inside a
+  compare pane the pill is redundant and in the way.
+
+### The compare view (`/compare/`, website/src/pages/compare/index.astro)
+
+Two demos in split iframes, sharing one mode control and one scroll position; the pair and the mode
+live in the URL (`?left=govuk.bootstrap&right=carbon.radix&mode=dark`), which is what makes a
+particular comparison a link somebody can send. It is its own route rather than a gallery mode
+because the state is worth a URL, the layout wants the viewport, and the gallery stays one crawlable
+document. Entry points: the gallery hero, a per-row `⇄ compare` link in the gallery matrix, the
+switcher's footer in every demo, and the site footer.
+
+**How one control drives two demos.** The compare page and the demos are same-origin, so the page
+_could_ walk each frame's document itself. It does not: every target encodes the mode its own way
+(`data-bs-theme`, `.dark`, `data-theme`, a re-`init`ed ECharts instance, an Angular signal), and a
+parent reaching in would have to learn all eight and re-learn the ninth. The demos already agree on
+something better — **every one of them puts the mode on a real button labelled with the mode it
+switches _to_** (`☀ light` while dark, `☾ dark` while light) — so the bridge presses that button and
+each demo does its own thing. `check:demos` proves that convention still holds in all 28 projects,
+because renaming that label in one target would break the sync silently and only in the hosted build.
+
+Three consequences worth knowing:
+
+- **Storybook is the exception**, for the reason it is an exception everywhere else in this spec: the
+  demo _is_ Storybook's chrome, and the scheme lives in a toolbar global rather than in the page. It
+  takes the mode through the manager URL (`?globals=colorScheme:dark`) instead, so that pane reloads
+  on a mode change, and its manager chrome stays in the design system's native mode.
+- **A light-only system stays light.** Which modes an example publishes comes from compiling it
+  (`website/src/demo-themes.js`), so GOV.UK's pane says it publishes no dark theme rather than being
+  driven into one — a demo toggled into a mode its tokens do not define would fall through to the
+  _framework's_ dark defaults and quietly stop showing compiled output.
+- **Scroll is relayed as a ratio, not an offset**, because the same page is a different height in
+  Bootstrap and in Radix, and matching pixels drift a screenful apart by the bottom of a long
+  comparison.

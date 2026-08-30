@@ -1,0 +1,605 @@
+---
+/**
+ * The compare view — two demos in one viewport, showing the parity argument
+ * instead of asserting it.
+ *
+ * The gallery already carries the claim ("within a row the markup is
+ * byte-identical, so everything that changes between columns is the design
+ * system"), but reading it costs the visitor a click, a back button, and a
+ * memory of what the previous page looked like. Two panes side by side, one
+ * mode control driving both and one scroll position shared between them, costs
+ * nothing and needs no sentence.
+ *
+ * **Its own route, not a gallery mode.** The design question in BL-08 was
+ * exactly that, and three things decided it:
+ *
+ *   the state is worth a URL. `?left=govuk.bootstrap&right=carbon.bootstrap`
+ *   is the shareable form of an argument — a link that lands somebody on the
+ *   comparison you meant, which a gallery mode toggled in place cannot be;
+ *   the layout wants the viewport. The gallery is a scrolling index with a
+ *   34-column table in it; this page is one tall split surface;
+ *   the gallery is the page search engines should rank for "transtyle demos",
+ *   and it stays a single crawlable document rather than a page whose real
+ *   content depends on a mode flag.
+ *
+ * Everything on this page is derived the same way the gallery derives its
+ * cards: the pickers come from `discoverDemos()`, and which examples publish a
+ * dark theme comes from compiling them (src/demo-themes.js) rather than from a
+ * list. GOV.UK's pane refusing to go dark is a compiled fact, not a special
+ * case typed in here.
+ *
+ * As on the gallery, the demos themselves are folded in beside the site at
+ * deploy time (scripts/assemble-demos.mjs), so `npm run site:build` alone
+ * leaves the two iframes pointing at nothing locally — `npm run demos:all`, or
+ * `npm run demos:assemble` over an existing demo-dist/, builds the real thing.
+ */
+import Base from '../../layouts/Base.astro';
+import { withBase } from '../../url.js';
+import { EXAMPLES, TARGETS, discoverDemos, demoPath, repoRoot } from '../../../../scripts/lib/demos.mjs';
+import { demoThemes } from '../../demo-themes.js';
+
+const root = repoRoot();
+const demos = discoverDemos(root);
+const themes = await demoThemes(EXAMPLES, root);
+
+const built = demos.map((d) => `${d.example}/${d.target}`);
+const isBuilt = (ex, tg) => built.includes(`${ex}/${tg}`);
+
+/**
+ * The opening pair: the two invented systems, in the same ecosystem.
+ *
+ * Acme against Cathode is the widest gap the repository contains — a corporate
+ * blue with rounded corners against a monospace CRT with radius 0 — and
+ * Bootstrap is the target most visitors have already built something in, so
+ * the first thing the page shows is a difference nobody can attribute to the
+ * framework.
+ */
+const DEFAULTS = { left: 'acme.bootstrap', right: 'cathode.bootstrap', mode: 'light' };
+
+const data = {
+  base: withBase(''),
+  examples: EXAMPLES.map((e) => ({ id: e.id, title: e.title, kicker: e.kicker })),
+  targets: TARGETS.map((t) => ({ id: t.id, title: t.title, stack: t.stack, doc: t.doc })),
+  built,
+  // What each example actually publishes, from its own compile: a light-only
+  // system must not be driven into a dark mode it has no values for, or the
+  // pane quietly shows the *framework's* dark defaults and the page starts
+  // lying about what the compiler produced.
+  modes: Object.fromEntries(EXAMPLES.map((e) => [e.id, themes[e.id].modes])),
+  defaults: DEFAULTS,
+};
+
+const [dlEx, dlTg] = DEFAULTS.left.split('.');
+const [drEx, drTg] = DEFAULTS.right.split('.');
+
+const title = 'Compare two demos side by side';
+const description =
+  'Two of the 32 demo builds in one viewport, with one mode control and one scroll position driving both — the same page, compiled from two different design systems.';
+
+const panes = [
+  { side: 'left', label: 'Left', ex: dlEx, tg: dlTg },
+  { side: 'right', label: 'Right', ex: drEx, tg: drTg },
+];
+---
+<Base title={`${title} · Transtyle`} description={description} current="demo" image="/og/default.png">
+  <main id="main">
+    <section class="head">
+      <div>
+        <p class="eyebrow">Live output · side by side</p>
+        <h1>Two demos, <span class="grad">one viewport.</span></h1>
+        <p class="sub">
+          Pick a design system and an ecosystem for each side. One mode control drives both, and the
+          two panes scroll together, so the only thing left moving between them is what the compiler
+          emitted. <a href={withBase('/demo/')}>All {demos.length} builds →</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="tools" aria-label="Comparison controls">
+      <div class="tool">
+        <span class="tool-label" id="mode-label">Demo mode</span>
+        <div class="seg" role="group" aria-labelledby="mode-label">
+          <button type="button" data-mode="light" aria-pressed="true">Light</button>
+          <button type="button" data-mode="dark" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+      <label class="tool check">
+        <input type="checkbox" id="lock" checked />
+        <span>Lock ecosystem<small>change one side's target, both follow</small></span>
+      </label>
+      <label class="tool check">
+        <input type="checkbox" id="sync" checked />
+        <span>Sync scroll<small>the same page in both panes</small></span>
+      </label>
+      <div class="tool push">
+        <button type="button" class="act" id="swap" title="Exchange the two sides">⇄ Swap</button>
+        <button type="button" class="act" id="copy" title="Copy a link to this exact comparison">Copy link</button>
+      </div>
+    </section>
+
+    <p class="reading" id="reading" aria-live="polite"></p>
+
+    <div class="split" id="split">
+      {panes.map((pane, i) => (
+        <>
+          {i === 1 && (
+            <div class="handle" id="handle" role="separator" aria-orientation="vertical"
+                 aria-label="Resize the two panes (double-click to reset)" tabindex="0">
+              <span></span>
+            </div>
+          )}
+          <section class="pane" data-pane={pane.side} aria-label={`${pane.label} demo`}>
+            <header class="pane-head">
+              <span class="side">{pane.label}</span>
+              <label class="vh" for={`${pane.side}-example`}>{pane.label} design system</label>
+              <select id={`${pane.side}-example`} data-role="example">
+                {EXAMPLES.map((e) => <option value={e.id} selected={e.id === pane.ex}>{e.title}</option>)}
+              </select>
+              <span class="times">×</span>
+              <label class="vh" for={`${pane.side}-target`}>{pane.label} ecosystem</label>
+              <select id={`${pane.side}-target`} data-role="target">
+                {TARGETS.map((t) => (
+                  <option value={t.id} selected={t.id === pane.tg} disabled={!isBuilt(pane.ex, t.id)}>
+                    {t.title}
+                  </option>
+                ))}
+              </select>
+              <a class="open" data-role="open" href={withBase(demoPath(pane.ex, pane.tg))}
+                 target="_blank" rel="noopener" title="Open this demo full size">Open ↗</a>
+            </header>
+            <p class="pane-note" data-role="note" hidden></p>
+            {/* `data-src` mirrors `src` so the first client render recognises
+                the frame as already pointing where it wants and leaves it
+                alone — a fresh visit costs no second load. */}
+            <iframe data-role="frame" title={`${pane.label} demo`}
+                    src={withBase(demoPath(pane.ex, pane.tg))}
+                    data-src={withBase(demoPath(pane.ex, pane.tg))}></iframe>
+          </section>
+        </>
+      ))}
+    </div>
+
+    <section class="band">
+      <h2>What this view is claiming</h2>
+      <div class="reads">
+        <div class="read">
+          <h3>Same target, two design systems</h3>
+          <p>
+            The markup in both panes is byte-identical — <a href="https://github.com/transtyle/transtyle/blob/main/scripts/check-demo-parity.mjs" rel="noopener">a CI check</a>
+            fails the build if it ever isn't. Every difference you can see is compiled output.
+          </p>
+        </div>
+        <div class="read">
+          <h3>Same design system, two targets</h3>
+          <p>
+            Change one side's ecosystem and the claim inverts: the markup is now completely
+            different, and the colours, corners and type are the same tokens twice.
+          </p>
+        </div>
+        <div class="read">
+          <h3>The mode control is the demos' own</h3>
+          <p>
+            This page does not restyle anything. It presses each demo's own mode toggle — the one in
+            its chrome bar — so what you get is the target's native mechanism
+            (<code>data-bs-theme</code>, <code>.dark</code>, <code>data-theme</code>) with compiled
+            values behind it.
+          </p>
+        </div>
+        <div class="read">
+          <h3>A light-only system stays light</h3>
+          <p>
+            GOV.UK publishes no dark theme, so its config declares one mode and its pane says so
+            rather than falling through to the framework's own dark defaults.
+            The <a href={withBase('/docs/examples/')}>walkthroughs</a> cover the rest of the seams.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script is:inline define:vars={{ DATA: data }}>
+    /**
+     * Compare-view controller.
+     *
+     * Three jobs: keep the URL and the two iframes agreeing, drive both demos'
+     * own mode toggles from one control, and relay scroll between the panes.
+     *
+     * The last two both go through postMessage to a small agent injected into
+     * every hosted demo (scripts/lib/demo-chrome.mjs). The demos are same-origin
+     * so this page *could* reach into `iframe.contentDocument` and click the
+     * button itself — but the demos already need injected chrome for the
+     * switcher, an explicit message contract is the thing that can be
+     * documented and guarded (check-demos.mjs proves every demo still has a
+     * toggle the agent can find), and it survives the day the demos move to
+     * their own origin.
+     */
+    (function () {
+      var SIDES = ['left', 'right'];
+      var split = document.getElementById('split');
+      var reading = document.getElementById('reading');
+      var lock = document.getElementById('lock');
+      var sync = document.getElementById('sync');
+
+      var panes = {};
+      SIDES.forEach(function (side) {
+        var el = split.querySelector('[data-pane="' + side + '"]');
+        panes[side] = {
+          el: el,
+          example: el.querySelector('[data-role="example"]'),
+          target: el.querySelector('[data-role="target"]'),
+          open: el.querySelector('[data-role="open"]'),
+          note: el.querySelector('[data-role="note"]'),
+          frame: el.querySelector('[data-role="frame"]'),
+          ready: false,
+        };
+      });
+
+      var has = function (ex, tg) { return DATA.built.indexOf(ex + '/' + tg) !== -1; };
+      var byId = function (list, id) {
+        for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+        return null;
+      };
+
+      // ---------- state ----------
+
+      var state = { left: null, right: null, mode: DATA.defaults.mode };
+
+      /** "acme.bootstrap" → {ex, tg}, rejecting anything not actually built. */
+      function parsePair(value, fallback) {
+        var parts = String(value || '').split('.');
+        return has(parts[0], parts[1])
+          ? { ex: parts[0], tg: parts[1] }
+          : { ex: fallback.split('.')[0], tg: fallback.split('.')[1] };
+      }
+
+      function readUrl() {
+        var q = new URLSearchParams(location.search);
+        state.left = parsePair(q.get('left'), DATA.defaults.left);
+        state.right = parsePair(q.get('right'), DATA.defaults.right);
+        state.mode = q.get('mode') === 'dark' ? 'dark' : 'light';
+        // The ecosystem lock is a consequence of the URL, not another
+        // parameter: a link that names two different targets is asking for two
+        // different targets, and having it silently re-lock them would throw
+        // away the comparison it was sent to show.
+        lock.checked = state.left.tg === state.right.tg;
+      }
+
+      function writeUrl(replace) {
+        // Built by hand rather than via URLSearchParams: every id here is
+        // [a-z-]+ and the point of the URL is that a person can read it, which
+        // "left=acme%2Ebootstrap" is not.
+        var q =
+          '?left=' + state.left.ex + '.' + state.left.tg +
+          '&right=' + state.right.ex + '.' + state.right.tg +
+          '&mode=' + state.mode;
+        history[replace ? 'replaceState' : 'pushState'](null, '', q + location.hash);
+      }
+
+      /** The mode a pane can honestly show: its own if it publishes only one. */
+      function effectiveMode(ex) {
+        var modes = DATA.modes[ex] || ['light'];
+        return modes.indexOf(state.mode) === -1 ? modes[0] : state.mode;
+      }
+
+      /**
+       * Storybook is the one target with no mode toggle of its own to press:
+       * the demo *is* Storybook's chrome, and the scheme lives in a toolbar
+       * global rather than in the page. It takes the mode through the URL its
+       * manager already reads, which costs that pane a reload on every toggle
+       * and is why the src is built here rather than in one place for all.
+       */
+      function srcFor(pair) {
+        var url = DATA.base + '/demo/' + pair.ex + '/' + pair.tg + '/';
+        return pair.tg === 'storybook'
+          ? url + '?globals=colorScheme:' + effectiveMode(pair.ex)
+          : url;
+      }
+
+      // ---------- rendering ----------
+
+      function renderPane(side) {
+        var pane = panes[side];
+        var pair = state[side];
+
+        pane.example.value = pair.ex;
+        pane.target.value = pair.tg;
+        // A cell that does not exist is dimmed rather than hidden, so the grid
+        // the visitor is choosing from is the same shape as the gallery's.
+        for (var i = 0; i < pane.target.options.length; i++) {
+          var opt = pane.target.options[i];
+          opt.disabled = !has(pair.ex, opt.value);
+        }
+        pane.open.href = DATA.base + '/demo/' + pair.ex + '/' + pair.tg + '/';
+
+        var src = srcFor(pair);
+        if (pane.frame.getAttribute('data-src') !== src) {
+          pane.ready = false;
+          pane.frame.setAttribute('data-src', src);
+          // The frame is *replaced* rather than re-pointed: an iframe
+          // navigation goes onto the joint session history, so assigning .src
+          // would make the browser's Back button undo a pane load instead of
+          // the comparison the visitor actually changed — and with a Storybook
+          // pane, which takes its mode through the URL, every mode toggle
+          // would leave one behind. A demo that has wandered somewhere
+          // cross-origin cannot be reached this way, hence the fallback.
+          try {
+            pane.frame.contentWindow.location.replace(src);
+          } catch (e) {
+            pane.frame.src = src;
+          }
+        }
+
+        var target = byId(DATA.targets, pair.tg);
+        var example = byId(DATA.examples, pair.ex);
+        pane.frame.title = example.title + ' compiled for ' + target.title;
+
+        var note = '';
+        if (DATA.modes[pair.ex].indexOf(state.mode) === -1) {
+          note = example.title + ' publishes no ' + state.mode + ' theme — this pane stays ' +
+            effectiveMode(pair.ex) + '.';
+        } else if (pair.tg === 'storybook') {
+          note = "Mode is passed to Storybook's own Scheme global; its manager chrome wears the design system's native mode.";
+        }
+        pane.note.textContent = note;
+        pane.note.hidden = !note;
+      }
+
+      /**
+       * The one sentence that says what the current pair proves.
+       *
+       * It changes with the axis being compared because the argument does: two
+       * design systems in one ecosystem is a statement about the tokens, and
+       * one design system in two ecosystems is a statement about the compiler.
+       */
+      function renderReading() {
+        var l = state.left, r = state.right;
+        var lEx = byId(DATA.examples, l.ex).title, rEx = byId(DATA.examples, r.ex).title;
+        var lTg = byId(DATA.targets, l.tg).title, rTg = byId(DATA.targets, r.tg).title;
+        var text;
+        if (l.ex === r.ex && l.tg === r.tg) {
+          text = 'Both panes are the same build. Change one side to compare something.';
+        } else if (l.tg === r.tg) {
+          text = 'Same ecosystem (' + lTg + '), two design systems. The markup is byte-identical — ' +
+            'everything that differs between these panes was compiled from ' + lEx + "'s and " + rEx + "'s tokens.";
+        } else if (l.ex === r.ex) {
+          text = 'Same design system (' + lEx + '), two ecosystems. Two completely different ' +
+            'applications, ' + lTg + ' and ' + rTg + ', themed from one set of token files.';
+        } else {
+          text = lEx + ' × ' + lTg + ' against ' + rEx + ' × ' + rTg +
+            ' — both axes at once: different tokens, different ecosystem.';
+        }
+        reading.textContent = text;
+      }
+
+      function render(replace) {
+        SIDES.forEach(renderPane);
+        renderReading();
+        document.querySelectorAll('.seg [data-mode]').forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode));
+        });
+        writeUrl(replace !== false);
+      }
+
+      // ---------- talking to the demos ----------
+
+      function post(side, message) {
+        var win = panes[side].frame.contentWindow;
+        if (win) win.postMessage(message, location.origin);
+      }
+
+      function pushMode(side) {
+        var pair = state[side];
+        if (pair.tg === 'storybook') return; // carried in the URL instead
+        post(side, { source: 'transtyle-compare', type: 'mode', mode: effectiveMode(pair.ex) });
+      }
+
+      window.addEventListener('message', function (event) {
+        if (event.origin !== location.origin) return;
+        var msg = event.data;
+        if (!msg || msg.source !== 'transtyle-demo') return;
+        var side = null;
+        for (var i = 0; i < SIDES.length; i++) {
+          if (panes[SIDES[i]].frame.contentWindow === event.source) side = SIDES[i];
+        }
+        if (!side) return;
+
+        if (msg.type === 'ready') {
+          panes[side].ready = true;
+          pushMode(side);
+        } else if (msg.type === 'scroll' && sync.checked) {
+          // Relayed as a ratio, not a pixel offset: the same page is a
+          // different height in Bootstrap and in Radix, and matching pixels
+          // would drift a screenful apart by the bottom of a long comparison.
+          var other = side === 'left' ? 'right' : 'left';
+          post(other, { source: 'transtyle-compare', type: 'scroll-to', ratio: msg.ratio });
+        }
+      });
+
+      SIDES.forEach(function (side) {
+        // Belt and braces: the agent announces itself, but a cached frame that
+        // fires load without a fresh announcement should still get the mode.
+        panes[side].frame.addEventListener('load', function () { pushMode(side); });
+      });
+
+      // ---------- controls ----------
+
+      document.querySelectorAll('.seg [data-mode]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          state.mode = button.dataset.mode;
+          render(false);
+          SIDES.forEach(pushMode);
+        });
+      });
+
+      SIDES.forEach(function (side) {
+        panes[side].example.addEventListener('change', function () {
+          state[side].ex = panes[side].example.value;
+          // Switching to a design system that has no build for the current
+          // target would ask for a 404; fall back to the first one it does have.
+          if (!has(state[side].ex, state[side].tg)) {
+            var first = DATA.targets.filter(function (t) { return has(state[side].ex, t.id); })[0];
+            if (first) state[side].tg = first.id;
+          }
+          render(false);
+        });
+        panes[side].target.addEventListener('change', function () {
+          var other = side === 'left' ? 'right' : 'left';
+          state[side].tg = panes[side].target.value;
+          if (lock.checked && has(state[other].ex, state[side].tg)) {
+            state[other].tg = state[side].tg;
+          }
+          render(false);
+        });
+      });
+
+      lock.addEventListener('change', function () {
+        if (lock.checked && state.left.tg !== state.right.tg &&
+            has(state.right.ex, state.left.tg)) {
+          state.right.tg = state.left.tg;
+          render(false);
+        }
+      });
+
+      document.getElementById('swap').addEventListener('click', function () {
+        var l = state.left;
+        state.left = state.right;
+        state.right = l;
+        render(false);
+      });
+
+      var copy = document.getElementById('copy');
+      copy.addEventListener('click', function () {
+        var done = function (ok) {
+          copy.textContent = ok ? 'Copied ✓' : 'Copy failed';
+          setTimeout(function () { copy.textContent = 'Copy link'; }, 1600);
+        };
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(location.href).then(function () { done(true); }, function () { done(false); });
+        } else {
+          done(false);
+        }
+      });
+
+      window.addEventListener('popstate', function () { readUrl(); render(true); });
+
+      // ---------- the splitter ----------
+
+      var handle = document.getElementById('handle');
+      var dragging = false;
+      var setSplit = function (pct) {
+        split.style.setProperty('--split', Math.min(80, Math.max(20, pct)) + '%');
+      };
+      var move = function (clientX) {
+        var box = split.getBoundingClientRect();
+        setSplit(((clientX - box.left) / box.width) * 100);
+      };
+      handle.addEventListener('pointerdown', function (e) {
+        dragging = true;
+        // The panes are iframes: without this the pointer crosses into the
+        // demo document mid-drag and the parent stops hearing pointermove.
+        split.classList.add('dragging');
+        handle.setPointerCapture(e.pointerId);
+      });
+      handle.addEventListener('pointermove', function (e) { if (dragging) move(e.clientX); });
+      handle.addEventListener('pointerup', function () { dragging = false; split.classList.remove('dragging'); });
+      handle.addEventListener('dblclick', function () { split.style.removeProperty('--split'); });
+      handle.addEventListener('keydown', function (e) {
+        var box = split.getBoundingClientRect();
+        var current = (handle.getBoundingClientRect().left - box.left) / box.width * 100;
+        if (e.key === 'ArrowLeft') { setSplit(current - 4); e.preventDefault(); }
+        if (e.key === 'ArrowRight') { setSplit(current + 4); e.preventDefault(); }
+        if (e.key === 'Home') { split.style.removeProperty('--split'); e.preventDefault(); }
+      });
+
+      readUrl();
+      render(true);
+    })();
+  </script>
+
+  <style>
+    main { max-width: 96rem; margin: 0 auto; padding: 0 clamp(1rem, 3vw, 2rem); }
+
+    .head { padding: 2.4rem 0 1.4rem; max-width: 46rem; }
+    .eyebrow { font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 0.5rem; }
+    .head h1 { font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 1.06; letter-spacing: -0.035em; margin: 0 0 0.7rem; font-weight: 780; }
+    .grad { background: linear-gradient(100deg, var(--primary), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .sub { font-size: 1rem; color: var(--text-muted); margin: 0; }
+
+    /* ---------- toolbar ---------- */
+    .tools {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.4rem;
+      padding: 0.7rem 0.9rem; margin-bottom: 0.8rem;
+      border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft);
+    }
+    .tool { display: flex; align-items: center; gap: 0.55rem; }
+    .tool.push { margin-left: auto; gap: 0.4rem; }
+    .tool-label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+    .seg button { border: 0; background: none; color: var(--text-muted); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 0.28rem 0.8rem; cursor: pointer; }
+    .seg button + button { border-left: 1px solid var(--border); }
+    .seg button[aria-pressed='true'] { background: var(--primary); color: #fff; }
+    .check { cursor: pointer; align-items: flex-start; }
+    .check input { margin-top: 0.2rem; accent-color: var(--primary); }
+    .check span { font-size: 0.85rem; font-weight: 600; line-height: 1.25; }
+    .check small { display: block; font-size: 0.7rem; font-weight: 500; color: var(--text-muted); }
+    .act { font: inherit; font-size: 0.83rem; font-weight: 600; padding: 0.32rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+    .act:hover { border-color: var(--primary); color: var(--primary-strong); }
+
+    .reading { font-size: 0.88rem; color: var(--text-muted); margin: 0 0 0.7rem; min-height: 1.3em; }
+
+    /* ---------- the split surface ---------- */
+    .split {
+      --split: 50%;
+      display: grid; grid-template-columns: var(--split) 10px 1fr;
+      height: min(calc(100vh - 9rem), 1000px); min-height: 32rem;
+      border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface);
+    }
+    .split.dragging iframe { pointer-events: none; }
+    .pane { display: flex; flex-direction: column; min-width: 0; }
+    .pane-head {
+      display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+      padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--border); background: var(--bg-soft);
+    }
+    .side { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--text-muted); }
+    .pane-head select {
+      font: inherit; font-size: 0.83rem; font-weight: 600; padding: 0.2rem 0.4rem;
+      border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); max-width: 10rem;
+    }
+    .times { color: var(--text-muted); font-size: 0.8rem; }
+    .open { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+    .open:hover { color: var(--primary-strong); }
+    .pane-note {
+      margin: 0; padding: 0.35rem 0.7rem; font-size: 0.74rem; line-height: 1.4;
+      color: var(--text-muted); background: var(--primary-soft); border-bottom: 1px solid var(--border);
+    }
+    .pane iframe { flex: 1; width: 100%; border: 0; display: block; background: #fff; }
+
+    .handle { background: var(--border-soft); cursor: col-resize; display: flex; align-items: center; justify-content: center; touch-action: none; }
+    .handle:hover, .handle:focus-visible { background: var(--primary); outline: none; }
+    .handle span { width: 2px; height: 2rem; border-radius: 2px; background: var(--text-muted); opacity: 0.5; }
+
+    /* ---------- reading guide ---------- */
+    .band { padding: 2.4rem 0; }
+    .band h2 { font-size: 1.4rem; letter-spacing: -0.02em; margin: 0 0 1rem; font-weight: 700; }
+    .reads { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+    .read { border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 0 12px 12px 0; background: var(--surface); padding: 0.9rem 1.1rem; }
+    .read h3 { margin: 0 0 0.35rem; font-size: 0.98rem; font-weight: 650; }
+    .read p { margin: 0; font-size: 0.86rem; color: var(--text-muted); }
+    .read code { font-size: 0.82em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 5px; }
+
+    .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+    /* Below this width two panes are two slivers; stack them and drop the
+       splitter, which has nothing left to divide. */
+    @media (max-width: 900px) {
+      .split { grid-template-columns: 1fr; height: auto; }
+      .handle { display: none; }
+      /* `flex: 1` sets a zero basis, which in an auto-height column collapses the
+         frame to the iframe's intrinsic 150px — the height below only wins once
+         the flex rule is switched off. */
+      .pane iframe { flex: none; height: 78vh; }
+      .handle + .pane { border-top: 1px solid var(--border); }
+      .tool.push { margin-left: 0; }
+    }
+  </style>
+</Base>

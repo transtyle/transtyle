@@ -57,7 +57,7 @@ current model docs before assigning it anything rather than guessing.
 | [BL-05](#bl-05) | Register `transtyle.dev`                                  | Infra     | High  | S      | blocked (maintainer) | human         |
 | [BL-06](#bl-06) | `create-transtyle` initializer                            | Adoption  | High  | M      | ready                | Sonnet        |
 | [BL-07](#bl-07) | A ninth exporter, from the B3 order                       | Ecosystem | High  | L      | idea                 | Opus → Sonnet |
-| [BL-08](#bl-08) | Side-by-side compare view for two demos                   | Site      | Med   | M      | idea                 | Opus → Sonnet |
+| [BL-08](#bl-08) | Side-by-side compare view for two demos                   | Site      | Med   | M      | done                 | Opus → Sonnet |
 | [BL-09](#bl-09) | Hostile-adoption round two                                | Evidence  | Med   | M      | ready                | Opus          |
 | [BL-10](#bl-10) | Compiled figures on the exporter docs pages               | Docs      | Med   | M      | ready                | Sonnet        |
 | [BL-11](#bl-11) | A social card for the blog post                           | Reach     | Med   | S      | ready                | Sonnet        |
@@ -70,6 +70,8 @@ current model docs before assigning it anything rather than guessing.
 | [BL-18](#bl-18) | Palette perceptual-distance warning                       | Compiler  | Low   | S      | ready                | Sonnet        |
 | [BL-19](#bl-19) | The four deferred catalog promotions                      | Catalog   | —     | —      | watch                | Opus          |
 | [BL-20](#bl-20) | Reconcile the three ID namespaces                         | Repo      | Low   | S      | done                 | —             |
+| [BL-21](#bl-21) | Compare view: a whole row at once                         | Site      | Med   | M      | idea                 | Opus          |
+| [BL-22](#bl-22) | Open Graph cards for a compare link                       | Reach     | Low   | S      | idea                 | Sonnet        |
 
 ### If you want to pick something now
 
@@ -198,7 +200,7 @@ surfaces per the sync rule.
 
 ### BL-08
 
-**Side-by-side compare view for two demos** · Site · Med · M · idea · Opus for the design, Sonnet to build
+**Side-by-side compare view for two demos** · Site · Med · M · **done** 2026-08-30 · Opus
 
 **What.** A page holding two demos in split iframes with a synced light/dark toggle and a shared
 target/system picker.
@@ -206,8 +208,32 @@ target/system picker.
 **Why.** The parity argument — same markup, different tokens — currently requires the visitor to
 click the switcher and remember what they just saw. Side by side, it needs no explanation at all.
 
-**Design question first:** whether it belongs in the gallery as a mode, or as its own route. Depends
-on nothing; BL-12 makes it better.
+**Shipped** as `/compare/` — **its own route**, which was the design question. Three things decided
+it: the pair and the mode belong in a URL (`?left=govuk.bootstrap&right=carbon.radix&mode=dark` is
+the shareable form of an argument, which a mode toggled in place cannot be), the layout wants the
+whole viewport where the gallery is a scrolling index, and the gallery stays one crawlable document.
+It came out larger than "two iframes and a toggle": a draggable splitter, swap, a copy-link button,
+a per-pair sentence saying what that pairing proves, and **synced scrolling**, which turned out to be
+the feature that makes the parity claim land — the two panes are the same page, so they should move
+as one.
+
+**Findings from building it**, none of them anticipated:
+
+- Driving eight targets' mode mechanisms from outside is a problem the demos had already solved.
+  Every one of them labels its toggle with the mode it switches _to_ (`☀ light` / `☾ dark`), so the
+  bridge presses the demo's own button instead of learning `data-bs-theme`, `.dark`, `data-theme`
+  and an Angular signal. `check:demos` now guards that convention in all 28 projects.
+- `scrollTo({ behavior: 'auto' })` does **not** mean "instant" — it means "defer to the computed
+  `scroll-behavior`", and Bootstrap's reboot sets `:root { scroll-behavior: smooth }`. The relayed
+  scroll animated for longer than the loop-suppression window, and did not move at all in a
+  background tab. `'instant'` is the value that does what the name suggests.
+- Re-pointing an iframe's `src` pushes onto the joint session history, so Back undid a pane load
+  rather than the comparison — `contentWindow.location.replace()` instead.
+- Which modes an example publishes had to come from the compiler, not a list: a demo toggled into a
+  mode its tokens do not define falls through to the _framework's_ dark defaults and quietly stops
+  showing compiled output. GOV.UK's pane says so instead.
+
+Documented in [specs/demo-app.md](specs/demo-app.md#the-hosted-exhibit). BL-12 still makes it better.
 
 ### BL-09
 
@@ -377,6 +403,40 @@ answers to "what next", so they are listed here to keep this file a complete pic
 | I2      | Figma variables importer                      | Open                                                                                       |
 | I3      | Watch mode + CI recipe                        | Open                                                                                       |
 | I4      | CSS custom-property importer                  | Candidate; the one that would have automated the Miniflux adoption                         |
+
+### BL-21
+
+**Compare view: a whole row at once** · Site · Med · M · idea · Opus
+
+**What.** An _n_-up mode for [/compare/](#bl-08): all four design systems in one ecosystem, in four
+columns, driven by the same one mode control and the same scroll position the two-pane view already
+shares.
+
+**Why.** Two panes prove the parity claim; four panes are the claim. The gallery's matrix already
+tells the visitor to "read across a row", and this is that row, live. The machinery — the injected
+bridge, the ratio-relayed scroll, the per-example mode honesty — is built and would not change.
+
+**The open question is what it costs the reader**, not what it costs to build. Four framework bundles
+in one viewport is four times the memory, and a column roughly 320px wide is narrower than the Nimbus
+Console page was designed for; a horizontally scrolling strip of full-width panes may be the better
+shape. Decide by looking at it before building the picker. Depends on nothing.
+
+### BL-22
+
+**Open Graph cards for a compare link** · Reach · Low · S · idea · Sonnet
+
+**What.** Give `/compare/?left=…&right=…` a card showing the two systems' swatches side by side, the
+way the gallery cards are painted from a live compile (`website/src/demo-themes.js`).
+
+**Why.** The compare URL exists to be sent to somebody. Right now it previews as the generic site
+card, so the link says nothing about which two systems it is about — the one thing the recipient
+would want to know before clicking.
+
+**Blocked on a decision, not on work:** the pair is in the query string, and a static site cannot
+generate a card per query. Either the compare view gains pretty routes
+(`/compare/govuk/bootstrap/carbon/radix/` — a prerendered page per ordered pair, which is absurd),
+or one card per _ecosystem_ row is generated and the query picks the closest, or the idea is dropped.
+Relates to [BL-16](#bl-16), which has the same shape one level down.
 
 ## Archive
 

@@ -71,6 +71,10 @@ const paint = (t) =>
         <span><b>{count}</b> live builds</span>
         <span><b>1</b> set of token files each</span>
       </p>
+      <p class="hero-cta">
+        <a class="btn primary" href={withBase('/compare/')}>Compare two side by side →</a>
+        <span>Two of them in one viewport, one mode control and one scroll position driving both.</span>
+      </p>
     </section>
 
     <section class="band">
@@ -179,6 +183,11 @@ const paint = (t) =>
                 <th scope="row">
                   <a href={withBase(`/docs/${target.doc}/`)}>{target.title}</a>
                   <span class="mx-stack">{target.stack}</span>
+                  {/* The row's own comparison: the two invented systems, the
+                      widest gap in the repository, in this one ecosystem. */}
+                  <a class="mx-compare"
+                     href={withBase(`/compare/?left=${EXAMPLES[0].id}.${target.id}&right=${EXAMPLES[1].id}.${target.id}&mode=light`)}
+                     aria-label={`Compare ${EXAMPLES[0].title} and ${EXAMPLES[1].title} side by side in ${target.title}`}>⇄ compare</a>
                 </th>
                 {EXAMPLES.map((example) => {
                   const theme = themes[example.id].light;
@@ -303,6 +312,8 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .sub { font-size: 1.08rem; color: var(--text-muted); margin: 0 0 1.6rem; }
     .strip { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 0; font-size: 0.85rem; color: var(--text-muted); }
     .strip b { color: var(--text); font-size: 1.05rem; font-weight: 700; margin-right: 0.15rem; }
+    .hero-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin: 1.6rem 0 0; }
+    .hero-cta span { font-size: 0.85rem; color: var(--text-muted); max-width: 24rem; }
 
     .band { padding: 2.8rem 0; border-top: 1px solid var(--border-soft); }
     .band.alt { background: var(--bg-soft); border-radius: 18px; padding: 2.5rem clamp(1rem, 3vw, 2rem); margin: 2.8rem 0; border-top: none; }
@@ -362,6 +373,8 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .matrix tbody th { width: 11rem; vertical-align: middle; }
     .matrix tbody th a { font-weight: 650; font-size: 0.92rem; }
     .mx-stack { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 500; }
+    .mx-compare { display: inline-block; margin-top: 0.15rem; font-size: 0.68rem; font-weight: 600; color: var(--text-muted); }
+    .mx-compare:hover { color: var(--primary-strong); }
     .cell {
       display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
       border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem 0.6rem;
