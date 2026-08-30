@@ -1,35 +1,37 @@
 # The checkers
 
-Twenty-one scripts, one job each — eighteen chained by `npm run check:all` and
+Twenty-three scripts, one job each — twenty chained by `npm run check:all` and
 run individually by CI, plus three that guard a release, a deploy, and the
 history itself.
 Every one exists because something real broke or could have: they are not a
 test suite grown for coverage, they are a list of mistakes this project has
 already made once.
 
-| Script                        | Guards                                                                                               |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `check-sync.mjs`              | Every shipped exporter exists on all five surfaces (code, spec, website, README, examples)           |
-| `check-docs.mjs`              | Website structure: nav reachability, links, anchors, CLI commands, diagnostic codes, blog posts      |
-| `check-doc-numbers.mjs`       | Every number the docs copy out of a build, re-derived                                                |
-| `check-encoding.mjs`          | Tracked text files are clean UTF-8 — no NUL bytes, no BOM                                            |
-| `check-color.mjs`             | The colour engine against reference values: parsing, round-trips, contrast, mixing                   |
-| `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                                |
-| `check-grid.mjs`              | Catalog completeness and the frozen Phase 0 values                                                   |
-| `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                    |
-| `check-determinism.mjs`       | Two builds of every example, byte-compared                                                           |
-| `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                 |
-| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` golden paths and error cases                           |
-| `check-component-tier.mjs`    | The empty tier defaults correctly; an authored tier reaches both component targets                   |
-| `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                          |
-| `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap                  |
-| `check-minimal-ds.mjs`        | All eight exporters survive a three-token design system, in six mode shapes                          |
-| `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                      |
-| `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, keywords, `files`, `bin` |
-| `check-brand.mjs`             | The logo everywhere: assets current, every surface still carrying it, brand hues still the mark's    |
-| `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex             |
-| `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                          |
-| `check-secrets.mjs`           | No credential or personal data in any blob, commit message or identity, ever                         |
+| Script                        | Guards                                                                                                |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `check-sync.mjs`              | Every shipped exporter exists on all five surfaces (code, spec, website, README, examples)            |
+| `check-docs.mjs`              | Website structure: nav reachability, links, anchors, CLI commands, diagnostic codes, blog posts       |
+| `check-doc-numbers.mjs`       | Every number the docs copy out of a build, re-derived                                                 |
+| `check-encoding.mjs`          | Tracked text files are clean UTF-8 — no NUL bytes, no BOM                                             |
+| `check-color.mjs`             | The colour engine against reference values: parsing, round-trips, contrast, mixing                    |
+| `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                                 |
+| `check-grid.mjs`              | Catalog completeness and the frozen Phase 0 values                                                    |
+| `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                     |
+| `check-determinism.mjs`       | Two builds of every example, byte-compared                                                            |
+| `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                  |
+| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` golden paths and error cases                            |
+| `check-component-tier.mjs`    | The empty tier defaults correctly; an authored tier reaches both component targets                    |
+| `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                           |
+| `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap                   |
+| `check-minimal-ds.mjs`        | All eight exporters survive a three-token design system, in six mode shapes                           |
+| `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                       |
+| `check-demos.mjs`             | The published demo grid: described, documented with its port, linked from its exporter page, deployed |
+| `gen-figures.mjs --check`     | The blog's figures still match a fresh compile of the examples they were painted from                 |
+| `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, keywords, `files`, `bin`  |
+| `check-brand.mjs`             | The logo everywhere: assets current, every surface still carrying it, brand hues still the mark's     |
+| `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex              |
+| `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                           |
+| `check-secrets.mjs`           | No credential or personal data in any blob, commit message or identity, ever                          |
 
 The last three are not in `check:all`, because none of them grades a working
 tree.
@@ -57,11 +59,16 @@ against a synthetic positive before the scan, because a scanner whose regexes
 quietly stopped matching reports "clean" forever and reads exactly like a repo
 with nothing to find.
 
-Five scripts here are not checkers:
+Six scripts here render rather than check:
 
 - `gen-schemas.mjs` and `gen-brand.mjs` render what `check-schemas.mjs` and
   `check-brand.mjs` then prove are current — the published JSON schemas, and
   every file derived from the brand mark.
+- `gen-figures.mjs` renders the blog's figures — miniature interfaces painted
+  entirely in one example's compiled values — and carries its own guard, which
+  is why it appears in the table above too: `--check` re-renders in memory and
+  fails on any byte of drift, the same bargain `gen-brand.mjs` makes. A picture
+  of output nobody compiled is the thing the coverage report exists to prevent.
 - `gen-social-card.mjs` renders the card a launch post carries, with every value
   on it read from a fresh compile of `examples/acme` rather than drawn by hand.
   Its output is gitignored (`brand/social/`) and has no checker, which is the

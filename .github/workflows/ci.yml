@@ -32,6 +32,7 @@ jobs:
       - run: npm run check:sync
       - run: npm run check:demos
       - run: npm run check:brand
+      - run: npm run check:figures
       - run: npm run check:doc-numbers
       - run: npm run check:format
       - run: npm run check:color

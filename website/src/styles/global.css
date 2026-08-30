@@ -395,3 +395,12 @@ h1, h2, h3 { text-wrap: balance; }
 .prose blockquote p { margin: 0.3rem 0; }
 .prose hr { border: none; border-top: 1px solid var(--border); margin: 2.2rem 0; }
 .prose img { max-width: 100%; }
+
+/* Compiled figures (scripts/gen-figures.mjs). The images carry their own dark
+   ground, so the border is what keeps them from bleeding into a dark page —
+   and the link wrapper keeps its hover underline off, since the whole picture
+   is the link and an underline under an image reads as a rendering fault. */
+.prose figure { margin: 1.8rem 0; }
+.prose figure a:hover { text-decoration: none; }
+.prose figure img { display: block; width: 100%; border: 1px solid var(--border); border-radius: 12px; }
+.prose figcaption { margin-top: 0.65rem; font-size: 0.88rem; line-height: 1.55; color: var(--text-muted); }
