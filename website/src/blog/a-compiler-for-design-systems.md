@@ -383,9 +383,19 @@ This is a **v0** release. Here is the actual state, with no rounding up.
 
 **Specced but not implemented:** `preview`, and `import` with the importers behind it — the reverse direction that turns an existing Tailwind config, Figma variable set, or CSS custom-property sheet back into tokens. The first release deliberately targets design systems that already speak DTCG.
 
-**Still moving:** the catalog can change in place until publication, and the plugin API reaches semver stability at 1.0. The [roadmap](/docs/roadmap/) tracks all of it, including the parts that are not done.
+**Still moving:** the catalog can change in place through the alpha, and the plugin API reaches semver stability at 1.0. The [roadmap](/docs/roadmap/) tracks all of it, including the parts that are not done.
+
+> **Written the day before publication.** Transtyle went to npm on 2026-08-30 as `0.1.0-alpha` — see [Transtyle 0.1.0-alpha is on npm](/blog/the-first-alpha/). The state described above is unchanged; only the way you get it is.
 
 Start here:
+
+```bash
+npm i -D @transtyle/cli
+npx transtyle init
+npx transtyle build
+```
+
+Or read a system that already compiles — the repository ships four, with runnable demos for every target:
 
 ```bash
 git clone https://github.com/transtyle/transtyle && cd transtyle
