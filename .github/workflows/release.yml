@@ -61,6 +61,23 @@ jobs:
         id: guard
         run: node scripts/check-release-tag.mjs
 
+      # Rendered here rather than next to the release that consumes it, and in
+      # BOTH modes on purpose: a dry run should discover that the notes cannot
+      # be built, not the real publish. Twelve changelogs say the same thing
+      # twelve times under a lockstep release, so the script takes the union of
+      # the substantive entries and drops the dependency-bump bookkeeping.
+      - name: Render the release notes
+        id: notes
+        run: |
+          v=$(node -p "require('./packages/core/package.json').version")
+          node scripts/release-notes.mjs "$v" > release-notes.md
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Release notes for v$v"
+            echo
+            cat release-notes.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # ONE step for both modes, differing only by --dry-run. They were two
       # steps, and the dry run drifted: it omitted --tag, which npm 10 tolerated
       # locally but npm 11 (installed above) rejects outright for a prerelease.
@@ -105,6 +122,26 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "v$v" -m "v$v"
           git push origin "v$v"
+
+      # A tag is not a release. Until one is created, /releases is empty — and
+      # that page is where someone decides whether upgrading is safe, using
+      # notes that otherwise live only inside the tarballs they have not
+      # downloaded yet. The first three alphas shipped with nothing there.
+      #
+      # `gh` is preinstalled on the runner, so this needs no extra pinned
+      # action, and `contents: write` — already requested for the tag push — is
+      # the only permission it uses. Prereleases are marked as such, so GitHub
+      # keeps showing the last stable one as "Latest" once there is a stable
+      # one to show.
+      - name: Publish the GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ steps.notes.outputs.version }}"
+          PRE=""
+          case "$v" in *-*) PRE="--prerelease" ;; esac
+          gh release create "v$v" --title "v$v" --notes-file release-notes.md $PRE
 
       # `npm publish --tag` sets exactly ONE tag, so the alpha channel and the
       # default channel cannot both be served by the publish itself. Policy:

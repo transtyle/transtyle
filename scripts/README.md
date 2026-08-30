@@ -56,9 +56,11 @@ against a synthetic positive before the scan, because a scanner whose regexes
 quietly stopped matching reports "clean" forever and reads exactly like a repo
 with nothing to find.
 
-`gen-schemas.mjs` and `sync-latest-tag.mjs` are not checkers — the first
-renders the published schemas that `check-schemas.mjs` then proves are
-current, the second moves the `latest` npm dist-tag after a release.
+`gen-schemas.mjs`, `sync-latest-tag.mjs` and `release-notes.mjs` are not
+checkers. The first renders the published schemas that `check-schemas.mjs` then
+proves are current; the second moves the `latest` npm dist-tag after a release;
+the third renders the GitHub Release body, taking the union of the twelve
+lockstep changelogs so the page says each change once instead of twelve times.
 
 ## Rules for writing one
 

@@ -49,6 +49,7 @@
     "postsite:build": "npm run check:site-links",
     "check:site-links": "node scripts/check-site-links.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
+    "release:notes": "node scripts/release-notes.mjs",
     "site:dev": "npm run dev -w @transtyle/website",
     "site:build": "npm run build -w @transtyle/website",
     "site:preview": "npm run preview -w @transtyle/website",

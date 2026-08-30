@@ -182,6 +182,18 @@ npx changeset pre enter alpha
 
 The workflow runs `npm run check:all` before it publishes anything, so a release cannot ship a build that fails its own guards.
 
+### What the release workflow leaves behind
+
+Beyond the twelve tarballs: an annotated git tag `v<version>`, and a **GitHub Release** at that tag whose body is rendered by [`scripts/release-notes.mjs`](scripts/release-notes.mjs). Preview it any time without releasing:
+
+```bash
+npm run release:notes
+```
+
+The twelve changelogs say the same thing twelve times under a lockstep release, each with a different tail of `Updated dependencies` lines. The script takes the **union** of the substantive entries and drops the bookkeeping, so the page states each change once — and a change that touched only one package still appears. Prereleases are marked `--prerelease`, so once a stable release exists GitHub keeps showing that one as "Latest".
+
+The notes are rendered **before** the publish and in dry runs too, so a rehearsal fails on a broken renderer rather than the real thing doing so after twelve packages are already on npm.
+
 ### What consumers see
 
 Alpha releases go to the `alpha` dist-tag, so the deliberate way in is:
