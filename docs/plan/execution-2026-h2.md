@@ -27,7 +27,7 @@
 
 ## Phase A — Release readiness (month 1)
 
-> **Priority update (maintainer, 2026-07-22): R4 (npm publish) and R5 (public deploy) are parked until a good first alpha.** The near-term goal is a compiler that's genuinely good to use, not a published one. R1–R3 stand (R3 done, R2 drafted, R1 human-gated); R4/R5 wait, and every downstream task marked `Depends: R4` waits with them. Reassess when "first alpha" is defined.
+> **Priority update (maintainer, 2026-07-22): R4 (npm publish) and R5 (public deploy) are parked until a good first alpha.** The near-term goal is a compiler that's genuinely good to use, not a published one. R1–R3 stand (R3 done, R2 drafted, R1 human-gated); R4/R5 wait, and every downstream task marked `Depends: R4` waits with them. Reassess when "first alpha" is defined. **Reassessed and unparked 2026-08-30:** the alpha bar (AL1–AL5) is met and R4/R5 are executing as AL6 — see the [ROADMAP](../../ROADMAP.md) alpha ledger.
 
 ### R1 — T11 practitioner sign-off & Phase 1 exit
 

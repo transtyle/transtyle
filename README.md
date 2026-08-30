@@ -2,11 +2,19 @@
 
 > A design system compiler. Describe your design system once; compile it to every ecosystem.
 
+> [!WARNING]
+> **Alpha — experimental.** Transtyle is published so it can be tried, not because it is finished.
+> Breaking changes ship without a deprecation cycle: the token vocabulary, the generated output, the
+> config format and the CLI surface can each change between alpha releases, and none of it carries a
+> stability or support promise. Pin an exact version, and treat generated files as disposable output
+> you can regenerate — never as something to hand-edit and keep. The freedom to break things before
+> 1.0 is deliberate and recorded: [ADR-0010](docs/adr/0010-pre-release-breaking-changes.md).
+
 <!-- measured: bootstrap.surface.component = 657 -->
 <!-- measured: exporters = 8 -->
 <!-- measured: examples = 4 -->
 
-**Status: walking skeleton.** The repository contains the complete product blueprint ([docs/](docs/)) plus a working implementation: the core pipeline and eight exporters (shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, css-variables — the plugin-API reference implementation — Radix Colors/Themes, and PrimeNG), exercised end-to-end by four examples and their runnable demo projects — two invented ([Acme](examples/acme/), [Cathode](examples/cathode/)) and two real, independently-designed systems adopted via the binding-layer pattern ([GOV.UK](examples/govuk/), [Carbon](examples/carbon/)). The **component tier is live on two targets**: PrimeNG (severity grid + archetype helpers) and Bootstrap (all 657 component-scoped variables classified against a checked-in surface inventory — driven by `component.*` tokens with semantic defaults, chained through Bootstrap's own expressions, or honestly reported; both Sass and CSS-variable paths). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
+**What is actually built.** The repository contains the complete product blueprint ([docs/](docs/)) plus a working implementation: the core pipeline and eight exporters (shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, css-variables — the plugin-API reference implementation — Radix Colors/Themes, and PrimeNG), exercised end-to-end by four examples and their runnable demo projects — two invented ([Acme](examples/acme/), [Cathode](examples/cathode/)) and two real, independently-designed systems adopted via the binding-layer pattern ([GOV.UK](examples/govuk/), [Carbon](examples/carbon/)). The **component tier is live on two targets**: PrimeNG (severity grid + archetype helpers) and Bootstrap (all 657 component-scoped variables classified against a checked-in surface inventory — driven by `component.*` tokens with semantic defaults, chained through Bootstrap's own expressions, or honestly reported; both Sass and CSS-variable paths). See [ROADMAP.md](ROADMAP.md) for what's real vs. planned.
 
 ## What it is
 

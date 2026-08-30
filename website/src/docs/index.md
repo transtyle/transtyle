@@ -10,6 +10,17 @@ Transtyle takes a framework-agnostic description of your design system — token
 
 Describe your design system once. Change it in one place. Regenerate every target.
 
+<div class="callout warn">
+<p class="callout-title">Alpha — how to read these docs</p>
+<p>Transtyle is at an experimental alpha. Breaking changes ship without a deprecation cycle, and
+nothing described here carries a stability promise yet — pin an exact version if you try it.</p>
+<p>These pages document <strong>what the compiler does today</strong>. Where a page describes something
+designed but not yet built, it says so inline: <span class="badge live">compiled</span> means it runs
+now, <span class="badge spec">specced</span> means it exists in the
+<a href="/docs/internals/">specification</a> and not yet in the compiler. The
+<a href="/docs/roadmap/">roadmap</a> is the authority on the difference.</p>
+</div>
+
 <div class="schema" role="img" aria-label="You write design tokens; Transtyle normalizes, derives and validates them; you ship eight native themes plus a coverage report">
   <div class="s-col">
     <span class="s-kicker">You write</span>
