@@ -110,8 +110,27 @@ npx changeset pre enter alpha
 
 This writes `.changeset/pre.json`. Commit it. From now on `changeset version` produces `-alpha.N` versions and the guard resolves the dist-tag to `alpha`.
 
+### How the alpha numbering works
+
+The alpha series is `0.1.0-alpha.0`, `0.1.0-alpha.1`, `0.1.0-alpha.2`, … — the base version stays put and only the counter moves, for the whole run up to beta.
+
+That falls out of how pre mode works rather than needing to be enforced. Changesets recomputes each version from the versions recorded at `pre enter`, applying the **highest bump across every changeset in the series**. Once one `minor` is in the series, later `patch` and `minor` changesets cannot move the base any further, so every subsequent release only increments the counter.
+
+Getting the series started (one time, before the first release):
+
+```bash
+# 1. Rebase the 12 packages to 0.0.0 — nothing is published, so nothing is lost.
+#    website/package.json is deliberately NOT touched; see the note below.
+# 2. Enter pre mode, which records those 0.0.0 versions as the series baseline.
+npx changeset pre enter alpha
+# 3. Make the first changeset a `minor` one. 0.0.0 + minor = 0.1.0 → 0.1.0-alpha.0.
+```
+
+> [!WARNING]
+> **One `major` changeset rebases the entire series to `1.0.0-alpha.N`.** The base is the highest bump seen since `pre enter`, so a single major bump in any PR moves it permanently for the rest of the run. `scripts/check-release-tag.mjs` refuses to publish a `>=1.0.0` prerelease for this reason — reaching 1.0 should be a decision, not a side effect of a bump type chosen in a PR. Use `minor` for breaking changes during the alpha; that is what the ADR-0010 exemption is for.
+
 > [!NOTE]
-> **Landing on `0.1.0-alpha.0` exactly.** Packages currently sit at `0.1.0`, so the first versioned bump in pre mode produces `0.1.1-alpha.0` (patch) or `0.2.0-alpha.0` (minor) — not `0.1.0-alpha.0`. If the first published version should read `0.1.0-alpha.0`, set all 12 `version` fields to `0.0.0` before running `changeset version` the first time, and use a minor changeset. Nothing has been published, so nothing is lost by doing this. Otherwise, just accept the number Changesets picks — it is only a label.
+> **`@transtyle/website` is excluded from the `fixed` group on purpose.** It is private and never published, but it is scoped `@transtyle/*` and carries its own `0.1.0`, and the fixed group takes the **highest** version in the group as its base — so leaving it in silently added a minor bump to every release. The group is declared as `["@transtyle/*", "!@transtyle/website"]`. Any future private package under the scope needs the same treatment.
 
 ### Cutting each alpha release
 
@@ -178,6 +197,7 @@ The same release should update ADR-0010 and [ADR-0011](docs/adr/0011-v0-freeze-r
 | `check:release-tag` fails on a normal working tree        | It is a release gate, not a repo invariant, so it is deliberately **not** in `check:all`. On `main` between releases the packages sit at a stable version and it refuses. Expected.    |
 | `changeset version` touches 45 files                      | Internal dependency ranges are rewritten everywhere, including private demo workspaces. Correct — see step 1 above.                                                                    |
 | Selecting one package in `npm run changeset` bumps all 12 | The `fixed` group. Working as configured.                                                                                                                                              |
+| An alpha release jumps to `1.0.0-alpha.N`                 | A `major` changeset landed and rebased the series. The release guard blocks it; downgrade the changeset to `minor` and re-run `changeset version`.                                     |
 | A published package is missing a file                     | Each `package.json` has an explicit `files` allowlist. Three packages need more than `src`: both `surface-inventory.json` files and `plugin-kit`'s `fixture/` are read at **runtime**. |
 | The publish job fails with an OIDC error                  | Almost always a mismatch between the npm trusted-publisher fields and reality — org, repo, workflow **filename**, or environment. All four are case-sensitive.                         |
 

@@ -71,6 +71,16 @@ if (inPre) {
     fail(
       `.changeset/pre.json says the prerelease tag is "${pre.tag}", but the packages are at ${version}. The identifier must read -${pre.tag}.N so the dist-tag and the version agree.`,
     );
+  } else if (Number(version.split('.')[0]) >= 1) {
+    // In pre mode Changesets recomputes the base from the versions recorded at
+    // `pre enter`, applying the highest bump across every changeset in the
+    // series. So patch and minor changesets leave the base alone and only move
+    // the counter (0.1.0-alpha.0 → .1 → .2), but ONE `major` changeset silently
+    // rebases the whole series to 1.0.0-alpha.N. Reaching 1.0 should be a
+    // decision, never a side effect of a bump type picked in a PR.
+    fail(
+      `the packages are at ${version}: a major-version prerelease. During a "${pre.tag}" series this almost always means a \`major\` changeset landed and rebased the series — check \`git diff\` for a changeset with a major bump, downgrade it to minor, and re-run \`npx changeset version\`. If the 1.0 line really is intended, that is a deliberate release decision and this guard should be revisited with it.`,
+    );
   }
 } else {
   distTag = 'latest';
