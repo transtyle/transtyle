@@ -38,11 +38,11 @@ const FONTS = [
 const oklch = (l, c, h) => ({ l, c, h, alpha: 1 });
 const hex = (color) => formatHex(color).text;
 
-// global.css, [data-theme='dark'].
-const BG = oklch(0.16, 0.014, 262);
-const SURFACE = oklch(0.21, 0.018, 262);
-const TEXT = oklch(0.93, 0.008, 260);
-const MUTED = oklch(0.7, 0.015, 260);
+// global.css, [data-theme='dark'] — neutrals at the logo tile's own hue.
+const BG = oklch(0.16, 0.03, 275);
+const SURFACE = oklch(0.21, 0.034, 275);
+const TEXT = oklch(0.93, 0.01, 275);
+const MUTED = oklch(0.7, 0.018, 275);
 // The two ends of the mark's own gradient, in OKLCH: #6B8DFF is hue 269 and
 // #D77BFF is 315. The site's --primary/--violet are the same pair, and
 // check-brand.mjs recomputes both from brand/transtyle-mark.svg.

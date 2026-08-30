@@ -53,4 +53,25 @@ export * from '../dist/storybook/preview.transtyle';
 
 Most of a design system is inexpressible in chrome theming — that's fine and honestly reported; it flows through the preview path.
 
+### Identity: `options.brand`
+
+`brandTitle` defaults to the config's `name`, and the sidebar's logo and link have no token to come from at all — they are identity, not design decisions. `options.brand` is where they go:
+
+```json
+"storybook": {
+  "output": "dist/storybook",
+  "options": {
+    "brand": {
+      "title": "Acme",
+      "url": "https://example.com/design",
+      "image": "/logo.png"
+    }
+  }
+}
+```
+
+All three are optional; `title` overrides the default, and `url` and `image` are emitted only when set. `image` is a URL your Storybook serves — a file in a `staticDirs` folder, typically `public/`. Storybook shows the image _instead of_ the title and uses the title as its alt text, so keep the title meaningful even when you set an image.
+
+Every example uses this: each one's Storybook demo serves `public/logo.png` and points `brand.image` at it, which is why the four demos carry a logo in the sidebar rather than Storybook's own.
+
 See it running — the demo _is_ Storybook's own chrome: `npm run dev -w acme-demo-storybook` (light corporate chrome) or `cathode-demo-storybook` (boots terminal-dark) in the [examples](/docs/examples/).

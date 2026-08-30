@@ -4,8 +4,9 @@
  *
  * There is exactly one description of the logo — the geometry and palette
  * constants below — and every asset the repository ships is rendered from it:
- * the two SVG variants in brand/, their PNG rasters, and the site's favicon,
- * apple-touch icon and PWA icons. Nothing is hand-drawn twice.
+ * the two SVG variants in brand/, their PNG rasters, the wordmark lockup, the
+ * site's favicon, apple-touch, PWA and feed icons, and a favicon for each of
+ * the thirty-two example demo projects. Nothing is hand-drawn twice.
  *
  * That matters more than it looks. A logo is the classic multi-surface asset:
  * one mark ends up as a 16px favicon, a 180px iOS tile, a 512px install icon,
@@ -136,6 +137,96 @@ export async function raster(svg, size) {
 }
 
 // ---------------------------------------------------------------------------
+// The lockup
+// ---------------------------------------------------------------------------
+
+/**
+ * The mark with the wordmark beside it, for slots that want something wider
+ * than a square — Storybook's sidebar heading is the one in this repo, and it
+ * is why this exists: a square mark there renders at 100×100 and swallows the
+ * header, while a 4:1 lockup lands at a well-proportioned 150×38.
+ *
+ * It carries the tile as its own ground rather than sitting on transparency,
+ * for the same reason the on-dark variant exists: that sidebar is themed by
+ * whichever design system is on show — Acme's is near-white, Cathode's boots
+ * black — and no single wordmark colour survives both. Extending the mark's
+ * own ground under the word is the honest way to be legible on either.
+ *
+ * satori lays it out and resvg rasterizes it, exactly as the Open Graph cards
+ * do, and for the same reason: the *static* Inter that `@fontsource/inter`
+ * ships alongside its variable build renders identically on a laptop and in
+ * CI, where an SVG `<text>` in a system font stack would come out different on
+ * every machine that opened it.
+ */
+const LOCKUP = { width: 430, height: 132, scale: 2 };
+
+async function lockup() {
+  const { default: satori } = await import('satori');
+  const font = (weight) =>
+    readFileSync(require.resolve(`@fontsource/inter/files/inter-latin-${weight}-normal.woff`));
+  // The plain mark, not the on-dark one: inside the bar the tile IS the bar,
+  // so the ring would draw a stray box around the glyph. The bar wears the ring
+  // instead — same job, one level out.
+  const markUri = `data:image/svg+xml;base64,${Buffer.from(mark({ id: 'transtyle-mark' })).toString('base64')}`;
+
+  const svg = await satori(
+    {
+      type: 'div',
+      props: {
+        style: {
+          display: 'flex',
+          alignItems: 'center',
+          gap: 24,
+          width: '100%',
+          height: '100%',
+          padding: '0 40px 0 18px',
+          backgroundColor: TILE,
+          // The mark's own corner, scaled: 24 on 400 is 6%, and 6% of this
+          // bar's height keeps the two shapes visibly the same family.
+          borderRadius: Math.round(LOCKUP.height * (RADIUS / SIZE)),
+          // The on-dark ring, at the mark's own proportion (6 units on 400).
+          border: `2px solid rgba(255, 255, 255, ${RING.opacity})`,
+        },
+        children: [
+          { type: 'img', props: { src: markUri, width: 96, height: 96 } },
+          {
+            type: 'div',
+            props: {
+              style: {
+                display: 'flex',
+                fontFamily: 'Inter',
+                fontSize: 58,
+                fontWeight: 700,
+                letterSpacing: '-0.03em',
+                color: '#FFFFFF',
+              },
+              children: 'transtyle',
+            },
+          },
+        ],
+      },
+    },
+    {
+      width: LOCKUP.width,
+      height: LOCKUP.height,
+      fonts: [
+        { name: 'Inter', data: font(400), weight: 400, style: 'normal' },
+        { name: 'Inter', data: font(700), weight: 700, style: 'normal' },
+      ],
+    },
+  );
+
+  await ensureWasm();
+  return Buffer.from(
+    new Resvg(svg, {
+      fitTo: { mode: 'width', value: LOCKUP.width * LOCKUP.scale },
+    })
+      .render()
+      .asPng(),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // The outputs
 // ---------------------------------------------------------------------------
 
@@ -159,6 +250,7 @@ export const OUTPUTS = [
   { rel: 'brand/transtyle-mark-256.png', from: ROUNDED, size: 256 },
   { rel: 'brand/transtyle-mark-on-dark-256.png', from: ON_DARK, size: 256 },
   { rel: 'brand/transtyle-mark-1024.png', from: ROUNDED, size: 1024 },
+  { rel: 'brand/transtyle-lockup.png', lockup: true },
 
   // The site. favicon.svg is what every modern browser actually uses; the PNG
   // is the fallback for the ones that don't, and for anything that scrapes a
@@ -213,15 +305,26 @@ function demoFavicons() {
       if (!existsSync(demoDir)) return [];
       return readdirSync(demoDir, { withFileTypes: true })
         .filter((d) => d.isDirectory())
-        .map((d) => ({
-          rel: `examples/${e.name}/demo/${d.name}/public/favicon.svg`,
-          svg: ROUNDED,
-        }));
+        .flatMap((d) => [
+          { rel: `examples/${e.name}/demo/${d.name}/public/favicon.svg`, svg: ROUNDED },
+          // Storybook alone has a *brand* slot as well as a tab icon: the
+          // sidebar heading, which the generated theme fills from the
+          // example's `options.brand.image`. On-dark, because that sidebar is
+          // themed by the design system on show and Cathode's boots black.
+          ...(d.name === 'storybook'
+            ? [{ rel: `examples/${e.name}/demo/${d.name}/public/logo.png`, lockup: true }]
+            : []),
+        ]);
     });
 }
 
+// The lockup costs a satori layout plus a rasterization, and two outputs want
+// the same bytes; render it once per process.
+let lockupBytes;
+
 /** @returns {Promise<Buffer>} the exact bytes `rel` should contain. */
 export async function render(output) {
+  if (output.lockup) return (lockupBytes ??= await lockup());
   return output.svg !== undefined
     ? Buffer.from(output.svg, 'utf8')
     : await raster(output.from, output.size);

@@ -25,12 +25,12 @@
  *  4. Absolute URLs off-repo — package READMEs are rendered by npm, outside
  *     the repository, so their logo must be an absolute URL rather than a
  *     relative path that only resolves on GitHub.
- *  5. Palette — the site's brand hues ARE the mark's. `--primary` and
- *     `--violet` are the two ends of the logo's gradient read back in OKLCH,
- *     and og.js and blog.js each hold their own copy of the same number. All
- *     three are recomputed here from the gradient rather than trusted, because
- *     "the accent no longer matches the logo" is invisible in a diff and
- *     obvious on the page.
+ *  5. Palette — the site's hues ARE the mark's. `--primary` and `--violet`
+ *     are the two ends of the logo's gradient read back in OKLCH, the neutral
+ *     ramp sits at the hue of the tile, and og.js and blog.js each hold their
+ *     own copy of the same numbers. Every one is recomputed here from the mark
+ *     rather than trusted, because "the accent no longer matches the logo" is
+ *     invisible in a diff and obvious on the page.
  *  6. Demos — every example demo project carries the favicon. There are
  *     thirty-two of them across three toolchains, which is exactly the kind of
  *     set where a new one gets added and quietly skipped.
@@ -43,7 +43,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseColor } from '../packages/core/src/color.js';
-import { GRADIENT, OUTPUTS, render } from './gen-brand.mjs';
+import { GRADIENT, OUTPUTS, TILE, render } from './gen-brand.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -169,6 +169,44 @@ for (const [file, name, expected] of [
   }
 }
 
+// The greys are the tile's, in the same way: every neutral in the ramp sits at
+// the hue of #080A24. Chroma is not constrained — how far each theme leans into
+// the tint is a design call and the two themes deliberately differ — but the
+// hue is the thing that makes them one family with the mark, and it is the
+// thing that silently reverts when someone hand-mixes a new surface.
+const NEUTRAL_HUE = hueOf(TILE);
+const NEUTRALS = [
+  'bg',
+  'bg-soft',
+  'surface',
+  'text',
+  'text-muted',
+  'border',
+  'border-soft',
+  'code-bg',
+  'terminal-bg',
+  'terminal-text',
+];
+for (const name of NEUTRALS) {
+  // `oklch(1 0 0)` — pure white --surface — carries no hue to check.
+  for (const [, c, h] of css.matchAll(
+    new RegExp(`--${name}:\\s*oklch\\([\\d.]+\\s+([\\d.]+)\\s+([\\d.]+)\\)`, 'g'),
+  )) {
+    if (Number(c) > 0 && Math.round(Number(h)) !== NEUTRAL_HUE) {
+      fail(
+        `global.css --${name} is hue ${h}, but the logo tile (${TILE}) is ${NEUTRAL_HUE} — the site's greys and the mark have come apart`,
+      );
+    }
+  }
+}
+for (const [, name, h] of read('website/src/og.js').matchAll(
+  /const (BG|SURFACE|TEXT|MUTED) = oklch\([\d.]+, [\d.]+, ([\d.]+)\)/g,
+)) {
+  if (Math.round(Number(h)) !== NEUTRAL_HUE) {
+    fail(`website/src/og.js ${name} is hue ${h}, but the logo tile is ${NEUTRAL_HUE}`);
+  }
+}
+
 // 6. demos — every example demo project carries the favicon, whichever
 // toolchain it is built with.
 const examplesDir = join(root, 'examples');
@@ -196,6 +234,17 @@ for (const e of readdirSync(examplesDir)) {
       );
     }
   }
+
+  // Storybook is the one target with a *brand* slot as well as a tab icon, and
+  // it is filled from the example's own config rather than from the demo — the
+  // generated theme carries `brandImage` through from `options.brand`.
+  const config = JSON.parse(read(`examples/${e}/transtyle.config.json`));
+  const brand = config.targets?.storybook?.options?.brand;
+  if (existsSync(join(demoDir, 'storybook')) && brand?.image !== '/logo.png') {
+    fail(
+      `examples/${e}/transtyle.config.json: targets.storybook.options.brand.image should be "/logo.png" — the generated theme is what puts the lockup in Storybook's sidebar, and public/logo.png is generated for it`,
+    );
+  }
 }
 
 if (errors.length) {
@@ -203,5 +252,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `✔ brand: ${OUTPUTS.length} generated assets match the mark, and every surface still carries it (${SURFACES.length} site/README references, ${packages} package pages, ${demos} demo projects); the site's --primary/--violet are the gradient's own hues, ${BRAND_HUE}° and ${VIOLET_HUE}°`,
+  `✔ brand: ${OUTPUTS.length} generated assets match the mark, and every surface still carries it (${SURFACES.length} site/README references, ${packages} package pages, ${demos} demo projects); --primary/--violet are the gradient's own hues (${BRAND_HUE}°/${VIOLET_HUE}°) and the greys are the tile's (${NEUTRAL_HUE}°)`,
 );

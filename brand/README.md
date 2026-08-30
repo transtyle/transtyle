@@ -52,6 +52,7 @@ a `<picture>`, which GitHub honours:
 | `transtyle-mark-256.png`         | For surfaces that will not take an SVG (GitHub proxies, npm, feeds). |
 | `transtyle-mark-on-dark-256.png` | Same, on-dark.                                                       |
 | `transtyle-mark-1024.png`        | Slides, talks, a GitHub repo social-preview upload.                  |
+| `transtyle-lockup.png`           | The mark plus the wordmark, for wide slots. See below.               |
 
 The site's `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`,
 `icon-192.png`, `icon-512.png` and `feed-icon-144.png` come out of the same
@@ -73,6 +74,24 @@ both dev and build. The obvious alternative — one shared file behind a relativ
 path — was tried and rejected: Vite rewrites `link[href]` into a hashed asset at
 build time but leaves it alone in dev, so the icon resolved in `npm run build`
 and 404'd in `npm run dev`, which is the only way anyone opens a demo.
+
+## The lockup
+
+`transtyle-lockup.png` is the mark with `transtyle` beside it, on a bar of the
+mark's own tile colour with the same 14%-white ring. Roughly 3.3:1, so it fits
+slots that want something wider than a square.
+
+It exists because Storybook's sidebar heading is one of those. A square mark
+there renders at 100×100 and swallows the header; the lockup lands at a
+well-proportioned 150×46. It carries its own dark ground rather than sitting on
+transparency for the same reason the on-dark variant does — that sidebar is
+themed by whichever design system is on show, and Cathode's boots black while
+Acme's is near-white. No single wordmark colour survives both.
+
+It is a PNG, and rendered with satori rather than drawn as SVG `<text>`,
+because the bundled static Inter comes out identical on a laptop and in CI
+while a system font stack would render differently on every machine that opened
+it.
 
 ## Colors
 
@@ -115,6 +134,11 @@ would work against the on-dark ring.
 - **All thirty-two example demos** — a generated `public/favicon.svg` each,
   linked from `index.html` (Vite, Angular) or served via `staticDirs`
   (Storybook).
+- **The four Storybook demos' sidebars** — the lockup, as `public/logo.png`,
+  reaching the chrome through each example's
+  `targets.storybook.options.brand` rather than by editing `manager.ts`: the
+  storybook exporter already carries `brand.title`/`url`/`image` into the
+  generated theme, and nothing exercised it until now.
 - **Root README** — `<picture>`, both variants.
 - **All twelve package READMEs** — on-dark variant, by absolute URL, because
   npm renders them outside the repository.

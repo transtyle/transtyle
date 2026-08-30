@@ -22,7 +22,13 @@
     "echarts": { "output": "dist/echarts" },
     "daisyui": { "output": "dist/daisyui" },
     "bootstrap": { "output": "dist/bootstrap" },
-    "storybook": { "output": "dist/storybook", "options": { "previewTargets": ["shadcn", "daisyui"] } },
+    "storybook": {
+      "output": "dist/storybook",
+      "options": {
+        "previewTargets": ["shadcn", "daisyui"],
+        "brand": { "url": "https://transtyle.github.io/transtyle/", "image": "/logo.png" }
+      }
+    },
     "css-variables": { "output": "dist/css-variables" },
     "radix": { "output": "dist/radix" },
     "primeng": { "output": "dist/primeng" }
