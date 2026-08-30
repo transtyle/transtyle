@@ -59,10 +59,14 @@ jobs:
       pages: write
       id-token: write
     steps:
-      # Only here to turn Pages on if it is off and report the resolved URL —
-      # the build does not consume its base_path output, because the base is
-      # pinned in astro.config.mjs so that a local build produces exactly what
-      # ships.
+      # Turns Pages on for the repo if it is off, which is the whole reason this
+      # step is here — its `base_path` output is deliberately unused, because the
+      # base is pinned in astro.config.mjs so a local build produces exactly what
+      # ships. `enablement` defaults to FALSE, and without it the first deploy
+      # fails with a bare "Get Pages site failed … Not Found" that reads like a
+      # permissions problem rather than "nobody has turned this on yet".
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+        with:
+          enablement: true
       - id: deploy
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
