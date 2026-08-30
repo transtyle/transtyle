@@ -26,8 +26,12 @@
  * endpoint is not CDN-cached and answers correctly immediately after a publish,
  * where registry.npmjs.org/<pkg> can 404 for minutes.
  *
- * Run: node scripts/sync-latest-tag.mjs [--dry-run]
+ * Run: node scripts/sync-latest-tag.mjs [--dry-run] [--otp=<code>]
  *      (also: npm run sync:latest-tag)
+ *
+ * Run locally it is INTERACTIVE: an account with 2FA on writes will make npm
+ * either print an auth URL to open or ask for a code, once per package. Answer
+ * the prompts. It is not interactive in CI, where OIDC authenticates it.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -56,7 +60,7 @@ function npmError(err) {
   const picked = (real.length ? real : lines).filter((l) => !/^A complete log/.test(l));
   const msg = picked.slice(0, 2).join(' — ') || 'unknown error';
   return /EOTP|one-time password/.test(raw)
-    ? `${msg}\n    → this account requires 2FA for dist-tag writes. Re-run with --otp=<code> from your authenticator, or let the release workflow do it (CI authenticates via OIDC).`
+    ? `${msg}\n    → this account requires 2FA for dist-tag writes. If npm printed an auth URL above, open it and approve; if it asked for a code, re-run with --otp=<code>. CI does not hit this: it authenticates via OIDC.`
     : msg;
 }
 
@@ -98,12 +102,20 @@ for (const { name, version } of packages) {
     moved++;
     continue;
   }
+  // stdio is INHERITED here, unlike the read above, and that is load-bearing.
+  // `dist-tag add` is a write, so npm may need to authenticate — and on an
+  // account using npm's web auth flow it prints a URL and blocks on ENTER
+  // rather than asking for a code. Captured stdout hides the URL and an ignored
+  // stdin can never deliver the ENTER, so piping here hangs forever with no
+  // output. Inheriting lets npm talk to whoever is running this. In CI there is
+  // no TTY and no prompt: the OIDC token authenticates, and npm's output goes
+  // to the job log, which is where it belongs anyway.
   try {
-    execFileSync('npm', ['dist-tag', 'add', `${name}@${version}`, 'latest', ...(otp ? [otp] : [])], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-    console.log(`  ${name}: latest ${current ?? '(unset)'} → ${version}`);
+    console.log(`  ${name}: moving latest ${current ?? '(unset)'} → ${version}`);
+    execFileSync('npm', ['dist-tag', 'add', `${name}@${version}`, 'latest', ...(otp ? [otp] : [])], { stdio: 'inherit' });
     moved++;
   } catch (err) {
-    errors.push(`${name}: could not move latest — ${npmError(err)}`);
+    errors.push(`${name}: could not move latest — ${npmError(err)} (npm's own output is above)`);
   }
 }
 
