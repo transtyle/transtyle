@@ -50,6 +50,7 @@
   },
   "changesets": [
     "cli-bin-path",
-    "first-public-alpha"
+    "first-public-alpha",
+    "package-readmes"
   ]
 }

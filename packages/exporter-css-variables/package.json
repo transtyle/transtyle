@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/exporter-css-variables",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Transtyle exporter emitting the resolved semantic catalog as plain CSS custom properties — the simplest possible backend and the plugin-API conformance fixture.",
   "type": "module",
   "main": "./src/index.js",

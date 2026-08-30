@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/exporter-shadcn",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Transtyle exporter for shadcn/ui (tailwind-v4 era).",
   "type": "module",
   "main": "./src/index.js",
@@ -8,7 +8,7 @@
     ".": "./src/index.js"
   },
   "dependencies": {
-    "@transtyle/ir": "0.1.0-alpha.1"
+    "@transtyle/ir": "0.1.0-alpha.2"
   },
   "transtyle": {
     "kind": "exporter",

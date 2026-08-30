@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/exporter-primeng",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Transtyle exporter for PrimeNG design-token presets (definePreset over Aura), with a full component-tier colour grid.",
   "type": "module",
   "main": "./src/index.js",
@@ -8,7 +8,7 @@
     ".": "./src/index.js"
   },
   "dependencies": {
-    "@transtyle/ir": "0.1.0-alpha.1"
+    "@transtyle/ir": "0.1.0-alpha.2"
   },
   "transtyle": {
     "kind": "exporter",

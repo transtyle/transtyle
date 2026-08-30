@@ -14,7 +14,7 @@
     "echarts": "^5.5.0"
   },
   "devDependencies": {
-    "@transtyle/cli": "0.1.0-alpha.1",
+    "@transtyle/cli": "0.1.0-alpha.2",
     "vite": "^6.0.0"
   }
 }

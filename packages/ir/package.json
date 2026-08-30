@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/ir",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Transtyle IR: semantic catalog, provenance constants, token-tree helpers. Zero dependencies.",
   "type": "module",
   "main": "./src/index.js",
