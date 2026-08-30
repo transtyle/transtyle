@@ -28,7 +28,7 @@
     "url": "git+https://github.com/transtyle/transtyle.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "homepage": "https://transtyle.github.io/transtyle/docs/cli/",
   "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

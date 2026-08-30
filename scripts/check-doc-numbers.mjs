@@ -65,7 +65,18 @@ const mdIn = (dir) =>
     .filter((f) => f.endsWith('.md'))
     .map((f) => `${dir}/${f}`);
 
+/**
+ * The published package READMEs. They are the npm landing page — the surface
+ * most people meet the project on and the one nobody in the repo ever reopens,
+ * which is exactly where a stale figure survives longest.
+ */
+const packageReadmes = () =>
+  readdirSync(join(root, 'packages'))
+    .map((d) => `packages/${d}/README.md`)
+    .filter((p) => existsSync(join(root, p)));
+
 const SURFACES = [
+  ...packageReadmes(),
   ...mdIn('website/src/docs'),
   ...mdIn('website/src/blog'),
   'website/src/pages/index.astro',

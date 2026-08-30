@@ -38,7 +38,7 @@
     "url": "git+https://github.com/transtyle/transtyle.git",
     "directory": "packages/exporter-daisyui"
   },
-  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "homepage": "https://transtyle.github.io/transtyle/docs/exporter-daisyui/",
   "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

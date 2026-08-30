@@ -1,7 +1,7 @@
 {
   "name": "@transtyle/exporter-primeng",
   "version": "0.1.0-alpha.1",
-  "description": "Transtyle exporter for PrimeNG design-token presets (definePreset over Aura). Not yet registered in the CLI — see docs/plan/component-tier.md C6.",
+  "description": "Transtyle exporter for PrimeNG design-token presets (definePreset over Aura), with a full component-tier colour grid.",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -39,7 +39,7 @@
     "url": "git+https://github.com/transtyle/transtyle.git",
     "directory": "packages/exporter-primeng"
   },
-  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "homepage": "https://transtyle.github.io/transtyle/docs/exporter-primeng/",
   "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

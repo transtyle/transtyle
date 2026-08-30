@@ -39,7 +39,7 @@
     "url": "git+https://github.com/transtyle/transtyle.git",
     "directory": "packages/exporter-shadcn"
   },
-  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "homepage": "https://transtyle.github.io/transtyle/docs/exporter-shadcn/",
   "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

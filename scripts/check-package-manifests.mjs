@@ -15,7 +15,10 @@
  * a consumer who installs the tarball:
  *   - publishConfig.access — a scoped package defaults to RESTRICTED, so a
  *     missing one either fails the publish or, worse, succeeds privately
- *   - repository/homepage/bugs — npm matches `repository` for provenance
+ *   - repository/homepage/bugs — npm matches `repository` for provenance, and a
+ *     homepage that names a docs page must name one that exists
+ *   - README.md — npm renders it as the package page whether you wrote one or
+ *     not; all twelve shipped their first alpha blank
  *   - files — the allowlist must exist, and everything the package needs to
  *     RUN must be inside it (entry points are checked; runtime data files are
  *     the reason `files` is reviewed by hand)
@@ -57,6 +60,24 @@ for (const d of readdirSync(pkgDir)) {
   }
   for (const field of ['repository', 'homepage', 'bugs']) {
     if (!pkg[field]) fail(name, `missing "${field}" (npm matches repository when attaching provenance)`);
+  }
+
+  // --- the npm landing page ------------------------------------------------
+  // All twelve packages shipped their first alpha with no README, so every one
+  // of them rendered as a blank page on npmjs.com — the surface most people
+  // meet the project on, and the only one nobody in the repo ever reopens.
+  const readme = join(dir, 'README.md');
+  if (!existsSync(readme)) {
+    fail(name, 'no README.md — npm always publishes one and renders it as the package page, so its absence is a blank landing page for every visitor');
+  } else if (readFileSync(readme, 'utf8').trim().length < 400) {
+    fail(name, 'README.md is a stub — the npm page is the first thing a stranger reads; say what the package emits and how to use it');
+  }
+
+  // A homepage pointing at a docs page that does not exist is a 404 baked into
+  // published metadata, where it cannot be fixed without another release.
+  const docsPage = /transtyle\.github\.io\/transtyle\/docs\/([\w-]+)\//.exec(pkg.homepage ?? '');
+  if (docsPage && !existsSync(join(root, 'website', 'src', 'docs', `${docsPage[1]}.md`))) {
+    fail(name, `homepage points at /docs/${docsPage[1]}/, which has no page in website/src/docs`);
   }
 
   // --- the files allowlist --------------------------------------------------
@@ -111,4 +132,4 @@ if (errors.length) {
   for (const e of errors) console.error(`✖ manifest: ${e}`);
   process.exit(1);
 }
-console.log(`✔ package manifests: ${checked} publishable packages — access, provenance metadata, files allowlist, entry points and bin all resolve`);
+console.log(`✔ package manifests: ${checked} publishable packages — access, provenance metadata, README, homepage, files allowlist, entry points and bin all resolve`);

@@ -35,7 +35,7 @@
     "url": "git+https://github.com/transtyle/transtyle.git",
     "directory": "packages/exporter-css-variables"
   },
-  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "homepage": "https://transtyle.github.io/transtyle/docs/exporter-css-variables/",
   "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }
