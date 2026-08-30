@@ -1,5 +1,11 @@
 # @transtyle/exporter-bootstrap
 
+## 0.1.0-alpha.1
+
+### Patch Changes
+
+- @transtyle/ir@0.1.0-alpha.1
+
 ## 0.1.0-alpha.0
 
 ### Minor Changes

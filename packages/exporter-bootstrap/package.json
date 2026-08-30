@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/exporter-bootstrap",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Transtyle exporter for Bootstrap themes (5.3+, Sass and CSS-variable paths).",
   "type": "module",
   "main": "./src/index.js",
@@ -8,7 +8,7 @@
     ".": "./src/index.js"
   },
   "dependencies": {
-    "@transtyle/ir": "0.1.0-alpha.0"
+    "@transtyle/ir": "0.1.0-alpha.1"
   },
   "transtyle": {
     "kind": "exporter",
@@ -31,7 +31,9 @@
     "src",
     "surface-inventory.json"
   ],
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

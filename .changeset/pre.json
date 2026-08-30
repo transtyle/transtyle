@@ -49,6 +49,7 @@
     "@transtyle/website": "0.1.0"
   },
   "changesets": [
+    "cli-bin-path",
     "first-public-alpha"
   ]
 }
