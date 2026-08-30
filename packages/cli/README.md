@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://transtyle.github.io/transtyle/"><img src="https://raw.githubusercontent.com/transtyle/transtyle/main/brand/transtyle-mark-on-dark-256.png" alt="Transtyle" width="88" height="88"></a>
+</p>
+
 # @transtyle/cli
 
 The command line for **[Transtyle](https://transtyle.github.io/transtyle/)**, a design system compiler: describe a design system once as W3C (DTCG) design tokens, compile native theme artifacts for every ecosystem.

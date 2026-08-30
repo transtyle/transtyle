@@ -4,6 +4,21 @@ import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 import { withBase } from '../url.js';
 
+// The header mark, inlined from the one source every brand asset is rendered
+// from (brand/transtyle-mark.svg — see scripts/gen-brand.mjs). Inlined rather
+// than <img>-ed so it costs no request and can take a themed ring in CSS; read
+// from the source file rather than copy-pasted so it cannot drift from the
+// favicon and the Open Graph badge.
+import markSource from '../../../brand/transtyle-mark.svg?raw';
+
+// The standalone file names itself for screen readers; here the wordmark right
+// next to it already says "transtyle", so the mark is decorative and its
+// intrinsic 400×400 is dropped in favour of the CSS size.
+const mark = markSource
+  .replace(' role="img" aria-label="Transtyle"', ' aria-hidden="true" focusable="false"')
+  .replace(/\s*<title>[^<]*<\/title>/, '')
+  .replace(' width="400" height="400"', '');
+
 const {
   title,
   description = 'Transtyle is a design system compiler: describe your design system once, compile native themes for every ecosystem.',
@@ -50,6 +65,15 @@ const imageUrl = new URL(withBase(image), site).href;
   {author && <meta property="article:author" content={author} />}
   <link rel="alternate" type="application/rss+xml" title="Transtyle blog" href={withBase('/blog/rss.xml')} />
   <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+  <link rel="icon" type="image/png" sizes="32x32" href={withBase('/favicon-32.png')} />
+  <link rel="apple-touch-icon" sizes="180x180" href={withBase('/apple-touch-icon.png')} />
+  <link rel="manifest" href={withBase('/site.webmanifest')} />
+  {/* The browser chrome around the page, matched to the theme it will be
+      showing: the site's own --bg in each mode, which in dark is a shade of
+      the logo tile. Two media-scoped tags rather than one, so the OS setting
+      picks — the in-page toggle is a preference, not a paint order. */}
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfcfd" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0d13" />
   <script is:inline>
     const t = localStorage.getItem('theme') ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.documentElement.dataset.theme = t;
@@ -66,7 +90,7 @@ const imageUrl = new URL(withBase(image), site).href;
   </div>
   <header class="site-header">
     <a class="wordmark" href={withBase('/')}>
-      <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="oklch(0.55 0.19 262)"/><stop offset="1" stop-color="oklch(0.55 0.2 296)"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M18 24h28M32 24v22" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/></svg>
+      <span class="mark" set:html={mark} />
       transtyle
     </a>
     <nav class="site-nav" aria-label="Site">
@@ -206,6 +230,18 @@ const imageUrl = new URL(withBase(image), site).href;
       font-weight: 750; font-size: 1.1rem; letter-spacing: -0.03em; color: var(--text);
     }
     .wordmark:hover { text-decoration: none; }
+    /* The mark's tile is #080A24, so on the dark theme — whose --bg is a
+       near-identical near-black — the rounded square dissolves and leaves the
+       glyph floating. A hairline ring gives the silhouette its edge back. It
+       is CSS rather than part of the SVG on purpose: a stroke inside a 400-unit
+       viewBox drawn at 24px would be a fifth of a pixel, while this stays one
+       crisp pixel at any size. Same treatment, baked in, as
+       brand/transtyle-mark-on-dark.svg. */
+    .mark { display: flex; }
+    .mark :global(svg) { display: block; width: 24px; height: 24px; border-radius: 6%; }
+    :global([data-theme='dark']) .mark :global(svg) {
+      box-shadow: 0 0 0 1px color-mix(in oklch, var(--text) 14%, transparent);
+    }
     .site-nav { display: flex; align-items: center; gap: 1.4rem; font-size: 0.92rem; }
     .site-nav a { color: var(--text-muted); font-weight: 500; }
     .site-nav a:hover, .site-nav a.active { color: var(--text); text-decoration: none; }

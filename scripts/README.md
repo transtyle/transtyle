@@ -1,6 +1,6 @@
 # The checkers
 
-Twenty scripts, one job each — seventeen chained by `npm run check:all` and
+Twenty-one scripts, one job each — eighteen chained by `npm run check:all` and
 run individually by CI, plus three that guard a release, a deploy, and the
 history itself.
 Every one exists because something real broke or could have: they are not a
@@ -26,6 +26,7 @@ already made once.
 | `check-minimal-ds.mjs`        | All eight exporters survive a three-token design system, in six mode shapes                     |
 | `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                 |
 | `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, `files`, `bin`      |
+| `check-brand.mjs`             | The logo, on every surface: generated assets current, and nothing has stopped carrying the mark |
 | `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex        |
 | `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                     |
 | `check-secrets.mjs`           | No credential or personal data in any blob, commit message or identity, ever                    |
@@ -56,9 +57,10 @@ against a synthetic positive before the scan, because a scanner whose regexes
 quietly stopped matching reports "clean" forever and reads exactly like a repo
 with nothing to find.
 
-`gen-schemas.mjs`, `sync-latest-tag.mjs` and `release-notes.mjs` are not
-checkers. The first renders the published schemas that `check-schemas.mjs` then
-proves are current; the second moves the `latest` npm dist-tag after a release;
+`gen-schemas.mjs`, `gen-brand.mjs`, `sync-latest-tag.mjs` and `release-notes.mjs`
+are not checkers. The first two render what `check-schemas.mjs` and
+`check-brand.mjs` then prove are current — the published JSON schemas, and every
+file derived from the brand mark; the second moves the `latest` npm dist-tag after a release;
 the third renders the GitHub Release body, taking the union of the twelve
 lockstep changelogs so the page says each change once instead of twelve times.
 

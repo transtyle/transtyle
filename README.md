@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="brand/transtyle-mark-on-dark-256.png">
+    <img src="brand/transtyle-mark-256.png" alt="" width="112" height="112">
+  </picture>
+</p>
+
 # Transtyle
 
 > A design system compiler. Describe your design system once; compile it to every ecosystem.

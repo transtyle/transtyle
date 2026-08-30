@@ -11,4 +11,5 @@
   <path d="M58 121H200V194H58V121Z" fill="url(#transtyle-mark)" />
   <path d="M200 194L272 121H342V194H200Z" fill="url(#transtyle-mark)" />
   <path d="M200 194L129 265V339H200V194Z" fill="url(#transtyle-mark)" />
+  <rect x="3" y="3" width="394" height="394" rx="21" fill="none" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="6" />
 </svg>

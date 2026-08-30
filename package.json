@@ -32,6 +32,8 @@
     "check:docs": "node scripts/check-docs.mjs",
     "format:md": "prettier --write \"**/*.{md,mdx}\"",
     "check:format": "prettier --check \"**/*.{md,mdx}\"",
+    "gen:brand": "node scripts/gen-brand.mjs",
+    "check:brand": "node scripts/check-brand.mjs",
     "gen:schemas": "node scripts/gen-schemas.mjs",
     "check:schemas": "node scripts/check-schemas.mjs",
     "check:grid": "node scripts/check-grid.mjs",
@@ -44,7 +46,7 @@
     "check:demo-parity": "node scripts/check-demo-parity.mjs",
     "check:bootstrap-surface": "node scripts/check-bootstrap-surface.mjs",
     "check:component-tier": "node scripts/check-component-tier.mjs",
-    "check:all": "npm run check:sync && npm run check:manifests && npm run check:doc-numbers && npm run check:encoding && npm run check:format && npm run check:color && npm run check:plugins && npm run check:grid && npm run check:fixtures && npm run check:determinism && npm run check:schemas && npm run check:cli && npm run check:component-tier && npm run check:bootstrap-surface && npm run check:coverage-bar && npm run check:minimal-ds && npm run check:demo-parity",
+    "check:all": "npm run check:sync && npm run check:manifests && npm run check:brand && npm run check:doc-numbers && npm run check:encoding && npm run check:format && npm run check:color && npm run check:plugins && npm run check:grid && npm run check:fixtures && npm run check:determinism && npm run check:schemas && npm run check:cli && npm run check:component-tier && npm run check:bootstrap-surface && npm run check:coverage-bar && npm run check:minimal-ds && npm run check:demo-parity",
     "presite:build": "npm run check:sync && npm run check:doc-numbers",
     "postsite:build": "npm run check:site-links",
     "check:site-links": "node scripts/check-site-links.mjs",
@@ -64,6 +66,7 @@
   "license": "MIT",
   "devDependencies": {
     "@changesets/cli": "2.31.1",
+    "@resvg/resvg-wasm": "2.6.2",
     "prettier": "3.9.6"
   }
 }

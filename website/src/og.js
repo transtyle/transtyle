@@ -24,6 +24,7 @@ import { createRequire } from 'node:module';
 import satori from 'satori';
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import { formatHex, contrastRatio } from '@transtyle/core';
+import logoSvg from '../../brand/transtyle-mark-on-dark.svg?raw';
 
 const require = createRequire(import.meta.url);
 const font = (weight) =>
@@ -67,10 +68,18 @@ function accentPair(hue) {
   };
 }
 
-/** The wordmark, as the header's own logo — always brand-hued: it is the mark, not the accent. */
-const BRAND = accentPair(BRAND_HUE);
-const LOGO = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${BRAND.from}"/><stop offset="1" stop-color="${BRAND.to}"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M18 24h28M32 24v22" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/></svg>`;
-const LOGO_URI = `data:image/svg+xml;base64,${Buffer.from(LOGO).toString('base64')}`;
+/**
+ * The mark, inlined from the same brand/ source the favicon and the site
+ * header are rendered from (scripts/gen-brand.mjs), so a card can never carry
+ * a logo the rest of the site has moved on from.
+ *
+ * The on-dark variant specifically: this card's ground is a near-black, and so
+ * is the mark's tile, so the plain variant would lose its rounded-square
+ * silhouette entirely and leave the glyph floating. It is also the one place
+ * the mark is *not* re-hued per card — the accent below moves with the post,
+ * the logo does not.
+ */
+const LOGO_URI = `data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}`;
 
 let wasmReady;
 const ensureWasm = () => {
