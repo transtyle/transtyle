@@ -19,6 +19,8 @@
  *     homepage that names a docs page must name one that exists
  *   - README.md — npm renders it as the package page whether you wrote one or
  *     not; all twelve shipped their first alpha blank
+ *   - LICENSE — npm ships one only if it is in the package directory, so a
+ *     `"license": "MIT"` field alone distributes terms without their text
  *   - files — the allowlist must exist, and everything the package needs to
  *     RUN must be inside it (entry points are checked; runtime data files are
  *     the reason `files` is reviewed by hand), plus CHANGELOG.md, which npm
@@ -43,6 +45,7 @@ const coveredByFiles = (files, target) =>
     return target === entry || target.startsWith(`${entry}/`);
   });
 
+const rootLicense = readFileSync(join(root, 'LICENSE'), 'utf8');
 const pkgDir = join(root, 'packages');
 let checked = 0;
 
@@ -61,6 +64,20 @@ for (const d of readdirSync(pkgDir)) {
   }
   for (const field of ['repository', 'homepage', 'bugs']) {
     if (!pkg[field]) fail(name, `missing "${field}" (npm matches repository when attaching provenance)`);
+  }
+
+  // --- the licence that is actually distributed ----------------------------
+  // Declaring `"license": "MIT"` is not the same as shipping MIT. npm adds a
+  // LICENSE file to the tarball only when one sits in the package directory,
+  // and none did for the first three alphas — so every published package asked
+  // people to accept terms whose text it did not carry. The copy must stay
+  // byte-identical to the root one, because twelve copies of a licence is
+  // exactly the shape of thing that drifts a copyright year and nobody notices.
+  const licensePath = join(dir, 'LICENSE');
+  if (!existsSync(licensePath)) {
+    fail(name, 'no LICENSE file — npm only publishes one when it sits in the package directory, so the tarball ships a "license" field with no licence text behind it');
+  } else if (readFileSync(licensePath, 'utf8') !== rootLicense) {
+    fail(name, 'LICENSE differs from the repository root LICENSE — copy the root one over it rather than editing a copy');
   }
 
   // --- the npm landing page ------------------------------------------------
@@ -141,4 +158,4 @@ if (errors.length) {
   for (const e of errors) console.error(`✖ manifest: ${e}`);
   process.exit(1);
 }
-console.log(`✔ package manifests: ${checked} publishable packages — access, provenance metadata, README, homepage, files allowlist, entry points and bin all resolve`);
+console.log(`✔ package manifests: ${checked} publishable packages — access, provenance metadata, LICENSE, README, homepage, files allowlist, entry points and bin all resolve`);
