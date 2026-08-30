@@ -142,7 +142,10 @@ export async function renderCard({ kicker, title, footer, hue = BRAND_HUE }) {
           },
           row({ alignItems: 'center', gap: 14, fontSize: 24, color: hex(MUTED) }, [
             text({}, footerText),
-            text({ marginLeft: 'auto' }, 'transtyle.dev'),
+            // Not a domain: the site moved to a Pages URL nobody would type, and
+            // the wordmark above already says the name. The repo is the stable
+            // thing to put in a reader's hands.
+            text({ marginLeft: 'auto' }, 'github.com/transtyle'),
           ]),
         ]),
       ],

@@ -17,15 +17,16 @@
  * saying nothing), so they're listed without one.
  */
 import { orderedSlugs, docPath } from '../nav.js';
+import { origin, withBase } from '../url.js';
 import { posts, postPath } from '../blog.js';
 
 export function GET({ site }) {
-  const base = (site ?? 'https://transtyle.dev').toString().replace(/\/$/, '');
+  const base = origin(site);
 
   const urls = [
-    { loc: '/', priority: '1.0' },
+    { loc: withBase('/'), priority: '1.0' },
     ...orderedSlugs.map((slug) => ({ loc: docPath(slug), priority: slug === 'index' ? '0.9' : '0.8' })),
-    { loc: '/blog/', priority: '0.7' },
+    { loc: withBase('/blog/'), priority: '0.7' },
     ...posts.map((post) => ({ loc: postPath(post.slug), lastmod: post.date, priority: '0.7' })),
   ];
 

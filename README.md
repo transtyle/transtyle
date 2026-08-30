@@ -10,6 +10,8 @@
 > you can regenerate — never as something to hand-edit and keep. The freedom to break things before
 > 1.0 is deliberate and recorded: [ADR-0010](docs/adr/0010-pre-release-breaking-changes.md).
 
+**Documentation:** [transtyle.github.io/transtyle](https://transtyle.github.io/transtyle/) · **Packages:** [`@transtyle/*` on npm](https://www.npmjs.com/org/transtyle) (`npm install @transtyle/cli@alpha`)
+
 <!-- measured: bootstrap.surface.component = 657 -->
 <!-- measured: exporters = 8 -->
 <!-- measured: examples = 4 -->
@@ -71,7 +73,7 @@ The full design-target CLI is specced in [docs/specs/cli.md](docs/specs/cli.md);
 
 ## Documentation
 
-**User documentation lives on the website** (`website/` — Astro; `npm run site:dev` locally, deployable static output via `npm run site:build`): getting started, concepts, configuration reference, CLI, exporter guides, example walkthroughs, diagnostics, and a dedicated guide for [operating Transtyle with AI agents](website/src/docs/ai-agents.md). The site also serves `llms.txt`, `llms-full.txt`, and every page as raw markdown.
+**User documentation lives on the website** — [transtyle.github.io/transtyle](https://transtyle.github.io/transtyle/), built from `website/` (Astro) and deployed from `main` on every push; `npm run site:dev` runs it locally: getting started, concepts, configuration reference, CLI, exporter guides, example walkthroughs, diagnostics, and a dedicated guide for [operating Transtyle with AI agents](website/src/docs/ai-agents.md). The site also serves `llms.txt`, `llms-full.txt`, and every page as raw markdown.
 
 The site also has a **blog** (`website/src/blog/`, one markdown file per post, published at `/blog/<filename>/`, with a full-content RSS feed at `/blog/rss.xml`). The first post — [A compiler for design systems](website/src/blog/a-compiler-for-design-systems.md) — is the release article: what the project is, why it is (and isn't) new against the token-tooling landscape, how the pipeline works, and who it's for. `npm run check:docs` enforces post frontmatter and link resolution the same way it does for docs pages.
 

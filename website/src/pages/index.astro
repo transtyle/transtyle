@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { Code } from 'astro:components';
+import { withBase } from '../url.js';
 
 // Match the markdown pipeline's Shiki config (astro.config.mjs) so highlighted
 // code looks identical on the homepage and in the docs, in both themes.
@@ -58,11 +59,11 @@ cd examples/acme && npx transtyle build`;
         Deterministic. Explainable. Zero runtime.
       </p>
       <div class="cta">
-        <a class="btn primary" href="/docs/getting-started/">Get started</a>
-        <a class="btn" href="/docs/">Read the docs</a>
+        <a class="btn primary" href={withBase('/docs/getting-started/')}>Get started</a>
+        <a class="btn" href={withBase('/docs/')}>Read the docs</a>
       </div>
       <p class="hero-post">
-        New — <a href="/blog/a-compiler-for-design-systems/">A compiler for design systems</a>: why
+        New — <a href={withBase('/blog/a-compiler-for-design-systems/')}>A compiler for design systems</a>: why
         theming is an N×M problem, and what changes when a design system is compiled rather than
         copied.
       </p>
@@ -103,7 +104,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
         <div class="pipe-col ir">
           <h3>Transtyle compiles<span class="pipe-tag">one shared representation</span></h3>
           <div class="chip ir-chip">normalize · derive ·<br />validate · explain</div>
-          <p class="pipe-note">Your tokens bind once to the <a href="/docs/language/">semantic catalog</a> — a pivot vocabulary of <em>meanings</em>, not names. Gaps are filled by deterministic rules.</p>
+          <p class="pipe-note">Your tokens bind once to the <a href={withBase('/docs/language/')}>semantic catalog</a> — a pivot vocabulary of <em>meanings</em>, not names. Gaps are filled by deterministic rules.</p>
         </div>
         <div class="pipe-arrow" aria-hidden="true">→</div>
         <div class="pipe-col">
@@ -123,7 +124,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band alt" aria-labelledby="h-derive">
       <h2 id="h-derive">Author three tokens — or every single one.</h2>
-      <p class="band-sub">Three is not a marketing number: a brand color, a page background and a text color is a legal design system, and CI compiles exactly that one against all eight exporters on every commit. It is the floor, not the ceiling. The derivation engine fills every slot you didn't author — hover states, on-colors, tints, dark-mode wiring, a data-viz palette — with deterministic, versioned rules. But every one of those slots is a real, addressable token: <a href="/docs/language/">the catalog</a> exposes the full role grids, elevation ladder, and scales, so you can pin any value — down to a single dark-mode hover state — and derivation yields to you. Authored always wins; every value knows its origin.</p>
+      <p class="band-sub">Three is not a marketing number: a brand color, a page background and a text color is a legal design system, and CI compiles exactly that one against all eight exporters on every commit. It is the floor, not the ceiling. The derivation engine fills every slot you didn't author — hover states, on-colors, tints, dark-mode wiring, a data-viz palette — with deterministic, versioned rules. But every one of those slots is a real, addressable token: <a href={withBase('/docs/language/')}>the catalog</a> exposes the full role grids, elevation ladder, and scales, so you can pin any value — down to a single dark-mode hover state — and derivation yields to you. Authored always wins; every value knows its origin.</p>
       <div class="transform">
         <div class="t-side">
           <p class="t-label">You write <span class="prov authored">authored</span></p>
@@ -181,7 +182,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
           </figure>
         </div>
       </div>
-      <p class="band-foot">Every example ships <a href="/docs/examples/">runnable demo projects</a> — the same page built with each target's real components, consuming only the compiled <code>dist/</code>.</p>
+      <p class="band-foot">Every example ships <a href={withBase('/docs/examples/')}>runnable demo projects</a> — the same page built with each target's real components, consuming only the compiled <code>dist/</code>.</p>
     </section>
 
     <section class="band" aria-labelledby="h-language">
@@ -198,7 +199,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
           <li><code>danger</code> severity<em>PrimeNG preset</em></li>
         </ul>
       </div>
-      <p class="band-foot">The full pivot vocabulary is one page: <a href="/docs/language/">the Transtyle language</a>. Your own names stay yours — you bind them once, with <a href="/docs/adopt-existing/">one-line aliases</a>.</p>
+      <p class="band-foot">The full pivot vocabulary is one page: <a href={withBase('/docs/language/')}>the Transtyle language</a>. Your own names stay yours — you bind them once, with <a href={withBase('/docs/adopt-existing/')}>one-line aliases</a>.</p>
     </section>
 
     <section class="band alt" aria-labelledby="h-honest">
@@ -221,8 +222,8 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       <p class="band-sub">
         The core knows nothing about Bootstrap. All eight official exporters use the same public plugin
         API — resolve the catalog, emit native files, report coverage honestly. The
-        <a href="/docs/exporter-css-variables/">css-variables exporter</a> is the reference
-        implementation to copy from; the <a href="/docs/internals/">internals guide</a> documents the contract.
+        <a href={withBase('/docs/exporter-css-variables/')}>css-variables exporter</a> is the reference
+        implementation to copy from; the <a href={withBase('/docs/internals/')}>internals guide</a> documents the contract.
       </p>
     </section>
 
@@ -234,8 +235,8 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
         Agents write config; the compiler compiles it.
       </p>
       <div class="cta">
-        <a class="btn" href="/docs/ai-agents/">The agent guide</a>
-        <a class="btn" href="/llms.txt">llms.txt</a>
+        <a class="btn" href={withBase('/docs/ai-agents/')}>The agent guide</a>
+        <a class="btn" href={withBase('/llms.txt')}>llms.txt</a>
       </div>
     </section>
 
@@ -244,8 +245,8 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       <p class="band-sub">Not yet on npm — you run it from the repository. Four real examples ship with it, including two independently-designed systems (GOV.UK, Carbon).</p>
       <div class="start"><Code code={startCommands} lang="bash" {...shiki} /></div>
       <div class="cta center">
-        <a class="btn primary" href="/docs/getting-started/">Getting started guide</a>
-        <a class="btn" href="/docs/adopt-existing/">I already have a design system</a>
+        <a class="btn primary" href={withBase('/docs/getting-started/')}>Getting started guide</a>
+        <a class="btn" href={withBase('/docs/adopt-existing/')}>I already have a design system</a>
       </div>
     </section>
   </main>

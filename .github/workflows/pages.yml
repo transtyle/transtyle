@@ -1,0 +1,68 @@
+name: Deploy site
+
+# The site is a GitHub Pages *project* site, so it lives at
+# https://transtyle.github.io/transtyle/ — under a path, which is why
+# website/astro.config.mjs sets `base` and scripts/check-site-links.mjs exists.
+#
+# Every push to main deploys, not only the ones touching website/: the site
+# builds its OG cards with @transtyle/core and its numbers are re-measured from
+# the examples by check-doc-numbers, so a change anywhere in the compiler can
+# change the page. Re-deploying identical bytes is cheap; serving a stale page
+# because the path filter was too clever is not.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, and never cancel one in flight: a half-applied Pages
+# deployment is a broken site, so a queued run waits rather than replacing it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # This job only reads the repo and uploads an artifact.
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # `site:build` is not just astro build: presite:build re-runs the sync and
+      # measured-number checks, and postsite:build runs the base-path guard over
+      # the emitted files. A site that would 404 its own links does not deploy.
+      - run: npm run site:build
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: website/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      # Writing the Pages deployment, and the OIDC token Pages uses to verify
+      # the artifact came from this workflow run. Scoped to this job so the
+      # build above never holds them.
+      pages: write
+      id-token: write
+    steps:
+      # Only here to turn Pages on if it is off and report the resolved URL —
+      # the build does not consume its base_path output, because the base is
+      # pinned in astro.config.mjs so that a local build produces exactly what
+      # ships.
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - id: deploy
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

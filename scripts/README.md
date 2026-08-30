@@ -1,9 +1,10 @@
 # The checkers
 
-Sixteen scripts, one job each, all chained by `npm run check:all` and run
-individually by CI. Every one exists because something real broke or could
-have: they are not a test suite grown for coverage, they are a list of
-mistakes this project has already made once.
+Nineteen scripts, one job each — seventeen chained by `npm run check:all` and
+run individually by CI, plus two that guard a release and a deploy instead.
+Every one exists because something real broke or could have: they are not a
+test suite grown for coverage, they are a list of mistakes this project has
+already made once.
 
 | Script                        | Guards                                                                                          |
 | ----------------------------- | ----------------------------------------------------------------------------------------------- |
@@ -23,9 +24,30 @@ mistakes this project has already made once.
 | `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap             |
 | `check-minimal-ds.mjs`        | All eight exporters survive a three-token design system, in six mode shapes                     |
 | `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                 |
+| `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, `files`, `bin`      |
+| `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex        |
+| `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                     |
 
-`gen-schemas.mjs` is not a checker — it renders the published schemas that
-`check-schemas.mjs` then proves are current.
+The last two are not in `check:all`, because neither grades a working tree.
+`check-release-tag` runs in the release workflow: on an ordinary tree it is
+_supposed_ to refuse, so chaining it into the everyday suite would make the
+suite red for being ordinary. `check-site-links` is a **post-build
+assertion** — it is chained to `site:build` as `postsite:build`, so it runs
+on every site build, local and CI, without anyone opting in.
+
+That makes `check-site-links` the one deliberate exception to the rule below
+about build output: it reads `website/dist/`, which is gitignored. The rule
+exists because stale or absent output makes a check lie, and neither is
+possible here — it only ever runs on the artifact of the build it is attached
+to, and it exits 1 rather than passing when `dist/` is missing. Grading the
+emitted files is the whole point: a link reaches the page by five different
+routes (`withBase()`, the Sätteri plugin, its raw-node pass, the markdown text
+rewrite, absolute URLs assembled by hand in the sitemap and feed), and a
+source-level rule would have to know all five. The output knows none of them.
+
+`gen-schemas.mjs` and `sync-latest-tag.mjs` are not checkers — the first
+renders the published schemas that `check-schemas.mjs` then proves are
+current, the second moves the `latest` npm dist-tag after a release.
 
 ## Rules for writing one
 

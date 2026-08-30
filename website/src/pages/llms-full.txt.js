@@ -1,5 +1,6 @@
 /** llms-full.txt: the entire documentation concatenated as plain markdown. */
 import { orderedSlugs } from '../nav.js';
+import { origin, withBase, withBaseInMarkdown } from '../url.js';
 
 const raws = import.meta.glob('../docs/*.md', { query: '?raw', import: 'default', eager: true });
 const bySlug = Object.fromEntries(
@@ -8,10 +9,10 @@ const bySlug = Object.fromEntries(
 
 const stripFrontmatter = (md) => md.replace(/^---\n[\s\S]*?\n---\n*/, '');
 
-export function GET() {
+export function GET({ site }) {
   const body = orderedSlugs
-    .map((slug) => stripFrontmatter(bySlug[slug]).trim())
+    .map((slug) => withBaseInMarkdown(stripFrontmatter(bySlug[slug]).trim()))
     .join('\n\n---\n\n');
-  const header = '<!-- Transtyle documentation, concatenated for LLM consumption. Source: https://transtyle.dev -->\n\n';
+  const header = `<!-- Transtyle documentation, concatenated for LLM consumption. Source: ${origin(site)}${withBase('/')} -->\n\n`;
   return new Response(header + body + '\n', { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 }

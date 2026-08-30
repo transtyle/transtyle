@@ -8,6 +8,7 @@
  * same call as the zero-dependency JSON-schema validator in packages/core.
  */
 import { posts, postPath } from '../../blog.js';
+import { origin, withBase } from '../../url.js';
 
 const raws = import.meta.glob('../../blog/*.md', { eager: true });
 const compiledBySlug = Object.fromEntries(
@@ -28,7 +29,7 @@ const absolutize = (html, base) =>
   html.replace(/(href|src)="\/(?!\/)/g, `$1="${base}/`);
 
 export async function GET({ site }) {
-  const base = (site ?? 'https://transtyle.dev').toString().replace(/\/$/, '');
+  const base = origin(site);
   const items = (
     await Promise.all(
       posts.map(async (post) => {
@@ -53,8 +54,8 @@ export async function GET({ site }) {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>Transtyle</title>
-    <link>${base}/blog/</link>
-    <atom:link href="${base}/blog/rss.xml" rel="self" type="application/rss+xml"/>
+    <link>${base}${withBase('/blog/')}</link>
+    <atom:link href="${base}${withBase('/blog/rss.xml')}" rel="self" type="application/rss+xml"/>
     <description>Releases, design decisions, and findings from compiling real design systems into real ecosystems.</description>
     <language>en</language>
     <docs>https://www.rssboard.org/rss-specification</docs>

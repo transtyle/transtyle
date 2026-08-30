@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { sections, orderedSlugs, docPath } from '../../nav.js';
+import { withBase } from '../../url.js';
 
 export async function getStaticPaths() {
   const mods = import.meta.glob('../../docs/*.md', { eager: true });
@@ -18,7 +19,7 @@ const pages = Object.fromEntries(
 const slug = Astro.params.slug ?? 'index';
 const page = pages[slug];
 const { Content, frontmatter } = page;
-const mdHref = `/docs/${slug}.md`;
+const mdHref = withBase(`/docs/${slug}.md`);
 
 const headings = page.getHeadings().filter((h) => h.depth === 2 || h.depth === 3);
 const i = orderedSlugs.indexOf(slug);

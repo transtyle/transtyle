@@ -8,7 +8,7 @@ order: 5
 
 One file: `transtyle.config.json`, in your project root. It's the **only** Transtyle-specific file in a project — everything else is standard DTCG. Config is data: no `transtyle.config.ts`, by design (introspectability, portability, determinism).
 
-The `$schema` line at the top is a real, published [JSON Schema](https://transtyle.dev/schemas/config/v0.json) — editors that honor it give you autocomplete and inline validation as you type. The compiler validates the same schema at load time: an **unknown or mistyped key is an error** (`TST1010`), never silently ignored, and each target's `options` are checked against the selected exporter's own schema (`TST1011`) — so a wrong `era` or a stray option fails the build with the exact path, rather than being dropped without warning.
+The `$schema` line at the top is a real, published [JSON Schema](/schemas/config/v0.json) — editors that honor it give you autocomplete and inline validation as you type. The `transtyle.dev` URL below is the schema's permanent identifier, not a download link: that domain is not registered yet, so an editor that fetches it literally will come up empty. The identical file is served from this site at the link above, and the compiler fetches neither — it validates against its own bundled copy. The compiler validates the same schema at load time: an **unknown or mistyped key is an error** (`TST1010`), never silently ignored, and each target's `options` are checked against the selected exporter's own schema (`TST1011`) — so a wrong `era` or a stray option fails the build with the exact path, rather than being dropped without warning.
 
 Full annotated example:
 

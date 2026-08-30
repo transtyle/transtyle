@@ -7,6 +7,8 @@
  * (that's the published URL, so renaming a file breaks a link — don't).
  * Required frontmatter: title, description, date (YYYY-MM-DD), author.
  */
+import { withBase } from './url.js';
+
 const modules = import.meta.glob('./blog/*.md', { eager: true });
 
 /** Every post, newest first. */
@@ -18,7 +20,7 @@ export const posts = Object.entries(modules)
   }))
   .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
-export const postPath = (slug) => `/blog/${slug}/`;
+export const postPath = (slug) => withBase(`/blog/${slug}/`);
 
 /**
  * The hue a post's social card is tinted with, in OKLCH degrees.

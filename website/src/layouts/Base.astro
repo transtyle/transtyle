@@ -2,13 +2,15 @@
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
+import { withBase } from '../url.js';
 
 const {
   title,
   description = 'Transtyle is a design system compiler: describe your design system once, compile native themes for every ecosystem.',
   current = '',
   // Every page gets a generated Open Graph card (src/pages/og/[slug].png.js);
-  // pages that don't name one fall back to the site card.
+  // pages that don't name one fall back to the site card. Callers pass a plain
+  // site path; the base is applied here, once, so no page has to remember to.
   image = '/og/default.png',
   // Article metadata, set by blog posts so link previews and readers can date them.
   publishedDate,
@@ -16,9 +18,12 @@ const {
 } = Astro.props;
 
 // og:image and og:url must be absolute — several crawlers reject relative ones.
-const site = Astro.site ?? new URL('https://transtyle.dev');
+// `site` is configured in astro.config.mjs and has no fallback on purpose: a
+// default domain here would quietly stamp every card and canonical tag with a
+// URL the site is not served from.
+const site = Astro.site;
 const canonical = new URL(Astro.url.pathname, site).href;
-const imageUrl = new URL(image, site).href;
+const imageUrl = new URL(withBase(image), site).href;
 ---
 <!doctype html>
 <html lang="en">
@@ -43,8 +48,8 @@ const imageUrl = new URL(image, site).href;
   <meta name="twitter:image" content={imageUrl} />
   {publishedDate && <meta property="article:published_time" content={`${publishedDate}T00:00:00Z`} />}
   {author && <meta property="article:author" content={author} />}
-  <link rel="alternate" type="application/rss+xml" title="Transtyle blog" href="/blog/rss.xml" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="alternate" type="application/rss+xml" title="Transtyle blog" href={withBase('/blog/rss.xml')} />
+  <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
   <script is:inline>
     const t = localStorage.getItem('theme') ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     document.documentElement.dataset.theme = t;
@@ -56,18 +61,18 @@ const imageUrl = new URL(image, site).href;
     <span>
       <strong>Alpha — experimental.</strong> Breaking changes ship without a deprecation cycle, and
       nothing here carries a stability promise yet.
-      <a href="/docs/roadmap/">What is built vs. planned →</a>
+      <a href={withBase('/docs/roadmap/')}>What is built vs. planned →</a>
     </span>
   </div>
   <header class="site-header">
-    <a class="wordmark" href="/">
+    <a class="wordmark" href={withBase('/')}>
       <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="oklch(0.55 0.19 262)"/><stop offset="1" stop-color="oklch(0.55 0.2 296)"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M18 24h28M32 24v22" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/></svg>
       transtyle
     </a>
     <nav class="site-nav" aria-label="Site">
-      <a href="/docs/" class={current === 'docs' ? 'active' : ''} aria-current={current === 'docs' ? 'page' : undefined}>Docs</a>
-      <a href="/blog/" class={current === 'blog' ? 'active' : ''} aria-current={current === 'blog' ? 'page' : undefined}>Blog</a>
-      <a href="/docs/ai-agents/">For AI agents</a>
+      <a href={withBase('/docs/')} class={current === 'docs' ? 'active' : ''} aria-current={current === 'docs' ? 'page' : undefined}>Docs</a>
+      <a href={withBase('/blog/')} class={current === 'blog' ? 'active' : ''} aria-current={current === 'blog' ? 'page' : undefined}>Blog</a>
+      <a href={withBase('/docs/ai-agents/')}>For AI agents</a>
       <a href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
       <button id="theme-toggle" aria-label="Toggle color scheme" title="Toggle color scheme">
         <svg class="sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/></svg>
@@ -83,11 +88,11 @@ const imageUrl = new URL(image, site).href;
       <strong>transtyle</strong> — a design system compiler. MIT licensed.
     </div>
     <div class="foot-links">
-      <a href="/docs/">Documentation</a>
-      <a href="/blog/">Blog</a>
-      <a href="/blog/rss.xml">RSS</a>
-      <a href="/docs/ai-agents/">AI agents</a>
-      <a href="/llms.txt">llms.txt</a>
+      <a href={withBase('/docs/')}>Documentation</a>
+      <a href={withBase('/blog/')}>Blog</a>
+      <a href={withBase('/blog/rss.xml')}>RSS</a>
+      <a href={withBase('/docs/ai-agents/')}>AI agents</a>
+      <a href={withBase('/llms.txt')}>llms.txt</a>
       <a href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
     </div>
   </footer>

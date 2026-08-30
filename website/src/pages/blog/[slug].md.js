@@ -3,6 +3,8 @@
  * the docs pages (docs/ai-agents.md): source over chrome, for agents and for
  * anyone who wants to quote the post without scraping HTML.
  */
+import { withBaseInMarkdown } from '../../url.js';
+
 const raws = import.meta.glob('../../blog/*.md', { query: '?raw', import: 'default', eager: true });
 
 export function getStaticPaths() {
@@ -13,7 +15,7 @@ export function getStaticPaths() {
 }
 
 export function GET({ props }) {
-  return new Response(props.raw, {
+  return new Response(withBaseInMarkdown(props.raw), {
     headers: { 'Content-Type': 'text/markdown; charset=utf-8' },
   });
 }

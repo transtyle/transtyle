@@ -6,12 +6,14 @@
  * for agents (docs/ai-agents.md). They're simply kept out of the sitemap, which
  * is a recommendation of canonical pages, not an access control.
  */
+import { origin, withBase } from '../url.js';
+
 export function GET({ site }) {
-  const base = (site ?? 'https://transtyle.dev').toString().replace(/\/$/, '');
+  const base = origin(site);
   const body = `User-agent: *
 Allow: /
 
-Sitemap: ${base}/sitemap.xml
+Sitemap: ${base}${withBase('/sitemap.xml')}
 `;
   return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 }

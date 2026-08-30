@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { posts, postPath, formatDate } from '../../blog.js';
+import { withBase } from '../../url.js';
 
 export async function getStaticPaths() {
   const mods = import.meta.glob('../../blog/*.md', { eager: true });
@@ -24,14 +25,14 @@ const older = posts.filter((p) => p.date < post.date).slice(0, 2);
 >
   <div class="post-layout">
     <main class="prose" id="main">
-      <p class="crumb"><a href="/blog/">← Blog</a></p>
+      <p class="crumb"><a href={withBase('/blog/')}>← Blog</a></p>
       <h1>{post.title}</h1>
       <p class="byline">
         <time datetime={post.date}>{formatDate(post.date)}</time>
         <span aria-hidden="true">·</span>
         <span>{post.author}</span>
         <span aria-hidden="true">·</span>
-        <a href={`/blog/${slug}.md`} title="This post as raw markdown">Markdown</a>
+        <a href={withBase(`/blog/${slug}.md`)} title="This post as raw markdown">Markdown</a>
       </p>
       <p class="lede">{post.description}</p>
 

@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { posts, postPath, formatDate } from '../../blog.js';
+import { withBase } from '../../url.js';
 ---
 
 <Base
@@ -15,7 +16,7 @@ import { posts, postPath, formatDate } from '../../blog.js';
       <p class="sub">
         Releases, design decisions, and findings from compiling real design systems into real
         ecosystems. Every post is also available as raw markdown — append <code>.md</code> to its
-        URL — and the whole thing has a <a href="/blog/rss.xml">feed</a>.
+        URL — and the whole thing has a <a href={withBase('/blog/rss.xml')}>feed</a>.
       </p>
     </header>
 
