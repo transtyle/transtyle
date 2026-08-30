@@ -33,6 +33,7 @@
     "format:md": "prettier --write \"**/*.{md,mdx}\"",
     "check:format": "prettier --check \"**/*.{md,mdx}\"",
     "gen:brand": "node scripts/gen-brand.mjs",
+    "gen:social": "node scripts/gen-social-card.mjs",
     "check:brand": "node scripts/check-brand.mjs",
     "gen:schemas": "node scripts/gen-schemas.mjs",
     "check:schemas": "node scripts/check-schemas.mjs",

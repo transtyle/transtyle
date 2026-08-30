@@ -57,12 +57,21 @@ against a synthetic positive before the scan, because a scanner whose regexes
 quietly stopped matching reports "clean" forever and reads exactly like a repo
 with nothing to find.
 
-`gen-schemas.mjs`, `gen-brand.mjs`, `sync-latest-tag.mjs` and `release-notes.mjs`
-are not checkers. The first two render what `check-schemas.mjs` and
-`check-brand.mjs` then prove are current — the published JSON schemas, and every
-file derived from the brand mark; the second moves the `latest` npm dist-tag after a release;
-the third renders the GitHub Release body, taking the union of the twelve
-lockstep changelogs so the page says each change once instead of twelve times.
+Five scripts here are not checkers:
+
+- `gen-schemas.mjs` and `gen-brand.mjs` render what `check-schemas.mjs` and
+  `check-brand.mjs` then prove are current — the published JSON schemas, and
+  every file derived from the brand mark.
+- `gen-social-card.mjs` renders the card a launch post carries, with every value
+  on it read from a fresh compile of `examples/acme` rather than drawn by hand.
+  Its output is gitignored (`brand/social/`) and has no checker, which is the
+  difference between it and the two above: the brand assets are referenced by a
+  dozen surfaces and must not drift, while a social card is referenced by
+  nothing here and belongs to the post it was rendered for.
+- `sync-latest-tag.mjs` moves the `latest` npm dist-tag after a release.
+- `release-notes.mjs` renders the GitHub Release body, taking the union of the
+  twelve lockstep changelogs so the page says each change once instead of twelve
+  times.
 
 ## Rules for writing one
 

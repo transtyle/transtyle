@@ -9,3 +9,6 @@ storybook-static/
 website/.astro/
 
 .claude/settings.local.json
+
+# Social cards are rendered on demand (npm run gen:social), never committed.
+brand/social/
