@@ -50,8 +50,13 @@ Then cut the first alpha exactly as described in [Releasing an alpha](#releasing
 
 ```bash
 npm run check:release-tag    # must print the alpha dist-tag before you continue
-npx changeset publish --tag alpha
-git push origin --follow-tags
+
+# Publish all 12 under that tag. `--access public` is not needed: every
+# package carries publishConfig.access = public.
+for d in packages/*/; do npm publish -w "$d" --tag alpha; done
+
+v=$(node -p "require('./packages/core/package.json').version")
+git tag -a "v$v" -m "v$v" && git push origin "v$v"
 ```
 
 That first publish will not carry a provenance attestation, because provenance requires the OIDC path. Every later release will. This is a known and accepted one-time gap; it is not worth publishing throwaway `0.0.0` placeholder packages to avoid.
@@ -88,6 +93,9 @@ npm run changeset
 ```
 
 It asks which packages changed and whether the bump is patch/minor/major, then writes a markdown file to `.changeset/`. Commit it. Several changesets accumulate between releases and are consumed together.
+
+> [!IMPORTANT]
+> **Changesets versions the packages; it does not publish them.** `changeset publish` refuses `--tag` while in pre mode, and with no tag it sends an alpha series to `latest` from the second release onward — once every published version is a prerelease it classifies the package as `only-pre` and falls back to `latest`, which would strand the `alpha` tag on `alpha.0` and point bare `npm install` at each new alpha. So publishing is plain `npm publish --tag <tag>` per package, using the tag [the release guard](scripts/check-release-tag.mjs) resolved. Use `npx changeset version`, never `npx changeset publish`.
 
 Two things about this repo specifically:
 
@@ -183,7 +191,8 @@ npx changeset version       # produces a version with no prerelease identifier
 The workflow will now refuse to publish, by design. To go through with it, run the publish step with the confirmation set — deliberately, having decided that the catalog vocabulary is one you are willing to keep forever:
 
 ```bash
-CONFIRM_STABLE_RELEASE=arm-the-freeze npx changeset publish --tag latest
+CONFIRM_STABLE_RELEASE=arm-the-freeze npm run check:release-tag
+for d in packages/*/; do npm publish -w "$d" --tag latest; done
 ```
 
 The same release should update ADR-0010 and [ADR-0011](docs/adr/0011-v0-freeze-readiness.md) to record that the freeze is now armed, and drop the alpha banners from the README, the website layout and the docs index.
@@ -192,14 +201,15 @@ The same release should update ADR-0010 and [ADR-0011](docs/adr/0011-v0-freeze-r
 
 ## Things that will surprise you
 
-| Surprise                                                  | Why                                                                                                                                                                                    |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `check:release-tag` fails on a normal working tree        | It is a release gate, not a repo invariant, so it is deliberately **not** in `check:all`. On `main` between releases the packages sit at a stable version and it refuses. Expected.    |
-| `changeset version` touches 45 files                      | Internal dependency ranges are rewritten everywhere, including private demo workspaces. Correct — see step 1 above.                                                                    |
-| Selecting one package in `npm run changeset` bumps all 12 | The `fixed` group. Working as configured.                                                                                                                                              |
-| An alpha release jumps to `1.0.0-alpha.N`                 | A `major` changeset landed and rebased the series. The release guard blocks it; downgrade the changeset to `minor` and re-run `changeset version`.                                     |
-| A published package is missing a file                     | Each `package.json` has an explicit `files` allowlist. Three packages need more than `src`: both `surface-inventory.json` files and `plugin-kit`'s `fixture/` are read at **runtime**. |
-| The publish job fails with an OIDC error                  | Almost always a mismatch between the npm trusted-publisher fields and reality — org, repo, workflow **filename**, or environment. All four are case-sensitive.                         |
+| Surprise                                                                                | Why                                                                                                                                                                                    |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `check:release-tag` fails on a normal working tree                                      | It is a release gate, not a repo invariant, so it is deliberately **not** in `check:all`. On `main` between releases the packages sit at a stable version and it refuses. Expected.    |
+| `changeset version` touches 45 files                                                    | Internal dependency ranges are rewritten everywhere, including private demo workspaces. Correct — see step 1 above.                                                                    |
+| Selecting one package in `npm run changeset` bumps all 12                               | The `fixed` group. Working as configured.                                                                                                                                              |
+| An alpha release jumps to `1.0.0-alpha.N`                                               | A `major` changeset landed and rebased the series. The release guard blocks it; downgrade the changeset to `minor` and re-run `changeset version`.                                     |
+| `changeset publish` errors with "Releasing under custom tag is not allowed in pre mode" | Expected — it is not the publish command here. Use the `npm publish -w … --tag` loop above.                                                                                            |
+| A published package is missing a file                                                   | Each `package.json` has an explicit `files` allowlist. Three packages need more than `src`: both `surface-inventory.json` files and `plugin-kit`'s `fixture/` are read at **runtime**. |
+| The publish job fails with an OIDC error                                                | Almost always a mismatch between the npm trusted-publisher fields and reality — org, repo, workflow **filename**, or environment. All four are case-sensitive.                         |
 
 ---
 

@@ -28,8 +28,8 @@ jobs:
       # The OIDC token npm exchanges for publish rights. This is what replaces a
       # long-lived NPM_TOKEN: nothing secret is stored in the repo or the org.
       id-token: write
-      # `changeset publish` writes one git tag per released package. Pushing
-      # those tags is the only write this job makes to the repository.
+      # The release tag pushed at the end is the only write this job makes to
+      # the repository.
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,10 +68,27 @@ jobs:
           # --workspaces would also walk the 33 private demo/website workspaces.
           for d in packages/*/; do npm publish --dry-run -w "$d"; done
 
+      # `changeset publish` is deliberately NOT used. It refuses --tag while in
+      # pre mode, and with no tag its getReleaseTag() sends an alpha series to
+      # `latest` from the second release onward: once every published version is
+      # a prerelease, publishedState becomes "only-pre" and it falls through to
+      # "latest". That would strand the `alpha` tag on alpha.0 and silently point
+      # bare installs at each new alpha. `npm publish` takes the guard's resolved
+      # tag every time, which is the behaviour ADR-0010's exemption relies on.
       - name: Publish to npm
         if: ${{ !inputs.dry_run }}
-        run: npx changeset publish --tag '${{ steps.guard.outputs.dist-tag }}'
+        run: |
+          for d in packages/*/; do
+            npm publish -w "$d" --tag "${{ steps.guard.outputs.dist-tag }}"
+          done
 
-      - name: Push release tags
+      # One annotated tag per release rather than twelve identical ones: the
+      # fixed group guarantees every package shares the version.
+      - name: Tag the release
         if: ${{ !inputs.dry_run }}
-        run: git push origin --follow-tags
+        run: |
+          v=$(node -p "require('./packages/core/package.json').version")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$v" -m "v$v"
+          git push origin "v$v"
