@@ -89,6 +89,22 @@ jobs:
             npm publish $DRY -w "$d" --tag "${{ steps.guard.outputs.dist-tag }}"
           done
 
+      # `npm publish --tag` sets exactly ONE tag, so the alpha channel and the
+      # default channel cannot both be served by the publish itself. Policy:
+      # while no stable release exists, `latest` tracks the newest alpha (a bare
+      # `npm install` should get the current alpha, not whichever prerelease npm
+      # auto-tagged first); once a stable release exists, prereleases never move
+      # `latest` again. The script reads that condition off the registry per
+      # package, so there is no flag anyone has to remember to flip.
+      #
+      # If this step fails, THE PUBLISH ALREADY SUCCEEDED — only the tag move
+      # did not. Re-run `npm run sync:latest-tag` locally; see RELEASING.md.
+      - name: Point latest at this release (pre-stable only)
+        run: |
+          DRY=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then DRY="--dry-run"; fi
+          node scripts/sync-latest-tag.mjs $DRY
+
       # One annotated tag per release rather than twelve identical ones: the
       # fixed group guarantees every package shares the version.
       - name: Tag the release

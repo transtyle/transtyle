@@ -179,7 +179,11 @@ npm install @transtyle/cli@alpha
 ```
 
 > [!NOTE]
-> npmjs.org auto-assigns `latest` on a package's very first publish regardless of `--tag`, and `latest` cannot be removed afterwards. So after the first alpha, a bare `npm install @transtyle/cli` will resolve to that first alpha and stay pinned there until a real release. This is a registry behaviour, not a promotion, and it is precisely why ADR-0010's freeze trigger is defined on the **version identifier** rather than on the dist-tag.
+> **How `latest` behaves, and why.** npmjs.org auto-assigns `latest` on a package's very first publish regardless of `--tag`, and it cannot be removed afterwards. Rather than fight that, the policy leans into it: **while no stable release exists, `latest` tracks the newest alpha.** A bare `npm install @transtyle/cli` therefore installs the current alpha rather than being stranded on whichever prerelease happened to be published first.
+>
+> `npm publish --tag` sets only one tag, so [`scripts/sync-latest-tag.mjs`](scripts/sync-latest-tag.mjs) runs after the publish and moves `latest` too. It decides per package by reading the registry: if the current `latest` carries a prerelease identifier, no stable release has taken over and `latest` is still the alpha's to move. **The first stable release repoints `latest` to itself, and from that moment the script leaves it alone permanently** — prereleases never move `latest` again, and `@alpha` becomes the opt-in channel it is meant to be. There is no flag to remember; the registry state is the switch.
+>
+> This is also why ADR-0010's freeze trigger is defined on the **version identifier** rather than on the dist-tag: `latest` legitimately points at a prerelease during the alpha, so a tag-based trigger would be meaningless.
 
 ---
 

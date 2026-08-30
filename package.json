@@ -26,6 +26,7 @@
     "example:check:carbon": "transtyle check --cwd examples/carbon",
     "changeset": "changeset",
     "check:manifests": "node scripts/check-package-manifests.mjs",
+    "sync:latest-tag": "node scripts/sync-latest-tag.mjs",
     "check:release-tag": "node scripts/check-release-tag.mjs",
     "check:sync": "node scripts/check-sync.mjs && node scripts/check-docs.mjs",
     "check:docs": "node scripts/check-docs.mjs",
