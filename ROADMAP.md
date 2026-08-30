@@ -145,7 +145,11 @@ Specced in [docs/specs/component-layer.md](docs/specs/component-layer.md); delib
 
 ## Backlog
 
-Captured-but-unscheduled ideas live in [docs/backlog.md](docs/backlog.md) — currently: implemented-only editorial policy (adopted), starter theme-kit template (its demo-app half shipped 2026-07-20 as the real npm demo projects; the `create-transtyle` packaging stays gated on npm publication), target priority order (daisyUI, Bootstrap, and Storybook now shipped; **Radix Themes** is next on the B3 list), the "adopt an existing design system" guide (written — it becomes Phase 1's "real DS" run), and "the Transtyle language" reference page (written).
+Everything proposed and not yet committed to lives in **[docs/backlog.md](docs/backlog.md)** — the register of possibilities, one `BL-nn` line each with what it is worth, what it costs, whether it is ready to start, and which model suits it. It carries what this roadmap deliberately does not: options nobody has decided on yet, including the ones that were raised and passed over. Anything proposed in a working session is written there in the same session, because an option that only ever existed in a chat message did not exist.
+
+The ledgers above are the committed half; the backlog lists them too (under "Committed elsewhere") so that one file answers "what could be done next" completely. An item graduates from there to here when the maintainer decides to do it — with an ADR if it changes a design decision, and an execution spec in `docs/plan/` if it is big enough to hand off.
+
+**Rewritten 2026-08-30.** It had been the five product ideas from the 2026-07-18 review, four of them long since shipped, while a year of proposals accumulated nowhere. Those five are archived in place, and the `B1…B10` collision with [the July audit's](docs/audit-2026-07.md) own findings is retired in favour of the `BL-` prefix.
 
 ## Standing tracks (all phases)
 
