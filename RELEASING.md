@@ -185,6 +185,19 @@ npm install @transtyle/cli@alpha
 >
 > This is also why ADR-0010's freeze trigger is defined on the **version identifier** rather than on the dist-tag: `latest` legitimately points at a prerelease during the alpha, so a tag-based trigger would be meaningless.
 
+> [!IMPORTANT]
+> **The `latest` move is a manual step after every release.** The workflow attempts it and is expected to fail: trusted publishing issues an OIDC credential scoped to publishing the versions the job just built, and `dist-tag add` is a different write that the registry rejects with `E401`. Nothing can fix that except a long-lived `NPM_TOKEN` in the repo, which is the thing trusted publishing exists to remove.
+>
+> So the step runs with `continue-on-error` — the publish and the git tag are already done by then — and the job summary tells you to run:
+>
+> ```bash
+> npm run sync:latest-tag
+> ```
+>
+> npm will print an auth URL and wait for you, possibly once per package. Confirm with `npm dist-tag ls @transtyle/cli`: both `alpha` and `latest` should read the new version.
+>
+> This first bit on `0.1.0-alpha.2`, where the failing step also took the git-tag step down with it because it ran first. The order is now tag-then-move, and this is why.
+
 ---
 
 ## Releasing a stable version

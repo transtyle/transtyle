@@ -31,7 +31,16 @@
  *
  * Run locally it is INTERACTIVE: an account with 2FA on writes will make npm
  * either print an auth URL to open or ask for a code, once per package. Answer
- * the prompts. It is not interactive in CI, where OIDC authenticates it.
+ * the prompts.
+ *
+ * IN CI IT CANNOT SUCCEED, and that is not a bug here. Trusted publishing hands
+ * the job an OIDC credential scoped to publishing the versions it just built;
+ * `dist-tag add` is a different write against a different endpoint, and the
+ * registry rejects that credential with E401 (observed on all twelve packages
+ * releasing 0.1.0-alpha.2). The only thing that would authenticate it is a
+ * long-lived NPM_TOKEN in the repo, which is the exact thing trusted publishing
+ * exists to remove. The release workflow therefore runs this with
+ * `continue-on-error` and tells the maintainer to run it here instead.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -59,9 +68,15 @@ function npmError(err) {
   const real = lines.filter((l) => l.startsWith('npm error')).map((l) => l.replace(/^npm error\s*/, ''));
   const picked = (real.length ? real : lines).filter((l) => !/^A complete log/.test(l));
   const msg = picked.slice(0, 2).join(' — ') || 'unknown error';
-  return /EOTP|one-time password/.test(raw)
-    ? `${msg}\n    → this account requires 2FA for dist-tag writes. If npm printed an auth URL above, open it and approve; if it asked for a code, re-run with --otp=<code>. CI does not hit this: it authenticates via OIDC.`
-    : msg;
+  if (/EOTP|one-time password/.test(raw)) {
+    return `${msg}\n    → this account requires 2FA for dist-tag writes. If npm printed an auth URL above, open it and approve; if it asked for a code, re-run with --otp=<code>.`;
+  }
+  if (/E401|Unable to authenticate/.test(raw)) {
+    return process.env.GITHUB_ACTIONS
+      ? `${msg}\n    → expected in CI: the OIDC credential from trusted publishing can publish, but not write dist-tags. THE PUBLISH ITSELF SUCCEEDED. Run \`npm run sync:latest-tag\` locally to finish.`
+      : `${msg}\n    → not logged in to npm. Run \`npm login\`, then re-run this.`;
+  }
+  return msg;
 }
 
 const isPrerelease = (v) => /-/.test(v);

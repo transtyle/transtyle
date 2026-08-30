@@ -89,24 +89,14 @@ jobs:
             npm publish $DRY -w "$d" --tag "${{ steps.guard.outputs.dist-tag }}"
           done
 
-      # `npm publish --tag` sets exactly ONE tag, so the alpha channel and the
-      # default channel cannot both be served by the publish itself. Policy:
-      # while no stable release exists, `latest` tracks the newest alpha (a bare
-      # `npm install` should get the current alpha, not whichever prerelease npm
-      # auto-tagged first); once a stable release exists, prereleases never move
-      # `latest` again. The script reads that condition off the registry per
-      # package, so there is no flag anyone has to remember to flip.
-      #
-      # If this step fails, THE PUBLISH ALREADY SUCCEEDED — only the tag move
-      # did not. Re-run `npm run sync:latest-tag` locally; see RELEASING.md.
-      - name: Point latest at this release (pre-stable only)
-        run: |
-          DRY=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then DRY="--dry-run"; fi
-          node scripts/sync-latest-tag.mjs $DRY
-
       # One annotated tag per release rather than twelve identical ones: the
       # fixed group guarantees every package shares the version.
+      #
+      # This runs BEFORE the dist-tag move, and the order is load-bearing. It
+      # used to run after, and 0.1.0-alpha.2 published without ever being
+      # tagged: the step below cannot succeed here (see its comment), and it
+      # took the tagging down with it. Nothing after a publish should depend on
+      # a step that is known to fail.
       - name: Tag the release
         if: ${{ !inputs.dry_run }}
         run: |
@@ -115,3 +105,49 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "v$v" -m "v$v"
           git push origin "v$v"
+
+      # `npm publish --tag` sets exactly ONE tag, so the alpha channel and the
+      # default channel cannot both be served by the publish itself. Policy:
+      # while no stable release exists, `latest` tracks the newest alpha (a bare
+      # `npm install` should get the current alpha, not whichever prerelease npm
+      # auto-tagged first); once a stable release exists, prereleases never move
+      # `latest` again. The script reads that condition off the registry per
+      # package, so there is no flag anyone has to remember to flip.
+      #
+      # THIS STEP IS EXPECTED TO FAIL on npmjs.org today, and is allowed to.
+      # Trusted publishing hands the job an OIDC credential scoped to publishing
+      # the versions it just built; `dist-tag add` is a different write against
+      # a different endpoint, and the registry rejects that credential outright
+      # (E401, twelve times, on 0.1.0-alpha.2). There is no token to add that
+      # would fix it without giving up the whole point of trusted publishing —
+      # a long-lived NPM_TOKEN in the repo.
+      #
+      # So it is attempted rather than removed: it costs a few seconds, it is
+      # the only thing that would notice if npm ever widens the OIDC scope, and
+      # when it fails the summary below tells you the one command to run. The
+      # publish has already succeeded by this point either way.
+      - name: Point latest at this release (pre-stable only)
+        id: latest
+        continue-on-error: true
+        run: |
+          DRY=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then DRY="--dry-run"; fi
+          node scripts/sync-latest-tag.mjs $DRY
+
+      - name: Say so if latest did not move
+        if: ${{ !inputs.dry_run && steps.latest.outcome == 'failure' }}
+        run: |
+          v=$(node -p "require('./packages/core/package.json').version")
+          {
+            echo "### Published, but \`latest\` did not move"
+            echo
+            echo "All packages are on npm at **$v** under the \`alpha\` dist-tag, and the release is tagged."
+            echo "Only the \`latest\` pointer is still on the previous version — the OIDC credential"
+            echo "trusted publishing issues cannot write dist-tags."
+            echo
+            echo "Run this locally to finish, and answer npm's auth prompt:"
+            echo
+            echo '```'
+            echo "npm run sync:latest-tag"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
