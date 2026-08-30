@@ -2,6 +2,17 @@
   "name": "@transtyle/exporter-echarts",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle exporter for Apache ECharts theme objects.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "echarts",
+    "apache-echarts",
+    "chart-theme",
+    "data-visualization",
+    "categorical-palette"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

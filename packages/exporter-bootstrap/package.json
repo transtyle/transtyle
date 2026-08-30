@@ -2,6 +2,17 @@
   "name": "@transtyle/exporter-bootstrap",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle exporter for Bootstrap themes (5.3+, Sass and CSS-variable paths).",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "bootstrap",
+    "bootstrap5",
+    "sass",
+    "scss",
+    "bootstrap-theme"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

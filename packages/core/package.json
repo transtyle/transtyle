@@ -2,6 +2,18 @@
   "name": "@transtyle/core",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle core: compilation pipeline (load, normalize, derive, resolve, emit, report).",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "compiler",
+    "design-token-transformer",
+    "oklch",
+    "color",
+    "contrast",
+    "wcag"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

@@ -19,6 +19,8 @@
  *     homepage that names a docs page must name one that exists
  *   - README.md — npm renders it as the package page whether you wrote one or
  *     not; all twelve shipped their first alpha blank
+ *   - keywords — npm search ranks on name, description and keywords, and all
+ *     twelve alphas shipped with none, so nothing was findable except by name
  *   - LICENSE — npm ships one only if it is in the package directory, so a
  *     `"license": "MIT"` field alone distributes terms without their text
  *   - files — the allowlist must exist, and everything the package needs to
@@ -64,6 +66,25 @@ for (const d of readdirSync(pkgDir)) {
   }
   for (const field of ['repository', 'homepage', 'bugs']) {
     if (!pkg[field]) fail(name, `missing "${field}" (npm matches repository when attaching provenance)`);
+  }
+
+  // --- findability on npm --------------------------------------------------
+  // All twelve alphas published with no `keywords`, which is the npm equivalent
+  // of the blank README below: npm's search ranks on name, description and
+  // keywords, so a package with none is reachable only by someone who already
+  // knows its name — the people it most needs to reach are exactly the ones who
+  // don't. The two shared anchors are required so that every package answers
+  // the category search, not just the one whose name happens to match.
+  const ANCHORS = ['design-tokens', 'design-system'];
+  const keywords = pkg.keywords;
+  if (!Array.isArray(keywords) || keywords.length === 0) {
+    fail(name, 'no "keywords" — npm search ranks on name, description and keywords, so the package is findable only by exact name; add at least the shared anchors: ' + ANCHORS.join(', '));
+  } else {
+    const missing = ANCHORS.filter((a) => !keywords.includes(a));
+    if (missing.length) fail(name, `keywords missing the shared anchor(s) ${missing.join(', ')} — every package should answer the category search, not only its own name`);
+    const malformed = keywords.filter((k) => typeof k !== 'string' || k !== k.toLowerCase().trim() || /\s/.test(k));
+    if (malformed.length) fail(name, `keywords must be lowercase and space-free (npm treats them as tokens): ${malformed.join(', ')} — use hyphens`);
+    if (new Set(keywords).size !== keywords.length) fail(name, 'duplicate entries in "keywords"');
   }
 
   // --- the licence that is actually distributed ----------------------------
@@ -158,4 +179,4 @@ if (errors.length) {
   for (const e of errors) console.error(`✖ manifest: ${e}`);
   process.exit(1);
 }
-console.log(`✔ package manifests: ${checked} publishable packages — access, provenance metadata, LICENSE, README, homepage, files allowlist, entry points and bin all resolve`);
+console.log(`✔ package manifests: ${checked} publishable packages — access, provenance metadata, keywords, LICENSE, README, homepage, files allowlist, entry points and bin all resolve`);

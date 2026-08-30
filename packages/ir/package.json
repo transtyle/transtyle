@@ -2,6 +2,16 @@
   "name": "@transtyle/ir",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle IR: semantic catalog, provenance constants, token-tree helpers. Zero dependencies.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "intermediate-representation",
+    "semantic-tokens",
+    "design-token-schema",
+    "catalog"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

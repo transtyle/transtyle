@@ -2,6 +2,16 @@
   "name": "@transtyle/exporter-daisyui",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle exporter for daisyUI themes (v5, Tailwind 4 era).",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "daisyui",
+    "tailwindcss",
+    "oklch",
+    "daisyui-theme"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

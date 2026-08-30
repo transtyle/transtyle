@@ -2,6 +2,16 @@
   "name": "@transtyle/exporter-storybook",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle exporter for Storybook chrome theming and preview composition (SB 8–9).",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "storybook",
+    "storybook-theme",
+    "storybook-addon",
+    "design-system-docs"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

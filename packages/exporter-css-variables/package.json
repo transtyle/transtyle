@@ -2,6 +2,16 @@
   "name": "@transtyle/exporter-css-variables",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle exporter emitting the resolved semantic catalog as plain CSS custom properties — the simplest possible backend and the plugin-API conformance fixture.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "css-variables",
+    "custom-properties",
+    "css",
+    "design-token-css"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

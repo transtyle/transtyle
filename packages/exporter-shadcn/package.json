@@ -2,6 +2,18 @@
   "name": "@transtyle/exporter-shadcn",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle exporter for shadcn/ui (tailwind-v4 era).",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "shadcn",
+    "shadcn-ui",
+    "tailwindcss",
+    "tailwind-v4",
+    "radix",
+    "css-variables"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

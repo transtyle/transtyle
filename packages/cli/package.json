@@ -2,6 +2,20 @@
   "name": "@transtyle/cli",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle CLI — compile a design system to native framework themes.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "cli",
+    "design-system-compiler",
+    "css-variables",
+    "sass",
+    "tailwindcss",
+    "bootstrap",
+    "shadcn-ui",
+    "storybook"
+  ],
   "type": "module",
   "bin": {
     "transtyle": "src/main.js"

@@ -2,6 +2,17 @@
   "name": "@transtyle/exporter-radix",
   "version": "0.1.0-alpha.3",
   "description": "Transtyle exporter for Radix Colors 12-step scales — the role grid's acceptance test.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "radix",
+    "radix-ui",
+    "radix-colors",
+    "radix-themes",
+    "color-scales"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {

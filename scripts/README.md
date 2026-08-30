@@ -7,29 +7,29 @@ Every one exists because something real broke or could have: they are not a
 test suite grown for coverage, they are a list of mistakes this project has
 already made once.
 
-| Script                        | Guards                                                                                            |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| `check-sync.mjs`              | Every shipped exporter exists on all five surfaces (code, spec, website, README, examples)        |
-| `check-docs.mjs`              | Website structure: nav reachability, links, anchors, CLI commands, diagnostic codes, blog posts   |
-| `check-doc-numbers.mjs`       | Every number the docs copy out of a build, re-derived                                             |
-| `check-encoding.mjs`          | Tracked text files are clean UTF-8 — no NUL bytes, no BOM                                         |
-| `check-color.mjs`             | The colour engine against reference values: parsing, round-trips, contrast, mixing                |
-| `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                             |
-| `check-grid.mjs`              | Catalog completeness and the frozen Phase 0 values                                                |
-| `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                 |
-| `check-determinism.mjs`       | Two builds of every example, byte-compared                                                        |
-| `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates              |
-| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` golden paths and error cases                        |
-| `check-component-tier.mjs`    | The empty tier defaults correctly; an authored tier reaches both component targets                |
-| `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                       |
-| `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap               |
-| `check-minimal-ds.mjs`        | All eight exporters survive a three-token design system, in six mode shapes                       |
-| `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                   |
-| `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, `files`, `bin`        |
-| `check-brand.mjs`             | The logo everywhere: assets current, every surface still carrying it, brand hues still the mark's |
-| `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex          |
-| `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                       |
-| `check-secrets.mjs`           | No credential or personal data in any blob, commit message or identity, ever                      |
+| Script                        | Guards                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `check-sync.mjs`              | Every shipped exporter exists on all five surfaces (code, spec, website, README, examples)           |
+| `check-docs.mjs`              | Website structure: nav reachability, links, anchors, CLI commands, diagnostic codes, blog posts      |
+| `check-doc-numbers.mjs`       | Every number the docs copy out of a build, re-derived                                                |
+| `check-encoding.mjs`          | Tracked text files are clean UTF-8 — no NUL bytes, no BOM                                            |
+| `check-color.mjs`             | The colour engine against reference values: parsing, round-trips, contrast, mixing                   |
+| `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                                |
+| `check-grid.mjs`              | Catalog completeness and the frozen Phase 0 values                                                   |
+| `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                    |
+| `check-determinism.mjs`       | Two builds of every example, byte-compared                                                           |
+| `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                 |
+| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` golden paths and error cases                           |
+| `check-component-tier.mjs`    | The empty tier defaults correctly; an authored tier reaches both component targets                   |
+| `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                          |
+| `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap                  |
+| `check-minimal-ds.mjs`        | All eight exporters survive a three-token design system, in six mode shapes                          |
+| `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                      |
+| `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, keywords, `files`, `bin` |
+| `check-brand.mjs`             | The logo everywhere: assets current, every surface still carrying it, brand hues still the mark's    |
+| `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex             |
+| `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                          |
+| `check-secrets.mjs`           | No credential or personal data in any blob, commit message or identity, ever                         |
 
 The last three are not in `check:all`, because none of them grades a working
 tree.

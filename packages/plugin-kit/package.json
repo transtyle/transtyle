@@ -2,6 +2,17 @@
   "name": "@transtyle/plugin-kit",
   "version": "0.1.0-alpha.3",
   "description": "The executable specification of the Transtyle exporter interface: a conformance suite any exporter (official or third-party) runs against to prove it honors the plugin contract.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "plugin",
+    "plugin-api",
+    "conformance",
+    "exporter",
+    "design-token-plugin"
+  ],
   "type": "module",
   "main": "./src/index.js",
   "exports": {
