@@ -15,6 +15,7 @@
     "modes": ["color-scheme"],
     "capabilities": ["build"]
   },
+  "files": ["src", "surface-inventory.json"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

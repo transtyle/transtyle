@@ -8,6 +8,7 @@
   "dependencies": {
     "@transtyle/core": "0.1.0"
   },
+  "files": ["src", "fixture"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

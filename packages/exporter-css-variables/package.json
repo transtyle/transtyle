@@ -14,6 +14,7 @@
     "modes": ["color-scheme"],
     "capabilities": ["build"]
   },
+  "files": ["src"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/transtyle/transtyle.git",

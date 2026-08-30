@@ -35,6 +35,8 @@ A third guard covers what neither of those can see: **`npm run check:doc-numbers
 
 ## Working locally
 
+Changes to a published package need a changeset (`npm run changeset`) in the same PR — see [RELEASING.md](RELEASING.md), which also covers how alpha and stable releases are cut and why the difference matters.
+
 ```bash
 npm install                    # links workspaces; installs website deps
 npm run example:shadcn         # compile the Acme example

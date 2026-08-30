@@ -24,6 +24,8 @@
     "example:check:cathode": "transtyle check --cwd examples/cathode",
     "example:check:govuk": "transtyle check --cwd examples/govuk",
     "example:check:carbon": "transtyle check --cwd examples/carbon",
+    "changeset": "changeset",
+    "check:release-tag": "node scripts/check-release-tag.mjs",
     "check:sync": "node scripts/check-sync.mjs && node scripts/check-docs.mjs",
     "check:docs": "node scripts/check-docs.mjs",
     "format:md": "prettier --write \"**/*.{md,mdx}\"",
@@ -55,6 +57,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@changesets/cli": "2.31.1",
     "prettier": "3.9.6"
   }
 }

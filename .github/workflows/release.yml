@@ -1,0 +1,77 @@
+name: Release
+
+# Never automatic. The ROADMAP's AL6 says the release executes "on explicit
+# maintainer go", and ADR-0010 makes a stable release a one-way door for the
+# semantic catalog — so the only trigger is a human pressing the button, and
+# the button defaults to a dry run.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Resolve the dist-tag and pack the tarballs without publishing'
+        type: boolean
+        default: true
+
+# Least privilege for the whole workflow, same as CI: the escalations that
+# publishing genuinely needs are requested per-job, below, so they are visible.
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Publish @transtyle/* to npm
+    runs-on: ubuntu-latest
+    # npm's trusted publisher can be configured to require a named environment;
+    # this is also where a required-reviewer rule belongs if one is ever wanted.
+    environment: release
+    permissions:
+      # The OIDC token npm exchanges for publish rights. This is what replaces a
+      # long-lived NPM_TOKEN: nothing secret is stored in the repo or the org.
+      id-token: write
+      # `changeset publish` writes one git tag per released package. Pushing
+      # those tags is the only write this job makes to the repository.
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Unlike CI, this job does push (tags), so the checkout token has to
+          # stay in .git/config for the final step.
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+      # Trusted publishing needs npm >= 11.5.1 and Node >= 22.14; the npm that
+      # ships with Node 22 is older, so it is upgraded rather than assumed.
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@latest
+          node -e "const [maj,min,pat]=process.versions.node.split('.').map(Number); if (maj<22 || (maj===22 && (min<14))) { console.error('Node '+process.versions.node+' is below the 22.14.0 trusted publishing needs'); process.exit(1); }"
+          npm --version
+      - run: npm ci
+
+      # A release is not a place to discover the build is broken.
+      - name: Full check suite
+        run: npm run check:all
+
+      # Resolves the dist-tag from .changeset/pre.json and refuses a release
+      # that would arm the ADR-0010 freeze without an explicit confirmation.
+      - name: Release guard
+        id: guard
+        run: node scripts/check-release-tag.mjs
+
+      - name: Pack (dry run)
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "Dry run — would publish to dist-tag '${{ steps.guard.outputs.dist-tag }}'"
+          # --workspaces would also walk the 33 private demo/website workspaces.
+          for d in packages/*/; do npm publish --dry-run -w "$d"; done
+
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        run: npx changeset publish --tag '${{ steps.guard.outputs.dist-tag }}'
+
+      - name: Push release tags
+        if: ${{ !inputs.dry_run }}
+        run: git push origin --follow-tags
