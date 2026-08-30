@@ -7,7 +7,9 @@
  * a fixed envelope, not a problem worth a dependency.
  *
  * Deliberately excluded: the raw-markdown routes (`/docs/<slug>.md`,
- * `/blog/<slug>.md`), llms.txt and the OG cards. They're alternate
+ * `/blog/<slug>.md`), llms.txt, the OG cards, and the 32 demo applications
+ * under /demo/<example>/<target>/ — those are one page rendered 32 ways and
+ * ship a noindex tag; the gallery that indexes them is the page to crawl. They're alternate
  * representations of pages already listed — submitting them invites duplicate-
  * content grading of the same text.
  *
@@ -26,6 +28,7 @@ export function GET({ site }) {
   const urls = [
     { loc: withBase('/'), priority: '1.0' },
     ...orderedSlugs.map((slug) => ({ loc: docPath(slug), priority: slug === 'index' ? '0.9' : '0.8' })),
+    { loc: withBase('/demo/'), priority: '0.9' },
     { loc: withBase('/blog/'), priority: '0.7' },
     ...posts.map((post) => ({ loc: postPath(post.slug), lastmod: post.date, priority: '0.7' })),
   ];

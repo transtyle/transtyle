@@ -6,6 +6,11 @@ order: 10
 
 # daisyUI exporter
 
+<div class="callout live-demos">
+  <span class="callout-title">See it live</span>
+  <p><a href="/demo/acme/daisyui/">Acme</a> · <a href="/demo/cathode/daisyui/">Cathode</a> · <a href="/demo/govuk/daisyui/">GOV.UK</a> · <a href="/demo/carbon/daisyui/">Carbon</a> — one page, four design systems, compiled to daisyUI. <a href="/demo/">All 32 demos →</a></p>
+</div>
+
 Emits **daisyUI v5** theme blocks (Tailwind 4 era): one `@plugin "daisyui/theme"` block per color-scheme mode, OKLCH values, light as `default`, dark as `prefersdark` — standard daisyUI multi-theme behavior, generated from your design system.
 
 <!-- measured: acme.daisyui.decls = 46 -->

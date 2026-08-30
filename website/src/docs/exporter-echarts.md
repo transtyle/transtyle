@@ -6,6 +6,11 @@ order: 9
 
 # Apache ECharts exporter
 
+<div class="callout live-demos">
+  <span class="callout-title">See it live</span>
+  <p><a href="/demo/acme/echarts/">Acme</a> · <a href="/demo/cathode/echarts/">Cathode</a> · <a href="/demo/govuk/echarts/">GOV.UK</a> · <a href="/demo/carbon/echarts/">Carbon</a> — one page, four design systems, compiled to Apache ECharts. <a href="/demo/">All 32 demos →</a></p>
+</div>
+
 The second reference exporter, and proof that Transtyle is not a CSS generator: the output is a **JSON theme object** for `echarts.registerTheme()`, colors are hex (canvas rendering), and the star of the show is a derivation problem no UI-framework target has — the **categorical data palette**.
 
 <!-- measured: acme.echarts.rows = 11 -->

@@ -15,6 +15,7 @@
 
 <p align="center">
   <a href="https://transtyle.github.io/transtyle/">Documentation</a> ·
+  <a href="https://transtyle.github.io/transtyle/demo/">Live demos</a> ·
   <a href="https://www.npmjs.com/org/transtyle">npm</a> ·
   <a href="ROADMAP.md">Roadmap</a> ·
   <a href="VISION.md">Vision</a>
@@ -122,10 +123,20 @@ Four examples compile end to end, each with runnable demo projects under
 | [GOV.UK](examples/govuk/)    | a real published system, adopted without renaming anything                                  |
 | [Carbon](examples/carbon/)   | IBM's, likewise — real values, real accessibility constraints                               |
 
+All 32 of those demos (4 examples × 8 targets) are deployed and browsable:
+**[transtyle.github.io/transtyle/demo](https://transtyle.github.io/transtyle/demo/)**. Within a
+target the page is byte-identical across all four design systems — enforced in CI — so anything
+that differs between them came out of the compiler. Each demo has a switcher in the corner for
+jumping along either axis.
+
+To run them locally instead:
+
 ```bash
 npm run dev -w acme-demo-bootstrap     # the same page in real Bootstrap, port 4101
 npm run dev -w acme-demo-shadcn        # …and in real shadcn/ui, port 4103
 npm run dev -w cathode-demo-storybook  # a phosphor-green Storybook, port 6201
+
+npm run demos:all                      # build all 32 + the site, exactly as deployed
 ```
 
 ## Status

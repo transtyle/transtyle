@@ -48,6 +48,20 @@ jobs:
       # measured-number checks, and postsite:build runs the base-path guard over
       # the emitted files. A site that would 404 its own links does not deploy.
       - run: npm run site:build
+      # The 32 demo projects, built as they are published: the same commands a
+      # contributor runs, plus the relative-base argument that lets each one work
+      # from /demo/<example>/<target>/ instead of a server root. Roughly a
+      # minute for all of them, so there is no matrix and nothing to cache —
+      # every deploy rebuilds them from the examples rather than serving a
+      # bundle nobody can date.
+      #
+      # Order is load-bearing and guarded: `site:build` empties website/dist, so
+      # assembling first would delete the demos, and assembling before its
+      # postbuild link check would send that check walking 33 MB of framework
+      # bundles. assemble-demos.mjs exits with that explanation if the gallery
+      # page it is folding demos in beside has not been built yet.
+      - run: npm run demos:build
+      - run: npm run demos:assemble
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: website/dist

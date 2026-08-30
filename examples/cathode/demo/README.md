@@ -1,6 +1,10 @@
 # Cathode demo projects — the hostile DS on real frameworks
 
-Seven npm projects, one per target, each themed **only** by the artifacts `transtyle build` writes to [`../dist/`](../dist/) (a `predev` hook rebuilds them). Spec: [docs/specs/demo-app.md](../../../docs/specs/demo-app.md). Within each target, these projects are file-identical to Acme's except `src/ds.config.*` and the package name/port — same code, radically different rendering: that's the proof.
+> **Deployed:** every project below is also running at
+> <https://transtyle.github.io/transtyle/demo/> — rebuilt from these sources on each
+> deploy, with a corner switcher for hopping between design systems and targets.
+
+Eight npm projects, one per target, each themed **only** by the artifacts `transtyle build` writes to [`../dist/`](../dist/) (a `predev` hook rebuilds them). Spec: [docs/specs/demo-app.md](../../../docs/specs/demo-app.md). Within each target, these projects are file-identical to Acme's except `src/ds.config.*` and the package name/port — same code, radically different rendering: that's the proof.
 
 All projects boot **terminal-dark** (Cathode's native mode; light is the paper printout). Run from the **repo root** (after `npm install`):
 
@@ -13,3 +17,4 @@ All projects boot **terminal-dark** (Cathode's native mode; light is the paper p
 | [storybook/](storybook/)         | `npm run dev -w cathode-demo-storybook`     | 6201 | A Storybook whose **own chrome** boots terminal-dark (DS-native mode) — sidebar, toolbar, and Controls panel in phosphor green; stories are just one explanatory text page |
 | [css-variables/](css-variables/) | `npm run dev -w cathode-demo-css-variables` | 4205 | Every catalog slot as a plain `--custom-property`, boots terminal-dark, browsed by family                                                                                  |
 | [radix/](radix/)                 | `npm run dev -w cathode-demo-radix`         | 4206 | The same page in real `@radix-ui/themes` components — the compiled `primary`/`neutral` scales override an existing Radix preset (`green`/`gray`), boots terminal-dark      |
+| [primeng/](primeng/)             | `npm run dev -w cathode-demo-primeng`       | 4207 | The same page in real PrimeNG components on Angular — the emitted preset is type-checked against PrimeNG's own `DesignTokens` types as part of `ng build`                  |

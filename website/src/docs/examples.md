@@ -21,6 +21,8 @@ cd examples/acme
 npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook, css-variables, radix, primeng
 ```
 
+**Or just look at it:** [Acme on shadcn/ui](/demo/acme/shadcn/) · [on Bootstrap](/demo/acme/bootstrap/) · [on PrimeNG](/demo/acme/primeng/) · [all eight](/demo/).
+
 What to study:
 
 <!-- measured: acme.engine = 231 -->
@@ -47,6 +49,8 @@ cd examples/cathode
 npx transtyle build          # same eight targets as Acme, radically different values
 ```
 
+**Or just look at it:** [Cathode on shadcn/ui](/demo/cathode/shadcn/) · [on Bootstrap](/demo/cathode/bootstrap/) · [on PrimeNG](/demo/cathode/primeng/) · [all eight](/demo/).
+
 What to study:
 
 - **The layered layout.** Three token files, all pure DTCG: `cathode.tokens.json` (source of truth), `cathode.light.tokens.json` (mode overlay — its mode assignment lives in the config), `transtyle.bindings.tokens.json` (catalog → vocabulary aliases). The pattern for real teams whose token files are generated. Restructuring Cathode from inline-extensions form to this layout produced byte-identical output — the equivalence is proven, not claimed.
@@ -63,6 +67,8 @@ What to study:
 cd examples/govuk
 npx transtyle build          # same eight targets as Acme/Cathode
 ```
+
+**Or just look at it:** [GOV.UK on shadcn/ui](/demo/govuk/shadcn/) · [on Bootstrap](/demo/govuk/bootstrap/) · [on PrimeNG](/demo/govuk/primeng/) · [all eight](/demo/).
 
 What to study:
 
@@ -83,6 +89,8 @@ cd examples/carbon
 npx transtyle build          # same eight targets
 ```
 
+**Or just look at it:** [Carbon on shadcn/ui](/demo/carbon/shadcn/) · [on Bootstrap](/demo/carbon/bootstrap/) · [on PrimeNG](/demo/carbon/primeng/) · [all eight](/demo/).
+
 What to study:
 
 - **Better native role coverage than GOV.UK.** Carbon has real, named tokens for `danger`/`success`/`warning`/`info` (its "Support" group) _and_ a real `secondary` (`$button-secondary`) — bound directly, not derived.
@@ -96,7 +104,11 @@ Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/transtyl
 
 <!-- measured: demos = 32 -->
 
-Each example ships eight npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), and Angular [PrimeNG](/docs/exporter-primeng/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 32 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI. From the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4107, 6101; Cathode: 4201–4207, 6201; GOV.UK: 4301–4307, 6301; Carbon: 4401–4407, 6401).
+Each example ships eight npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), and Angular [PrimeNG](/docs/exporter-primeng/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 32 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI.
+
+**All 32 are deployed — [open the demo gallery](/demo/).** Every one is rebuilt from the examples on each deploy, so what is running there is what today's compiler emits. Each demo carries a switcher in the corner: from Acme's Bootstrap page you are one click from Carbon's, and the markup underneath is byte-identical, so the difference is entirely the design system.
+
+To run them locally instead, from the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4107, 6101; Cathode: 4201–4207, 6201; GOV.UK: 4301–4307, 6301; Carbon: 4401–4407, 6401).
 
 ## Using them as templates
 

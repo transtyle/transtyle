@@ -6,6 +6,11 @@ order: 15
 
 # PrimeNG exporter
 
+<div class="callout live-demos">
+  <span class="callout-title">See it live</span>
+  <p><a href="/demo/acme/primeng/">Acme</a> · <a href="/demo/cathode/primeng/">Cathode</a> · <a href="/demo/govuk/primeng/">GOV.UK</a> · <a href="/demo/carbon/primeng/">Carbon</a> — one page, four design systems, compiled to PrimeNG. <a href="/demo/">All 32 demos →</a></p>
+</div>
+
 Every other reference exporter binds at the semantic tier only. PrimeNG ships its own explicit three-tier design-token system (`primitive` → `semantic` → `components`), so this exporter overrides an existing preset (`Aura`) rather than authoring one from zero — anything it doesn't emit is inherited from Aura untouched.
 
 <!-- measured: acme.primeng.rows = 349 -->

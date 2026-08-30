@@ -2,10 +2,16 @@
 import Base from '../layouts/Base.astro';
 import { Code } from 'astro:components';
 import { withBase } from '../url.js';
+import { EXAMPLES, TARGETS, discoverDemos, repoRoot } from '../../../scripts/lib/demos.mjs';
+import { demoThemes } from '../demo-themes.js';
 
 // Match the markdown pipeline's Shiki config (astro.config.mjs) so highlighted
 // code looks identical on the homepage and in the docs, in both themes.
 const shiki = { themes: { light: 'github-light', dark: 'github-dark' }, defaultColor: false };
+
+const root = repoRoot();
+const demoCount = discoverDemos(root).length;
+const themes = await demoThemes(EXAMPLES, root);
 
 const authoredTokens = `{
   "semantic": {
@@ -187,7 +193,33 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
           </figure>
         </div>
       </div>
-      <p class="band-foot">Every example ships <a href={withBase('/docs/examples/')}>runnable demo projects</a> — the same page built with each target's real components, consuming only the compiled <code>dist/</code>.</p>
+      <p class="band-foot">Those previews are a summary. The <a href={withBase('/demo/')}>{demoCount} live demos</a> are the real thing — each target's own components, in the browser, consuming only the compiled <code>dist/</code>.</p>
+    </section>
+
+    <section class="band alt" aria-labelledby="h-gallery">
+      <h2 id="h-gallery">Don't take our word for it — {demoCount} of them are running</h2>
+      <p class="band-sub">
+        Four design systems, each compiled to all {TARGETS.length} targets and deployed. Within a
+        target the page is byte-identical, so everything that changes between these columns came out
+        of the compiler. The swatches below are read from a live compile at build time.
+      </p>
+      <div class="gallery-strip">
+        {EXAMPLES.map((example) => (
+          <a class="gcard" href={withBase(`/demo/${example.id}/shadcn/`)}>
+            <span class="gswatch" aria-hidden="true">
+              <i style={`background:${themes[example.id].light.primary}`}></i>
+              <i style={`background:${themes[example.id].light.page}`}></i>
+              <i style={`background:${themes[example.id].light.text}`}></i>
+              <i style={`background:${themes[example.id].light.border}`}></i>
+            </span>
+            <span class="gname">{example.title}</span>
+            <span class="gkicker">{example.kicker}</span>
+          </a>
+        ))}
+      </div>
+      <p class="band-foot">
+        <a class="btn primary" href={withBase('/demo/')}>Open the demo gallery →</a>
+      </p>
     </section>
 
     <section class="band" aria-labelledby="h-language">
@@ -405,5 +437,14 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .band.final .start { max-width: 42rem; margin: 0 auto; text-align: left; }
     /* Radius/clipping/ring come from `.code-wrap` (global.css) now, not a border here. */
     .band.final .start pre { padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; margin: 0; }
+    /* The demo-gallery strip: four design systems as four real palettes. */
+    .gallery-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.8rem; margin: 1.6rem 0 0; }
+    .gcard { display: block; border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem 1rem; background: var(--surface); box-shadow: var(--shadow); color: var(--text); }
+    .gcard:hover { text-decoration: none; border-color: var(--primary); transform: translateY(-2px); }
+    .gcard { transition: border-color 0.14s, transform 0.14s; }
+    .gswatch { display: flex; gap: 3px; margin-bottom: 0.6rem; }
+    .gswatch i { flex: 1; height: 1.5rem; border-radius: 4px; border: 1px solid color-mix(in oklch, var(--text) 12%, transparent); }
+    .gname { display: block; font-weight: 700; letter-spacing: -0.01em; }
+    .gkicker { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; }
   </style>
 </Base>

@@ -254,6 +254,11 @@ h1, h2, h3 { text-wrap: balance; }
 .callout.warn { border-left-color: var(--warn); }
 .callout > :first-child { margin-top: 0.2rem; }
 .callout > :last-child { margin-bottom: 0.2rem; }
+/* The "See it live" row on every exporter page: a callout whose content is
+   links, so they get the weight prose links do not need. */
+.callout.live-demos { border-left-color: var(--cov-native); }
+.callout.live-demos p { margin: 0.25rem 0 0; font-size: 0.92rem; }
+.callout.live-demos a { font-weight: 600; }
 .callout-title { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
 
 /* .flow — a horizontal pipeline diagram: nodes joined by arrows.

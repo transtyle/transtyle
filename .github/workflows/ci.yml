@@ -30,6 +30,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check:sync
+      - run: npm run check:demos
       - run: npm run check:brand
       - run: npm run check:doc-numbers
       - run: npm run check:format

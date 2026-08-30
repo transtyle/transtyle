@@ -51,6 +51,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { discoverDemos, demoPath } from './lib/demos.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -103,8 +104,21 @@ for (const s of slugs) anchorsOf[s] = headingAnchors(read(`${DOCS_DIR}/${s}.md`)
 const blogAnchorsOf = {};
 for (const s of blogSlugs) blogAnchorsOf[s] = headingAnchors(read(`${BLOG_DIR}/${s}.md`));
 
-// Non-/docs/ site routes that legitimately exist (pages/ + public/).
-const KNOWN_ROUTES = new Set(['/', '/docs/', '/blog/', '/blog/rss.xml', '/llms.txt', '/llms-full.txt']);
+// Non-/docs/ site routes that legitimately exist (pages/ + public/), plus the
+// demo gallery and the 32 apps folded in beside it at deploy time
+// (scripts/assemble-demos.mjs). Those are real URLs with no page file to find
+// them by, so they are discovered the same way the gallery discovers them —
+// listing them by hand here is how one of them would end up misspelled.
+const KNOWN_ROUTES = new Set([
+  '/',
+  '/docs/',
+  '/blog/',
+  '/blog/rss.xml',
+  '/llms.txt',
+  '/llms-full.txt',
+  '/demo/',
+  ...discoverDemos(root).map((d) => demoPath(d.example, d.target)),
+]);
 const publicFiles = readdirSync(join(root, 'website/public'), { recursive: true }).map((f) => '/' + String(f).replaceAll('\\', '/'));
 
 // Every markdown page the site publishes — docs and blog posts alike. A blog

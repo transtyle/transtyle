@@ -1,0 +1,402 @@
+---
+/**
+ * The demo gallery — the page that answers "what does it actually produce?"
+ *
+ * Nothing on this page is hand-maintained prose about the demos:
+ *
+ *   the grid comes from `discoverDemos()`, which reads the repo, so a ninth
+ *   target appears here on the commit that adds its demo project;
+ *   every colour, corner and typeface in the preview cards comes from
+ *   compiling the four examples in this process (src/demo-themes.js), so the
+ *   page cannot show a design system the compiler no longer produces.
+ *
+ * The demos themselves are static builds folded in beside this page at deploy
+ * time (scripts/build-demos.mjs → scripts/assemble-demos.mjs). They are not
+ * part of the Astro build, which is why `npm run site:build` alone leaves these
+ * links pointing at nothing locally — `npm run demos:all` builds the full thing.
+ */
+import Base from '../../layouts/Base.astro';
+import { withBase } from '../../url.js';
+import { EXAMPLES, TARGETS, discoverDemos, demoPath, repoRoot } from '../../../../scripts/lib/demos.mjs';
+import { demoThemes } from '../../demo-themes.js';
+
+const root = repoRoot();
+const demos = discoverDemos(root);
+const themes = await demoThemes(EXAMPLES, root);
+
+const built = new Set(demos.map((d) => `${d.example}/${d.target}`));
+const url = (example, target) => withBase(demoPath(example, target));
+const workspaceOf = (example, target) =>
+  demos.find((d) => d.example === example && d.target === target)?.workspace;
+
+// The one number the page leads with, counted rather than typed.
+const count = demos.length;
+
+const title = 'Demo gallery — 32 live builds of one design system compiler';
+const description = `${count} running applications: ${EXAMPLES.length} design systems compiled to ${TARGETS.length} ecosystems, every page identical except the theme.`;
+
+/** Inline custom properties for a preview card, from that example's compiled output. */
+const paint = (t) =>
+  t &&
+  [
+    `--d-page:${t.page}`,
+    `--d-surface:${t.surface ?? t.page}`,
+    `--d-text:${t.text}`,
+    `--d-muted:${t.muted ?? t.text}`,
+    `--d-border:${t.border}`,
+    `--d-primary:${t.primary}`,
+    `--d-on-primary:${t.onPrimary ?? '#fff'}`,
+    `--d-danger:${t.danger ?? t.primary}`,
+    `--d-success:${t.success ?? t.primary}`,
+    `--d-warning:${t.warning ?? t.primary}`,
+    `--d-radius:${t.radius ?? '0'}`,
+    `--d-radius-card:${t.radiusCard ?? t.radius ?? '0'}`,
+    `--d-font:${t.font}`,
+  ].join(';');
+---
+<Base title={`${title} · Transtyle`} description={description} current="demo" image="/og/default.png">
+  <main id="main">
+    <section class="hero">
+      <p class="eyebrow">Live output</p>
+      <h1>Every one of these is<br /><span class="grad">the same page.</span></h1>
+      <p class="sub">
+        {count} running applications — {EXAMPLES.length} design systems compiled to {TARGETS.length}
+        ecosystems. Within a row the markup is <strong>byte-identical</strong>, enforced in CI.
+        Everything you see change between columns was compiled from that design system's tokens:
+        no theme CSS was written by hand for any of them.
+      </p>
+      <p class="strip">
+        <span><b>{EXAMPLES.length}</b> design systems</span>
+        <span><b>{TARGETS.length}</b> ecosystems</span>
+        <span><b>{count}</b> live builds</span>
+        <span><b>1</b> set of token files each</span>
+      </p>
+    </section>
+
+    <section class="band">
+      <h2 id="systems">The four design systems</h2>
+      <p class="band-sub">
+        Two invented as opposites, two real systems nobody here designed. Each card below is painted
+        with values read out of a live compile of that example — the same values the demos it links
+        to are wearing.
+      </p>
+
+      <div class="systems">
+        {EXAMPLES.map((example) => {
+          const theme = themes[example.id];
+          return (
+            <article class="system">
+              <div class="sys-head">
+                <div>
+                  <p class="sys-kicker">{example.kicker}</p>
+                  <h3>{example.title}</h3>
+                </div>
+                <span class="modes">{theme.modes.join(' + ')}</span>
+              </div>
+              <p class="sys-blurb">{example.blurb}</p>
+
+              <div class="previews">
+                {['light', 'dark'].map((mode) =>
+                  theme[mode] ? (
+                    <figure class="preview" style={paint(theme[mode])}>
+                      <div class="pv-bar">
+                        <span class="pv-dot" />
+                        <span class="pv-name">{example.title}</span>
+                      </div>
+                      <div class="pv-body">
+                        <div class="pv-card">
+                          <div class="pv-h">Monthly report</div>
+                          <div class="pv-line" />
+                          <div class="pv-line short" />
+                          <div class="pv-actions">
+                            <span class="pv-btn">Continue</span>
+                            <span class="pv-btn ghost">Cancel</span>
+                          </div>
+                          <div class="pv-dots">
+                            <i class="ok" /><i class="warn" /><i class="danger" />
+                          </div>
+                        </div>
+                      </div>
+                      <figcaption>{mode}</figcaption>
+                    </figure>
+                  ) : (
+                    <figure class="preview empty">
+                      <p>
+                        No dark theme — <span>GOV.UK publishes none, so the config declares one mode.</span>
+                      </p>
+                      <figcaption>dark</figcaption>
+                    </figure>
+                  ),
+                )}
+              </div>
+
+              <p class="sys-look"><b>What to look for:</b> {example.look}</p>
+
+              <div class="sys-links">
+                {TARGETS.map((target) =>
+                  built.has(`${example.id}/${target.id}`) ? (
+                    <a class="chip" href={url(example.id, target.id)}>{target.title}</a>
+                  ) : null,
+                )}
+              </div>
+
+              {example.unaffiliated && (
+                <p class="sys-note">
+                  An independent demonstration of Transtyle. Not affiliated with, endorsed by, or
+                  produced by {example.unaffiliated}.
+                </p>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+
+    <section class="band alt">
+      <h2 id="matrix">All {count}, side by side</h2>
+      <p class="band-sub">
+        Read across a row to see one ecosystem wearing four different design systems. Read down a
+        column to see one design system compiled into eight. Each swatch is that build's real
+        primary, surface and text colour.
+      </p>
+
+      <div class="matrix-scroll">
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th scope="col"><span class="vh">Target</span></th>
+              {EXAMPLES.map((example) => (
+                <th scope="col">
+                  <span class="mx-ex">{example.title}</span>
+                  <span class="mx-kicker">{example.kicker}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {TARGETS.map((target) => (
+              <tr>
+                <th scope="row">
+                  <a href={withBase(`/docs/${target.doc}/`)}>{target.title}</a>
+                  <span class="mx-stack">{target.stack}</span>
+                </th>
+                {EXAMPLES.map((example) => {
+                  const theme = themes[example.id].light;
+                  return (
+                    <td>
+                      {built.has(`${example.id}/${target.id}`) ? (
+                        <a class="cell" href={url(example.id, target.id)}
+                           aria-label={`Open the ${example.title} design system compiled for ${target.title}`}>
+                          <span class="cell-sw" style={paint(theme)}>
+                            <i style="background: var(--d-primary)" />
+                            <i style="background: var(--d-surface)" />
+                            <i style="background: var(--d-text)" />
+                          </span>
+                          <span class="cell-go">Open ↗</span>
+                        </a>
+                      ) : (
+                        <span class="cell missing">—</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="matrix-foot">
+        Each target's page explains what it emits and why:
+        {TARGETS.map((target, i) => (
+          <>
+            {i > 0 && ' · '}
+            <a href={withBase(`/docs/${target.doc}/`)}>{target.title}</a>
+          </>
+        ))}
+      </p>
+    </section>
+
+    <section class="band">
+      <h2 id="how">How to read a demo</h2>
+      <div class="reads">
+        <div class="read">
+          <h3>The page never changes</h3>
+          <p>
+            Every demo for a given target is the same application — same markup, same components,
+            same interactions. <a href="https://github.com/transtyle/transtyle/blob/main/scripts/check-demo-parity.mjs" rel="noopener">A CI check</a>
+            fails the build if one drifts, so any visible difference between columns is attributable
+            to the design system and nothing else.
+          </p>
+        </div>
+        <div class="read">
+          <h3>Nothing but <code>dist/</code></h3>
+          <p>
+            Each project consumes only the artifacts <code>transtyle build</code> writes — the
+            generated Sass, the generated CSS, the generated theme JSON. No demo contains a colour
+            value. Switch a page to dark and you are watching compiled output, not a stylesheet
+            someone tuned by hand.
+          </p>
+        </div>
+        <div class="read">
+          <h3>The corner pill switches axes</h3>
+          <p>
+            Every demo carries a switcher: jump to the same page in another design system, or to
+            another ecosystem in the same one. That comparison is the point of the exhibit — one
+            token source, eight idiomatic outputs.
+          </p>
+        </div>
+        <div class="read">
+          <h3>Look for the seams</h3>
+          <p>
+            Cathode's <code>--radius: 0rem</code> makes shadcn's <code>calc(var(--radius) - 4px)</code>
+            negative, and the browser clamps it to 0 — brutalism by accident of CSS. GOV.UK renders
+            in its documented Arial fallback because its real typeface is licensed to crown services.
+            The <a href={withBase('/docs/examples/')}>walkthroughs</a> name every one of these.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="band alt">
+      <h2 id="local">Run them yourself</h2>
+      <p class="band-sub">
+        The demos are npm workspaces in the repo. Each rebuilds its example's tokens before it
+        starts, so what you see is always what today's compiler emits.
+      </p>
+      <pre data-copy="git clone https://github.com/transtyle/transtyle && cd transtyle && npm install && npm run dev -w acme-demo-bootstrap"><code>git clone https://github.com/transtyle/transtyle
+cd transtyle && npm install
+
+npm run dev -w acme-demo-bootstrap     # or any of the {count} below
+npm run demos:all                      # build all {count} + the site, as deployed</code></pre>
+      <details class="ports">
+        <summary>Workspace names and local ports</summary>
+        <div class="ports-grid">
+          {EXAMPLES.map((example) => (
+            <div>
+              <h4>{example.title}</h4>
+              <ul>
+                {TARGETS.map((target) => {
+                  const demo = demos.find((d) => d.example === example.id && d.target === target.id);
+                  return demo ? (
+                    <li><code>{demo.workspace}</code><span>{demo.port ?? '—'}</span></li>
+                  ) : null;
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </details>
+      <p class="cta-row">
+        <a class="btn primary" href={withBase('/docs/getting-started/')}>Compile your own</a>
+        <a class="btn" href={withBase('/docs/examples/')}>Read the walkthroughs</a>
+      </p>
+    </section>
+  </main>
+
+  <style>
+    main { max-width: 74rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
+
+    .hero { padding: 3.5rem 0 2.5rem; max-width: 44rem; }
+    .eyebrow { font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 0.6rem; }
+    .hero h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 1rem; font-weight: 780; }
+    .grad { background: linear-gradient(100deg, var(--primary), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .sub { font-size: 1.08rem; color: var(--text-muted); margin: 0 0 1.6rem; }
+    .strip { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+    .strip b { color: var(--text); font-size: 1.05rem; font-weight: 700; margin-right: 0.15rem; }
+
+    .band { padding: 2.8rem 0; border-top: 1px solid var(--border-soft); }
+    .band.alt { background: var(--bg-soft); border-radius: 18px; padding: 2.5rem clamp(1rem, 3vw, 2rem); margin: 2.8rem 0; border-top: none; }
+    .band h2 { font-size: 1.6rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; font-weight: 700; }
+    .band-sub { color: var(--text-muted); max-width: 46rem; margin: 0 0 1.8rem; }
+
+    /* ---------- design system cards ---------- */
+    .systems { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1.1rem; }
+    .system { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 1.2rem 1.3rem 1.3rem; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+    .sys-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+    .sys-kicker { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0; }
+    .system h3 { margin: 0.15rem 0 0; font-size: 1.3rem; letter-spacing: -0.02em; }
+    .modes { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.7rem; color: var(--text-muted); border: 1px solid var(--border); border-radius: 99px; padding: 0.1rem 0.55rem; white-space: nowrap; }
+    .sys-blurb { font-size: 0.9rem; color: var(--text-muted); margin: 0.7rem 0 1rem; }
+
+    /* The preview: a miniature interface drawn entirely in the example's own
+       compiled values. Every custom property here is --d-*, never the site's
+       own --bg/--text/--primary, so a design system's colours cannot leak out
+       of the card and repaint the page around it. */
+    .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .preview { margin: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--d-page); font-family: var(--d-font); }
+    .pv-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--d-border); }
+    .pv-dot { width: 0.55rem; height: 0.55rem; border-radius: 99px; background: var(--d-primary); flex-shrink: 0; }
+    .pv-name { font-size: 0.68rem; font-weight: 600; color: var(--d-text); }
+    .pv-body { padding: 0.6rem; }
+    .pv-card { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: var(--d-radius-card); padding: 0.6rem; }
+    .pv-h { font-size: 0.7rem; font-weight: 700; color: var(--d-text); margin-bottom: 0.4rem; }
+    .pv-line { height: 0.3rem; border-radius: 99px; background: var(--d-muted); opacity: 0.35; margin-bottom: 0.25rem; }
+    .pv-line.short { width: 62%; }
+    .pv-actions { display: flex; gap: 0.35rem; margin-top: 0.6rem; }
+    .pv-btn { font-size: 0.62rem; font-weight: 600; padding: 0.22rem 0.5rem; border-radius: var(--d-radius); background: var(--d-primary); color: var(--d-on-primary); }
+    .pv-btn.ghost { background: transparent; color: var(--d-muted); border: 1px solid var(--d-border); }
+    .pv-dots { display: flex; gap: 0.25rem; margin-top: 0.55rem; }
+    .pv-dots i { width: 0.42rem; height: 0.42rem; border-radius: 99px; }
+    .pv-dots i.ok { background: var(--d-success); }
+    .pv-dots i.warn { background: var(--d-warning); }
+    .pv-dots i.danger { background: var(--d-danger); }
+    .preview figcaption { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); background: var(--bg-soft); border-top: 1px solid var(--border-soft); padding: 0.2rem 0.6rem; }
+    .preview.empty { display: flex; flex-direction: column; justify-content: space-between; background: repeating-linear-gradient(-45deg, var(--bg-soft), var(--bg-soft) 6px, transparent 6px, transparent 12px); }
+    .preview.empty p { font-size: 0.68rem; color: var(--text-muted); margin: 0; padding: 0.6rem; font-weight: 600; }
+    .preview.empty p span { display: block; font-weight: 400; margin-top: 0.15rem; }
+
+    .sys-look { font-size: 0.85rem; color: var(--text-muted); margin: 0.9rem 0 0.8rem; }
+    .sys-look b { color: var(--text); }
+    .sys-links { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: auto; }
+    .chip { font-size: 0.78rem; border: 1px solid var(--border); border-radius: 8px; padding: 0.2rem 0.55rem; color: var(--text); background: var(--bg-soft); }
+    .chip:hover { text-decoration: none; border-color: var(--primary); color: var(--primary-strong); }
+    .sys-note { font-size: 0.72rem; color: var(--text-muted); margin: 0.9rem 0 0; padding-top: 0.7rem; border-top: 1px solid var(--border-soft); }
+
+    /* ---------- the matrix ---------- */
+    .matrix-scroll { overflow-x: auto; }
+    .matrix { border-collapse: separate; border-spacing: 0.35rem; width: 100%; min-width: 40rem; }
+    .matrix th { text-align: left; font-weight: 600; vertical-align: bottom; padding: 0 0.3rem 0.4rem; }
+    .matrix thead th { font-size: 0.95rem; }
+    .mx-ex { display: block; letter-spacing: -0.01em; }
+    .mx-kicker { display: block; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; }
+    .matrix tbody th { width: 11rem; vertical-align: middle; }
+    .matrix tbody th a { font-weight: 650; font-size: 0.92rem; }
+    .mx-stack { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 500; }
+    .cell {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem 0.6rem;
+      background: var(--surface); color: var(--text-muted); font-size: 0.75rem; font-weight: 600;
+      transition: border-color 0.12s, transform 0.12s;
+    }
+    .cell:hover { text-decoration: none; border-color: var(--primary); color: var(--primary-strong); transform: translateY(-1px); }
+    .cell-sw { display: flex; gap: 2px; }
+    .cell-sw i { width: 0.85rem; height: 1.1rem; border-radius: 3px; border: 1px solid color-mix(in oklch, var(--text) 12%, transparent); }
+    .cell.missing { display: block; text-align: center; opacity: 0.4; border-style: dashed; }
+    .matrix-foot { font-size: 0.82rem; color: var(--text-muted); margin: 1.2rem 0 0; }
+    .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+    /* ---------- reading guide + local ---------- */
+    .reads { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+    .read { border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: 0 12px 12px 0; background: var(--surface); padding: 0.9rem 1.1rem; }
+    .read h3 { margin: 0 0 0.35rem; font-size: 1rem; font-weight: 650; }
+    .read p { margin: 0; font-size: 0.87rem; color: var(--text-muted); }
+    .read code { font-size: 0.82em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 5px; }
+
+    pre { margin: 0 0 1.2rem; padding: 1rem 1.2rem; border-radius: 12px; background: var(--terminal-bg); color: var(--terminal-text); font-size: 0.82rem; line-height: 1.7; overflow-x: auto; }
+    .ports summary { cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); }
+    .ports-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .ports-grid h4 { margin: 0 0 0.4rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+    .ports-grid ul { list-style: none; margin: 0; padding: 0; }
+    .ports-grid li { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.74rem; padding: 0.12rem 0; font-family: 'JetBrains Mono Variable', monospace; }
+    .ports-grid li span { color: var(--text-muted); }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 1.8rem 0 0; }
+    .btn { display: inline-block; padding: 0.6rem 1.2rem; border-radius: 10px; border: 1px solid var(--border); font-weight: 600; font-size: 0.92rem; color: var(--text); }
+    .btn:hover { text-decoration: none; border-color: var(--primary); }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn.primary:hover { background: var(--primary-strong); }
+
+    @media (max-width: 720px) {
+      .previews { grid-template-columns: 1fr; }
+    }
+  </style>
+</Base>

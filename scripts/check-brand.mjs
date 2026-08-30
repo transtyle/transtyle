@@ -226,11 +226,17 @@ for (const e of readdirSync(examplesDir)) {
       .filter(existsSync)
       .map((f) => readFileSync(f, 'utf8'));
     const sbMain = join(dir, '.storybook', 'main.ts');
-    const linked = html.some((t) => t.includes('href="/favicon.svg"'));
+    // Relative, not root-absolute. The demos are published under
+    // /demo/<example>/<target>/ (scripts/assemble-demos.mjs), where
+    // `href="/favicon.svg"` asks the *site* root for a file that lives in the
+    // demo's own directory. Vite happened to rewrite it and Angular did not,
+    // so the Angular demos shipped that 404 until the demos left localhost —
+    // where every one of them is served from a root and it cannot be seen.
+    const linked = html.some((t) => t.includes('href="favicon.svg"'));
     const staticDir = existsSync(sbMain) && readFileSync(sbMain, 'utf8').includes("staticDirs: ['../public']");
     if (!linked && !staticDir) {
       fail(
-        `${where} does not use its public/favicon.svg — link it from index.html (\`<link rel="icon" type="image/svg+xml" href="/favicon.svg">\`) or, for Storybook, serve it with \`staticDirs: ['../public']\``,
+        `${where} does not use its public/favicon.svg — link it from index.html (\`<link rel="icon" type="image/svg+xml" href="favicon.svg">\`, relative so it survives being served from a subdirectory) or, for Storybook, serve it with \`staticDirs: ['../public']\``,
       );
     }
   }
@@ -240,9 +246,9 @@ for (const e of readdirSync(examplesDir)) {
   // generated theme carries `brandImage` through from `options.brand`.
   const config = JSON.parse(read(`examples/${e}/transtyle.config.json`));
   const brand = config.targets?.storybook?.options?.brand;
-  if (existsSync(join(demoDir, 'storybook')) && brand?.image !== '/logo.png') {
+  if (existsSync(join(demoDir, 'storybook')) && brand?.image !== 'logo.png') {
     fail(
-      `examples/${e}/transtyle.config.json: targets.storybook.options.brand.image should be "/logo.png" — the generated theme is what puts the lockup in Storybook's sidebar, and public/logo.png is generated for it`,
+      `examples/${e}/transtyle.config.json: targets.storybook.options.brand.image should be "logo.png" — the generated theme is what puts the lockup in Storybook's sidebar, public/logo.png is generated for it, and the path is relative so it also resolves at /demo/${e}/storybook/`,
     );
   }
 }

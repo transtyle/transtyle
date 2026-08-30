@@ -6,6 +6,11 @@ order: 12
 
 # Storybook exporter
 
+<div class="callout live-demos">
+  <span class="callout-title">See it live</span>
+  <p><a href="/demo/acme/storybook/">Acme</a> · <a href="/demo/cathode/storybook/">Cathode</a> · <a href="/demo/govuk/storybook/">GOV.UK</a> · <a href="/demo/carbon/storybook/">Carbon</a> — one page, four design systems, compiled to Storybook. <a href="/demo/">All 32 demos →</a></p>
+</div>
+
 Storybook isn't a UI framework — it's the tool that documents your other targets. This exporter themes **Storybook itself** (Storybook 8–9) and wires your sibling targets into its preview. All emitted files are **additive fragments**: you import them from your own `.storybook/` config; we never overwrite user files.
 
 <!-- measured: acme.storybook.rows = 32 -->

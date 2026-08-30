@@ -49,7 +49,7 @@
         "previewTargets": ["shadcn", "daisyui"],
         "brand": {
           "url": "https://transtyle.github.io/transtyle/",
-          "image": "/logo.png"
+          "image": "logo.png"
         }
       }
     },

@@ -95,6 +95,7 @@ const imageUrl = new URL(withBase(image), site).href;
     </a>
     <nav class="site-nav" aria-label="Site">
       <a href={withBase('/docs/')} class={current === 'docs' ? 'active' : ''} aria-current={current === 'docs' ? 'page' : undefined}>Docs</a>
+      <a href={withBase('/demo/')} class={current === 'demo' ? 'active' : ''} aria-current={current === 'demo' ? 'page' : undefined}>Demos</a>
       <a href={withBase('/blog/')} class={current === 'blog' ? 'active' : ''} aria-current={current === 'blog' ? 'page' : undefined}>Blog</a>
       <a href={withBase('/docs/ai-agents/')}>For AI agents</a>
       <a href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
@@ -113,6 +114,7 @@ const imageUrl = new URL(withBase(image), site).href;
     </div>
     <div class="foot-links">
       <a href={withBase('/docs/')}>Documentation</a>
+      <a href={withBase('/demo/')}>Demos</a>
       <a href={withBase('/blog/')}>Blog</a>
       <a href={withBase('/blog/rss.xml')}>RSS</a>
       <a href={withBase('/docs/ai-agents/')}>AI agents</a>

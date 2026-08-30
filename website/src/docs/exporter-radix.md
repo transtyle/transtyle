@@ -6,6 +6,11 @@ order: 14
 
 # Radix Colors / Themes exporter
 
+<div class="callout live-demos">
+  <span class="callout-title">See it live</span>
+  <p><a href="/demo/acme/radix/">Acme</a> · <a href="/demo/cathode/radix/">Cathode</a> · <a href="/demo/govuk/radix/">GOV.UK</a> · <a href="/demo/carbon/radix/">Carbon</a> — one page, four design systems, compiled to Radix Themes. <a href="/demo/">All 32 demos →</a></p>
+</div>
+
 Radix's 12-step-per-color model is, cell for cell, [the role grid](/docs/language/#color-roles-the-role-grid) — numbered instead of named. That makes this exporter the grid's own acceptance test: only 2 of 12 steps need a fresh mix (steps 2 and 6), everything else is a direct grid cell.
 
 <!-- measured: acme.radix.decls = 450 -->

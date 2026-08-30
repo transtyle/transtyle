@@ -12,3 +12,7 @@ website/.astro/
 
 # Social cards are rendered on demand (npm run gen:social), never committed.
 brand/social/
+
+# Staged demo builds (npm run demos:build) — 33 MB of third-party bundles,
+# rebuilt from the examples on every deploy.
+demo-dist/

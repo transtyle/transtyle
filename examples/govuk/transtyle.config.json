@@ -26,7 +26,7 @@
       "output": "dist/storybook",
       "options": {
         "previewTargets": ["shadcn", "daisyui"],
-        "brand": { "url": "https://transtyle.github.io/transtyle/", "image": "/logo.png" }
+        "brand": { "url": "https://transtyle.github.io/transtyle/", "image": "logo.png" }
       }
     },
     "css-variables": { "output": "dist/css-variables" },

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "predev": "transtyle build --cwd ../..",
-    "dev": "storybook dev -p 6101",
+    "dev": "storybook dev -p 6301",
     "prebuild": "transtyle build --cwd ../..",
     "build": "storybook build"
   },
