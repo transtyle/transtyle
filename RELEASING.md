@@ -143,6 +143,18 @@ npx changeset pre enter alpha
 
 ### Cutting each alpha release
 
+0. **Audit the history for anything that should not be public.**
+
+   ```bash
+   npm run check:secrets
+   ```
+
+   Reads every blob that has ever existed in any ref — not the working tree — plus every commit message and author identity, and matches known credential shapes and personal-data patterns. Its output is redacted, so a failing run is safe to paste into an issue.
+
+   Do this **before** publishing, not after: a tarball on npm cannot be unpublished after 72 hours, and a credential in git history is not fixed by deleting the file. If it finds something high-severity, **rotate the credential first** and only then decide whether rewriting history is worth it.
+
+   A clean run is evidence, not proof — it cannot recognise a secret with no recognisable shape.
+
 1. **Version the packages.**
 
    ```bash

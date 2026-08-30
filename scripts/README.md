@@ -1,7 +1,8 @@
 # The checkers
 
-Nineteen scripts, one job each — seventeen chained by `npm run check:all` and
-run individually by CI, plus two that guard a release and a deploy instead.
+Twenty scripts, one job each — seventeen chained by `npm run check:all` and
+run individually by CI, plus three that guard a release, a deploy, and the
+history itself.
 Every one exists because something real broke or could have: they are not a
 test suite grown for coverage, they are a list of mistakes this project has
 already made once.
@@ -27,8 +28,10 @@ already made once.
 | `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, `files`, `bin`      |
 | `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex        |
 | `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                     |
+| `check-secrets.mjs`           | No credential or personal data in any blob, commit message or identity, ever                    |
 
-The last two are not in `check:all`, because neither grades a working tree.
+The last three are not in `check:all`, because none of them grades a working
+tree.
 `check-release-tag` runs in the release workflow: on an ordinary tree it is
 _supposed_ to refuse, so chaining it into the everyday suite would make the
 suite red for being ordinary. `check-site-links` is a **post-build
@@ -44,6 +47,14 @@ emitted files is the whole point: a link reaches the page by five different
 routes (`withBase()`, the Sätteri plugin, its raw-node pass, the markdown text
 rewrite, absolute URLs assembled by hand in the sitemap and feed), and a
 source-level rule would have to know all five. The output knows none of them.
+
+`check-secrets` audits every blob that has ever existed in any ref, which does
+not change when you edit a file — running it on every `check:all` would re-scan
+167 commits to learn nothing. It belongs before a release, or after anything
+unusual, and RELEASING.md says so. It also self-tests: each detector is checked
+against a synthetic positive before the scan, because a scanner whose regexes
+quietly stopped matching reports "clean" forever and reads exactly like a repo
+with nothing to find.
 
 `gen-schemas.mjs` and `sync-latest-tag.mjs` are not checkers — the first
 renders the published schemas that `check-schemas.mjs` then proves are
