@@ -382,6 +382,11 @@ const panes = [
 
       // ---------- talking to the demos ----------
 
+      // How far down the comparison is, 0–1. Kept here rather than read off a
+      // frame on demand, because the pane that would be asked is sometimes the
+      // one that has just been replaced and is back at the top.
+      var shared = 0;
+
       function post(side, message) {
         var win = panes[side].frame.contentWindow;
         if (win) win.postMessage(message, location.origin);
@@ -406,7 +411,17 @@ const panes = [
         if (msg.type === 'ready') {
           panes[side].ready = true;
           pushMode(side);
-        } else if (msg.type === 'scroll' && sync.checked) {
+          // A pane that has just been swapped for another design system comes
+          // up at the top while the pane beside it is halfway down the page.
+          // Putting it where the reader already is makes changing one side a
+          // continuation of the comparison rather than a restart of it — the
+          // same thing the switcher's place marker does for a full navigation.
+          if (sync.checked && shared > 0) {
+            post(side, { source: 'transtyle-compare', type: 'scroll-to', ratio: shared });
+          }
+        } else if (msg.type === 'scroll') {
+          shared = msg.ratio;
+          if (!sync.checked) return;
           // Relayed as a ratio, not a pixel offset: the same page is a
           // different height in Bootstrap and in Radix, and matching pixels
           // would drift a screenful apart by the bottom of a long comparison.

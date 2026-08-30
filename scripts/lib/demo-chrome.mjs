@@ -202,7 +202,11 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
       var ex = kind === 'example' ? item.id : D.example;
       var tg = kind === 'example' ? D.target : item.id;
       var current = item.id === (kind === 'example' ? D.example : D.target);
+      // \`data-href\` is the destination without a place marker, kept so the
+      // marker can be recomputed rather than accumulated; \`data-target\` is
+      // read to decide whether the destination can honour one at all.
       return '<a class="opt" href="' + demo(ex, tg) + '"' +
+        ' data-href="' + demo(ex, tg) + '" data-target="' + tg + '"' +
         (current ? ' aria-current="page"' : '') +
         (has(ex, tg) ? '' : ' data-missing') + '>' + esc(item.title) +
         (item.kicker ? '<small>' + esc(item.kicker) + '</small>' : '') + '</a>';
@@ -249,15 +253,111 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
     panel.hidden = !yes;
     pill.setAttribute('aria-expanded', String(yes));
     wrap.querySelector('.caret').textContent = yes ? '▼' : '▲';
+    // Late enough to be current, early enough that a middle-click or a
+    // copied link carries the place too — not only a plain left-click.
+    if (yes) markPlace();
     if (yes) panel.querySelector('.close').focus();
   };
   pill.addEventListener('click', function () { open(panel.hidden); });
+  // Recomputed once more on the way out: the panel can sit open while the page
+  // behind it is scrolled.
+  wrap.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('.opt[data-href]')) markPlace();
+  }, true);
   wrap.querySelector('.close').addEventListener('click', function () { open(false); pill.focus(); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !panel.hidden) { open(false); pill.focus(); }
   });
 
   if (!framed) document.body.appendChild(host);
+
+  // ---------- keeping your place across a switch ----------
+
+  /**
+   * Switching design systems means comparing the *same part* of two pages, and
+   * a switcher that lands you at the top makes you scroll back down every time.
+   *
+   * What travels is a **heading**, not a scroll offset. Within a target the
+   * demos are byte-identical, so "3 · Form" exists in all four and its pixel
+   * offset does not — Cathode's monospace type and radius 0 make the same page
+   * a different height, and Bootstrap's page is a different height again from
+   * Radix's. A slug of the heading text is the only anchor that survives both
+   * axes, and it survives the cross-target move too, because the fake page is
+   * the same fake page with the same numbered sections in eight idioms.
+   *
+   * The offset rides along as a fallback for the two demos that are not that
+   * page at all — the ECharts dashboard and the css-variables reference dump —
+   * where landing proportionally is at least closer than landing at the top.
+   *
+   * It travels in the hash because that is the one part of a URL no demo's own
+   * routing reads, and it is cleared as soon as it is spent, so a reload or a
+   * copied link is the plain page again.
+   */
+  var PLACE = /^#transtyle=([0-9.]+)~(.*)$/;
+  var HEADINGS = 'h2, h3';
+  var maxScroll = function () {
+    return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  };
+  var slugOf = function (text) {
+    return String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  };
+
+  /** The heading the reader is under, as a slug, plus how far down they are. */
+  var placeHere = function () {
+    var max = maxScroll();
+    var ratio = max ? window.scrollY / max : 0;
+    var nodes = document.querySelectorAll(HEADINGS);
+    var slug = '';
+    for (var i = 0; i < nodes.length; i++) {
+      // The last heading at or above the fold line is the section you are in.
+      // 96px, not 0: a heading a hair below the top edge is still the one you
+      // are reading, and the demos' own chrome bar sits in that band.
+      if (nodes[i].getBoundingClientRect().top <= 96) slug = slugOf(nodes[i].textContent || '');
+    }
+    return !slug && ratio < 0.01 ? '' : '#transtyle=' + ratio.toFixed(3) + '~' + slug;
+  };
+
+  var markPlace = function () {
+    var place = placeHere();
+    var links = wrap.querySelectorAll('.opt[data-href]');
+    for (var i = 0; i < links.length; i++) {
+      // Storybook is excluded rather than merely unhelpful: its demo is
+      // Storybook's own chrome, which has no section to land on, and its
+      // manager owns the URL.
+      var carry = links[i].getAttribute('data-target') === 'storybook' ? '' : place;
+      links[i].setAttribute('href', links[i].getAttribute('data-href') + carry);
+    }
+  };
+
+  (function restorePlace() {
+    var m = PLACE.exec(location.hash);
+    if (!m) return;
+    var ratio = parseFloat(m[1]) || 0;
+    var slug = m[2];
+    // Spent immediately: a place marker left in the URL would re-fire on
+    // reload and turn up in anything the visitor copies.
+    history.replaceState(null, '', location.pathname + location.search);
+
+    var tries = 0;
+    (function attempt() {
+      var nodes = document.querySelectorAll(HEADINGS);
+      for (var i = 0; i < nodes.length; i++) {
+        if (slug && slugOf(nodes[i].textContent || '') === slug) {
+          // 'instant' for the reason the compare view needs it: Bootstrap's
+          // reboot sets :root { scroll-behavior: smooth }, and 'auto' defers
+          // to that — an animation the reader did not ask for, over a page
+          // that is still settling.
+          nodes[i].scrollIntoView({ block: 'start', behavior: 'instant' });
+          window.scrollBy({ top: -12, behavior: 'instant' });
+          return;
+        }
+      }
+      // React, Angular and the css-variables demo all build their headings
+      // after this script runs, so an early miss is not a miss yet.
+      if (tries++ < 40) return setTimeout(attempt, 50);
+      if (ratio) window.scrollTo({ top: Math.round(ratio * maxScroll()), behavior: 'instant' });
+    })();
+  })();
 
   // ---------- the compare view's bridge ----------
 
@@ -290,9 +390,6 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
 
   if (framed) {
     var suppressUntil = 0;
-    var maxScroll = function () {
-      return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    };
     // Nothing here is private — a demo id and a scroll ratio — and a framed
     // page cannot read its embedder's origin to name it, so '*' is the honest
     // target rather than a guess. The compare page checks the origin on its side.

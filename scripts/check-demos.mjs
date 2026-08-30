@@ -27,6 +27,10 @@
  *   7. compare view   — /compare/ exists and is reachable, the injected bridge
  *                       it drives the demos with is still there, and every demo
  *                       still carries the mode toggle that bridge presses.
+ *   8. chrome conventions — the two things the injected chrome reads out of a
+ *                       demo rather than being told: the "☀ light" mode toggle
+ *                       it presses, and the numbered section headings it carries
+ *                       the reader's place by.
  *
  * Run: node scripts/check-demos.mjs (also: npm run check:demos, part of
  * check:all). Exits 1 with a list of violations.
@@ -196,6 +200,31 @@ for (const demo of demos) {
       `examples/${demo.example}/demo/${demo.target}/ has no "☀ light" mode toggle — the compare ` +
         "view finds each demo's toggle by that label (scripts/lib/demo-chrome.mjs); without it that " +
         'pane stops following the shared mode control',
+    );
+  }
+}
+
+// The other convention the chrome rides on: the switcher carries the reader's
+// place across a jump by naming the *heading* they were under, because within a
+// target the demos are byte-identical and their pixel offsets are not — Cathode
+// is a different height from Acme, and Bootstrap from Radix. Numbered section
+// headings are what makes that anchor work across targets too, so the six
+// Nimbus Console projects have to keep them. The two demos that render a
+// different page (the ECharts dashboard, the css-variables dump) fall back to a
+// proportional offset and are exempt.
+const CONSOLE_EXEMPT = new Set(['storybook', 'echarts', 'css-variables']);
+for (const demo of demos) {
+  if (CONSOLE_EXEMPT.has(demo.target)) continue;
+  const text = sourceFiles(demo.dir)
+    .map((file) => readFileSync(file, 'utf8'))
+    .join('\n');
+  const missing = ['3 · Form', '5 · Table'].filter((heading) => !text.includes(heading));
+  if (missing.length) {
+    fail(
+      `examples/${demo.example}/demo/${demo.target}/ no longer has the ${missing.join(' / ')} ` +
+        'section heading(s) — the switcher carries the reader\'s place by heading name ' +
+        '(scripts/lib/demo-chrome.mjs), so a renamed section drops them back at the top of the ' +
+        'next demo instead',
     );
   }
 }

@@ -74,6 +74,27 @@ while naming the one it is in — which is the parity rule above. Hosting concer
   and relay its scroll position. A framed demo gets the bridge and not the switcher — inside a
   compare pane the pill is redundant and in the way.
 
+### Keeping your place across a switch
+
+Comparing two design systems means comparing the _same part_ of two pages, so a switcher that lands
+the reader at the top makes them scroll back down every time. What the switcher carries across a jump
+is a **heading**, not a scroll offset: within a target the four demos are byte-identical and their
+pixel offsets are not — Cathode's monospace type and radius 0 make the same page a different height,
+and Bootstrap's page is a different height again from Radix's. A slug of the heading text
+(`3 · Form` → `3-form`) survives both axes, which is why the six Nimbus Console projects keep
+**numbered section headings** and `check:demos` says so.
+
+It travels in the hash (`#transtyle=<ratio>~<heading-slug>`), because that is the one part of a URL
+no demo's own routing reads, and it is cleared with `history.replaceState` the moment it is spent —
+a place marker left in the bar would re-fire on reload and turn up in anything the visitor copies.
+The ratio rides along as the fallback for the two demos that are not that page at all (the ECharts
+dashboard, the css-variables dump), where landing proportionally is at least closer than landing at
+the top; Storybook gets no marker, having no section to land on and owning its own URL.
+
+The compare view does the same thing by its own route: when one pane is swapped for another design
+system, the new frame is told the shared scroll position as it announces itself, so changing a side
+continues the comparison instead of restarting it.
+
 ### The compare view (`/compare/`, website/src/pages/compare/index.astro)
 
 Two demos in split iframes, sharing one mode control and one scroll position; the pair and the mode

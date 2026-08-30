@@ -61,7 +61,7 @@ current model docs before assigning it anything rather than guessing.
 | [BL-09](#bl-09) | Hostile-adoption round two                                | Evidence  | Med   | M      | ready                | Opus          |
 | [BL-10](#bl-10) | Compiled figures on the exporter docs pages               | Docs      | Med   | M      | ready                | Sonnet        |
 | [BL-11](#bl-11) | A social card for the blog post                           | Reach     | Med   | S      | ready                | Sonnet        |
-| [BL-12](#bl-12) | Demo switcher keeps your place                            | Site      | Med   | S      | ready                | Sonnet        |
+| [BL-12](#bl-12) | Demo switcher keeps your place                            | Site      | Med   | S      | done                 | Sonnet        |
 | [BL-13](#bl-13) | `derivation.overrides` — specced, unimplemented           | Compiler  | Med   | M      | idea                 | Opus          |
 | [BL-14](#bl-14) | Option-scale generator (one colour → a ramp)              | Compiler  | Med   | M      | idea                 | Opus          |
 | [BL-15](#bl-15) | APCA as an alternate contrast standard                    | Compiler  | Med   | M      | idea                 | Opus          |
@@ -233,7 +233,7 @@ as one.
   mode its tokens do not define falls through to the _framework's_ dark defaults and quietly stops
   showing compiled output. GOV.UK's pane says so instead.
 
-Documented in [specs/demo-app.md](specs/demo-app.md#the-hosted-exhibit). BL-12 still makes it better.
+Documented in [specs/demo-app.md](specs/demo-app.md#the-hosted-exhibit). [BL-12](#bl-12) made it better, as predicted: a pane swapped mid-comparison now keeps its place.
 
 ### BL-09
 
@@ -277,13 +277,33 @@ and pointing the post's frontmatter at it.
 
 ### BL-12
 
-**Demo switcher keeps your place** · Site · Med · S · ready · Sonnet
+**Demo switcher keeps your place** · Site · Med · S · **done** 2026-08-30 · Opus
 
 **What.** The corner switcher jumps to the top of the destination demo. Preserve scroll position, or
 better, the section, across a switch.
 
 **Why.** Comparing two systems means comparing the _same part_ of two pages, and today that means
 scrolling back down every time.
+
+**Shipped** as the "or better" version: what travels is the **heading**, not the offset. Scroll
+position is the wrong thing to preserve here and the item's own hedge was right — within a target the
+four demos are byte-identical and their heights are not (Cathode's monospace type and radius 0 make
+the same page shorter than Acme's; Bootstrap's is a different height again from Radix's), so a
+matched pixel offset lands somewhere else in the page. A slug of the heading text (`3 · Form` →
+`3-form`) survives both axes, including the cross-target move, because the fake page is the same
+fake page in eight idioms.
+
+Carried in the hash (`#transtyle=<ratio>~<heading-slug>`) — the one part of a URL no demo's own
+routing reads — and cleared with `replaceState` the moment it is spent, so it never survives into a
+reload or a copied link. The ratio rides along as the fallback for the two demos that render a
+different page (the ECharts dashboard, the css-variables dump); Storybook gets no marker at all,
+having no section to land on. `check:demos` now guards the numbered section headings the anchor
+depends on, alongside the mode-toggle label from [BL-08](#bl-08).
+
+[/compare/](#bl-08) got the same idea by its own route: a pane swapped for another design system is
+told the shared scroll position as it announces itself, so changing one side continues the comparison
+rather than restarting it. Documented in
+[specs/demo-app.md](specs/demo-app.md#keeping-your-place-across-a-switch).
 
 ### BL-13
 
