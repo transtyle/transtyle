@@ -15,5 +15,12 @@
     "modes": ["color-scheme"],
     "capabilities": ["build"]
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git",
+    "directory": "packages/exporter-shadcn"
+  },
+  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

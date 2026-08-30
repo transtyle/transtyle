@@ -18,7 +18,7 @@ Also removed: PrimeNG's hardcoded `mask.transitionDuration: '0.3s'`, now `durati
 
 While grepping `components.js`, `grep` reported **"Binary file matches"**. The file contained two NUL bytes, sitting inside a template literal (`` `${sel}\0${cssVar}` `` — a Set key). JavaScript accepts that silently, which is why `check:all` had passed 59/59 across three commits and the emitted output was always correct.
 
-The damage was to reviewability, not behavior: git had committed the file as `Bin 0 -> 10525 bytes` in [159d5a5](https://github.com/julien-deramond/transtyle/commit/159d5a5) — **AL1.4's principal new file landed with no reviewable diff**, and would have broken `git blame`, PR review, and GitHub rendering from then on.
+The damage was to reviewability, not behavior: git had committed the file as `Bin 0 -> 10525 bytes` in [159d5a5](https://github.com/transtyle/transtyle/commit/159d5a5) — **AL1.4's principal new file landed with no reviewable diff**, and would have broken `git blame`, PR review, and GitHub rendering from then on.
 
 Both bytes replaced with the spaces they should have been; the file is UTF-8 text again and diffs normally. Scanned every source file touched during AL1/AL2 — no others affected. Root cause is most likely a shell heredoc mangling during the AL1.4 write; the lasting mitigation is that this file is now plain text under version control, so any recurrence shows up immediately as a binary diff in review.
 

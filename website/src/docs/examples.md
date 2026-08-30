@@ -72,7 +72,7 @@ What to study:
 - **A licensing limitation, not a compiler one.** GOV.UK's real typeface (GDS Transport) is licensed to crown services only; the demo projects render in GOV.UK's own documented `arial` fallback instead.
 - **Radius 0 is authentic here too** — but for a different reason than Cathode: it's GOV.UK's actual, deliberate flat aesthetic, not an invented quirk.
 
-Full reasoning for every binding decision: [`docs/findings/govuk-adoption.md`](https://github.com/julien-deramond/transtyle/blob/main/docs/findings/govuk-adoption.md).
+Full reasoning for every binding decision: [`docs/findings/govuk-adoption.md`](https://github.com/transtyle/transtyle/blob/main/docs/findings/govuk-adoption.md).
 
 ## Carbon — a real design system
 
@@ -90,7 +90,7 @@ What to study:
 - **A genuinely open type system.** IBM Plex Sans/Mono are open-source and load for real in the demo projects — unlike GOV.UK's licensed font.
 - **A flagged, not guessed, gap.** `secondary` and `warning` fall back to their light values in dark mode, because Carbon's G100 `$button-secondary` and `$support-warning` weren't independently re-verified against the live source for this pass — the honest alternative to inventing a plausible-looking hex. The build says so out loud: `transtyle check` prints an informational `TST1204` for exactly those two roles and `neutral` — and stays quiet about the nine colours whose dark values are real, because the test is the resolved colour rather than where it was written.
 
-Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/julien-deramond/transtyle/blob/main/docs/findings/carbon-adoption.md).
+Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/transtyle/transtyle/blob/main/docs/findings/carbon-adoption.md).
 
 ## See the themes on real frameworks
 

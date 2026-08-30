@@ -5,5 +5,12 @@
   "type": "module",
   "main": "./src/index.js",
   "exports": { ".": "./src/index.js" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git",
+    "directory": "packages/ir"
+  },
+  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

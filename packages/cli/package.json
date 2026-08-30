@@ -15,5 +15,12 @@
     "@transtyle/exporter-radix": "*",
     "@transtyle/exporter-primeng": "*"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

@@ -6,5 +6,12 @@
   "main": "./src/index.js",
   "exports": { ".": "./src/index.js" },
   "dependencies": { "@transtyle/ir": "*" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

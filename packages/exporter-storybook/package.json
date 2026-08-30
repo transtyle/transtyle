@@ -15,5 +15,12 @@
     "modes": ["color-scheme"],
     "capabilities": ["build", "compose"]
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git",
+    "directory": "packages/exporter-storybook"
+  },
+  "homepage": "https://github.com/transtyle/transtyle#readme",
+  "bugs": "https://github.com/transtyle/transtyle/issues",
   "license": "MIT"
 }

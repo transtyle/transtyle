@@ -49,6 +49,10 @@
     "check:color": "node scripts/check-color.mjs",
     "check:doc-numbers": "node scripts/check-doc-numbers.mjs"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git"
+  },
   "license": "MIT",
   "devDependencies": {
     "prettier": "3.9.6"
