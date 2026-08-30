@@ -1,5 +1,25 @@
 # @transtyle/exporter-primeng
 
+## 0.1.0-alpha.3
+
+### Patch Changes
+
+- 3d71e2f: Ship `CHANGELOG.md` in every published package.
+
+  npm always includes `README` and `LICENSE` regardless of the `files` allowlist, but not the changelog — so the first three alphas published with no version history at all, on the one page a stranger reads to decide whether upgrading is safe. Changesets has been writing the file since `0.1.0-alpha.0`; only the allowlist was keeping it in the repo.
+
+  `check:manifests` now requires it, so a package added later cannot quietly ship without one.
+
+- af10209: Ship the MIT licence text in every published package.
+
+  npm adds a `LICENSE` file to a tarball only when one sits in the package directory. Only the monorepo root had one, so the first three alphas published twelve packages that each declared `"license": "MIT"` without carrying the text those terms ask to be distributed with them.
+
+  Each package now holds a copy, and `check:manifests` requires it to be byte-identical to the root one — twelve copies of a licence being exactly the sort of thing that drifts a copyright year with nobody noticing.
+
+- Updated dependencies [3d71e2f]
+- Updated dependencies [af10209]
+  - @transtyle/ir@0.1.0-alpha.3
+
 ## 0.1.0-alpha.2
 
 ### Patch Changes

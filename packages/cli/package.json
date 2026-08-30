@@ -1,21 +1,21 @@
 {
   "name": "@transtyle/cli",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Transtyle CLI — compile a design system to native framework themes.",
   "type": "module",
   "bin": {
     "transtyle": "src/main.js"
   },
   "dependencies": {
-    "@transtyle/core": "0.1.0-alpha.2",
-    "@transtyle/exporter-shadcn": "0.1.0-alpha.2",
-    "@transtyle/exporter-echarts": "0.1.0-alpha.2",
-    "@transtyle/exporter-daisyui": "0.1.0-alpha.2",
-    "@transtyle/exporter-bootstrap": "0.1.0-alpha.2",
-    "@transtyle/exporter-storybook": "0.1.0-alpha.2",
-    "@transtyle/exporter-css-variables": "0.1.0-alpha.2",
-    "@transtyle/exporter-radix": "0.1.0-alpha.2",
-    "@transtyle/exporter-primeng": "0.1.0-alpha.2"
+    "@transtyle/core": "0.1.0-alpha.3",
+    "@transtyle/exporter-shadcn": "0.1.0-alpha.3",
+    "@transtyle/exporter-echarts": "0.1.0-alpha.3",
+    "@transtyle/exporter-daisyui": "0.1.0-alpha.3",
+    "@transtyle/exporter-bootstrap": "0.1.0-alpha.3",
+    "@transtyle/exporter-storybook": "0.1.0-alpha.3",
+    "@transtyle/exporter-css-variables": "0.1.0-alpha.3",
+    "@transtyle/exporter-radix": "0.1.0-alpha.3",
+    "@transtyle/exporter-primeng": "0.1.0-alpha.3"
   },
   "files": [
     "src",

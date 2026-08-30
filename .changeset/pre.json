@@ -51,6 +51,8 @@
   "changesets": [
     "cli-bin-path",
     "first-public-alpha",
-    "package-readmes"
+    "package-readmes",
+    "ship-changelogs",
+    "ship-license"
   ]
 }

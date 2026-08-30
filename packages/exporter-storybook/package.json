@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/exporter-storybook",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Transtyle exporter for Storybook chrome theming and preview composition (SB 8–9).",
   "type": "module",
   "main": "./src/index.js",
@@ -8,7 +8,7 @@
     ".": "./src/index.js"
   },
   "dependencies": {
-    "@transtyle/ir": "0.1.0-alpha.2"
+    "@transtyle/ir": "0.1.0-alpha.3"
   },
   "transtyle": {
     "kind": "exporter",

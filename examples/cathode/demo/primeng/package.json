@@ -27,7 +27,7 @@
     "@angular/build": "^22.0.7",
     "@angular/cli": "^22.0.7",
     "@angular/compiler-cli": "^22.0.0",
-    "@transtyle/cli": "0.1.0-alpha.2",
+    "@transtyle/cli": "0.1.0-alpha.3",
     "typescript": "~6.0.2"
   }
 }
