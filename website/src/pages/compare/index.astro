@@ -1,20 +1,30 @@
 ---
 /**
- * The compare view — two demos in one viewport, showing the parity argument
+ * The compare view — demos in one viewport, showing the parity argument
  * instead of asserting it.
  *
  * The gallery already carries the claim ("within a row the markup is
  * byte-identical, so everything that changes between columns is the design
  * system"), but reading it costs the visitor a click, a back button, and a
- * memory of what the previous page looked like. Two panes side by side, one
- * mode control driving both and one scroll position shared between them, costs
- * nothing and needs no sentence.
+ * memory of what the previous page looked like. Panes side by side, one mode
+ * control driving all of them and one scroll position shared between them,
+ * costs nothing and needs no sentence.
+ *
+ * Two shapes, because there are two different arguments to make:
+ *
+ *   **Two panes** (`?left=govuk.bootstrap&right=carbon.radix`) — any pair, on
+ *   either axis, with a draggable splitter. This is the one that can compare
+ *   across ecosystems, and the one whose URL is worth sending.
+ *   **The whole row** (`?row=bootstrap`) — every design system in one
+ *   ecosystem at once. The gallery's matrix tells the visitor to "read across
+ *   a row"; this is that row, live. It is derived from EXAMPLES, so a fifth
+ *   design system becomes a fifth column on the commit that adds it.
  *
  * **Its own route, not a gallery mode.** The design question in BL-08 was
  * exactly that, and three things decided it:
  *
- *   the state is worth a URL. `?left=govuk.bootstrap&right=carbon.bootstrap`
- *   is the shareable form of an argument — a link that lands somebody on the
+ *   the state is worth a URL. `?left=govuk.bootstrap&right=carbon.radix` is
+ *   the shareable form of an argument — a link that lands somebody on the
  *   comparison you meant, which a gallery mode toggled in place cannot be;
  *   the layout wants the viewport. The gallery is a scrolling index with a
  *   34-column table in it; this page is one tall split surface;
@@ -30,7 +40,7 @@
  *
  * As on the gallery, the demos themselves are folded in beside the site at
  * deploy time (scripts/assemble-demos.mjs), so `npm run site:build` alone
- * leaves the two iframes pointing at nothing locally — `npm run demos:all`, or
+ * leaves the iframes pointing at nothing locally — `npm run demos:all`, or
  * `npm run demos:assemble` over an existing demo-dist/, builds the real thing.
  */
 import Base from '../../layouts/Base.astro';
@@ -54,7 +64,7 @@ const isBuilt = (ex, tg) => built.includes(`${ex}/${tg}`);
  * the first thing the page shows is a difference nobody can attribute to the
  * framework.
  */
-const DEFAULTS = { left: 'acme.bootstrap', right: 'cathode.bootstrap', mode: 'light' };
+const DEFAULTS = { left: 'acme.bootstrap', right: 'cathode.bootstrap', row: 'bootstrap', mode: 'light' };
 
 const data = {
   base: withBase(''),
@@ -72,11 +82,11 @@ const data = {
 const [dlEx, dlTg] = DEFAULTS.left.split('.');
 const [drEx, drTg] = DEFAULTS.right.split('.');
 
-const title = 'Compare two demos side by side';
+const title = 'Compare demos side by side';
 const description =
-  'Two of the 32 demo builds in one viewport, with one mode control and one scroll position driving both — the same page, compiled from two different design systems.';
+  'Two of the 32 demo builds in one viewport — or a whole row of them — with one mode control and one scroll position driving all of them.';
 
-const panes = [
+const pairPanes = [
   { side: 'left', label: 'Left', ex: dlEx, tg: dlTg },
   { side: 'right', label: 'Right', ex: drEx, tg: drTg },
 ];
@@ -86,41 +96,60 @@ const panes = [
     <section class="head">
       <div>
         <p class="eyebrow">Live output · side by side</p>
-        <h1>Two demos, <span class="grad">one viewport.</span></h1>
+        <h1>The same page, <span class="grad">every way at once.</span></h1>
         <p class="sub">
-          Pick a design system and an ecosystem for each side. One mode control drives both, and the
-          two panes scroll together, so the only thing left moving between them is what the compiler
-          emitted. <a href={withBase('/demo/')}>All {demos.length} builds →</a>
+          Put two demos beside each other, or a whole ecosystem's row of {EXAMPLES.length}. One mode
+          control drives all of them and they scroll together, so the only thing left moving between
+          panes is what the compiler emitted. <a href={withBase('/demo/')}>All {demos.length} builds →</a>
         </p>
       </div>
     </section>
 
     <section class="tools" aria-label="Comparison controls">
       <div class="tool">
+        <span class="tool-label" id="view-label">View</span>
+        <div class="seg" role="group" aria-labelledby="view-label" id="view">
+          <button type="button" data-view="pair" aria-pressed="true">Two panes</button>
+          <button type="button" data-view="row" aria-pressed="false">Whole row</button>
+        </div>
+      </div>
+
+      <div class="tool" data-only="row" hidden>
+        <label class="tool-label" for="row-target">Ecosystem</label>
+        <select id="row-target">
+          {TARGETS.map((t) => <option value={t.id} selected={t.id === DEFAULTS.row}>{t.title}</option>)}
+        </select>
+      </div>
+
+      <div class="tool">
         <span class="tool-label" id="mode-label">Demo mode</span>
-        <div class="seg" role="group" aria-labelledby="mode-label">
+        <div class="seg" role="group" aria-labelledby="mode-label" id="mode">
           <button type="button" data-mode="light" aria-pressed="true">Light</button>
           <button type="button" data-mode="dark" aria-pressed="false">Dark</button>
         </div>
       </div>
-      <label class="tool check">
+
+      <label class="tool check" data-only="pair">
         <input type="checkbox" id="lock" checked />
         <span>Lock ecosystem<small>change one side's target, both follow</small></span>
       </label>
       <label class="tool check">
         <input type="checkbox" id="sync" checked />
-        <span>Sync scroll<small>the same page in both panes</small></span>
+        <span>Sync scroll<small>the same page in every pane</small></span>
       </label>
       <div class="tool push">
-        <button type="button" class="act" id="swap" title="Exchange the two sides">⇄ Swap</button>
+        <button type="button" class="act" id="swap" data-only="pair" title="Exchange the two sides">⇄ Swap</button>
         <button type="button" class="act" id="copy" title="Copy a link to this exact comparison">Copy link</button>
       </div>
     </section>
 
     <p class="reading" id="reading" aria-live="polite"></p>
 
-    <div class="split" id="split">
-      {panes.map((pane, i) => (
+    {/* Two surfaces, one shown at a time. The row's frames ship with no `src`
+        at all, so the shape you are not looking at costs nothing to load; the
+        controller blanks whichever one you leave. */}
+    <div class="surface split" id="split">
+      {pairPanes.map((pane, i) => (
         <>
           {i === 1 && (
             <div class="handle" id="handle" role="separator" aria-orientation="vertical"
@@ -159,20 +188,40 @@ const panes = [
       ))}
     </div>
 
+    <div class="surface strip" id="strip" hidden>
+      {EXAMPLES.map((example) => (
+        <section class="pane" data-row={example.id} aria-label={`${example.title} demo`}>
+          <header class="pane-head">
+            <span class="row-name">{example.title}</span>
+            <span class="row-kicker">{example.kicker}</span>
+            <a class="open" data-role="open" href={withBase(demoPath(example.id, DEFAULTS.row))}
+               target="_blank" rel="noopener" title="Open this demo full size">Open ↗</a>
+          </header>
+          <p class="pane-note" data-role="note" hidden></p>
+          {/* The frame is laid out at its own comfortable width and scaled to
+              the column, rather than squeezed into it — see .strip in the
+              stylesheet for why. The box is what clips the overhang. */}
+          <div class="frame-box"><iframe data-role="frame" title={`${example.title} demo`}></iframe></div>
+        </section>
+      ))}
+    </div>
+
+    <p class="strip-note" id="strip-note" hidden></p>
+
     <section class="band">
       <h2>What this view is claiming</h2>
       <div class="reads">
         <div class="read">
-          <h3>Same target, two design systems</h3>
+          <h3>One target, every design system</h3>
           <p>
-            The markup in both panes is byte-identical — <a href="https://github.com/transtyle/transtyle/blob/main/scripts/check-demo-parity.mjs" rel="noopener">a CI check</a>
-            fails the build if it ever isn't. Every difference you can see is compiled output.
+            The markup in every pane of a row is byte-identical — <a href="https://github.com/transtyle/transtyle/blob/main/scripts/check-demo-parity.mjs" rel="noopener">a CI check</a>
+            fails the build if it ever isn't. Everything you can see differ is compiled output.
           </p>
         </div>
         <div class="read">
-          <h3>Same design system, two targets</h3>
+          <h3>One design system, two targets</h3>
           <p>
-            Change one side's ecosystem and the claim inverts: the markup is now completely
+            Put two panes on different ecosystems and the claim inverts: the markup is now completely
             different, and the colours, corners and type are the same tokens twice.
           </p>
         </div>
@@ -201,38 +250,29 @@ const panes = [
     /**
      * Compare-view controller.
      *
-     * Three jobs: keep the URL and the two iframes agreeing, drive both demos'
-     * own mode toggles from one control, and relay scroll between the panes.
+     * Three jobs: keep the URL and the visible frames agreeing, drive every
+     * demo's own mode toggle from one control, and relay scroll between panes.
      *
-     * The last two both go through postMessage to a small agent injected into
-     * every hosted demo (scripts/lib/demo-chrome.mjs). The demos are same-origin
-     * so this page *could* reach into `iframe.contentDocument` and click the
+     * The last two go through postMessage to a small agent injected into every
+     * hosted demo (scripts/lib/demo-chrome.mjs). The demos are same-origin so
+     * this page *could* reach into `iframe.contentDocument` and click the
      * button itself — but the demos already need injected chrome for the
      * switcher, an explicit message contract is the thing that can be
      * documented and guarded (check-demos.mjs proves every demo still has a
      * toggle the agent can find), and it survives the day the demos move to
      * their own origin.
+     *
+     * Everything below is written against a *list* of panes rather than a left
+     * and a right, because the row shape has as many panes as there are
+     * examples and that number is discovered, not typed.
      */
     (function () {
-      var SIDES = ['left', 'right'];
-      var split = document.getElementById('split');
       var reading = document.getElementById('reading');
       var lock = document.getElementById('lock');
       var sync = document.getElementById('sync');
-
-      var panes = {};
-      SIDES.forEach(function (side) {
-        var el = split.querySelector('[data-pane="' + side + '"]');
-        panes[side] = {
-          el: el,
-          example: el.querySelector('[data-role="example"]'),
-          target: el.querySelector('[data-role="target"]'),
-          open: el.querySelector('[data-role="open"]'),
-          note: el.querySelector('[data-role="note"]'),
-          frame: el.querySelector('[data-role="frame"]'),
-          ready: false,
-        };
-      });
+      var split = document.getElementById('split');
+      var strip = document.getElementById('strip');
+      var stripNote = document.getElementById('strip-note');
 
       var has = function (ex, tg) { return DATA.built.indexOf(ex + '/' + tg) !== -1; };
       var byId = function (list, id) {
@@ -240,9 +280,38 @@ const panes = [
         return null;
       };
 
+      /** One pane's controls, whichever surface it belongs to. */
+      function readPane(el) {
+        return {
+          el: el,
+          example: el.querySelector('[data-role="example"]'),
+          target: el.querySelector('[data-role="target"]'),
+          open: el.querySelector('[data-role="open"]'),
+          note: el.querySelector('[data-role="note"]'),
+          frame: el.querySelector('[data-role="frame"]'),
+          pair: null,
+        };
+      }
+
+      var SIDES = ['left', 'right'];
+      var pairPanes = {};
+      SIDES.forEach(function (side) {
+        pairPanes[side] = readPane(split.querySelector('[data-pane="' + side + '"]'));
+      });
+      var rowPanes = {};
+      DATA.examples.forEach(function (e) {
+        rowPanes[e.id] = readPane(strip.querySelector('[data-row="' + e.id + '"]'));
+      });
+
       // ---------- state ----------
 
-      var state = { left: null, right: null, mode: DATA.defaults.mode };
+      var state = {
+        view: 'pair',
+        left: null,
+        right: null,
+        row: DATA.defaults.row,
+        mode: DATA.defaults.mode,
+      };
 
       /** "acme.bootstrap" → {ex, tg}, rejecting anything not actually built. */
       function parsePair(value, fallback) {
@@ -257,6 +326,12 @@ const panes = [
         state.left = parsePair(q.get('left'), DATA.defaults.left);
         state.right = parsePair(q.get('right'), DATA.defaults.right);
         state.mode = q.get('mode') === 'dark' ? 'dark' : 'light';
+
+        var row = q.get('row');
+        var known = row && byId(DATA.targets, row) && DATA.examples.some(function (e) { return has(e.id, row); });
+        state.view = known ? 'row' : 'pair';
+        if (known) state.row = row;
+
         // The ecosystem lock is a consequence of the URL, not another
         // parameter: a link that names two different targets is asking for two
         // different targets, and having it silently re-lock them would throw
@@ -269,10 +344,22 @@ const panes = [
         // [a-z-]+ and the point of the URL is that a person can read it, which
         // "left=acme%2Ebootstrap" is not.
         var q =
-          '?left=' + state.left.ex + '.' + state.left.tg +
-          '&right=' + state.right.ex + '.' + state.right.tg +
-          '&mode=' + state.mode;
+          state.view === 'row'
+            ? '?row=' + state.row + '&mode=' + state.mode
+            : '?left=' + state.left.ex + '.' + state.left.tg +
+              '&right=' + state.right.ex + '.' + state.right.tg +
+              '&mode=' + state.mode;
         history[replace ? 'replaceState' : 'pushState'](null, '', q + location.hash);
+      }
+
+      /** The panes currently on screen, in reading order. */
+      function activePanes() {
+        if (state.view === 'row') {
+          return DATA.examples
+            .filter(function (e) { return has(e.id, state.row); })
+            .map(function (e) { return rowPanes[e.id]; });
+        }
+        return [pairPanes.left, pairPanes.right];
       }
 
       /** The mode a pane can honestly show: its own if it publishes only one. */
@@ -285,8 +372,7 @@ const panes = [
        * Storybook is the one target with no mode toggle of its own to press:
        * the demo *is* Storybook's chrome, and the scheme lives in a toolbar
        * global rather than in the page. It takes the mode through the URL its
-       * manager already reads, which costs that pane a reload on every toggle
-       * and is why the src is built here rather than in one place for all.
+       * manager already reads, which costs that pane a reload on every toggle.
        */
       function srcFor(pair) {
         var url = DATA.base + '/demo/' + pair.ex + '/' + pair.tg + '/';
@@ -295,63 +381,140 @@ const panes = [
           : url;
       }
 
+      // ---------- frames ----------
+
+      function point(pane, src) {
+        if (pane.frame.getAttribute('data-src') === src) return;
+        var fresh = !pane.frame.getAttribute('data-src');
+        pane.frame.setAttribute('data-src', src);
+        // A frame that has already loaded something is *replaced* rather than
+        // re-pointed: an iframe navigation goes onto the joint session
+        // history, so assigning .src would make the browser's Back button undo
+        // a pane load instead of the comparison the visitor actually changed —
+        // and with a Storybook pane, which takes its mode through the URL,
+        // every mode toggle would leave one behind. A demo that has wandered
+        // somewhere cross-origin cannot be reached this way, hence the
+        // fallback.
+        if (fresh) {
+          pane.frame.src = src;
+          return;
+        }
+        try {
+          pane.frame.contentWindow.location.replace(src);
+        } catch (e) {
+          pane.frame.src = src;
+        }
+      }
+
+      /** Unload a pane the visitor has navigated away from. */
+      function blank(pane) {
+        if (!pane.frame.getAttribute('data-src')) return;
+        pane.frame.removeAttribute('data-src');
+        pane.pair = null;
+        try {
+          pane.frame.contentWindow.location.replace('about:blank');
+        } catch (e) {
+          pane.frame.src = 'about:blank';
+        }
+      }
+
+      /** The one honest caveat a pane may need to carry. */
+      function noteFor(pair) {
+        var example = byId(DATA.examples, pair.ex);
+        if (DATA.modes[pair.ex].indexOf(state.mode) === -1) {
+          return example.title + ' publishes no ' + state.mode + ' theme — this pane stays ' +
+            effectiveMode(pair.ex) + '.';
+        }
+        if (pair.tg === 'storybook') {
+          return "Mode is passed to Storybook's own Scheme global; its manager chrome wears the design system's native mode.";
+        }
+        return '';
+      }
+
+      function paint(pane, pair) {
+        pane.pair = pair;
+        var example = byId(DATA.examples, pair.ex);
+        var target = byId(DATA.targets, pair.tg);
+        pane.open.href = DATA.base + '/demo/' + pair.ex + '/' + pair.tg + '/';
+        pane.frame.title = example.title + ' compiled for ' + target.title;
+        var note = noteFor(pair);
+        pane.note.textContent = note;
+        pane.note.hidden = !note;
+        point(pane, srcFor(pair));
+      }
+
       // ---------- rendering ----------
 
-      function renderPane(side) {
-        var pane = panes[side];
+      function renderPairPane(side) {
+        var pane = pairPanes[side];
         var pair = state[side];
-
         pane.example.value = pair.ex;
         pane.target.value = pair.tg;
         // A cell that does not exist is dimmed rather than hidden, so the grid
         // the visitor is choosing from is the same shape as the gallery's.
         for (var i = 0; i < pane.target.options.length; i++) {
-          var opt = pane.target.options[i];
-          opt.disabled = !has(pair.ex, opt.value);
+          pane.target.options[i].disabled = !has(pair.ex, pane.target.options[i].value);
         }
-        pane.open.href = DATA.base + '/demo/' + pair.ex + '/' + pair.tg + '/';
+        paint(pane, pair);
+      }
 
-        var src = srcFor(pair);
-        if (pane.frame.getAttribute('data-src') !== src) {
-          pane.ready = false;
-          pane.frame.setAttribute('data-src', src);
-          // The frame is *replaced* rather than re-pointed: an iframe
-          // navigation goes onto the joint session history, so assigning .src
-          // would make the browser's Back button undo a pane load instead of
-          // the comparison the visitor actually changed — and with a Storybook
-          // pane, which takes its mode through the URL, every mode toggle
-          // would leave one behind. A demo that has wandered somewhere
-          // cross-origin cannot be reached this way, hence the fallback.
-          try {
-            pane.frame.contentWindow.location.replace(src);
-          } catch (e) {
-            pane.frame.src = src;
-          }
-        }
-
-        var target = byId(DATA.targets, pair.tg);
-        var example = byId(DATA.examples, pair.ex);
-        pane.frame.title = example.title + ' compiled for ' + target.title;
-
-        var note = '';
-        if (DATA.modes[pair.ex].indexOf(state.mode) === -1) {
-          note = example.title + ' publishes no ' + state.mode + ' theme — this pane stays ' +
-            effectiveMode(pair.ex) + '.';
-        } else if (pair.tg === 'storybook') {
-          note = "Mode is passed to Storybook's own Scheme global; its manager chrome wears the design system's native mode.";
-        }
-        pane.note.textContent = note;
-        pane.note.hidden = !note;
+      function renderRow() {
+        rowTarget.value = state.row;
+        DATA.examples.forEach(function (e) {
+          var pane = rowPanes[e.id];
+          var lit = has(e.id, state.row);
+          pane.el.hidden = !lit;
+          if (lit) paint(pane, { ex: e.id, tg: state.row });
+          else blank(pane);
+        });
+        fitStrip();
       }
 
       /**
-       * The one sentence that says what the current pair proves.
+       * The width the demos are actually built for.
+       *
+       * Not a round number picked for looks: below 480px every one of the eight
+       * targets' pages starts to overflow horizontally (Cathode first, at
+       * 440px, on its monospace tracking), and at 480 none of them does. See
+       * the .strip comment in the stylesheet.
+       */
+      var FRAME_WIDTH = 480;
+
+      /** Draw each row pane at its real layout width, scaled into the column. */
+      function fitStrip() {
+        if (state.view !== 'row') return;
+        var pane = activePanes()[0];
+        if (!pane) return;
+        var width = pane.el.getBoundingClientRect().width;
+        if (!width) return;
+        var z = Math.min(1, width / FRAME_WIDTH);
+        strip.style.setProperty('--z', z.toFixed(4));
+        // Said out loud rather than left to be noticed: a page drawn at 71% is
+        // showing you a real layout at an unreal size, and the reader should
+        // know which of those two facts explains the small type.
+        stripNote.hidden = z >= 1;
+        stripNote.textContent =
+          'Each pane is laid out at ' + FRAME_WIDTH + 'px — the narrowest width the demos render ' +
+          'without overflowing — and drawn at ' + Math.round(z * 100) + '% so the whole row fits. ' +
+          'The layout is real; the type is small. Open one ↗, or drop to two panes, to read it.';
+      }
+
+      /**
+       * The one sentence that says what the current view proves.
        *
        * It changes with the axis being compared because the argument does: two
        * design systems in one ecosystem is a statement about the tokens, and
        * one design system in two ecosystems is a statement about the compiler.
        */
       function renderReading() {
+        if (state.view === 'row') {
+          var n = activePanes().length;
+          reading.textContent =
+            'One ecosystem (' + byId(DATA.targets, state.row).title + '), all ' + n +
+            ' design systems. The markup is byte-identical across these ' + n +
+            ' panes — every difference you can see was compiled from a different set of token files.';
+          return;
+        }
         var l = state.left, r = state.right;
         var lEx = byId(DATA.examples, l.ex).title, rEx = byId(DATA.examples, r.ex).title;
         var lTg = byId(DATA.targets, l.tg).title, rTg = byId(DATA.targets, r.tg).title;
@@ -372,10 +535,30 @@ const panes = [
       }
 
       function render(replace) {
-        SIDES.forEach(renderPane);
+        var row = state.view === 'row';
+        split.hidden = row;
+        strip.hidden = !row;
+        if (!row) stripNote.hidden = true;
+        // Controls that only mean something in one shape are hidden rather
+        // than disabled: a swap button with nothing to swap is a puzzle.
+        document.querySelectorAll('[data-only]').forEach(function (el) {
+          el.hidden = el.getAttribute('data-only') !== state.view;
+        });
+
+        if (row) {
+          SIDES.forEach(function (side) { blank(pairPanes[side]); });
+          renderRow();
+        } else {
+          DATA.examples.forEach(function (e) { blank(rowPanes[e.id]); });
+          SIDES.forEach(renderPairPane);
+        }
+
         renderReading();
-        document.querySelectorAll('.seg [data-mode]').forEach(function (b) {
+        document.querySelectorAll('#mode [data-mode]').forEach(function (b) {
           b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode));
+        });
+        document.querySelectorAll('#view [data-view]').forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b.dataset.view === state.view));
         });
         writeUrl(replace !== false);
       }
@@ -387,37 +570,38 @@ const panes = [
       // one that has just been replaced and is back at the top.
       var shared = 0;
 
-      function post(side, message) {
-        var win = panes[side].frame.contentWindow;
+      function post(pane, message) {
+        var win = pane.frame.contentWindow;
         if (win) win.postMessage(message, location.origin);
       }
 
-      function pushMode(side) {
-        var pair = state[side];
-        if (pair.tg === 'storybook') return; // carried in the URL instead
-        post(side, { source: 'transtyle-compare', type: 'mode', mode: effectiveMode(pair.ex) });
+      function pushMode(pane) {
+        if (!pane.pair || pane.pair.tg === 'storybook') return; // carried in the URL instead
+        post(pane, { source: 'transtyle-compare', type: 'mode', mode: effectiveMode(pane.pair.ex) });
+      }
+
+      function paneOf(win) {
+        var all = activePanes();
+        for (var i = 0; i < all.length; i++) if (all[i].frame.contentWindow === win) return all[i];
+        return null;
       }
 
       window.addEventListener('message', function (event) {
         if (event.origin !== location.origin) return;
         var msg = event.data;
         if (!msg || msg.source !== 'transtyle-demo') return;
-        var side = null;
-        for (var i = 0; i < SIDES.length; i++) {
-          if (panes[SIDES[i]].frame.contentWindow === event.source) side = SIDES[i];
-        }
-        if (!side) return;
+        var pane = paneOf(event.source);
+        if (!pane) return;
 
         if (msg.type === 'ready') {
-          panes[side].ready = true;
-          pushMode(side);
+          pushMode(pane);
           // A pane that has just been swapped for another design system comes
-          // up at the top while the pane beside it is halfway down the page.
+          // up at the top while the panes beside it are halfway down the page.
           // Putting it where the reader already is makes changing one side a
           // continuation of the comparison rather than a restart of it — the
           // same thing the switcher's place marker does for a full navigation.
           if (sync.checked && shared > 0) {
-            post(side, { source: 'transtyle-compare', type: 'scroll-to', ratio: shared });
+            post(pane, { source: 'transtyle-compare', type: 'scroll-to', ratio: shared });
           }
         } else if (msg.type === 'scroll') {
           shared = msg.ratio;
@@ -425,30 +609,52 @@ const panes = [
           // Relayed as a ratio, not a pixel offset: the same page is a
           // different height in Bootstrap and in Radix, and matching pixels
           // would drift a screenful apart by the bottom of a long comparison.
-          var other = side === 'left' ? 'right' : 'left';
-          post(other, { source: 'transtyle-compare', type: 'scroll-to', ratio: msg.ratio });
+          activePanes().forEach(function (other) {
+            if (other !== pane) post(other, { source: 'transtyle-compare', type: 'scroll-to', ratio: msg.ratio });
+          });
         }
       });
 
-      SIDES.forEach(function (side) {
-        // Belt and braces: the agent announces itself, but a cached frame that
-        // fires load without a fresh announcement should still get the mode.
-        panes[side].frame.addEventListener('load', function () { pushMode(side); });
-      });
+      // Belt and braces: the agent announces itself, but a cached frame that
+      // fires load without a fresh announcement should still get the mode.
+      [pairPanes.left, pairPanes.right]
+        .concat(DATA.examples.map(function (e) { return rowPanes[e.id]; }))
+        .forEach(function (pane) {
+          pane.frame.addEventListener('load', function () { pushMode(pane); });
+        });
 
       // ---------- controls ----------
 
-      document.querySelectorAll('.seg [data-mode]').forEach(function (button) {
+      document.querySelectorAll('#view [data-view]').forEach(function (button) {
         button.addEventListener('click', function () {
-          state.mode = button.dataset.mode;
+          if (state.view === button.dataset.view) return;
+          state.view = button.dataset.view;
+          // A shape change resets how far down we are: the panes about to load
+          // have no scroll position yet, and inheriting the last one would put
+          // a fresh row halfway down a page the reader has not seen.
+          shared = 0;
           render(false);
-          SIDES.forEach(pushMode);
         });
       });
 
+      document.querySelectorAll('#mode [data-mode]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          state.mode = button.dataset.mode;
+          render(false);
+          activePanes().forEach(pushMode);
+        });
+      });
+
+      var rowTarget = document.getElementById('row-target');
+      rowTarget.addEventListener('change', function () {
+        state.row = rowTarget.value;
+        shared = 0;
+        render(false);
+      });
+
       SIDES.forEach(function (side) {
-        panes[side].example.addEventListener('change', function () {
-          state[side].ex = panes[side].example.value;
+        pairPanes[side].example.addEventListener('change', function () {
+          state[side].ex = pairPanes[side].example.value;
           // Switching to a design system that has no build for the current
           // target would ask for a 404; fall back to the first one it does have.
           if (!has(state[side].ex, state[side].tg)) {
@@ -457,9 +663,9 @@ const panes = [
           }
           render(false);
         });
-        panes[side].target.addEventListener('change', function () {
+        pairPanes[side].target.addEventListener('change', function () {
           var other = side === 'left' ? 'right' : 'left';
-          state[side].tg = panes[side].target.value;
+          state[side].tg = pairPanes[side].target.value;
           if (lock.checked && has(state[other].ex, state[side].tg)) {
             state[other].tg = state[side].tg;
           }
@@ -496,8 +702,11 @@ const panes = [
       });
 
       window.addEventListener('popstate', function () { readUrl(); render(true); });
+      // The scale is a function of the column width, so it is recomputed rather
+      // than remembered — a resized window, or a fifth design system, changes it.
+      window.addEventListener('resize', fitStrip);
 
-      // ---------- the splitter ----------
+      // ---------- the splitter (two-pane shape only) ----------
 
       var handle = document.getElementById('handle');
       var dragging = false;
@@ -547,35 +756,76 @@ const panes = [
       border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft);
     }
     .tool { display: flex; align-items: center; gap: 0.55rem; }
+    .tool[hidden] { display: none; }
     .tool.push { margin-left: auto; gap: 0.4rem; }
     .tool-label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
     .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
     .seg button { border: 0; background: none; color: var(--text-muted); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 0.28rem 0.8rem; cursor: pointer; }
     .seg button + button { border-left: 1px solid var(--border); }
     .seg button[aria-pressed='true'] { background: var(--primary); color: #fff; }
+    .tools select {
+      font: inherit; font-size: 0.85rem; font-weight: 600; padding: 0.24rem 0.45rem;
+      border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text);
+    }
     .check { cursor: pointer; align-items: flex-start; }
     .check input { margin-top: 0.2rem; accent-color: var(--primary); }
     .check span { font-size: 0.85rem; font-weight: 600; line-height: 1.25; }
     .check small { display: block; font-size: 0.7rem; font-weight: 500; color: var(--text-muted); }
     .act { font: inherit; font-size: 0.83rem; font-weight: 600; padding: 0.32rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
     .act:hover { border-color: var(--primary); color: var(--primary-strong); }
+    .act[hidden] { display: none; }
 
     .reading { font-size: 0.88rem; color: var(--text-muted); margin: 0 0 0.7rem; min-height: 1.3em; }
 
-    /* ---------- the split surface ---------- */
-    .split {
-      --split: 50%;
-      display: grid; grid-template-columns: var(--split) 10px 1fr;
+    /* ---------- the pane surfaces ---------- */
+    .surface {
       height: min(calc(100vh - 9rem), 1000px); min-height: 32rem;
       border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface);
     }
+    .surface[hidden] { display: none; }
+
+    .split { --split: 50%; display: grid; grid-template-columns: var(--split) 10px 1fr; }
     .split.dragging iframe { pointer-events: none; }
+
+    /*
+      The row shape: one column per design system, scaled rather than squeezed.
+
+      This was BL-21's open question and it was settled by measuring, not by
+      taste. Four equal columns on a 1440px laptop are 344px wide, and at 344px
+      every one of the demos overflows its own column horizontally — 106px for
+      Acme, 127px for Cathode, whose monospace tracking is the widest — so the
+      row became four cramped mobile layouts each with a scrollbar of its own.
+      Sweeping the width upward, the overflow disappears at 480px and not
+      before. But four 480px panes need 1950px of window, which is not a laptop.
+
+      So the frame is laid out at 480px and drawn at whatever fraction of it the
+      column actually has (--z, set by fitStrip()). The layout in each pane is
+      then the real one — the same one you would get by opening the demo — at a
+      size you can compare but not read. That is the right trade for this shape:
+      reading across a row is a question about colour, corner radius, type and
+      density, and the two-pane shape is right there for anything closer.
+    */
+    .strip { --z: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(16rem, 1fr); overflow-x: auto; }
+    .strip .pane + .pane { border-left: 1px solid var(--border); }
+    .strip .frame-box { flex: 1; position: relative; overflow: hidden; }
+    .strip .frame-box iframe {
+      position: absolute; top: 0; left: 0;
+      /* Laid out at 1/z of the box and drawn back down to it: at --z: 0.72 a
+         344px column lays the demo out at 478px. */
+      width: calc(100% / var(--z)); height: calc(100% / var(--z));
+      transform: scale(var(--z)); transform-origin: 0 0;
+    }
+    .strip-note { font-size: 0.78rem; color: var(--text-muted); margin: 0.6rem 0 0; }
+    .pane[hidden] { display: none; }
+
     .pane { display: flex; flex-direction: column; min-width: 0; }
     .pane-head {
       display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
       padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--border); background: var(--bg-soft);
     }
     .side { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--text-muted); }
+    .row-name { font-size: 0.9rem; font-weight: 700; letter-spacing: -0.01em; }
+    .row-kicker { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); font-weight: 600; }
     .pane-head select {
       font: inherit; font-size: 0.83rem; font-weight: 600; padding: 0.2rem 0.4rem;
       border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); max-width: 10rem;
@@ -605,14 +855,16 @@ const panes = [
     .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
     /* Below this width two panes are two slivers; stack them and drop the
-       splitter, which has nothing left to divide. */
+       splitter, which has nothing left to divide. The row keeps its columns
+       and scrolls sideways — stacking four demos would be a very long page
+       and no comparison at all. */
     @media (max-width: 900px) {
       .split { grid-template-columns: 1fr; height: auto; }
       .handle { display: none; }
-      /* `flex: 1` sets a zero basis, which in an auto-height column collapses the
-         frame to the iframe's intrinsic 150px — the height below only wins once
-         the flex rule is switched off. */
-      .pane iframe { flex: none; height: 78vh; }
+      /* `flex: 1` sets a zero basis, which in an auto-height column collapses
+         the frame to the iframe's intrinsic 150px — the height below only wins
+         once the flex rule is switched off. */
+      .split .pane iframe { flex: none; height: 78vh; }
       .handle + .pane { border-top: 1px solid var(--border); }
       .tool.push { margin-left: 0; }
     }

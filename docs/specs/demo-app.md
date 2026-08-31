@@ -95,14 +95,35 @@ The compare view does the same thing by its own route: when one pane is swapped 
 system, the new frame is told the shared scroll position as it announces itself, so changing a side
 continues the comparison instead of restarting it.
 
-### The compare view (`/compare/`, website/src/pages/compare/index.astro)
+### The compare view — `/compare/`
 
-Two demos in split iframes, sharing one mode control and one scroll position; the pair and the mode
-live in the URL (`?left=govuk.bootstrap&right=carbon.radix&mode=dark`), which is what makes a
-particular comparison a link somebody can send. It is its own route rather than a gallery mode
-because the state is worth a URL, the layout wants the viewport, and the gallery stays one crawlable
-document. Entry points: the gallery hero, a per-row `⇄ compare` link in the gallery matrix, the
-switcher's footer in every demo, and the site footer.
+Demos in iframes, sharing one mode control and one scroll position. It is its own route rather than a
+gallery mode because the state is worth a URL, the layout wants the viewport, and the gallery stays
+one crawlable document. Entry points: the gallery hero, a per-row `⇄ compare all 4` link in the
+gallery matrix, the switcher's footer in every demo, and the site footer.
+
+Two shapes, because there are two arguments to make:
+
+- **Two panes** (`?left=govuk.bootstrap&right=carbon.radix&mode=dark`) — any pair, on either axis,
+  with a draggable splitter. This is the one that can compare across ecosystems, and the one whose
+  URL is worth sending: it is the shareable form of a particular argument.
+- **The whole row** (`?row=bootstrap&mode=dark`) — every design system in one ecosystem at once. The
+  gallery's matrix tells the visitor to "read across a row"; this is that row, live. The columns come
+  from `EXAMPLES`, so a fifth design system becomes a fifth column on the commit that adds it.
+
+Only one shape's frames are loaded at a time — the other's are blanked to `about:blank` — so the
+shape you are not looking at costs nothing.
+
+**The row is scaled, not squeezed**, and that was decided by measuring rather than by taste. Four
+equal columns on a 1440px laptop are 344px wide, and at 344px every demo overflows its own column
+horizontally (106px for Acme, 127px for Cathode, whose monospace tracking is the widest), turning the
+row into four cramped mobile layouts each with a scrollbar of its own. Sweeping the width upward, the
+overflow disappears at **480px** and not before — but four 480px panes need ~1950px of window, which
+is not a laptop. So each frame is laid out at 480px and drawn at whatever fraction of that the column
+actually has (a CSS `transform: scale`, recomputed on resize). The layout in each pane is then the
+real one at a size you can compare but not read, which is the right trade: reading across a row is a
+question about colour, corner radius, type and density, and the two-pane shape is one click away for
+anything closer. The page says the scale out loud rather than leaving it to be noticed.
 
 **How one control drives two demos.** The compare page and the demos are same-origin, so the page
 _could_ walk each frame's document itself. It does not: every target encodes the mode its own way

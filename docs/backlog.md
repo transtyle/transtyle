@@ -70,7 +70,7 @@ current model docs before assigning it anything rather than guessing.
 | [BL-18](#bl-18) | Palette perceptual-distance warning                       | Compiler  | Low   | S      | ready                | Sonnet        |
 | [BL-19](#bl-19) | The four deferred catalog promotions                      | Catalog   | —     | —      | watch                | Opus          |
 | [BL-20](#bl-20) | Reconcile the three ID namespaces                         | Repo      | Low   | S      | done                 | —             |
-| [BL-21](#bl-21) | Compare view: a whole row at once                         | Site      | Med   | M      | idea                 | Opus          |
+| [BL-21](#bl-21) | Compare view: a whole row at once                         | Site      | Med   | M      | done                 | Opus          |
 | [BL-22](#bl-22) | Open Graph cards for a compare link                       | Reach     | Low   | S      | idea                 | Sonnet        |
 
 ### If you want to pick something now
@@ -426,7 +426,7 @@ answers to "what next", so they are listed here to keep this file a complete pic
 
 ### BL-21
 
-**Compare view: a whole row at once** · Site · Med · M · idea · Opus
+**Compare view: a whole row at once** · Site · Med · M · **done** 2026-08-31 · Opus
 
 **What.** An _n_-up mode for [/compare/](#bl-08): all four design systems in one ecosystem, in four
 columns, driven by the same one mode control and the same scroll position the two-pane view already
@@ -436,10 +436,39 @@ shares.
 tells the visitor to "read across a row", and this is that row, live. The machinery — the injected
 bridge, the ratio-relayed scroll, the per-example mode honesty — is built and would not change.
 
-**The open question is what it costs the reader**, not what it costs to build. Four framework bundles
-in one viewport is four times the memory, and a column roughly 320px wide is narrower than the Nimbus
-Console page was designed for; a horizontally scrolling strip of full-width panes may be the better
-shape. Decide by looking at it before building the picker. Depends on nothing.
+**The open question was what it costs the reader**, not what it costs to build — and it was settled by
+measuring rather than by taste, which is worth recording because the guess in this entry was wrong in
+an instructive way.
+
+Four equal columns on a 1440px laptop are 344px wide. At 344px **every demo overflows its own column
+horizontally** — 106px for Acme, 127px for Cathode, whose monospace tracking is the widest — so the
+row is not merely cramped, it is four mobile layouts each with a scrollbar of its own. Sweeping the
+width upward, the overflow disappears at **480px** and not before:
+
+| pane width | horizontal overflow inside each demo (px) |
+| ---------- | ----------------------------------------- |
+| 344        | 106 · 127 · 74 · 76                       |
+| 400        | 50 · 71 · 18 · 20                         |
+| 440        | 12 · 31 · 12 · 12                         |
+| 480        | none (12 is the scrollbar allowance)      |
+
+But four 480px panes need ~1950px of window. So neither guess in this entry was right: squeezing
+breaks the demos, and a scrolling strip of full-width panes gives up the one thing the shape is for,
+which is seeing the whole row at once.
+
+**Shipped** as the third option: each frame is laid out at 480px and **drawn at whatever fraction of
+that the column has** (a `transform: scale`, ~72% on a laptop, recomputed on resize). The layout in
+each pane is then the real one at a size you can compare but not read — the right trade, because
+reading across a row is a question about colour, corner radius, type and density, and the two-pane
+shape is one click away for anything closer. The page states the scale rather than leaving it to be
+noticed.
+
+Built into [/compare/](#bl-08) as a second shape (`?row=bootstrap`) rather than a second route, since
+the mode bridge, the ratio-relayed scroll and the per-example mode honesty are all shared; only one
+shape's frames are loaded at a time. The columns come from `EXAMPLES`, so [BL-01](#bl-01)'s fifth
+design system becomes a fifth column on the commit that adds it. The gallery matrix's per-row link
+now opens this instead of a pair. Documented in
+[specs/demo-app.md](specs/demo-app.md#the-compare-view--compare).
 
 ### BL-22
 

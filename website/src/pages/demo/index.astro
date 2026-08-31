@@ -183,11 +183,10 @@ const paint = (t) =>
                 <th scope="row">
                   <a href={withBase(`/docs/${target.doc}/`)}>{target.title}</a>
                   <span class="mx-stack">{target.stack}</span>
-                  {/* The row's own comparison: the two invented systems, the
-                      widest gap in the repository, in this one ecosystem. */}
-                  <a class="mx-compare"
-                     href={withBase(`/compare/?left=${EXAMPLES[0].id}.${target.id}&right=${EXAMPLES[1].id}.${target.id}&mode=light`)}
-                     aria-label={`Compare ${EXAMPLES[0].title} and ${EXAMPLES[1].title} side by side in ${target.title}`}>⇄ compare</a>
+                  {/* This row, live: every design system in this one
+                      ecosystem, in the compare view's row shape. */}
+                  <a class="mx-compare" href={withBase(`/compare/?row=${target.id}&mode=light`)}
+                     aria-label={`Compare all ${EXAMPLES.length} design systems side by side in ${target.title}`}>⇄ compare all {EXAMPLES.length}</a>
                 </th>
                 {EXAMPLES.map((example) => {
                   const theme = themes[example.id].light;
