@@ -35,6 +35,49 @@ A third guard covers what neither of those can see: **`npm run check:doc-numbers
 - **Config is data.** No executable config.
 - **The catalog is a meta-language, not a translation of any one target.** New semantic-tier (or component-tier) vocabulary must be validated against multiple independent ecosystems before being added — never derived from a single library's own naming or grouping shape (`docs/proposals/0001-universal-token-ir.md`'s 14-ecosystem study is the model to match, not a one-time exception). Concretely: (1) exporters translate by _meaning_, not name — the same catalog token may legitimately feed several differently-shaped or differently-named places in one target's own structure; (2) new shared derivation logic starts **exporter-private** (a helper inside that one exporter, reading existing catalog cells) and is promoted into the shared catalog only once a **second, independent** exporter needs the identical thing — the path Bootstrap's border-subtle mix took before it was promoted into an engine-owned grid cell ([exercise F10](docs/exercises/phase0-bootstrap.md)), not a one-off.
 
+## AI-agent issue workflow
+
+An AI agent working in this repo (fixing a task, reviewing code, exploring the codebase) often
+notices something adjacent to its actual task — a bug, a missing capability, a rough edge worth
+smoothing over. That observation belongs in a GitHub issue on **`transtyle/transtyle`** (never on
+an upstream project like `twbs/bootstrap` — file there only if the finding is genuinely about their
+code), not in a scratch note or a chat message that evaporates at the end of the session.
+
+**Opening an issue.** The agent files it directly (`gh issue create --repo transtyle/transtyle …`)
+and writes it as if handing the task to a developer who has none of the current conversation's
+context:
+
+- A plain-language problem statement — what's wrong, missing, or could be better, and why it
+  matters to the project (not just "this looks off").
+- Enough detail to implement from later without re-deriving it: affected files or areas, a concrete
+  proposed approach, and acceptance criteria where the fix isn't obvious from the problem alone.
+- No unexplained internal jargon or unresolved references to "the current change" — the issue must
+  stand on its own once the session that created it is gone.
+
+Every agent-filed issue gets exactly three labels at creation: **`ai-submitted`**, one type label
+(**`bug`** / **`feature`** / **`enhancement`** — see the table below for the distinction), and
+**`needs-triage`**.
+
+**Triage.** `needs-triage` means no human has read the issue yet, so nobody — human or agent —
+starts work on it. A maintainer reviews it, and once it's specified well enough to pick up as-is,
+replaces `needs-triage` with `ready-to-dev`. Agents never apply `ready-to-dev` themselves, including
+to their own issues.
+
+**Picking up work.** When asked to work through available issues, an agent filters to
+`is:issue is:open label:ready-to-dev` on `transtyle/transtyle` — `needs-triage` issues are not yet
+authorized to start. If a `ready-to-dev` issue turns out to be ambiguous or under-specified once
+work begins, stop and ask rather than guessing at the missing intent.
+
+| Label            | Meaning                                                                            | Who applies it     |
+| ---------------- | ---------------------------------------------------------------------------------- | ------------------ |
+| `ai-submitted`   | Opened by an AI agent rather than a human                                          | the agent          |
+| `needs-triage`   | Not yet reviewed by a maintainer — nobody should start work on it                  | on every new issue |
+| `ready-to-dev`   | Triaged and specified enough to be picked up                                       | maintainer only    |
+| `bug`            | Something isn't working                                                            | —                  |
+| `feature`        | New capability that does not exist yet                                             | —                  |
+| `enhancement`    | Improvement to something that already exists                                       | —                  |
+| `upstream-drift` | An exporter's mapping has fallen out of sync with a new upstream framework release | —                  |
+
 ## Working locally
 
 Changes to a published package need a changeset (`npm run changeset`) in the same PR — see [RELEASING.md](RELEASING.md), which also covers how alpha and stable releases are cut and why the difference matters.
