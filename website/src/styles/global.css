@@ -83,6 +83,7 @@
   --ok: oklch(0.72 0.14 150);
   --warn: oklch(0.78 0.13 82);
   --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 24px oklch(0 0 0 / 0.35);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
