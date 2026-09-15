@@ -16,4 +16,4 @@ Base ramp `base-100/200/300` ← `elevation.0.surface`/`elevation.1.surface`/`bo
 
 ## Ground-truth testing
 
-`examples/*/demo/daisyui/` — a real Vite + Tailwind 4 + daisyUI app whose `@plugin "daisyui"` block names the generated themes, built in CI for all four examples. That proves the emitted blocks are accepted by daisyUI's own plugin and that both themes register. **Still aspirational:** asserting computed styles on a component sample.
+`examples/*/demo/daisyui/` — a real Vite + Tailwind 4 + daisyUI app whose `@plugin "daisyui"` block names the generated themes, built in CI for all four examples. That proves the emitted blocks are accepted by daisyUI's own plugin and that both themes register. **Still aspirational:** asserting computed styles on a component sample. Tracked as [issue #12](https://github.com/transtyle/transtyle/issues/12).

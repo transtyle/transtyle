@@ -34,4 +34,4 @@ Unique among exporters: Storybook options may reference other configured targets
 
 ## Ground-truth testing
 
-`examples/*/demo/storybook/` builds a real Storybook (`@storybook/html-vite`) with the generated manager/preview/theme files, in CI, for all four examples — a build failure is how a bad `ThemeVars` shape surfaces. **Still aspirational:** booting each supported major rather than the pinned one, and screenshot probes on the manager UI), token stories render, and mode toolbar toggles sibling stylesheet behavior.
+`examples/*/demo/storybook/` builds a real Storybook (`@storybook/html-vite`) with the generated manager/preview/theme files, in CI, for all four examples — a build failure is how a bad `ThemeVars` shape surfaces. **Still aspirational:** booting each supported major rather than the pinned one ([issue #13](https://github.com/transtyle/transtyle/issues/13)), and screenshot probes on the manager UI ([issue #12](https://github.com/transtyle/transtyle/issues/12)), token stories render, and mode toolbar toggles sibling stylesheet behavior.

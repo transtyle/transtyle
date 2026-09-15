@@ -51,7 +51,7 @@ The component-theming surface is measured by a checked-in inventory ([surface-in
 
 ## Ground-truth testing
 
-`examples/*/demo/bootstrap/` compiles real Bootstrap with the emitted Sass (`sass` + `bootstrap` in the demo's own dependencies), built in CI for all four examples — the strongest ground truth any target here has, since Bootstrap's own build fails loudly on a variable it cannot use. Every emitted value is also diffed key-by-key against the Phase 0 fixtures by `check:fixtures`. **Still aspirational:** compiling each supported minor rather than the pinned one, and spot-checking resolved CSS custom-property values in the built stylesheet. Headless render of a fixture page diffs key computed styles between Sass path and CSS-var path to keep the two paths' documented fidelity gap accurate.
+`examples/*/demo/bootstrap/` compiles real Bootstrap with the emitted Sass (`sass` + `bootstrap` in the demo's own dependencies), built in CI for all four examples — the strongest ground truth any target here has, since Bootstrap's own build fails loudly on a variable it cannot use. Every emitted value is also diffed key-by-key against the Phase 0 fixtures by `check:fixtures`. **Still aspirational:** compiling each supported minor rather than the pinned one ([issue #13](https://github.com/transtyle/transtyle/issues/13)), and spot-checking resolved CSS custom-property values in the built stylesheet ([issue #12](https://github.com/transtyle/transtyle/issues/12)). Headless render of a fixture page diffs key computed styles between Sass path and CSS-var path to keep the two paths' documented fidelity gap accurate.
 
 ## Doc capability (Tier 3, later)
 

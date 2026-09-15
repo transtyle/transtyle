@@ -29,7 +29,7 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 
 ## Ground-truth testing
 
-`examples/*/demo/shadcn/` — a real Vite + Tailwind v4 app built from shadcn's own registry components (`@radix-ui/react-*` primitives), consuming only the emitted `globals.transtyle.css`. CI builds all four, which proves the emitted CSS parses under the era's toolchain and that Tailwind resolves every `@theme inline` token. **Still aspirational:** headless-rendering light and dark and asserting computed styles per component/variable pair — nothing today catches a theme that builds cleanly and looks wrong.
+`examples/*/demo/shadcn/` — a real Vite + Tailwind v4 app built from shadcn's own registry components (`@radix-ui/react-*` primitives), consuming only the emitted `globals.transtyle.css`. CI builds all four, which proves the emitted CSS parses under the era's toolchain and that Tailwind resolves every `@theme inline` token. **Still aspirational:** headless-rendering light and dark and asserting computed styles per component/variable pair — nothing today catches a theme that builds cleanly and looks wrong. Tracked as [issue #12](https://github.com/transtyle/transtyle/issues/12).
 
 ## Out of scope
 

@@ -91,6 +91,6 @@ If the project didn't exist at the ref, diff says so and exits 0 (nothing to dif
 
 Implemented: the resolved-graph semantic diff, contrast-regression flagging, per-target output impact, git-ref resolution, `--json`, and the exit-code contract, all exercised by `scripts/check-cli.mjs`.
 
-Deliberately not yet done: a rich token-level line diff inside each target (the current impact is a count plus a sample), and contrast checking beyond the four `text.{base,muted}` × `elevation.{0,1}.surface` pairs `runChecks` defines — extending that list benefits `check` and `diff` together, by construction. Neither changes this command's contract.
+Deliberately not yet done: a rich token-level line diff inside each target (the current impact is a count plus a sample), and contrast checking beyond the four `text.{base,muted}` × `elevation.{0,1}.surface` pairs `runChecks` defines — extending that list benefits `check` and `diff` together, by construction. Neither changes this command's contract. Tracked as [issue #11](https://github.com/transtyle/transtyle/issues/11).
 
 **A note on the exit code:** a contrast regression does not get its own exit code. Any regression implies a semantic change, which already exits `1`; CI that needs to fail _specifically_ on accessibility reads `contrastRegressions` from `--json`. Keeping one meaning for exit `1` is worth more than a second signal.

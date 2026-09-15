@@ -18,7 +18,7 @@ Four independently-versioned surfaces. Conflating them is how ecosystems end up 
 | **CLI / core packages** | normal npm semver                | UX may evolve fast; `report.json` and other machine outputs get schema fields so CI consumers survive changes.                                                                                  |
 | **Each exporter**       | its own npm semver               | Independent release cadence — a Bootstrap 5.4 release must be shippable the same week without touching core.                                                                                    |
 
-**Specced:** core checking those declared ranges at load time and refusing a mismatch with an actionable diagnostic ("exporter-bootstrap 2.x requires IR spec v1; you are on v0 — upgrade the exporter or pin core"). The manifests exist and are shape-checked by `plugin-kit`; nothing in the compile path reads them, which [ADR-0011](../adr/0011-v0-freeze-readiness.md) §2 identifies as the concrete blocker on freezing plugin API v0. Until it lands, an incompatible exporter fails in whatever way its code happens to fail.
+**Specced:** core checking those declared ranges at load time and refusing a mismatch with an actionable diagnostic ("exporter-bootstrap 2.x requires IR spec v1; you are on v0 — upgrade the exporter or pin core"). The manifests exist and are shape-checked by `plugin-kit`; nothing in the compile path reads them, which [ADR-0011](../adr/0011-v0-freeze-readiness.md) §2 identifies as the concrete blocker on freezing plugin API v0. Until it lands, an incompatible exporter fails in whatever way its code happens to fail. Tracked as [issue #14](https://github.com/transtyle/transtyle/issues/14).
 
 ## Target framework versions ([ADR-0006](../adr/0006-version-ranges.md))
 
@@ -41,7 +41,7 @@ The vision pitched `transtyle build bootstrap 5.3.8` — patch-level targeting. 
 
 ## Reproducibility
 
-**Specced.** `transtyle.lock` (generated) would record: core/CLI versions, every plugin version, rule-pack version, IR spec version. Committed to the user's repo. `transtyle build --frozen` (default in CI) fails on any drift. This is the Terraform lockfile lesson applied to design systems: a theme regenerated two years later must either be identical or fail loudly asking to upgrade intentionally.
+**Specced.** `transtyle.lock` (generated) would record: core/CLI versions, every plugin version, rule-pack version, IR spec version. Committed to the user's repo. `transtyle build --frozen` (default in CI) fails on any drift. This is the Terraform lockfile lesson applied to design systems: a theme regenerated two years later must either be identical or fail loudly asking to upgrade intentionally. Tracked as [issue #1](https://github.com/transtyle/transtyle/issues/1).
 
 ## Deprecation policy
 
