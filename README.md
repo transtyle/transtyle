@@ -1,9 +1,4 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="brand/transtyle-mark-on-dark-256.png">
-    <img src="brand/transtyle-mark-256.png" alt="" width="112" height="112">
-  </picture>
-</p>
+<p align="center"><a href="https://transtyle.github.io/transtyle/"><picture><source srcset=".github/header.svg" type="image/svg+xml"><img src=".github/header.png" width="830" alt="Transtyle, a design system compiler: describe your design system once, in design tokens, and compile native themes for every ecosystem you ship in."></picture></a></p>
 
 <h1 align="center">Transtyle</h1>
 

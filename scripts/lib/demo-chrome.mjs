@@ -116,37 +116,38 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
 
   var css = \`
     * { box-sizing: border-box; }
+    /* The site's colours, written out: a shadow root inside somebody else's
+       page cannot reach the site's tokens. Field #0A0C11, panel #16181E, line
+       #292C33, text #E6E8EC / #8F929A, cyan #3AB9BF for the current choice.
+       Flat — no blur, no shadow — so it reads the same over any demo. */
     /* Inherited text properties cross the shadow boundary — Cathode's demo
        sets uppercase and wide tracking on body text, and without these the
        switcher quietly joins in. Everything else is blocked by the boundary. */
     .root {
       font: 500 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-      color: #e8e9f2; text-transform: none; letter-spacing: normal; text-align: left;
+      color: #E6E8EC; text-transform: none; letter-spacing: normal; text-align: left;
       direction: ltr; word-spacing: normal; text-indent: 0; visibility: visible;
       display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
     }
     button { font: inherit; cursor: pointer; }
     .pill {
       display: flex; align-items: center; gap: 8px;
-      padding: 7px 12px 7px 8px; border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(14,16,32,0.82);
-      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-      color: #e8e9f2; box-shadow: 0 4px 20px rgba(0,0,0,0.35);
-      transition: border-color .15s, transform .15s;
+      padding: 6px 12px 6px 6px; border-radius: 6px;
+      border: 1px solid #292C33;
+      background: #0A0C11;
+      color: #E6E8EC;
+      transition: border-color .15s;
     }
-    .pill:hover { border-color: rgba(255,255,255,0.34); transform: translateY(-1px); }
-    .pill svg { width: 18px; height: 18px; border-radius: 4px; display: block; }
+    .pill:hover { border-color: #3AB9BF; }
+    .pill svg { width: 20px; height: 20px; display: block; }
     .pill b { font-weight: 650; }
     .pill .sep { opacity: .45; }
     .pill .caret { opacity: .55; font-size: 10px; margin-left: 2px; }
     .panel {
       width: min(92vw, 340px); max-height: min(78vh, 620px); overflow: auto;
-      border-radius: 14px; padding: 14px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(14,16,32,0.94);
-      -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-      box-shadow: 0 18px 50px rgba(0,0,0,0.5);
+      border-radius: 6px; padding: 14px;
+      border: 1px solid #292C33;
+      background: #16181E;
     }
     .head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
     .kicker { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; opacity: .55; font-weight: 700; }
@@ -159,23 +160,23 @@ export function demoChrome({ root, example, target, examples, targets, built }) 
     .grid.ex { grid-template-columns: 1fr 1fr; }
     .grid.tg { grid-template-columns: 1fr 1fr; }
     .opt {
-      display: block; text-decoration: none; color: #dfe1ee;
-      border: 1px solid rgba(255,255,255,0.12); border-radius: 9px;
-      padding: 7px 9px; font-size: 12.5px; background: rgba(255,255,255,0.03);
-      transition: background .12s, border-color .12s;
+      display: block; text-decoration: none; color: #E6E8EC;
+      border: 1px solid #292C33; border-radius: 3px;
+      padding: 7px 9px; font-size: 12.5px; background: #0A0C11;
+      transition: border-color .12s;
     }
-    .opt:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.28); }
+    .opt:hover { border-color: #8F929A; }
     .opt small { display: block; font-size: 10px; opacity: .5; font-weight: 500; }
     .opt[aria-current] {
-      border-color: #8f9cff; background: rgba(120,135,255,0.18); color: #fff;
+      border-color: #3AB9BF; color: #3AB9BF;
     }
     .opt[data-missing] { opacity: .32; pointer-events: none; }
-    .foot { margin-top: 14px; padding-top: 11px; border-top: 1px solid rgba(255,255,255,0.1); display: grid; gap: 6px; }
-    .foot a { color: #b9c0ff; text-decoration: none; font-size: 12px; }
+    .foot { margin-top: 14px; padding-top: 11px; border-top: 1px solid #292C33; display: grid; gap: 6px; }
+    .foot a { color: #3AB9BF; text-decoration: none; font-size: 12px; }
     .foot a:hover { text-decoration: underline; }
     .note {
-      margin-top: 11px; padding: 8px 10px; border-radius: 9px; font-size: 11px; line-height: 1.5;
-      background: rgba(255,190,80,0.1); border: 1px solid rgba(255,190,80,0.24); color: #ffd9a1;
+      margin-top: 11px; padding: 8px 10px; border-radius: 3px; font-size: 11px; line-height: 1.5;
+      background: #0A0C11; border: 1px solid #292C33; color: #8F929A;
     }
     @media print { .root { display: none; } }
   \`;
