@@ -42,6 +42,8 @@
  * deploy time (scripts/assemble-demos.mjs), so `npm run site:build` alone
  * leaves the iframes pointing at nothing locally — `npm run demos:all`, or
  * `npm run demos:assemble` over an existing demo-dist/, builds the real thing.
+ * Under `npm run site:dev`, website/dev-demos-plugin.mjs serves them straight
+ * from demo-dist/ once `npm run demos:build` has run.
  */
 import Base from '../../layouts/Base.astro';
 import { withBase } from '../../url.js';
