@@ -15,6 +15,7 @@
  * part of the Astro build, which is why `npm run site:build` alone leaves these
  * links pointing at nothing locally — `npm run demos:all` builds the full thing.
  */
+import { Button } from '@deramond.dev/astro';
 import Base from '../../layouts/Base.astro';
 import { withBase } from '../../url.js';
 import { EXAMPLES, TARGETS, discoverDemos, demoPath, repoRoot } from '../../../../scripts/lib/demos.mjs';
@@ -72,7 +73,7 @@ const paint = (t) =>
         <span><b>1</b> set of token files each</span>
       </p>
       <p class="hero-cta">
-        <a class="btn primary" href={withBase('/compare/')}>Compare two side by side →</a>
+        <Button variant="ghost" href={withBase('/compare/')}>Compare two side by side →</Button>
         <span>Two of them in one viewport, one mode control and one scroll position driving both.</span>
       </p>
     </section>
@@ -295,8 +296,8 @@ npm run demos:all                      # build all {count} + the site, as deploy
         </div>
       </details>
       <p class="cta-row">
-        <a class="btn primary" href={withBase('/docs/getting-started/')}>Compile your own</a>
-        <a class="btn" href={withBase('/docs/examples/')}>Read the walkthroughs</a>
+        <Button variant="ghost" href={withBase('/docs/getting-started/')}>Compile your own</Button>
+        <Button variant="quiet" href={withBase('/docs/examples/')}>Read the walkthroughs</Button>
       </p>
     </section>
   </main>
@@ -402,10 +403,6 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .ports-grid li { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.74rem; padding: 0.12rem 0; font-family: var(--mono); }
     .ports-grid li span { color: var(--text-muted); }
     .cta-row { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 1.8rem 0 0; }
-    .btn { display: inline-block; padding: 0.6rem 1.2rem; border-radius: var(--radius-md); border: 1px solid var(--border); font: var(--type-button); text-transform: uppercase; letter-spacing: var(--font-letter-spacing-button); color: var(--text); }
-    .btn:hover { text-decoration: none; border-color: var(--primary); }
-    .btn.primary { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
-    .btn.primary:hover { background: var(--primary-strong); }
 
     @media (max-width: 720px) {
       .previews { grid-template-columns: 1fr; }

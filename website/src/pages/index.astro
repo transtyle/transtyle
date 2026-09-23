@@ -1,5 +1,6 @@
 ---
 import { codeProps } from '@deramond.dev/astro/code';
+import { Button } from '@deramond.dev/astro';
 import Base from '../layouts/Base.astro';
 import { Code } from 'astro:components';
 import { withBase } from '../url.js';
@@ -67,8 +68,8 @@ npx transtyle build`;
         Deterministic. Explainable. Zero runtime.
       </p>
       <div class="cta">
-        <a class="btn gold" href={withBase('/docs/getting-started/')}>Get started</a>
-        <a class="btn" href={withBase('/docs/')}>Read the docs</a>
+        <Button variant="gold" href={withBase('/docs/getting-started/')}>Get started</Button>
+        <Button variant="quiet" href={withBase('/docs/')}>Read the docs</Button>
       </div>
       <p class="hero-status">
         <span class="pill">Alpha</span> On npm as <code>@transtyle/cli@alpha</code> — published so it
@@ -218,7 +219,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
         ))}
       </div>
       <p class="band-foot">
-        <a class="btn primary" href={withBase('/demo/')}>Open the demo gallery →</a>
+        <Button variant="ghost" href={withBase('/demo/')}>Open the demo gallery →</Button>
       </p>
     </section>
 
@@ -272,8 +273,8 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
         Agents write config; the compiler compiles it.
       </p>
       <div class="cta">
-        <a class="btn" href={withBase('/docs/ai-agents/')}>The agent guide</a>
-        <a class="btn" href={withBase('/llms.txt')}>llms.txt</a>
+        <Button variant="quiet" href={withBase('/docs/ai-agents/')}>The agent guide</Button>
+        <Button variant="quiet" href={withBase('/llms.txt')}>llms.txt</Button>
       </div>
     </section>
 
@@ -282,8 +283,8 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       <p class="band-sub">On npm as an alpha — <code>@transtyle/cli@alpha</code>. Prefer to look before you install? The <a href={withBase('/docs/examples/')}>four examples</a> in the repository compile end to end, two of them real systems nobody here designed (GOV.UK, Carbon).</p>
       <div class="start"><Code code={startCommands} lang="bash" {...shiki} /></div>
       <div class="cta center">
-        <a class="btn primary" href={withBase('/docs/getting-started/')}>Getting started guide</a>
-        <a class="btn" href={withBase('/docs/adopt-existing/')}>I already have a design system</a>
+        <Button variant="ghost" href={withBase('/docs/getting-started/')}>Getting started guide</Button>
+        <Button variant="quiet" href={withBase('/docs/adopt-existing/')}>I already have a design system</Button>
       </div>
     </section>
   </main>
@@ -315,18 +316,6 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     }
     .hero-status code { font-size: 0.85em; }
     .cta.center { margin-top: 1.4rem; }
-    .btn {
-      display: inline-block; padding: 0.6rem 1.3rem; border-radius: var(--radius-md);
-      font: var(--type-button); text-transform: uppercase; letter-spacing: var(--font-letter-spacing-button);
-      border: 1px solid var(--border); color: var(--text);
-    }
-    .btn:hover { text-decoration: none; border-color: var(--text-muted); color: var(--text); }
-    /* Cyan for a way forward; gold only for the page's one decision — the
-       hero's "Get started" — never twice. */
-    .btn.primary { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
-    .btn.primary:hover { color: var(--primary-strong); border-color: var(--primary-strong); }
-    .btn.gold { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
-    .btn.gold:hover { color: var(--color-on-accent); filter: none; border-color: var(--color-accent); }
 
     .terminal {
       max-width: 42rem; margin: 2.6rem auto 0; border-radius: var(--radius-md); overflow: hidden;
