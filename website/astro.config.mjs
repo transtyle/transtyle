@@ -4,6 +4,7 @@ import { defineConfig } from 'astro/config';
 import { satteri } from '@astrojs/markdown-satteri';
 import deramond from '@deramond.dev/astro/integration';
 import { baseUrlsPlugin } from './base-urls-plugin.mjs';
+import { devDemosPlugin } from './dev-demos-plugin.mjs';
 
 // Where the site actually lives.
 //
@@ -62,6 +63,9 @@ export default defineConfig({
     // code panel.
     processor: satteri({ hastPlugins: [baseUrlsPlugin({ base })] }),
   },
+  // `astro dev` serves the built demos from demo-dist/, with their chrome, so
+  // the gallery and the compare view work locally (dev-demos-plugin.mjs).
+  vite: { plugins: [devDemosPlugin({ base })] },
   integrations: [
     // The site's chrome, type, colours, docs shell, Open Graph cards,
     // favicons and search. Every page, the docs sidebar (src/nav.js), the
