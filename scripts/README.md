@@ -28,7 +28,7 @@ already made once.
 | `check-demos.mjs`             | The published demo grid: described, documented with its port, linked from its exporter page, deployed |
 | `gen-figures.mjs --check`     | The blog's figures still match a fresh compile of the examples they were painted from                 |
 | `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, keywords, `files`, `bin`  |
-| `check-brand.mjs`             | The logo everywhere: assets current, every surface still carrying it, brand hues still the mark's     |
+| `check-brand.mjs`             | The logo everywhere: assets current, every surface still carrying it, the site drawing the same glyph |
 | `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex              |
 | `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                           |
 | `check-secrets.mjs`           | No credential or personal data in any blob, commit message or identity, ever                          |

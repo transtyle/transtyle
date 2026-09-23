@@ -5,25 +5,29 @@
  * There is exactly one description of the logo — the geometry and palette
  * constants below — and every asset the repository ships is rendered from it:
  * the two SVG variants in brand/, their PNG rasters, the wordmark lockup, the
- * site's favicon, apple-touch, PWA and feed icons, and a favicon for each of
- * the thirty-two example demo projects. Nothing is hand-drawn twice.
+ * feed icon, and a favicon for each of the thirty-two example demo projects.
+ * Nothing is hand-drawn twice. (The site's own favicons and app icons are the
+ * committed files in website/src/brand/, served by @deramond.dev/astro.)
  *
  * That matters more than it looks. A logo is the classic multi-surface asset:
- * one mark ends up as a 16px favicon, a 180px iOS tile, a 512px install icon,
- * a README image and a 64px badge on an Open Graph card. Kept as six separate
- * files, they drift — someone tweaks the SVG, the PNGs stay on last year's
- * gradient, and the drift is invisible until you see two of them side by side.
- * Here the PNGs cannot disagree with the SVG, because they are the SVG.
+ * one mark ends up as a 16px favicon, a README image, a feed icon and a
+ * sidebar heading in Storybook. Kept as separate files, they drift — someone
+ * redraws the SVG, the PNGs stay on last year's mark, and the drift is
+ * invisible until you see two of them side by side. Here the PNGs cannot
+ * disagree with the SVG, because they are the SVG.
  *
- * Two variants exist, and the difference is one hairline:
+ * The mark is one colour: the T-and-slash glyph in the foreground colour, no
+ * gradient. Every file here is shown on somebody else's page — GitHub, npm, a
+ * feed reader, a demo themed by another design system — so each one carries
+ * its own dark field under the glyph rather than trusting the host's
+ * background. Two variants exist, and the difference is one hairline:
  *
- *   transtyle-mark.svg          the mark as designed
- *   transtyle-mark-on-dark.svg  the same, plus a 14%-white inner ring
+ *   transtyle-mark.svg          the glyph on its field
+ *   transtyle-mark-on-dark.svg  the same, plus a hairline inside the edge
  *
- * The tile is #080A24 — near-black. On a light page that reads as a crisp
- * rounded square; on a dark page (the site's own --bg is #0a0d13, GitHub's
- * dark is #0d1117) the square dissolves into the background and the glyph is
- * left floating. The ring gives the silhouette its edge back. It is invisible
+ * On a light page the field reads as a crisp square; on a dark one (GitHub's
+ * dark is #0d1117) it dissolves into the background and the glyph is left
+ * floating. The hairline gives the silhouette its edge back. It is invisible
  * against a light background, so the on-dark variant is the safe choice
  * anywhere the background is unknown — npm renders package READMEs on both.
  *
@@ -47,77 +51,59 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 // The mark
 // ---------------------------------------------------------------------------
 
-/** The tile. Also the site's dark `theme-color` and the OG card's ground. */
-export const TILE = '#080A24';
+/** The field under the glyph: the site's background. */
+export const FIELD = '#0A0C11';
+
+/** The glyph: the site's foreground. One colour, never a gradient. */
+export const INK = '#E6E8EC';
+
+/** The on-dark hairline: the site's line colour. */
+const LINE = '#292C33';
 
 /**
- * The glyph gradient, magenta → blue across the mark's own diagonal.
- *
- * Exported because it is also the site's brand pair: read back in OKLCH these
- * two ends are hue 315 and hue 269, which is exactly what global.css sets
- * `--violet` and `--primary` to. check-brand.mjs recomputes them from here and
- * fails if the stylesheet, the OG renderer or the blog's accent ladder drifts.
+ * The glyph on a 32-unit box: the crossbar's left half, its right half sheared
+ * into the diagonal, and the stem hanging off the same 45° cut. Bar height,
+ * stem width and the cut are one 6.5-unit module, so the T sits on a 4 × 3
+ * grid of them (x 3–29, y 6.25–25.75).
  */
-export const GRADIENT = [
-  { offset: '0', color: '#D77BFF' },
-  { offset: '0.45', color: '#C77CFF' },
-  { offset: '1', color: '#6B8DFF' },
+export const GLYPH = [
+  'M3 6.25H16V12.75H3Z',
+  'M16 12.75L22.5 6.25H29V12.75Z',
+  'M16 12.75L9.5 19.25V25.75H16Z',
 ];
 
-/** Everything is authored on a 400×400 grid with a 24-unit corner radius. */
-const SIZE = 400;
-const RADIUS = 24;
-
-/** The rounded tile, as a path (a `rect` would not survive being inset below). */
-const TILE_PATH =
-  'M376 0H24C10.7452 0 0 10.7452 0 24V376C0 389.255 10.7452 400 24 400H376C389.255 400 400 389.255 400 376V24C400 10.7452 389.255 0 376 0Z';
-
 /**
- * The three blocks of the T: the crossbar's left half, its right half sheared
- * into the diagonal, and the stem hanging off the same 45° cut.
+ * The same glyph drawn for 16px, on 3-pixel modules, so every edge of a
+ * favicon lands on a whole pixel instead of blurring across two.
  */
-const GLYPH = [
-  'M58 121H200V194H58V121Z',
-  'M200 194L272 121H342V194H200Z',
-  'M200 194L129 265V339H200V194Z',
-];
-
-/** The on-dark ring, in user units — see the header note on why it exists. */
-const RING = { color: '#FFFFFF', opacity: '0.14', width: 6 };
+export const GLYPH_16 = ['M2 4H8V7H2Z', 'M8 7L11 4H14V7Z', 'M8 7L5 10V13H8Z'];
 
 /**
- * @param {{ id: string, ring?: boolean, square?: boolean }} options
- *   `id` namespaces the gradient, so two marks can be inlined on one page.
- *   `square` drops the rounded corners for full-bleed tiles (iOS and Android
- *   apply their own mask and would otherwise round an already-rounded icon).
+ * @param {{ ring?: boolean }} options
+ *   The field extends half a module past the glyph's box on every side (a
+ *   38-unit square), which is the mark's clear space.
  * @returns {string} a standalone SVG document
  */
-export function mark({ id, ring = false, square = false }) {
-  const stops = GRADIENT.map(
-    (s) => `      <stop offset="${s.offset}" stop-color="${s.color}" />`,
-  ).join('\n');
-  const tile = square
-    ? `  <path d="M0 0H${SIZE}V${SIZE}H0V0Z" fill="${TILE}" />`
-    : `  <path d="${TILE_PATH}" fill="${TILE}" />`;
-  const glyph = GLYPH.map((d) => `  <path d="${d}" fill="url(#${id})" />`).join('\n');
-  // Inset by half the stroke width so the ring sits *inside* the tile edge
-  // rather than straddling it, which would leave a soft half-pixel fringe.
-  const inset = RING.width / 2;
+export function mark({ ring = false } = {}) {
+  const glyph = GLYPH.map((d) => `  <path d="${d}" fill="${INK}" />`).join('\n');
   const edge = ring
-    ? `\n  <rect x="${inset}" y="${inset}" width="${SIZE - RING.width}" height="${SIZE - RING.width}" rx="${square ? 0 : RADIUS - inset}" fill="none" stroke="${RING.color}" stroke-opacity="${RING.opacity}" stroke-width="${RING.width}" />`
+    ? `\n  <rect x="-2.75" y="-2.75" width="37.5" height="37.5" fill="none" stroke="${LINE}" stroke-width="0.5" />`
     : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}" role="img" aria-label="Transtyle">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-3 -3 38 38" width="400" height="400" role="img" aria-label="Transtyle">
   <title>Transtyle</title>
-  <defs>
-    <linearGradient id="${id}" x1="58" y1="110" x2="342" y2="180" gradientUnits="userSpaceOnUse">
-${stops}
-    </linearGradient>
-  </defs>
-${tile}
+  <rect x="-3" y="-3" width="38" height="38" fill="${FIELD}" />
 ${glyph}${edge}
 </svg>
 `;
 }
+
+/** The 16px favicon: the pixel-grid glyph on the field, edge to edge. */
+const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" role="img" aria-label="Transtyle">
+  <title>Transtyle</title>
+  <rect width="16" height="16" fill="${FIELD}" />
+${GLYPH_16.map((d) => `  <path d="${d}" fill="${INK}" />`).join('\n')}
+</svg>
+`;
 
 // ---------------------------------------------------------------------------
 // Rasterization
@@ -146,28 +132,24 @@ export async function raster(svg, size) {
  * is why this exists: a square mark there renders at 100×100 and swallows the
  * header, while a 4:1 lockup lands at a well-proportioned 150×38.
  *
- * It carries the tile as its own ground rather than sitting on transparency,
+ * It carries the field as its own ground rather than sitting on transparency,
  * for the same reason the on-dark variant exists: that sidebar is themed by
  * whichever design system is on show — Acme's is near-white, Cathode's boots
- * black — and no single wordmark colour survives both. Extending the mark's
- * own ground under the word is the honest way to be legible on either.
+ * black — and no single wordmark colour survives both.
  *
- * satori lays it out and resvg rasterizes it, exactly as the Open Graph cards
- * do, and for the same reason: the *static* Inter that `@fontsource/inter`
- * ships alongside its variable build renders identically on a laptop and in
- * CI, where an SVG `<text>` in a system font stack would come out different on
+ * The name is set in Chakra Petch 700, uppercase, the site's display face.
+ * satori lays it out and resvg rasterizes it, for the same reason as every
+ * other raster here: the static font file renders identically on a laptop and
+ * in CI, where an SVG `<text>` in a system font would come out different on
  * every machine that opened it.
  */
 const LOCKUP = { width: 430, height: 132, scale: 2 };
 
 async function lockup() {
   const { default: satori } = await import('satori');
-  const font = (weight) =>
-    readFileSync(require.resolve(`@fontsource/inter/files/inter-latin-${weight}-normal.woff`));
-  // The plain mark, not the on-dark one: inside the bar the tile IS the bar,
-  // so the ring would draw a stray box around the glyph. The bar wears the ring
-  // instead — same job, one level out.
-  const markUri = `data:image/svg+xml;base64,${Buffer.from(mark({ id: 'transtyle-mark' })).toString('base64')}`;
+  const font = readFileSync(require.resolve('@fontsource/chakra-petch/files/chakra-petch-latin-700-normal.woff'));
+  const glyph = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${GLYPH.map((d) => `<path d="${d}" fill="${INK}"/>`).join('')}</svg>`;
+  const markUri = `data:image/svg+xml;base64,${Buffer.from(glyph).toString('base64')}`;
 
   const svg = await satori(
     {
@@ -176,31 +158,28 @@ async function lockup() {
         style: {
           display: 'flex',
           alignItems: 'center',
-          gap: 24,
+          gap: 18,
           width: '100%',
           height: '100%',
-          padding: '0 40px 0 18px',
-          backgroundColor: TILE,
-          // The mark's own corner, scaled: 24 on 400 is 6%, and 6% of this
-          // bar's height keeps the two shapes visibly the same family.
-          borderRadius: Math.round(LOCKUP.height * (RADIUS / SIZE)),
-          // The on-dark ring, at the mark's own proportion (6 units on 400).
-          border: `2px solid rgba(255, 255, 255, ${RING.opacity})`,
+          padding: '0 30px 0 24px',
+          backgroundColor: FIELD,
+          // The on-dark hairline, one level out: the bar is the field here.
+          border: `2px solid ${LINE}`,
         },
         children: [
-          { type: 'img', props: { src: markUri, width: 96, height: 96 } },
+          { type: 'img', props: { src: markUri, width: 72, height: 72 } },
           {
             type: 'div',
             props: {
               style: {
                 display: 'flex',
-                fontFamily: 'Inter',
-                fontSize: 58,
+                fontFamily: 'Chakra Petch',
+                fontSize: 46,
                 fontWeight: 700,
-                letterSpacing: '-0.03em',
-                color: '#FFFFFF',
+                letterSpacing: '0.02em',
+                color: INK,
               },
-              children: 'transtyle',
+              children: 'TRANSTYLE',
             },
           },
         ],
@@ -209,10 +188,7 @@ async function lockup() {
     {
       width: LOCKUP.width,
       height: LOCKUP.height,
-      fonts: [
-        { name: 'Inter', data: font(400), weight: 400, style: 'normal' },
-        { name: 'Inter', data: font(700), weight: 700, style: 'normal' },
-      ],
+      fonts: [{ name: 'Chakra Petch', data: font, weight: 700, style: 'normal' }],
     },
   );
 
@@ -230,9 +206,8 @@ async function lockup() {
 // The outputs
 // ---------------------------------------------------------------------------
 
-const ROUNDED = mark({ id: 'transtyle-mark' });
-const ON_DARK = mark({ id: 'transtyle-mark', ring: true });
-const FULL_BLEED = mark({ id: 'transtyle-mark', square: true });
+const ON_FIELD = mark();
+const ON_DARK = mark({ ring: true });
 
 /**
  * Every generated file, in one list — this is what `npm run gen:brand` writes
@@ -245,22 +220,12 @@ export const OUTPUTS = [
   // The brand folder: the mark itself, plus rasters for surfaces that cannot
   // be trusted with an SVG (npm strips very little, but GitHub proxies images
   // and some feed readers refuse SVG outright).
-  { rel: 'brand/transtyle-mark.svg', svg: ROUNDED },
+  { rel: 'brand/transtyle-mark.svg', svg: ON_FIELD },
   { rel: 'brand/transtyle-mark-on-dark.svg', svg: ON_DARK },
-  { rel: 'brand/transtyle-mark-256.png', from: ROUNDED, size: 256 },
+  { rel: 'brand/transtyle-mark-256.png', from: ON_FIELD, size: 256 },
   { rel: 'brand/transtyle-mark-on-dark-256.png', from: ON_DARK, size: 256 },
-  { rel: 'brand/transtyle-mark-1024.png', from: ROUNDED, size: 1024 },
+  { rel: 'brand/transtyle-mark-1024.png', from: ON_FIELD, size: 1024 },
   { rel: 'brand/transtyle-lockup.png', lockup: true },
-
-  // The site. favicon.svg is what every modern browser actually uses; the PNG
-  // is the fallback for the ones that don't, and for anything that scrapes a
-  // tab icon. The Apple and PWA icons are full-bleed because both platforms
-  // mask the icon themselves.
-  { rel: 'website/public/favicon.svg', svg: ROUNDED },
-  { rel: 'website/public/favicon-32.png', from: ROUNDED, size: 32 },
-  { rel: 'website/public/apple-touch-icon.png', from: FULL_BLEED, size: 180 },
-  { rel: 'website/public/icon-192.png', from: FULL_BLEED, size: 192 },
-  { rel: 'website/public/icon-512.png', from: FULL_BLEED, size: 512 },
 
   // The RSS channel image. 144px because that is the widest RSS 2.0 permits
   // for <image> (default 88, max width 144, max height 400), and on-dark
@@ -306,11 +271,11 @@ function demoFavicons() {
       return readdirSync(demoDir, { withFileTypes: true })
         .filter((d) => d.isDirectory())
         .flatMap((d) => [
-          { rel: `examples/${e.name}/demo/${d.name}/public/favicon.svg`, svg: ROUNDED },
+          { rel: `examples/${e.name}/demo/${d.name}/public/favicon.svg`, svg: FAVICON },
           // Storybook alone has a *brand* slot as well as a tab icon: the
           // sidebar heading, which the generated theme fills from the
-          // example's `options.brand.image`. On-dark, because that sidebar is
-          // themed by the design system on show and Cathode's boots black.
+          // example's `options.brand.image`. On its own field, because that
+          // sidebar is themed by the design system on show and Cathode's boots black.
           ...(d.name === 'storybook'
             ? [{ rel: `examples/${e.name}/demo/${d.name}/public/logo.png`, lockup: true }]
             : []),

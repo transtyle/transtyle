@@ -18,19 +18,17 @@
  *     for byte. Rasterization is pure wasm, so this is a real equality, not an
  *     approximate one.
  *  2. Consumption — the surfaces that are supposed to show the mark reference
- *     it: the site head, the manifest, the OG renderer, the feed, the root
- *     README, and every publishable package README.
+ *     it: the site's brand config (header, favicons, manifest, Open Graph
+ *     cards), the feed, the root README, and every publishable package README.
  *  3. No dangling reference — nothing in the tree points at a brand/ file that
  *     does not exist, which is how a rename silently breaks a README image.
  *  4. Absolute URLs off-repo — package READMEs are rendered by npm, outside
  *     the repository, so their logo must be an absolute URL rather than a
  *     relative path that only resolves on GitHub.
- *  5. Palette — the site's hues ARE the mark's. `--primary` and `--violet`
- *     are the two ends of the logo's gradient read back in OKLCH, the neutral
- *     ramp sits at the hue of the tile, and og.js and blog.js each hold their
- *     own copy of the same numbers. Every one is recomputed here from the mark
- *     rather than trusted, because "the accent no longer matches the logo" is
- *     invisible in a diff and obvious on the page.
+ *  5. One glyph — the site's own copy of the mark (website/src/brand/mark.svg,
+ *     drawn in currentColor for the header and the Open Graph cards) and its
+ *     favicon draw exactly the geometry below, so a redraw here cannot leave
+ *     the site on the old one.
  *  6. Demos — every example demo project carries the favicon. There are
  *     thirty-two of them across three toolchains, which is exactly the kind of
  *     set where a new one gets added and quietly skipped.
@@ -42,8 +40,7 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseColor } from '../packages/core/src/color.js';
-import { GRADIENT, OUTPUTS, TILE, render } from './gen-brand.mjs';
+import { GLYPH, GLYPH_16, OUTPUTS, render } from './gen-brand.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -66,18 +63,15 @@ for (const output of OUTPUTS) {
 // 2. consumption — each surface, and the asset it must name.
 const RAW = 'https://raw.githubusercontent.com/transtyle/transtyle/main/brand';
 const SURFACES = [
-  ['website/src/layouts/Base.astro', 'brand/transtyle-mark.svg?raw', 'the header mark'],
-  ['website/src/layouts/Base.astro', "withBase('/favicon.svg')", 'the SVG favicon'],
-  ['website/src/layouts/Base.astro', "withBase('/favicon-32.png')", 'the PNG favicon fallback'],
-  ['website/src/layouts/Base.astro', "withBase('/apple-touch-icon.png')", 'the iOS home-screen icon'],
-  ['website/src/layouts/Base.astro', "withBase('/site.webmanifest')", 'the web app manifest'],
-  ['website/src/pages/site.webmanifest.js', "withBase('/icon-192.png')", 'the 192px install icon'],
-  ['website/src/pages/site.webmanifest.js', "withBase('/icon-512.png')", 'the 512px install icon'],
-  ['website/src/og.js', 'brand/transtyle-mark-on-dark.svg?raw', 'the Open Graph card badge'],
+  ['website/astro.config.mjs', "mark: './src/brand/mark.svg'", 'the header mark and the Open Graph badge'],
+  ['website/astro.config.mjs', "favicons: './src/brand/favicons/'", 'the favicons, app icons and web manifest'],
   ['website/src/pages/blog/rss.xml.js', "withBase('/feed-icon-144.png')", 'the RSS channel image'],
-  ['README.md', 'brand/transtyle-mark-256.png', 'the README logo (light)'],
-  ['README.md', 'brand/transtyle-mark-on-dark-256.png', 'the README logo (dark)'],
+  ['README.md', '.github/header.svg', 'the README header'],
+  ['README.md', '.github/header.png', 'the README header, for hosts that refuse SVG'],
 ];
+for (const file of ['.github/header.svg', '.github/header.png']) {
+  if (!existsSync(join(root, file))) fail(`${file} is missing — the README opens with it`);
+}
 for (const [file, needle, what] of SURFACES) {
   if (!read(file).includes(needle)) fail(`${file} no longer references ${needle} — ${what}`);
 }
@@ -126,84 +120,18 @@ for (const file of tracked) {
 }
 for (const d of dangling) fail(d);
 
-// 5. palette — the site's brand hues are the mark's, recomputed from the
-// gradient by the same colour module the compiler itself uses.
-const hueOf = (hex) => Math.round(parseColor(hex).h);
-const BRAND_HUE = hueOf(GRADIENT.at(-1).color); // the blue end, #6B8DFF → 269
-const VIOLET_HUE = hueOf(GRADIENT[0].color); //   the magenta end, #D77BFF → 315
-const ACCENT_STEP = VIOLET_HUE - BRAND_HUE;
-
-const css = read('website/src/styles/global.css');
-// --primary-strong and --primary-soft are ramp steps of the same hue; --violet
-// is the other end of the logo's own sweep. Lightness and chroma are the
-// contrast budget and are deliberately NOT constrained here.
-for (const [name, expected] of [
-  ['primary', BRAND_HUE],
-  ['primary-strong', BRAND_HUE],
-  ['primary-soft', BRAND_HUE],
-  ['violet', VIOLET_HUE],
+// 5. one glyph — the site's copies draw the same geometry as the generator.
+// Compared as number sequences, so path formatting (commas, spaces, repeated
+// commands) is free to differ and only the shape is held.
+const numbers = (text) => (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number).join(' ');
+const pathsIn = (file) => [...read(file).matchAll(/<path[^>]*\sd="([^"]+)"/g)].map(([, d]) => numbers(d));
+for (const [file, glyph] of [
+  ['website/src/brand/mark.svg', GLYPH],
+  ['website/src/brand/favicons/favicon.svg', GLYPH_16],
 ]) {
-  const decls = [...css.matchAll(new RegExp(`--${name}:\\s*oklch\\([\\d.]+\\s+[\\d.]+\\s+([\\d.]+)\\)`, 'g'))];
-  if (decls.length === 0) {
-    fail(`global.css declares no --${name} in the expected oklch(L C H) form`);
-    continue;
-  }
-  for (const [, h] of decls) {
-    if (Math.round(Number(h)) !== expected) {
-      fail(
-        `global.css --${name} is hue ${h}, but the mark's gradient says ${expected} — the site accent and the logo have come apart (npm run check:brand explains; the hues come from brand/transtyle-mark.svg)`,
-      );
-    }
-  }
-}
-
-for (const [file, name, expected] of [
-  ['website/src/og.js', 'BRAND_HUE', BRAND_HUE],
-  ['website/src/og.js', 'ACCENT_STEP', ACCENT_STEP],
-  ['website/src/blog.js', 'BRAND_HUE', BRAND_HUE],
-]) {
-  const found = read(file).match(new RegExp(`const ${name} = (\\d+);`))?.[1];
-  if (found === undefined) fail(`${file} no longer declares ${name} as a plain number`);
-  else if (Number(found) !== expected) {
-    fail(`${file} ${name} is ${found}, but the mark's gradient says ${expected}`);
-  }
-}
-
-// The greys are the tile's, in the same way: every neutral in the ramp sits at
-// the hue of #080A24. Chroma is not constrained — how far each theme leans into
-// the tint is a design call and the two themes deliberately differ — but the
-// hue is the thing that makes them one family with the mark, and it is the
-// thing that silently reverts when someone hand-mixes a new surface.
-const NEUTRAL_HUE = hueOf(TILE);
-const NEUTRALS = [
-  'bg',
-  'bg-soft',
-  'surface',
-  'text',
-  'text-muted',
-  'border',
-  'border-soft',
-  'code-bg',
-  'terminal-bg',
-  'terminal-text',
-];
-for (const name of NEUTRALS) {
-  // `oklch(1 0 0)` — pure white --surface — carries no hue to check.
-  for (const [, c, h] of css.matchAll(
-    new RegExp(`--${name}:\\s*oklch\\([\\d.]+\\s+([\\d.]+)\\s+([\\d.]+)\\)`, 'g'),
-  )) {
-    if (Number(c) > 0 && Math.round(Number(h)) !== NEUTRAL_HUE) {
-      fail(
-        `global.css --${name} is hue ${h}, but the logo tile (${TILE}) is ${NEUTRAL_HUE} — the site's greys and the mark have come apart`,
-      );
-    }
-  }
-}
-for (const [, name, h] of read('website/src/og.js').matchAll(
-  /const (BG|SURFACE|TEXT|MUTED) = oklch\([\d.]+, [\d.]+, ([\d.]+)\)/g,
-)) {
-  if (Math.round(Number(h)) !== NEUTRAL_HUE) {
-    fail(`website/src/og.js ${name} is hue ${h}, but the logo tile is ${NEUTRAL_HUE}`);
+  const found = pathsIn(file);
+  if (found.length !== glyph.length || glyph.some((d, i) => numbers(d) !== found[i])) {
+    fail(`${file} does not draw the glyph in scripts/gen-brand.mjs — the site and the mark have come apart`);
   }
 }
 
@@ -258,5 +186,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `✔ brand: ${OUTPUTS.length} generated assets match the mark, and every surface still carries it (${SURFACES.length} site/README references, ${packages} package pages, ${demos} demo projects); --primary/--violet are the gradient's own hues (${BRAND_HUE}°/${VIOLET_HUE}°) and the greys are the tile's (${NEUTRAL_HUE}°)`,
+  `✔ brand: ${OUTPUTS.length} generated assets match the mark, and every surface still carries it (${SURFACES.length} site/README references, ${packages} package pages, ${demos} demo projects), and the site draws the same glyph`,
 );

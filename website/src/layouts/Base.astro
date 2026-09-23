@@ -1,134 +1,95 @@
 ---
-import '@fontsource-variable/inter';
-import '@fontsource-variable/jetbrains-mono';
+import { BaseLayout, Header, Footer } from '@deramond.dev/astro';
 import '../styles/global.css';
 import { withBase } from '../url.js';
 
-// The header mark, inlined from the one source every brand asset is rendered
-// from (brand/transtyle-mark.svg — see scripts/gen-brand.mjs). Inlined rather
-// than <img>-ed so it costs no request and can take a themed ring in CSS; read
-// from the source file rather than copy-pasted so it cannot drift from the
-// favicon and the Open Graph badge.
-import markSource from '../../../brand/transtyle-mark.svg?raw';
-
-// The standalone file names itself for screen readers; here the wordmark right
-// next to it already says "transtyle", so the mark is decorative and its
-// intrinsic 400×400 is dropped in favour of the CSS size.
-const mark = markSource
-  .replace(' role="img" aria-label="Transtyle"', ' aria-hidden="true" focusable="false"')
-  .replace(/\s*<title>[^<]*<\/title>/, '')
-  .replace(' width="400" height="400"', '');
+// The chrome — header, footer, fonts, colours, favicons, the Open Graph and
+// Twitter tags — is @deramond.dev/astro's, configured once in astro.config.mjs.
+// One theme, dark: there is no light mode and no toggle. What stays here is
+// what is this site's own: the alpha notice, the per-page card, the article
+// dates and the copy button on hand-built code blocks.
 
 const {
   title,
-  description = 'Transtyle is a design system compiler: describe your design system once, compile native themes for every ecosystem.',
+  description,
   current = '',
   // Every page gets a generated Open Graph card (src/pages/og/[slug].png.js);
-  // pages that don't name one fall back to the site card. Callers pass a plain
-  // site path; the base is applied here, once, so no page has to remember to.
-  image = '/og/default.png',
+  // pages that don't name one fall back to the site card the integration
+  // makes. Callers pass a plain site path; the base is applied here, once.
+  image,
   // Article metadata, set by blog posts so link previews and readers can date them.
   publishedDate,
   author,
 } = Astro.props;
 
-// og:image and og:url must be absolute — several crawlers reject relative ones.
-// `site` is configured in astro.config.mjs and has no fallback on purpose: a
-// default domain here would quietly stamp every card and canonical tag with a
-// URL the site is not served from.
-const site = Astro.site;
-const canonical = new URL(Astro.url.pathname, site).href;
-const imageUrl = new URL(withBase(image), site).href;
+// The same entries, in the same order, as before the move: the compare view
+// is part of the demos, and "For AI agents" is a first-class way in.
+const nav = [
+  { label: 'Docs', href: withBase('/docs/') },
+  { label: 'Demos', href: withBase('/demo/') },
+  { label: 'Blog', href: withBase('/blog/') },
+  { label: 'For AI agents', href: withBase('/docs/ai-agents/') },
+];
+const currentHref = { docs: nav[0].href, demo: nav[1].href, compare: nav[1].href, blog: nav[2].href }[current];
+const footer = {
+  blurb: 'A design system compiler. MIT licensed.',
+  columns: [
+    {
+      title: 'Project',
+      links: [
+        { label: 'Documentation', href: withBase('/docs/') },
+        { label: 'Demos', href: withBase('/demo/') },
+        { label: 'Compare', href: withBase('/compare/') },
+        { label: 'GitHub', href: 'https://github.com/transtyle/transtyle' },
+      ],
+    },
+    {
+      title: 'Read',
+      links: [
+        { label: 'Blog', href: withBase('/blog/') },
+        { label: 'RSS', href: withBase('/blog/rss.xml') },
+        { label: 'AI agents', href: withBase('/docs/ai-agents/') },
+        { label: 'llms.txt', href: withBase('/llms.txt') },
+      ],
+    },
+  ],
+};
 ---
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{title}</title>
-  <meta name="description" content={description} />
-  <link rel="canonical" href={canonical} />
-  <meta property="og:title" content={title} />
-  <meta property="og:description" content={description} />
-  <meta property="og:type" content={publishedDate ? 'article' : 'website'} />
-  <meta property="og:url" content={canonical} />
-  <meta property="og:site_name" content="Transtyle" />
-  <meta property="og:image" content={imageUrl} />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content={title} />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content={title} />
-  <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content={imageUrl} />
-  {publishedDate && <meta property="article:published_time" content={`${publishedDate}T00:00:00Z`} />}
-  {author && <meta property="article:author" content={author} />}
-  <link rel="alternate" type="application/rss+xml" title="Transtyle blog" href={withBase('/blog/rss.xml')} />
-  <link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
-  <link rel="icon" type="image/png" sizes="32x32" href={withBase('/favicon-32.png')} />
-  <link rel="apple-touch-icon" sizes="180x180" href={withBase('/apple-touch-icon.png')} />
-  <link rel="manifest" href={withBase('/site.webmanifest')} />
-  {/* The browser chrome around the page, matched to the theme it will be
-      showing: the site's own --bg in each mode, which in dark is a shade of
-      the logo tile. Two media-scoped tags rather than one, so the OS setting
-      picks — the in-page toggle is a preference, not a paint order. */}
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfcfd" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0d13" />
-  <script is:inline>
-    const t = localStorage.getItem('theme') ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    document.documentElement.dataset.theme = t;
-  </script>
-</head>
-<body>
+<BaseLayout
+  title={title}
+  rawTitle
+  description={description}
+  image={image && withBase(image)}
+  type={publishedDate ? 'article' : 'website'}
+>
+  <Fragment slot="head">
+    {publishedDate && <meta property="article:published_time" content={`${publishedDate}T00:00:00Z`} />}
+    {author && <meta property="article:author" content={author} />}
+    <link rel="alternate" type="application/rss+xml" title="Transtyle blog" href={withBase('/blog/rss.xml')} />
+  </Fragment>
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="alpha-bar">
+  <div class="alpha-bar" role="note">
     <span>
       <strong>Alpha — experimental.</strong> Breaking changes ship without a deprecation cycle, and
       nothing here carries a stability promise yet.
       <a href={withBase('/docs/roadmap/')}>What is built vs. planned →</a>
     </span>
   </div>
-  <header class="site-header">
-    <a class="wordmark" href={withBase('/')}>
-      <span class="mark" set:html={mark} />
-      transtyle
-    </a>
-    <nav class="site-nav" aria-label="Site">
-      <a href={withBase('/docs/')} class={current === 'docs' ? 'active' : ''} aria-current={current === 'docs' ? 'page' : undefined}>Docs</a>
-      <a href={withBase('/demo/')} class={current === 'demo' ? 'active' : ''} aria-current={current === 'demo' ? 'page' : undefined}>Demos</a>
-      <a href={withBase('/blog/')} class={current === 'blog' ? 'active' : ''} aria-current={current === 'blog' ? 'page' : undefined}>Blog</a>
-      <a href={withBase('/docs/ai-agents/')}>For AI agents</a>
-      <a href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
-      <button id="theme-toggle" aria-label="Toggle color scheme" title="Toggle color scheme">
-        <svg class="sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/></svg>
-        <svg class="moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
-      </button>
-    </nav>
-  </header>
+  <Header nav={nav} current={currentHref}>
+    <a slot="actions" class="gh" href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
+  </Header>
 
   <slot />
 
-  <footer class="site-footer">
-    <div>
-      <strong>transtyle</strong> — a design system compiler. MIT licensed.
-    </div>
-    <div class="foot-links">
-      <a href={withBase('/docs/')}>Documentation</a>
-      <a href={withBase('/demo/')}>Demos</a>
-      <a href={withBase('/compare/')}>Compare</a>
-      <a href={withBase('/blog/')}>Blog</a>
-      <a href={withBase('/blog/rss.xml')}>RSS</a>
-      <a href={withBase('/docs/ai-agents/')}>AI agents</a>
-      <a href={withBase('/llms.txt')}>llms.txt</a>
-      <a href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
-    </div>
-  </footer>
+  <Footer {...footer} />
 
   <script is:inline>
     // Copy button on every code block — markdown (Shiki) and hand-built alike.
     // A `data-copy` attribute on the block overrides what gets copied, so a
     // terminal transcript yields the command rather than command plus output.
-    for (const pre of document.querySelectorAll('pre')) {
+    // Markdown code blocks get theirs from the docs shell (.d-prose); this
+    // covers the hand-built ones on the homepage and the compare page.
+    for (const pre of document.querySelectorAll('pre:not(.d-prose pre)')) {
       const wrap = document.createElement('div');
       wrap.className = 'code-wrap';
       pre.parentNode.insertBefore(wrap, pre);
@@ -136,13 +97,6 @@ const imageUrl = new URL(withBase(image), site).href;
 
       const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
       const ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-
-      // Let the wrapper's fade match the block's own background: Shiki sets the
-      // theme colours as custom properties on the <pre>, so lift them one level.
-      for (const v of ['--shiki-light-bg', '--shiki-dark-bg']) {
-        const value = pre.style.getPropertyValue(v);
-        if (value) wrap.style.setProperty(v, value);
-      }
 
       // Show the fade only while there is genuinely more to the right. The
       // threshold is deliberately above 1px: a block can measure a few px of
@@ -204,64 +158,17 @@ const imageUrl = new URL(withBase(image), site).href;
     }
   </script>
 
-  <script is:inline>
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = next;
-      localStorage.setItem('theme', next);
-    });
-  </script>
-
   <style>
+    /* The alpha notice: the warning state, with its word. */
     .alpha-bar {
-      padding: 0.4rem clamp(1rem, 4vw, 2.5rem);
-      background: color-mix(in oklch, var(--warn) 15%, var(--bg));
-      border-bottom: 1px solid color-mix(in oklch, var(--warn) 32%, var(--border-soft));
-      font-size: 0.82rem; line-height: 1.45; color: var(--text); text-align: center;
+      padding: var(--space-2) clamp(1rem, 4vw, 2.5rem);
+      background: var(--color-panel);
+      border-bottom: 1px solid var(--color-line);
+      font-size: 0.82rem; line-height: 1.45; color: var(--color-fg); text-align: center;
     }
+    .alpha-bar strong { color: var(--color-warning); }
     .alpha-bar a { color: inherit; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
-    .site-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0.7rem clamp(1rem, 4vw, 2.5rem);
-      border-bottom: 1px solid var(--border-soft);
-      position: sticky; top: 0; z-index: 10;
-      background: color-mix(in oklch, var(--bg) 85%, transparent);
-      backdrop-filter: blur(10px);
-    }
-    .wordmark {
-      display: flex; align-items: center; gap: 0.55rem;
-      font-weight: 750; font-size: 1.1rem; letter-spacing: -0.03em; color: var(--text);
-    }
-    .wordmark:hover { text-decoration: none; }
-    /* The mark's tile is #080A24, so on the dark theme — whose --bg is a
-       near-identical near-black — the rounded square dissolves and leaves the
-       glyph floating. A hairline ring gives the silhouette its edge back. It
-       is CSS rather than part of the SVG on purpose: a stroke inside a 400-unit
-       viewBox drawn at 24px would be a fifth of a pixel, while this stays one
-       crisp pixel at any size. Same treatment, baked in, as
-       brand/transtyle-mark-on-dark.svg. */
-    .mark { display: flex; }
-    .mark :global(svg) { display: block; width: 24px; height: 24px; border-radius: 6%; }
-    :global([data-theme='dark']) .mark :global(svg) {
-      box-shadow: 0 0 0 1px color-mix(in oklch, var(--text) 14%, transparent);
-    }
-    .site-nav { display: flex; align-items: center; gap: 1.4rem; font-size: 0.92rem; }
-    .site-nav a { color: var(--text-muted); font-weight: 500; }
-    .site-nav a:hover, .site-nav a.active { color: var(--text); text-decoration: none; }
-    #theme-toggle {
-      display: grid; place-items: center; width: 2rem; height: 2rem;
-      border: 1px solid var(--border); border-radius: 8px; background: none; color: var(--text-muted); cursor: pointer;
-    }
-    #theme-toggle:hover { color: var(--text); border-color: var(--text-muted); }
-    :global([data-theme='dark']) .sun { display: none; }
-    :global(:root:not([data-theme='dark'])) .moon { display: none; }
-    .site-footer {
-      display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between;
-      padding: 2rem clamp(1rem, 4vw, 2.5rem); margin-top: 4rem;
-      border-top: 1px solid var(--border-soft); color: var(--text-muted); font-size: 0.85rem;
-    }
-    .foot-links { display: flex; gap: 1.2rem; }
-    .foot-links a { color: var(--text-muted); }
+    .gh { font: var(--type-mono-sm, 500 0.8rem var(--font-family-mono)); color: var(--color-muted); }
+    .gh:hover { color: var(--color-fg); }
   </style>
-</body>
-</html>
+</BaseLayout>

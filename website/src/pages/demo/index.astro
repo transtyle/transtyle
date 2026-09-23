@@ -15,6 +15,7 @@
  * part of the Astro build, which is why `npm run site:build` alone leaves these
  * links pointing at nothing locally — `npm run demos:all` builds the full thing.
  */
+import { Button } from '@deramond.dev/astro';
 import Base from '../../layouts/Base.astro';
 import { withBase } from '../../url.js';
 import { EXAMPLES, TARGETS, discoverDemos, demoPath, repoRoot } from '../../../../scripts/lib/demos.mjs';
@@ -54,7 +55,7 @@ const paint = (t) =>
     `--d-font:${t.font}`,
   ].join(';');
 ---
-<Base title={`${title} · Transtyle`} description={description} current="demo" image="/og/default.png">
+<Base title={`${title} · Transtyle`} description={description} current="demo">
   <main id="main">
     <section class="hero">
       <p class="eyebrow">Live output</p>
@@ -72,7 +73,7 @@ const paint = (t) =>
         <span><b>1</b> set of token files each</span>
       </p>
       <p class="hero-cta">
-        <a class="btn primary" href={withBase('/compare/')}>Compare two side by side →</a>
+        <Button variant="ghost" href={withBase('/compare/')}>Compare two side by side →</Button>
         <span>Two of them in one viewport, one mode control and one scroll position driving both.</span>
       </p>
     </section>
@@ -295,8 +296,8 @@ npm run demos:all                      # build all {count} + the site, as deploy
         </div>
       </details>
       <p class="cta-row">
-        <a class="btn primary" href={withBase('/docs/getting-started/')}>Compile your own</a>
-        <a class="btn" href={withBase('/docs/examples/')}>Read the walkthroughs</a>
+        <Button variant="ghost" href={withBase('/docs/getting-started/')}>Compile your own</Button>
+        <Button variant="quiet" href={withBase('/docs/examples/')}>Read the walkthroughs</Button>
       </p>
     </section>
   </main>
@@ -306,8 +307,8 @@ npm run demos:all                      # build all {count} + the site, as deploy
 
     .hero { padding: 3.5rem 0 2.5rem; max-width: 44rem; }
     .eyebrow { font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 0.6rem; }
-    .hero h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 1rem; font-weight: 780; }
-    .grad { background: linear-gradient(100deg, var(--primary), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.05; margin: 0 0 1rem; font-weight: 780; }
+    .grad { color: var(--primary); }
     .sub { font-size: 1.08rem; color: var(--text-muted); margin: 0 0 1.6rem; }
     .strip { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 0; font-size: 0.85rem; color: var(--text-muted); }
     .strip b { color: var(--text); font-size: 1.05rem; font-weight: 700; margin-right: 0.15rem; }
@@ -315,17 +316,17 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .hero-cta span { font-size: 0.85rem; color: var(--text-muted); max-width: 24rem; }
 
     .band { padding: 2.8rem 0; border-top: 1px solid var(--border-soft); }
-    .band.alt { background: var(--bg-soft); border-radius: 18px; padding: 2.5rem clamp(1rem, 3vw, 2rem); margin: 2.8rem 0; border-top: none; }
-    .band h2 { font-size: 1.6rem; letter-spacing: -0.02em; margin: 0 0 0.5rem; font-weight: 700; }
+    .band.alt { background: var(--bg-soft); border-radius: var(--radius-md); padding: 2.5rem clamp(1rem, 3vw, 2rem); margin: 2.8rem 0; border-top: none; }
+    .band h2 { font-size: 1.6rem; margin: 0 0 0.5rem; font-weight: 700; }
     .band-sub { color: var(--text-muted); max-width: 46rem; margin: 0 0 1.8rem; }
 
     /* ---------- design system cards ---------- */
     .systems { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1.1rem; }
-    .system { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 1.2rem 1.3rem 1.3rem; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+    .system { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: 1.2rem 1.3rem 1.3rem; box-shadow: var(--shadow); display: flex; flex-direction: column; }
     .sys-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
     .sys-kicker { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0; }
-    .system h3 { margin: 0.15rem 0 0; font-size: 1.3rem; letter-spacing: -0.02em; }
-    .modes { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.7rem; color: var(--text-muted); border: 1px solid var(--border); border-radius: 99px; padding: 0.1rem 0.55rem; white-space: nowrap; }
+    .system h3 { margin: 0.15rem 0 0; font-size: 1.3rem; }
+    .modes { font-family: var(--mono); font-size: 0.7rem; color: var(--text-muted); border: 1px solid var(--border); border-radius: 99px; padding: 0.1rem 0.55rem; white-space: nowrap; }
     .sys-blurb { font-size: 0.9rem; color: var(--text-muted); margin: 0.7rem 0 1rem; }
 
     /* The preview: a miniature interface drawn entirely in the example's own
@@ -333,7 +334,7 @@ npm run demos:all                      # build all {count} + the site, as deploy
        own --bg/--text/--primary, so a design system's colours cannot leak out
        of the card and repaint the page around it. */
     .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-    .preview { margin: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--d-page); font-family: var(--d-font); }
+    .preview { margin: 0; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--d-page); font-family: var(--d-font); }
     .pv-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--d-border); }
     .pv-dot { width: 0.55rem; height: 0.55rem; border-radius: 99px; background: var(--d-primary); flex-shrink: 0; }
     .pv-name { font-size: 0.68rem; font-weight: 600; color: var(--d-text); }
@@ -350,7 +351,7 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .pv-dots i.ok { background: var(--d-success); }
     .pv-dots i.warn { background: var(--d-warning); }
     .pv-dots i.danger { background: var(--d-danger); }
-    .preview figcaption { font-family: 'JetBrains Mono Variable', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); background: var(--bg-soft); border-top: 1px solid var(--border-soft); padding: 0.2rem 0.6rem; }
+    .preview figcaption { font-family: var(--mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); background: var(--bg-soft); border-top: 1px solid var(--border-soft); padding: 0.2rem 0.6rem; }
     .preview.empty { display: flex; flex-direction: column; justify-content: space-between; background: repeating-linear-gradient(-45deg, var(--bg-soft), var(--bg-soft) 6px, transparent 6px, transparent 12px); }
     .preview.empty p { font-size: 0.68rem; color: var(--text-muted); margin: 0; padding: 0.6rem; font-weight: 600; }
     .preview.empty p span { display: block; font-weight: 400; margin-top: 0.15rem; }
@@ -358,7 +359,7 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .sys-look { font-size: 0.85rem; color: var(--text-muted); margin: 0.9rem 0 0.8rem; }
     .sys-look b { color: var(--text); }
     .sys-links { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: auto; }
-    .chip { font-size: 0.78rem; border: 1px solid var(--border); border-radius: 8px; padding: 0.2rem 0.55rem; color: var(--text); background: var(--bg-soft); }
+    .chip { font-size: 0.78rem; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.2rem 0.55rem; color: var(--text); background: var(--bg-soft); }
     .chip:hover { text-decoration: none; border-color: var(--primary); color: var(--primary-strong); }
     .sys-note { font-size: 0.72rem; color: var(--text-muted); margin: 0.9rem 0 0; padding-top: 0.7rem; border-top: 1px solid var(--border-soft); }
 
@@ -367,7 +368,7 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .matrix { border-collapse: separate; border-spacing: 0.35rem; width: 100%; min-width: 40rem; }
     .matrix th { text-align: left; font-weight: 600; vertical-align: bottom; padding: 0 0.3rem 0.4rem; }
     .matrix thead th { font-size: 0.95rem; }
-    .mx-ex { display: block; letter-spacing: -0.01em; }
+    .mx-ex { display: block; }
     .mx-kicker { display: block; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; }
     .matrix tbody th { width: 11rem; vertical-align: middle; }
     .matrix tbody th a { font-weight: 650; font-size: 0.92rem; }
@@ -376,7 +377,7 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .mx-compare:hover { color: var(--primary-strong); }
     .cell {
       display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-      border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem 0.6rem;
+      border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.5rem 0.6rem;
       background: var(--surface); color: var(--text-muted); font-size: 0.75rem; font-weight: 600;
       transition: border-color 0.12s, transform 0.12s;
     }
@@ -394,18 +395,14 @@ npm run demos:all                      # build all {count} + the site, as deploy
     .read p { margin: 0; font-size: 0.87rem; color: var(--text-muted); }
     .read code { font-size: 0.82em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 5px; }
 
-    pre { margin: 0 0 1.2rem; padding: 1rem 1.2rem; border-radius: 12px; background: var(--terminal-bg); color: var(--terminal-text); font-size: 0.82rem; line-height: 1.7; overflow-x: auto; }
+    pre { margin: 0 0 1.2rem; padding: 1rem 1.2rem; border-radius: var(--radius-md); background: var(--terminal-bg); color: var(--terminal-text); font-size: 0.82rem; line-height: 1.7; overflow-x: auto; }
     .ports summary { cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); }
     .ports-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; margin-top: 1rem; }
     .ports-grid h4 { margin: 0 0 0.4rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
     .ports-grid ul { list-style: none; margin: 0; padding: 0; }
-    .ports-grid li { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.74rem; padding: 0.12rem 0; font-family: 'JetBrains Mono Variable', monospace; }
+    .ports-grid li { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.74rem; padding: 0.12rem 0; font-family: var(--mono); }
     .ports-grid li span { color: var(--text-muted); }
     .cta-row { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 1.8rem 0 0; }
-    .btn { display: inline-block; padding: 0.6rem 1.2rem; border-radius: 10px; border: 1px solid var(--border); font-weight: 600; font-size: 0.92rem; color: var(--text); }
-    .btn:hover { text-decoration: none; border-color: var(--primary); }
-    .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-    .btn.primary:hover { background: var(--primary-strong); }
 
     @media (max-width: 720px) {
       .previews { grid-template-columns: 1fr; }
