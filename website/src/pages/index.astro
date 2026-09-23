@@ -1,13 +1,14 @@
 ---
+import { codeProps } from '@deramond.dev/astro/code';
 import Base from '../layouts/Base.astro';
 import { Code } from 'astro:components';
 import { withBase } from '../url.js';
 import { EXAMPLES, TARGETS, discoverDemos, repoRoot } from '../../../scripts/lib/demos.mjs';
 import { demoThemes } from '../demo-themes.js';
 
-// Match the markdown pipeline's Shiki config (astro.config.mjs) so highlighted
-// code looks identical on the homepage and in the docs, in both themes.
-const shiki = { themes: { light: 'github-light', dark: 'github-dark' }, defaultColor: false };
+// The markdown pipeline's code theme (set by @deramond.dev/astro), so
+// highlighted code looks identical on the homepage and in the docs.
+const shiki = codeProps;
 
 const root = repoRoot();
 const demoCount = discoverDemos(root).length;
@@ -66,7 +67,7 @@ npx transtyle build`;
         Deterministic. Explainable. Zero runtime.
       </p>
       <div class="cta">
-        <a class="btn primary" href={withBase('/docs/getting-started/')}>Get started</a>
+        <a class="btn gold" href={withBase('/docs/getting-started/')}>Get started</a>
         <a class="btn" href={withBase('/docs/')}>Read the docs</a>
       </div>
       <p class="hero-status">
@@ -293,13 +294,11 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .eyebrow {
       display: inline-block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
       color: var(--primary); background: var(--primary-soft); padding: 0.3rem 0.9rem; border-radius: 99px;
-      font-family: 'JetBrains Mono Variable', monospace;
+      font-family: var(--mono);
     }
-    h1 { font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.08; letter-spacing: -0.035em; font-weight: 800; margin: 1rem 0; }
-    /* Violet first, then primary — left-to-right, the same direction the mark's
-       own gradient runs (its magenta corner is the top-left one). Reversed, the
-       headline swept against the logo directly above it. */
-    .grad { background: linear-gradient(90deg, var(--violet), var(--primary)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    h1 { font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.08; margin: 1rem 0; }
+    /* The second line in cyan: flat colour, no sweep. */
+    .grad { color: var(--primary); }
     .sub { max-width: 46rem; margin: 0 auto 1.6rem; font-size: 1.1rem; color: var(--text-muted); }
     .sub strong { color: var(--text); }
     .cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
@@ -312,49 +311,54 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--primary); border: 1px solid var(--primary-soft); background: var(--primary-soft);
       padding: 0.1rem 0.5rem; border-radius: 99px; margin-right: 0.35rem; vertical-align: 0.05em;
-      font-family: 'JetBrains Mono Variable', monospace;
+      font-family: var(--mono);
     }
     .hero-status code { font-size: 0.85em; }
     .cta.center { margin-top: 1.4rem; }
     .btn {
-      display: inline-block; padding: 0.6rem 1.3rem; border-radius: 10px; font-weight: 600; font-size: 0.95rem;
+      display: inline-block; padding: 0.6rem 1.3rem; border-radius: var(--radius-md);
+      font: var(--type-button); text-transform: uppercase; letter-spacing: var(--font-letter-spacing-button);
       border: 1px solid var(--border); color: var(--text);
     }
-    .btn:hover { text-decoration: none; border-color: var(--text-muted); }
-    .btn.primary { background: linear-gradient(90deg, var(--violet), var(--primary)); border: none; color: white; }
-    .btn.primary:hover { filter: brightness(1.08); }
+    .btn:hover { text-decoration: none; border-color: var(--text-muted); color: var(--text); }
+    /* Cyan for a way forward; gold only for the page's one decision — the
+       hero's "Get started" — never twice. */
+    .btn.primary { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+    .btn.primary:hover { color: var(--primary-strong); border-color: var(--primary-strong); }
+    .btn.gold { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
+    .btn.gold:hover { color: var(--color-on-accent); filter: none; border-color: var(--color-accent); }
 
     .terminal {
-      max-width: 42rem; margin: 2.6rem auto 0; border-radius: 14px; overflow: hidden;
+      max-width: 42rem; margin: 2.6rem auto 0; border-radius: var(--radius-md); overflow: hidden;
       box-shadow: var(--shadow); border: 1px solid var(--border); text-align: left;
     }
     .term-bar { display: flex; align-items: center; gap: 6px; padding: 0.6rem 0.9rem; background: var(--bg-soft); border-bottom: 1px solid var(--border-soft); }
     .term-bar span { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
-    .term-bar em { margin-left: auto; font-size: 0.75rem; color: var(--text-muted); font-style: normal; font-family: 'JetBrains Mono Variable', monospace; }
+    .term-bar em { margin-left: auto; font-size: 0.75rem; color: var(--text-muted); font-style: normal; font-family: var(--mono); }
     .terminal pre { margin: 0; padding: 1.1rem 1.3rem; background: var(--terminal-bg); color: var(--terminal-text); font-size: 0.83rem; line-height: 1.7; overflow-x: auto; }
     .dim { opacity: 0.6; }
-    .ok { color: oklch(0.75 0.15 150); }
-    .cov-n { color: oklch(0.78 0.13 150); }
-    .cov-d { color: oklch(0.78 0.12 262); }
-    .cov-a { color: oklch(0.82 0.12 82); }
+    .ok { color: var(--ok); }
+    .cov-n { color: var(--cov-native); }
+    .cov-d { color: var(--cov-derived); }
+    .cov-a { color: var(--cov-approx); }
 
     .strip { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; justify-content: center; margin-top: 2.4rem; font-size: 0.85rem; color: var(--text-muted); }
     .strip span::before { content: '✓ '; color: var(--ok); }
 
     .band { padding: 3.5rem 0; border-top: 1px solid var(--border-soft); text-align: center; }
-    .band h2 { font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.025em; margin: 0 0 0.6rem; }
+    .band h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 0.6rem; }
     .band-sub { max-width: 46rem; margin: 0 auto 2rem; color: var(--text-muted); }
     .band-foot { max-width: 46rem; margin: 1.6rem auto 0; color: var(--text-muted); font-size: 0.9rem; }
 
     .pipeline { display: flex; align-items: stretch; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-    .pipe-col { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.3rem; min-width: 13rem; box-shadow: var(--shadow); }
+    .pipe-col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.1rem 1.3rem; min-width: 13rem; box-shadow: var(--shadow); }
     .pipe-col h3 { margin: 0 0 0.7rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
     .pipe-arrow { align-self: center; color: var(--text-muted); font-size: 1.4rem; }
-    .chip { border: 1px solid var(--border); border-radius: 8px; padding: 0.35rem 0.7rem; margin: 0.4rem 0; font-size: 0.88rem; font-weight: 500; }
+    .chip { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.35rem 0.7rem; margin: 0.4rem 0; font-size: 0.88rem; font-weight: 500; }
     .chip.soon { color: var(--text-muted); border-style: dashed; }
     .chip.soon::after { content: ' · specced'; font-size: 0.72rem; }
-    .pipe-col.ir { background: linear-gradient(135deg, var(--primary-soft), transparent); border-color: var(--primary); }
-    .ir-chip { border: none; font-family: 'JetBrains Mono Variable', monospace; font-size: 0.82rem; }
+    .pipe-col.ir { background: var(--primary-soft); border-color: var(--primary); }
+    .ir-chip { border: none; font-family: var(--mono); font-size: 0.82rem; }
     .pipe-note { font-size: 0.8rem; color: var(--text-muted); margin: 0.7rem 0 0; max-width: 13rem; }
 
     /* The write→get pair is a *transformation*, not a comparison, so it reads as
@@ -368,10 +372,10 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.5rem;
       font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted);
     }
-    .t-label.mono { font-family: 'JetBrains Mono Variable', monospace; letter-spacing: 0; }
+    .t-label.mono { font-family: var(--mono); letter-spacing: 0; }
     .t-arrow { display: grid; place-items: center; color: var(--text-muted); opacity: 0.6; }
     @media (max-width: 860px) {
-      .transform { grid-template-columns: 1fr; }
+      .transform { grid-template-columns: minmax(0, 1fr); }
       .t-arrow { transform: rotate(90deg); padding: 0.2rem 0; }
     }
     /* Shiki's own background rule is !important and wins here by design — it
@@ -382,15 +386,15 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       overflow-x: auto;
     }
 
-    .pipe-tag { display: block; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 500; text-transform: none; margin-top: 0.15rem; font-family: 'JetBrains Mono Variable', monospace; }
+    .pipe-tag { display: block; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 500; text-transform: none; margin-top: 0.15rem; font-family: var(--mono); }
 
     /* ---- showcase: one token file → four native-looking previews ---- */
     /* Wide enough for the token snippet's longest line, so the common case is
        "it fits" rather than "it scrolls". */
     .showcase { display: grid; grid-template-columns: minmax(18rem, 1.25fr) 2fr; gap: 1.2rem; text-align: left; align-items: start; }
-    @media (max-width: 860px) { .showcase { grid-template-columns: 1fr; } }
-    .show-targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
-    .tframe { margin: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+    @media (max-width: 860px) { .showcase { grid-template-columns: minmax(0, 1fr); } }
+    .show-targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); gap: 0.9rem; }
+    .tframe { margin: 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
     .tframe figcaption { font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 0.45rem 0.9rem; border-bottom: 1px solid var(--border-soft); background: var(--bg-soft); }
     .tframe .t-ui { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; padding: 0.95rem; min-height: 5.4rem; }
     .tframe.dark { background: oklch(0.15 0.012 255); border-color: oklch(0.3 0.02 255); }
@@ -414,14 +418,14 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .t-ui.chart i { flex: 1; height: var(--h); background: var(--c); border-radius: 3px 3px 0 0; }
 
     .xlate { display: flex; align-items: center; justify-content: center; gap: 1.4rem; flex-wrap: wrap; }
-    .x-src { display: flex; align-items: center; gap: 0.3rem; font-size: 1rem; border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem 1.2rem; background: var(--surface); box-shadow: var(--shadow); }
+    .x-src { display: flex; align-items: center; gap: 0.3rem; font-size: 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.8rem 1.2rem; background: var(--surface); box-shadow: var(--shadow); }
     .x-arrow { color: var(--text-muted); font-size: 1.5rem; }
     .x-out { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; text-align: left; }
-    .x-out li { display: flex; align-items: baseline; gap: 0.8rem; justify-content: space-between; border: 1px solid var(--border-soft); border-radius: 8px; padding: 0.3rem 0.8rem; background: var(--surface); }
+    .x-out li { display: flex; align-items: baseline; gap: 0.8rem; justify-content: space-between; border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 0.3rem 0.8rem; background: var(--surface); }
     .x-out em { font-style: normal; font-size: 0.78rem; color: var(--text-muted); }
 
     .coverage { max-width: 44rem; margin: 0 auto; }
-    .cov-bar { display: flex; height: 2.4rem; border-radius: 10px; overflow: hidden; font-size: 0.8rem; font-weight: 650; color: white; box-shadow: var(--shadow); }
+    .cov-bar { display: flex; height: 2.4rem; border-radius: var(--radius-md); overflow: hidden; font-size: 0.8rem; font-weight: 650; color: var(--color-on-primary); }
     .seg { display: grid; place-items: center; }
     .seg.native, .dot.native { background: var(--cov-native); }
     .seg.derived, .dot.derived { background: var(--cov-derived); }
@@ -438,12 +442,12 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .band.final .start pre { padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; margin: 0; }
     /* The demo-gallery strip: four design systems as four real palettes. */
     .gallery-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.8rem; margin: 1.6rem 0 0; }
-    .gcard { display: block; border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem 1rem; background: var(--surface); box-shadow: var(--shadow); color: var(--text); }
+    .gcard { display: block; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.85rem 1rem; background: var(--surface); box-shadow: var(--shadow); color: var(--text); }
     .gcard:hover { text-decoration: none; border-color: var(--primary); transform: translateY(-2px); }
     .gcard { transition: border-color 0.14s, transform 0.14s; }
     .gswatch { display: flex; gap: 3px; margin-bottom: 0.6rem; }
     .gswatch i { flex: 1; height: 1.5rem; border-radius: 4px; border: 1px solid color-mix(in oklch, var(--text) 12%, transparent); }
-    .gname { display: block; font-weight: 700; letter-spacing: -0.01em; }
+    .gname { display: block; font-weight: 700; }
     .gkicker { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; }
   </style>
 </Base>

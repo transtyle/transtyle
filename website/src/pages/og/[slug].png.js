@@ -1,50 +1,46 @@
 /**
  * One Open Graph card per page, generated at build time.
  *
- *   /og/default.png            — the site card (homepage, blog index, fallback)
+ *   /og/index.png              — the site card (made by @deramond.dev/astro)
  *   /og/docs-<slug>.png        — a documentation page
  *   /og/blog-<slug>.png        — a blog post
  *
  * The slug set is derived from the same sources the pages themselves are built
  * from, so a new page cannot ship without its card. Base.astro maps a page to
- * its card via the `image` prop.
+ * its card via the `image` prop; a page without one gets the site card.
+ *
+ * The card itself is @deramond.dev/astro's: the site's mark, the title, and
+ * the site's artwork (src/brand/og-art.png) in the right panel.
  */
+import config from 'virtual:deramond/config';
+import { ogResponse } from '@deramond.dev/astro/og';
 import { orderedSlugs } from '../../nav.js';
-import { posts, formatDate, accentHue } from '../../blog.js';
-import { renderCard } from '../../og.js';
+import { posts, formatDate } from '../../blog.js';
 
 const docs = import.meta.glob('../../docs/*.md', { eager: true });
 const docFrontmatter = Object.fromEntries(
   Object.entries(docs).map(([p, m]) => [p.split('/').pop().replace('.md', ''), m.frontmatter]),
 );
 
+
 export function getStaticPaths() {
   return [
-    {
-      params: { slug: 'default' },
-      props: { kicker: 'Design system compiler', title: 'One design system. Every ecosystem.', footer: 'Compile native themes for eight ecosystems' },
-    },
     ...orderedSlugs.map((slug) => ({
       params: { slug: `docs-${slug}` },
-      props: { kicker: 'Docs', title: docFrontmatter[slug].title, footer: docFrontmatter[slug].description },
+      props: { eyebrow: { label: 'Docs' }, title: docFrontmatter[slug].title, sub: docFrontmatter[slug].description },
     })),
-    // Posts carry a per-post accent hue (derived from the slug, or authored as
-    // `accentHue`); docs and the site card stay on the brand hue.
     ...posts.map((post) => ({
       params: { slug: `blog-${post.slug}` },
-      props: {
-        kicker: 'Blog',
-        title: post.title,
-        footer: `${formatDate(post.date)} · ${post.author}`,
-        hue: accentHue(post),
-      },
+      props: { eyebrow: { label: `Blog · ${post.date}` }, title: post.title, sub: post.description, meta: post.author },
     })),
   ];
 }
 
-export async function GET({ props }) {
-  const png = await renderCard(props);
-  return new Response(png, {
-    headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=31536000, immutable' },
+export function GET({ props, site }) {
+  return ogResponse({
+    ...props,
+    url: `${site.host}${config.base}`.replace(/\/$/, ''),
+    art: config.og.art,
+    mark: config.brand.mark,
   });
 }

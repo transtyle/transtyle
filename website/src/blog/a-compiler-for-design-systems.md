@@ -3,11 +3,6 @@ title: 'A compiler for design systems'
 description: 'An experiment I finally had time to run: describe a design system once, compile native themes for every ecosystem you ship in. What it is, how it works, and what four real systems look like coming out the other end.'
 date: '2026-08-30'
 author: 'Julien Déramond'
-# Pinned to the brand hue rather than the slug-derived rung: this is the post
-# that introduces the project, so its card should be unmistakably the project's
-# own colour. Later posts take their derived accent — delete this line and this
-# one does too.
-accentHue: 262
 ---
 
 ## First, what this actually is

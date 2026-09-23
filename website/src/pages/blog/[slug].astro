@@ -1,4 +1,5 @@
 ---
+import { Prose } from '@deramond.dev/astro';
 import Base from '../../layouts/Base.astro';
 import { posts, postPath, formatDate } from '../../blog.js';
 import { withBase } from '../../url.js';
@@ -24,7 +25,7 @@ const older = posts.filter((p) => p.date < post.date).slice(0, 2);
   author={post.author}
 >
   <div class="post-layout">
-    <main class="prose" id="main">
+    <main class="post" id="main">
       <p class="crumb"><a href={withBase('/blog/')}>← Blog</a></p>
       <h1>{post.title}</h1>
       <p class="byline">
@@ -36,7 +37,7 @@ const older = posts.filter((p) => p.date < post.date).slice(0, 2);
       </p>
       <p class="lede">{post.description}</p>
 
-      <Content />
+      <Prose><Content /></Prose>
 
       <footer class="post-foot">
         <p>
@@ -103,11 +104,11 @@ const older = posts.filter((p) => p.date < post.date).slice(0, 2);
     main { padding: 1.8rem 0 3rem; flex: 1; min-width: 0; }
     .crumb { font-size: 0.85rem; margin: 0 0 1rem; }
     .crumb a { color: var(--text-muted); }
-    .prose h1 { font-size: 2.4rem; }
+    .post h1 { font-size: clamp(var(--font-size-2xl), 5vw, var(--font-size-4xl)); margin-bottom: var(--space-4); }
     .byline {
       display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
       font-size: 0.85rem; color: var(--text-muted); margin: -0.4rem 0 1.2rem;
-      font-family: 'JetBrains Mono Variable', monospace;
+      font-family: var(--mono);
     }
     .lede {
       font-size: 1.12rem; line-height: 1.6; color: var(--text-muted);
