@@ -2,6 +2,8 @@
  * One Open Graph card per page, generated at build time.
  *
  *   /og/index.png              — the site card (made by @deramond.dev/astro)
+ *   /og/default.png            — the same card at its old address, which
+ *                                link previews already posted still point to
  *   /og/docs-<slug>.png        — a documentation page
  *   /og/blog-<slug>.png        — a blog post
  *
@@ -25,6 +27,10 @@ const docFrontmatter = Object.fromEntries(
 
 export function getStaticPaths() {
   return [
+    {
+      params: { slug: 'default' },
+      props: { kind: 'site', name: 'Transtyle', title: 'One design system.', accent: 'Every ecosystem.', subtitle: 'A design system compiler' },
+    },
     ...orderedSlugs.map((slug) => ({
       params: { slug: `docs-${slug}` },
       props: { eyebrow: { label: 'Docs' }, title: docFrontmatter[slug].title, sub: docFrontmatter[slug].description },

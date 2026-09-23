@@ -46,8 +46,10 @@ const next = i < orderedSlugs.length - 1 ? link(orderedSlugs[i + 1]) : undefined
   editUrl={`https://github.com/transtyle/transtyle/edit/main/website/src/docs/${slug}.md`}
   pageCount={orderedSlugs.length}
 >
+  <link slot="head" rel="alternate" type="application/rss+xml" title="Transtyle blog" href={withBase('/blog/rss.xml')} />
   <Fragment slot="links">
     <a href={mdHref} title="This page as raw markdown — for humans with taste and agents with context windows">Markdown</a>
+    <a href={withBase('/llms.txt')}>llms.txt</a>
     <a href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
   </Fragment>
   <p slot="before" class="alpha-note">

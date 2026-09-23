@@ -82,8 +82,8 @@ export default defineConfig({
       nav: [
         { label: 'Docs', href: `${root}/docs/` },
         { label: 'Demos', href: `${root}/demo/` },
-        { label: 'Compare', href: `${root}/compare/` },
         { label: 'Blog', href: `${root}/blog/` },
+        { label: 'For AI agents', href: `${root}/docs/ai-agents/` },
       ],
       og: { art: './src/brand/og-art.png' },
       docs: {
@@ -92,8 +92,8 @@ export default defineConfig({
         tabs: [
           { label: 'Docs', href: `${root}/docs/` },
           { label: 'Demos', href: `${root}/demo/` },
-          { label: 'Compare', href: `${root}/compare/` },
           { label: 'Blog', href: `${root}/blog/` },
+          { label: 'For AI agents', href: `${root}/docs/ai-agents/` },
         ],
         edit: { repo: 'transtyle/transtyle', dir: 'website/src/docs' },
       },

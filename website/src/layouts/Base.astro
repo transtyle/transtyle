@@ -22,13 +22,15 @@ const {
   author,
 } = Astro.props;
 
+// The same entries, in the same order, as before the move: the compare view
+// is part of the demos, and "For AI agents" is a first-class way in.
 const nav = [
   { label: 'Docs', href: withBase('/docs/') },
   { label: 'Demos', href: withBase('/demo/') },
-  { label: 'Compare', href: withBase('/compare/') },
   { label: 'Blog', href: withBase('/blog/') },
+  { label: 'For AI agents', href: withBase('/docs/ai-agents/') },
 ];
-const currentHref = { docs: nav[0].href, demo: nav[1].href, compare: nav[2].href, blog: nav[3].href }[current];
+const currentHref = { docs: nav[0].href, demo: nav[1].href, compare: nav[1].href, blog: nav[2].href }[current];
 const footer = {
   blurb: 'A design system compiler. MIT licensed.',
   columns: [
