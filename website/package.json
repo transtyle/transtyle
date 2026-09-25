@@ -13,7 +13,7 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@deramond.dev/astro": "^0.5.1",
+    "@deramond.dev/astro": "^0.6.0",
     "@transtyle/core": "0.1.0-alpha.3",
     "astro": "^7.3.4"
   }
