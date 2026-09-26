@@ -97,3 +97,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build -w ${{ matrix.workspace }}
+
+  # The one check `main` requires before a merge. Requiring every job by name
+  # would mean editing the branch rules each time a demo joins the matrix, so
+  # this job waits for all of them and fails if any did not succeed.
+  ci-passed:
+    name: CI passed
+    if: always()
+    needs: [checks, demo-projects]
+    runs-on: ubuntu-latest
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
