@@ -86,13 +86,43 @@ third-party exporter is a package name in your config.
 
 The mental model is Babel's, or LLVM's:
 
-```
-importers (frontends)      intermediate representation       exporters (backends)
-─────────────────────      ───────────────────────────       ────────────────────
-DTCG token files      ┐                                  ┌→  Bootstrap (Sass + CSS vars)
-Figma variables       ├──→   normalized, derived,     ───┼→  shadcn/ui (globals.css)
-Tailwind config       ┘      validated token graph       ├→  Apache ECharts (theme JSON)
-                                                         └→  …
+```mermaid
+%%{init: {"fontFamily": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", "theme": "base", "flowchart": {"wrappingWidth": 480}, "themeVariables": {"dropShadow": "none", "darkMode": true, "background": "#0A0C11", "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", "fontSize": "14px", "primaryColor": "#16181E", "primaryTextColor": "#E6E8EC", "primaryBorderColor": "#292C33", "secondaryColor": "#16181E", "tertiaryColor": "#0A0C11", "lineColor": "#3AB9BF", "textColor": "#E6E8EC", "clusterBkg": "#0A0C11", "clusterBorder": "#292C33", "titleColor": "#8F929A", "edgeLabelBackground": "#0A0C11"}}}%%
+flowchart TB
+  accTitle: Importers, the intermediate representation, exporters
+  accDescr: Importers read DTCG token files, Figma variables and a Tailwind config into one normalized, derived, validated token graph, which exporters write out as Bootstrap Sass and CSS variables, shadcn/ui globals.css, an Apache ECharts theme JSON, and more targets.
+
+  subgraph field[" "]
+    direction TB
+    subgraph front["IMPORTERS (FRONTENDS)"]
+      direction TB
+      dtcg["DTCG token files"]
+      figma["Figma variables"]
+      tw["Tailwind config"]
+    end
+    subgraph ir["INTERMEDIATE REPRESENTATION"]
+      pivot["normalized, derived, validated token graph"]
+    end
+    subgraph back["EXPORTERS (BACKENDS)"]
+      direction TB
+      bs["Bootstrap (Sass + CSS vars)"]
+      sh["shadcn/ui (globals.css)"]
+      ec["Apache ECharts (theme JSON)"]
+      more["&hellip;"]
+    end
+    dtcg --> pivot
+    figma --> pivot
+    tw --> pivot
+    pivot --> bs
+    pivot --> sh
+    pivot --> ec
+    pivot --> more
+  end
+
+  classDef empty fill:#0A0C11,stroke:#8F929A,stroke-dasharray:4 3,color:#8F929A
+  linkStyle default stroke-width:1.5px,color:#8F929A
+  style field fill:#0A0C11,stroke:#292C33
+  class more empty
 ```
 
 One source of truth in the middle, pluggable ends on either side — which is what makes
