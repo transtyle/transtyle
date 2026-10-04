@@ -54,29 +54,19 @@ context:
 - No unexplained internal jargon or unresolved references to "the current change" — the issue must
   stand on its own once the session that created it is gone.
 
-Every agent-filed issue gets exactly three labels at creation: **`ai-submitted`**, one type label
-(**`bug`** / **`feature`** / **`enhancement`** — see the table below for the distinction), and
-**`needs-triage`**.
+Every agent-filed issue gets exactly two labels at creation: **`ai-submitted`** and one type label
+(**`bug`** / **`feature`** / **`enhancement`** — see the table below for the distinction).
 
-**Triage.** `needs-triage` means no human has read the issue yet, so nobody — human or agent —
-starts work on it. A maintainer reviews it, and once it's specified well enough to pick up as-is,
-replaces `needs-triage` with `ready-to-dev`. Agents never apply `ready-to-dev` themselves, including
-to their own issues.
+**Picking up work.** If an issue turns out to be ambiguous or under-specified once work begins,
+stop and ask rather than guessing at the missing intent.
 
-**Picking up work.** When asked to work through available issues, an agent filters to
-`is:issue is:open label:ready-to-dev` on `transtyle/transtyle` — `needs-triage` issues are not yet
-authorized to start. If a `ready-to-dev` issue turns out to be ambiguous or under-specified once
-work begins, stop and ask rather than guessing at the missing intent.
-
-| Label            | Meaning                                                                            | Who applies it     |
-| ---------------- | ---------------------------------------------------------------------------------- | ------------------ |
-| `ai-submitted`   | Opened by an AI agent rather than a human                                          | the agent          |
-| `needs-triage`   | Not yet reviewed by a maintainer — nobody should start work on it                  | on every new issue |
-| `ready-to-dev`   | Triaged and specified enough to be picked up                                       | maintainer only    |
-| `bug`            | Something isn't working                                                            | —                  |
-| `feature`        | New capability that does not exist yet                                             | —                  |
-| `enhancement`    | Improvement to something that already exists                                       | —                  |
-| `upstream-drift` | An exporter's mapping has fallen out of sync with a new upstream framework release | —                  |
+| Label            | Meaning                                                                            | Who applies it |
+| ---------------- | ---------------------------------------------------------------------------------- | -------------- |
+| `ai-submitted`   | Opened by an AI agent rather than a human                                          | the agent      |
+| `bug`            | Something isn't working                                                            | —              |
+| `feature`        | New capability that does not exist yet                                             | —              |
+| `enhancement`    | Improvement to something that already exists                                       | —              |
+| `upstream-drift` | An exporter's mapping has fallen out of sync with a new upstream framework release | —              |
 
 ## Working locally
 
