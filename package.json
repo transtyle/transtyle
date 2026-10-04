@@ -64,7 +64,8 @@
     "check:demos": "node scripts/check-demos.mjs",
     "check:plugins": "node scripts/check-plugins.mjs",
     "check:color": "node scripts/check-color.mjs",
-    "check:doc-numbers": "node scripts/check-doc-numbers.mjs"
+    "check:doc-numbers": "node scripts/check-doc-numbers.mjs",
+    "demo:record": "node scripts/record-demo.mjs"
   },
   "repository": {
     "type": "git",
@@ -76,6 +77,8 @@
     "@fontsource/chakra-petch": "5.3.0",
     "@fontsource/inter": "5.3.0",
     "@resvg/resvg-wasm": "2.6.2",
+    "ffmpeg-static": "5.3.0",
+    "playwright": "1.63.0",
     "prettier": "3.9.6",
     "satori": "0.33.4"
   }

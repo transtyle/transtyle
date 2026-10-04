@@ -16,6 +16,8 @@
   <a href="VISION.md">Vision</a>
 </p>
 
+<p align="center"><img src="media/demo.gif" width="830" alt="The same fake app, Nimbus Console, built in Bootstrap from two design systems compiled by Transtyle: Acme, corporate blue with rounded corners, on the left and Cathode, phosphor green with square corners, on the right. Both panes scroll through the buttons, a form and a card, switch to the other color mode and come back."></p>
+
 > [!WARNING]
 > **Alpha — experimental.** Breaking changes ship without a deprecation cycle: token vocabulary,
 > generated output, config format and CLI surface can each change between alpha releases. Pin an

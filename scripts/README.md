@@ -59,7 +59,7 @@ against a synthetic positive before the scan, because a scanner whose regexes
 quietly stopped matching reports "clean" forever and reads exactly like a repo
 with nothing to find.
 
-Six scripts here render rather than check:
+Seven scripts here render rather than check:
 
 - `gen-schemas.mjs` and `gen-brand.mjs` render what `check-schemas.mjs` and
   `check-brand.mjs` then prove are current — the published JSON schemas, and
@@ -75,6 +75,11 @@ Six scripts here render rather than check:
   difference between it and the two above: the brand assets are referenced by a
   dozen surfaces and must not drift, while a social card is referenced by
   nothing here and belongs to the post it was rendered for.
+- `record-demo.mjs` re-records the README's hero GIF (`media/demo.gif`): it builds the Acme and Cathode
+  Bootstrap demos, serves them side by side and drives them with Playwright, encoding with the
+  `ffmpeg-static` binary under 2 MB. It has no checker and no CI job, because it needs a browser:
+  run `npx playwright install chromium` once, then `npm run demo:record`, whenever the demos'
+  look changes, and commit the new GIF.
 - `sync-latest-tag.mjs` moves the `latest` npm dist-tag after a release.
 - `release-notes.mjs` renders the GitHub Release body, taking the union of the
   twelve lockstep changelogs so the page says each change once instead of twelve
