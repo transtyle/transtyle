@@ -7,7 +7,7 @@ A retro CRT terminal design system whose native language contains no "primary", 
 - **Its own vocabulary.** The DS speaks in `crt.ink`, `crt.tube`, `crt.glass`, `crt.scanline`, `crt.amber`, `crt.meltdown`. These live as _custom semantic tokens_ — legal in the IR, carried with full provenance.
 - **Dark is native.** The terminal look is the default mode; "light" is a paper-printout mode. (`modes.color-scheme.default: "dark"`.)
 - **The brand color is the text color.** Phosphor green is simultaneously `primary` and `text` — and it flips polarity across modes (glowing green on black ↔ ink green on paper).
-- **Radius 0, monospace as the "sans" font.**
+- **Radius 0, monospace as the "sans" font.** The radius is written in the DTCG object form (`{ "value": 0, "unit": "rem" }`, in `transtyle.bindings.tokens.json`) rather than the `"0rem"` string the other examples use, so every build exercises it; both forms compile to the same `0rem`.
 
 ## The layered layout (the actual lesson)
 

@@ -23,7 +23,16 @@ A token is a node with `$value`; groups may declare `$type` for their children:
 }
 ```
 
-Supported `$type`s today: `color` (values: `oklch()`, `#hex` incl. 4/8-digit alpha, `rgb()`/`rgba()`, `hsl()`/`hsla()`, CSS named colors, `transparent`), `dimension` (explicit units: `0.5rem`, `16px`), `fontFamily` (array of family names), and the composites `shadow`, `typography`, `border` and `transition`. Other DTCG types are carried through as authored, without type-specific parsing.
+Supported `$type`s today: `color` (values: `oklch()`, `#hex` incl. 4/8-digit alpha, `rgb()`/`rgba()`, `hsl()`/`hsla()`, CSS named colors, `transparent`), `dimension`, `duration`, `cubicBezier`, `fontWeight`, `number`, `fontFamily` (array of family names), and the composites `shadow`, `typography`, `border` and `transition`. Other DTCG types are carried through as authored, without type-specific parsing. `dimension`, `duration`, `cubicBezier` and `fontWeight` take either the CSS form a stylesheet would contain or the structured DTCG form:
+
+| `$type`       | CSS form                       | DTCG form                         |
+| ------------- | ------------------------------ | --------------------------------- |
+| `dimension`   | `"0.5rem"`                     | `{ "value": 0.5, "unit": "rem" }` |
+| `duration`    | `"150ms"`                      | `{ "value": 150, "unit": "ms" }`  |
+| `cubicBezier` | `"cubic-bezier(0.2, 0, 0, 1)"` | `[0.2, 0, 0, 1]`                  |
+| `fontWeight`  | `600`                          | `"semi-bold"`                     |
+
+Dimension units are `px` or `rem`, duration units `ms` or `s`; a cubicBezier's x1 and x2 lie between 0 and 1; a DTCG weight keyword compiles to its number. Both forms compile to the same output on every target, and the same members inside `typography`, `shadow`, `border` and `transition` composites accept both too. A structured value that doesn't fit (a missing or unknown unit, a string where a number belongs, an unknown weight keyword) stops the build with `TST1106` and a hint naming the accepted forms.
 
 A composite's members follow the same rules as top-level tokens: a color member parses like a `color` token, any member may be an alias — including to a slot the engine derives, like `scrim` — and a malformed or missing member is reported under its own path (`TST1106` on `semantic.color.elevation.1.shadow.color`). Members a stylesheet writes positionally are required, as DTCG specifies: all five of a `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), and all three of a `border` (`color`, `width`, `style`) or a `transition` (`duration`, `delay`, `timingFunction`). A `shadow` may also be an array of layers, stacked first-on-top as in CSS, each with an optional `inset: true`:
 

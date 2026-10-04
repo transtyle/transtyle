@@ -99,6 +99,18 @@
  * caught a regression that flips the IR flag but never wires it into what an
  * exporter actually renders.
  *
+ * **DTCG object forms** (issue #24) are the last case: the same design system
+ * authored twice, once with CSS strings (`"0.5rem"`, `"cubic-bezier(…)"`, `600`)
+ * and once with the DTCG structured forms (`{ "value": 0.5, "unit": "rem" }`,
+ * `[0.2, 0, 0, 1]`, `"semi-bold"`), must compile byte-identical on every
+ * exporter. Before NORMALIZE parsed those forms, the object one wrote
+ * `[object Object]` into six targets, dropped the value in two more, and broke
+ * the derived radius scale with a false TST1105, all under a green build; the
+ * leak pattern below never looked for `[object Object]` either. Malformed
+ * structured values must stop the build with TST1106 naming the token and type.
+ * Validated by reverting normalize.js to carry those values as authored: the
+ * twin fails on all eight exporters.
+ *
  * Run: node scripts/check-minimal-ds.mjs   (npm run check:minimal-ds)
  */
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
@@ -651,6 +663,139 @@ for (const [code, path] of [
 }
 rmSync(compDir, { recursive: true, force: true });
 
+// DTCG object-form twin (issue #24): one design system, authored once with CSS
+// strings and once with the DTCG structured forms, must compile to the same
+// bytes on every exporter. Covers each parsed type, a per-mode value, an alias
+// to a structured value, and composite members.
+const twinTokens = (structured) => {
+  const pick = (string, dtcg) => (structured ? dtcg : string);
+  return {
+    semantic: {
+      ...MINIMAL_TOKENS.semantic,
+      radius: { md: { $type: 'dimension', $value: pick('0.375rem', { value: 0.375, unit: 'rem' }) } },
+      space: {
+        $type: 'dimension',
+        4: {
+          $value: pick('16px', { value: 16, unit: 'px' }),
+          $extensions: { 'transtyle.modes': { density: { compact: pick('12px', { value: 12, unit: 'px' }) } } },
+        },
+        // Exponent territory: String(1e-7) is "1e-7", which no stylesheet parses.
+        px: { $value: pick('0.0000001rem', { value: 1e-7, unit: 'rem' }) },
+      },
+      border: { $type: 'dimension', 'radius-alias': { $value: '{semantic.radius.md}' } },
+      duration: { fast: { $type: 'duration', $value: pick('120ms', { value: 120, unit: 'ms' }) } },
+      easing: { standard: { $type: 'cubicBezier', $value: pick('cubic-bezier(0.2, 0, 0, 1)', [0.2, 0, 0, 1]) } },
+      type: {
+        weight: { semibold: { $type: 'fontWeight', $value: pick(600, 'semi-bold') } },
+        role: {
+          body: {
+            md: {
+              $type: 'typography',
+              $value: {
+                fontFamily: 'Inter',
+                fontSize: pick('1rem', { value: 1, unit: 'rem' }),
+                fontWeight: pick(300, 'light'),
+                lineHeight: 1.5,
+                letterSpacing: pick('0.5px', { value: 0.5, unit: 'px' }),
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+};
+const twinBuild = async (structured) => {
+  const d = mkdtempSync(join(tmpdir(), 'transtyle-twin-'));
+  mkdirSync(join(d, 'tokens'));
+  writeFileSync(join(d, 'tokens', 'base.tokens.json'), JSON.stringify(twinTokens(structured), null, 2));
+  writeFileSync(
+    join(d, 'transtyle.config.json'),
+    JSON.stringify({
+      name: 'twin',
+      tokens: ['tokens/*.tokens.json'],
+      modes: MODE_SHAPES['two-dimension'],
+      derivation: { rules: 'standard@1' },
+      targets: Object.fromEntries(Object.keys(EXPORTERS).map((n) => [n, { output: `dist/${n}` }])),
+    }),
+  );
+  const r = await compile({
+    cwd: d,
+    targets: Object.keys(EXPORTERS),
+    emit: false,
+    loadExporter: async (n) => (await import(EXPORTERS[n])).default,
+  });
+  rmSync(d, { recursive: true, force: true });
+  return r;
+};
+const asString = await twinBuild(false);
+const asDtcg = await twinBuild(true);
+let twinFiles = 0;
+for (const [label, r] of [['string twin', asString], ['DTCG object-form twin', asDtcg]]) {
+  for (const d of r.diagnostics.errors) errors.push(`${label}: ${d.code} ${d.message}`);
+}
+for (const name of Object.keys(EXPORTERS)) {
+  const files = (r) => r.results.find((x) => x.target === name)?.emitted ?? [];
+  const want = files(asString);
+  const got = files(asDtcg);
+  if (!want.length) errors.push(`object-form twin: ${name} emitted nothing for the string twin, so the comparison proves nothing`);
+  for (const f of want) {
+    twinFiles++;
+    const g = got.find((x) => x.path === f.path);
+    if (!g) {
+      errors.push(`object-form twin: ${name}/${f.path} is missing when the same tokens are authored in DTCG object form`);
+      continue;
+    }
+    if (g.contents === f.contents) continue;
+    const a = f.contents.split('\n');
+    const b = g.contents.split('\n');
+    const i = a.findIndex((line, n) => line !== b[n]);
+    errors.push(`object-form twin: ${name}/${f.path}:${i + 1} differs from the string twin — "${b[i]?.trim()}" vs "${a[i]?.trim()}". DTCG object forms must canonicalize to the CSS string in NORMALIZE (packages/core/src/values.js)`);
+  }
+  for (const f of [...want, ...got]) {
+    f.contents.split('\n').forEach((line, i) => {
+      if (leaks(line)) errors.push(`object-form twin: ${name}/${f.path}:${i + 1} leaked a JS value into output: ${line.trim()}`);
+    });
+  }
+}
+
+// Malformed structured values: each must stop the build with TST1106 naming the
+// token and its type — never pass through to an exporter.
+const MALFORMED = {
+  'no-unit': ['dimension', { value: 16 }],
+  'string-value': ['dimension', { value: '16', unit: 'px' }],
+  'unknown-unit': ['dimension', { value: 16, unit: 'em' }],
+  'bare-number': ['dimension', 16],
+  'duration-unit': ['duration', { value: 1, unit: 'min' }],
+  'three-points': ['cubicBezier', [0.2, 0, 0]],
+  'x-out-of-range': ['cubicBezier', [1.2, 0, 0, 1]],
+  'unknown-weight': ['fontWeight', 'semi-boldish'],
+};
+const badDir = mkdtempSync(join(tmpdir(), 'transtyle-malformed-'));
+mkdirSync(join(badDir, 'tokens'));
+writeFileSync(
+  join(badDir, 'tokens', 'base.tokens.json'),
+  JSON.stringify({
+    semantic: {
+      ...MINIMAL_TOKENS.semantic,
+      probe: Object.fromEntries(Object.entries(MALFORMED).map(([k, [type, value]]) => [k, { $type: type, $value: value }])),
+    },
+  }),
+);
+writeFileSync(
+  join(badDir, 'transtyle.config.json'),
+  JSON.stringify({ name: 'malformed', tokens: ['tokens/*.tokens.json'], derivation: { rules: 'standard@1' }, targets: {} }),
+);
+const malformed = await compile({ cwd: badDir, targets: [], emit: false, loadExporter: loadNoop });
+rmSync(badDir, { recursive: true, force: true });
+for (const [k, [type, value]] of Object.entries(MALFORMED)) {
+  const slot = `semantic.probe.${k}`;
+  const d = malformed.diagnostics.errors.find((x) => x.code === 'TST1106' && x.message.startsWith(`${slot}:`));
+  if (!d) errors.push(`malformed ${type} ${JSON.stringify(value)} (${slot}) must fail with TST1106, but it did not`);
+  else if (!d.message.includes(type)) errors.push(`TST1106 for ${slot} does not name the type "${type}": ${d.message}`);
+  else if (!d.hint) errors.push(`TST1106 for ${slot} carries no hint naming the accepted forms`);
+}
+
 if (errors.length) {
   console.error(`✘ minimal-ds check: ${errors.length} problem(s)`);
   for (const e of errors) console.error('  - ' + e);
@@ -659,4 +804,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; the 1-token Bootstrap Sass path builds against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; the 1-token Bootstrap Sass path builds against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length} malformed values fail with TST1106`);

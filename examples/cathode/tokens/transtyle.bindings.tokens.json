@@ -20,7 +20,7 @@
       }
     },
     "radius": {
-      "md": { "$type": "dimension", "$value": "0rem" }
+      "md": { "$type": "dimension", "$value": { "value": 0, "unit": "rem" } }
     },
     "font": {
       "sans": { "$type": "fontFamily", "$value": "{option.font.mono}" },

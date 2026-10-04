@@ -41,7 +41,9 @@
         "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } } }
       }
     },
-    "radius": { "md": { "$type": "dimension", "$value": "0.5rem" } },
+    "radius": { "md": { "$type": "dimension", "$value": { "value": 0.5, "unit": "rem" } } },
+    "duration": { "fast": { "$type": "duration", "$value": { "value": 150, "unit": "ms" } } },
+    "easing": { "standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0, 1] } },
     "font": {
       "sans": { "$type": "fontFamily", "$value": ["system-ui", "sans-serif"] },
       "mono": { "$type": "fontFamily", "$value": ["ui-monospace", "monospace"] }
