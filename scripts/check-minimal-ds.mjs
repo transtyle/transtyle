@@ -210,6 +210,13 @@ const errors = [];
 // the value side only keeps legitimate prose (a comment mentioning "undefined")
 // out of it — the emitted files carry a lot of explanatory comments.
 const LEAK = /(:|=>?)\s*(undefined|null|NaN)\b/;
+// …and the two that hide *inside* a value, where the rule above cannot see
+// them: `oklch(NaN NaN NaN)` is a color function fed a string instead of a
+// parsed color, `[object Object]` an object stringified whole. An authored
+// shadow shipped the first for months behind a check that only looked right
+// after the colon (#26). Neither ever appears in legitimate output or prose.
+const LEAK_INSIDE = /\bNaN\b|\[object Object\]/;
+const leaks = (line) => LEAK.test(line) || LEAK_INSIDE.test(line);
 
 let files = 0;
 for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
@@ -241,7 +248,7 @@ for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
         const contents = f.contents ?? '';
         if (!contents.trim()) errors.push(`${at}/${f.path}: emitted an empty file`);
         contents.split('\n').forEach((line, i) => {
-          if (LEAK.test(line)) errors.push(`${at}/${f.path}:${i + 1} leaked a JS value into output: ${line.trim()}`);
+          if (leaks(line)) errors.push(`${at}/${f.path}:${i + 1} leaked a JS value into output: ${line.trim()}`);
         });
 
         // 6b. autoDark's provenance reclassification must reach real exporter
@@ -411,6 +418,157 @@ if (boundPrimary('light') === boundPrimary('dark')) {
 }
 rmSync(bindDir, { recursive: true, force: true });
 
+// Authored composites (#26). Every derived composite — the elevation ladder's
+// shadows, the type roles — is built in DERIVE with its members already in IR
+// form, so a sweep over a design system that authors none can never see what
+// happens to one the user wrote. What happened: NORMALIZE passed the whole
+// `$value` through, `shadow.color` reached the exporters as the string
+// "#00000033", and css-variables shipped `oklch(NaN NaN NaN)` with no
+// diagnostic. Each DTCG composite the catalog or css-variables consumes is
+// authored here in the shapes that matter: a literal member, a per-mode
+// value, a member aliasing an authored token, a member aliasing a slot only
+// DERIVE fills (the deferred path), the stacked-shadow array form with
+// `inset`, and a whole-token alias to an authored composite. All eight
+// exporters must compile it cleanly in both modes with nothing leaking.
+const compDir = mkdtempSync(join(tmpdir(), 'transtyle-composites-'));
+mkdirSync(join(compDir, 'tokens'));
+const layer = (color, y, blur, extra = {}) => ({ color, offsetX: '0px', offsetY: y, blur, spread: '0px', ...extra });
+writeFileSync(
+  join(compDir, 'tokens', 'base.tokens.json'),
+  JSON.stringify(
+    {
+      option: { color: { $type: 'color', ink: { $value: '#1a1a2e' } } },
+      semantic: {
+        color: {
+          ...MINIMAL_TOKENS.semantic.color,
+          elevation: {
+            1: {
+              shadow: {
+                $type: 'shadow',
+                $value: layer('#00000033', '2px', '8px'),
+                $extensions: { 'transtyle.modes': { 'color-scheme': { dark: layer('#00000099', '2px', '8px') } } },
+              },
+            },
+            2: {
+              shadow: {
+                $type: 'shadow',
+                $value: [layer('{semantic.color.scrim}', '1px', '2px'), layer('{option.color.ink}', '4px', '12px', { spread: '-2px', inset: true })],
+              },
+            },
+            3: { shadow: { $type: 'shadow', $value: '{semantic.color.elevation.1.shadow}' } },
+          },
+        },
+        border: { focus: { $type: 'border', $value: { color: '{semantic.color.primary.solid}', width: '2px', style: 'solid' } } },
+        motion: { fade: { $type: 'transition', $value: { duration: '{semantic.duration.fast}', delay: '0ms', timingFunction: [0.4, 0, 0.2, 1] } } },
+        type: { role: { body: { md: { $type: 'typography', $value: { fontSize: '{semantic.type.size.lg}', fontWeight: 500, lineHeight: 1.5 } } } } },
+      },
+    },
+    null,
+    2,
+  ),
+);
+writeFileSync(
+  join(compDir, 'transtyle.config.json'),
+  JSON.stringify(
+    {
+      name: 'composites',
+      tokens: ['tokens/*.tokens.json'],
+      modes: MODE_SHAPES['light-dark'],
+      derivation: { rules: 'standard@1' },
+      targets: Object.fromEntries(Object.keys(EXPORTERS).map((n) => [n, { output: `dist/${n}` }])),
+    },
+    null,
+    2,
+  ),
+);
+const isOklch = (v) => v && ['l', 'c', 'h', 'alpha'].every((k) => typeof v[k] === 'number' && !Number.isNaN(v[k]));
+let compFiles = 0;
+for (const [name, pkg] of Object.entries(EXPORTERS)) {
+  const at = `${name} (authored composites)`;
+  let result;
+  try {
+    result = await compile({ cwd: compDir, targets: [name], emit: false, loadExporter: async () => (await import(pkg)).default });
+  } catch (e) {
+    errors.push(`${at}: threw instead of reporting — ${e.message}`);
+    continue;
+  }
+  if (result.diagnostics.errors.length) {
+    errors.push(`${at}: produced errors — ${result.diagnostics.errors.map((d) => `${d.code} ${d.message}`).join('; ')}`);
+    continue;
+  }
+  for (const f of result.results.find((r) => r.target === name)?.emitted ?? []) {
+    compFiles++;
+    (f.contents ?? '').split('\n').forEach((line, i) => {
+      if (leaks(line)) errors.push(`${at}/${f.path}:${i + 1} leaked a JS value into output: ${line.trim()}`);
+    });
+    if (name === 'css-variables' && f.path.endsWith('.css')) {
+      for (const want of ['--elevation-2-shadow: 0px 1px 2px 0px oklch(0.1 0 0 / 0.5), inset 0px 4px 12px -2px oklch(', '--border-focus: 2px solid oklch(', '--motion-fade: 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms']) {
+        if (!f.contents.includes(want)) errors.push(`${at}/${f.path}: expected a line starting "${want}"`);
+      }
+    }
+    if (name === 'primeng' && !f.path.endsWith('.md') && f.path !== 'report.json' && !f.contents.includes('inset 0px 4px 12px -2px oklch(')) {
+      errors.push(`${at}/${f.path}: the overlays read elevation.2.shadow, but the authored stacked shadow did not reach the preset`);
+    }
+  }
+  if (name !== 'css-variables') continue;
+  // IR boundary, once: every member parsed, per mode, with its aliases recorded.
+  for (const mode of ['light', 'dark']) {
+    const map = result.normalized.modes[mode];
+    const value = (p) => map.get(p)?.value;
+    const layers = ['1', '2', '3'].flatMap((n) => [value(`semantic.color.elevation.${n}.shadow`)].flat());
+    if (layers.length !== 4 || !layers.every((l) => isOklch(l?.color))) {
+      errors.push(`${at} [${mode}]: authored shadow layers did not all parse to OKLCH colors — ${JSON.stringify(layers)}`);
+    }
+    if (JSON.stringify(value('semantic.color.elevation.2.shadow')?.[0]?.color) !== JSON.stringify(value('semantic.color.scrim'))) {
+      errors.push(`${at} [${mode}]: a shadow member aliasing the derived scrim did not resolve to the scrim`);
+    }
+    if (JSON.stringify(value('semantic.color.elevation.3.shadow')) !== JSON.stringify(value('semantic.color.elevation.1.shadow'))) {
+      errors.push(`${at} [${mode}]: a whole-token alias to an authored shadow did not carry its parsed value`);
+    }
+    if (!isOklch(value('semantic.border.focus')?.color) || value('semantic.motion.fade')?.duration !== '150ms' || value('semantic.type.role.body.md')?.fontSize !== value('semantic.type.size.lg')) {
+      errors.push(`${at} [${mode}]: border/transition/typography members did not resolve (${JSON.stringify([value('semantic.border.focus'), value('semantic.motion.fade'), value('semantic.type.role.body.md')])})`);
+    }
+    const members = map.get('semantic.color.elevation.2.shadow')?.provenance?.members;
+    if (members?.['0.color'] !== 'semantic.color.scrim' || members?.['1.color'] !== 'option.color.ink') {
+      errors.push(`${at} [${mode}]: provenance.members does not record the member aliases explain prints (${JSON.stringify(members)})`);
+    }
+  }
+  const alpha = (mode) => result.normalized.modes[mode].get('semantic.color.elevation.1.shadow')?.value?.color?.alpha;
+  if (alpha('light') === alpha('dark')) {
+    errors.push(`${at}: the dark-mode value authored for elevation.1.shadow did not reach the dark map`);
+  }
+}
+
+// …and a composite the user got wrong must say where. One run, every kind of
+// mistake, each reported under its member's own path.
+writeFileSync(
+  join(compDir, 'tokens', 'base.tokens.json'),
+  JSON.stringify({
+    semantic: {
+      color: {
+        ...MINIMAL_TOKENS.semantic.color,
+        elevation: {
+          1: { shadow: { $type: 'shadow', $value: { color: 'not-a-color', offsetX: '0px', offsetY: '2px', blur: '8px' } } },
+          2: { shadow: { $type: 'shadow', $value: [layer('{semantic.color.nope}', '1px', '2px')] } },
+          3: { shadow: { $type: 'shadow', $value: '0 1px 2px #000' } },
+        },
+      },
+    },
+  }),
+);
+const bad = await compile({ cwd: compDir, targets: [], emit: false, loadExporter: loadNoop });
+for (const [code, path] of [
+  ['TST1106', 'semantic.color.elevation.1.shadow.color'],
+  ['TST1106', 'semantic.color.elevation.1.shadow.spread'],
+  ['TST1105', 'semantic.color.elevation.2.shadow.0.color'],
+  ['TST1106', 'semantic.color.elevation.3.shadow'],
+]) {
+  if (!bad.diagnostics.errors.some((d) => d.code === code && d.message.includes(path))) {
+    errors.push(`authored composites: expected ${code} naming ${path} — got ${bad.diagnostics.errors.map((d) => `${d.code} ${d.message}`).join('; ') || 'no errors'}`);
+  }
+}
+rmSync(compDir, { recursive: true, force: true });
+
 if (errors.length) {
   console.error(`✘ minimal-ds check: ${errors.length} problem(s)`);
   for (const e of errors) console.error('  - ' + e);
@@ -419,4 +577,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member`);

@@ -31,7 +31,7 @@
  */
 
 import { mapSeverityGrid } from './severity-grid.js';
-import { field, list, navigation, overlay, content } from './archetypes.js';
+import { field, list, navigation, overlay, content, shadowCss } from './archetypes.js';
 
 const get = (map, path) => map.get(`semantic.${path}`)?.value;
 
@@ -358,14 +358,11 @@ export function buildMenu(light, dark, ctx) {
     nd = navigation(dark);
   const cl = content(light),
     cd = content(dark);
-  const shadow = light.get('semantic.color.elevation.2.shadow')?.value;
   return {
     tokens: {
       root: {
         borderRadius: cl.structural.borderRadius,
-        shadow: shadow
-          ? `${shadow.offsetX} ${shadow.offsetY} ${shadow.blur} ${shadow.spread} ${ctx.formatColor(shadow.color)}`
-          : undefined,
+        shadow: shadowCss(light.get('semantic.color.elevation.2.shadow')?.value, ctx),
       },
       colorScheme: {
         // Menu's own component-level `item` type is narrower than the shared

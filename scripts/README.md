@@ -23,7 +23,7 @@ already made once.
 | `check-component-tier.mjs`    | The empty tier defaults correctly; an authored tier reaches both component targets                    |
 | `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                           |
 | `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap                   |
-| `check-minimal-ds.mjs`        | All eight exporters survive a three-token design system, in six mode shapes                           |
+| `check-minimal-ds.mjs`        | Eight exporters survive a three-token design system in six mode shapes, and authored composites       |
 | `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                       |
 | `check-demos.mjs`             | The published demo grid: described, documented with its port, linked from its exporter page, deployed |
 | `gen-figures.mjs --check`     | The blog's figures still match a fresh compile of the examples they were painted from                 |

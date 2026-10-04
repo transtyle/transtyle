@@ -218,10 +218,41 @@ function formatEntryValue(entry) {
     return `{ family: ${value.fontFamily}, size: ${value.fontSize}, weight: ${value.fontWeight}, leading: ${value.lineHeight} }`;
   }
   if (type === 'shadow') {
-    return `${value.offsetX} ${value.offsetY} ${value.blur} ${value.spread} / ${formatColor(value.color)}`;
+    return (Array.isArray(value) ? value : [value])
+      .map((s) => `${s.inset ? 'inset ' : ''}${s.offsetX} ${s.offsetY} ${s.blur} ${s.spread} / ${formatColor(s.color)}`)
+      .join(', ');
+  }
+  if (type === 'border') {
+    const style = typeof value.style === 'string' ? value.style : JSON.stringify(value.style);
+    return `${value.width} ${style} / ${formatColor(value.color)}`;
+  }
+  if (type === 'transition') {
+    const easing = Array.isArray(value.timingFunction) ? `cubic-bezier(${value.timingFunction.join(', ')})` : value.timingFunction;
+    return `${value.duration} ${easing} ${value.delay}`;
   }
   if (Array.isArray(value)) return value.join(', ');
   return String(value);
+}
+
+const COMPOSITE_TYPES = new Set(['shadow', 'typography', 'border', 'transition']);
+const isOklch = (v) => v !== null && typeof v === 'object' && ['l', 'c', 'h'].every((k) => typeof v[k] === 'number');
+
+/**
+ * An authored composite's members, one per line, each with the alias it came
+ * through (`color = oklch(…)  ← {semantic.color.scrim}`). A stacked shadow
+ * numbers its layers (`1.color`), the same paths diagnostics use.
+ */
+function printMembers(entry, indent) {
+  if (!COMPOSITE_TYPES.has(entry.type) || entry.value === null || typeof entry.value !== 'object') return;
+  const layered = Array.isArray(entry.value);
+  const aliases = entry.provenance.members ?? {};
+  (layered ? entry.value : [entry.value]).forEach((layer, i) => {
+    for (const [name, v] of Object.entries(layer)) {
+      const key = layered ? `${i}.${name}` : name;
+      const shown = isOklch(v) ? formatEntryValue({ type: 'color', value: v }) : Array.isArray(v) ? v.join(', ') : String(v);
+      console.log(`${indent}    ${key} = ${shown}${aliases[key] ? `  ← {${aliases[key]}}` : ''}`);
+    }
+  });
 }
 
 function printExplain(map, slotPath, resolvePath, depth, seen) {
@@ -232,6 +263,7 @@ function printExplain(map, slotPath, resolvePath, depth, seen) {
   const prov = entry.provenance;
   if (prov.kind === 'authored') {
     console.log(`${indent} └─ authored`);
+    printMembers(entry, indent);
     return;
   }
   if (prov.kind === 'aliased') {

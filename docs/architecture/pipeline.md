@@ -25,6 +25,7 @@ Turn the raw forest into canonical IR:
 - resolve `$ref`/alias chains (`{color.brand.500}`), detecting cycles;
 - expand mode definitions into the mode matrix ([ir.md](ir.md#modes));
 - canonicalize colors to OKLCH internally, keeping the authored text alongside for provenance and for exporters that want it back in its original form. Dimensions are **not** canonicalized — `0.5rem` stays `0.5rem` all the way to the target, and unit conversion happens in the exporter that needs it (which is why `rem → px` shows up as an `approximated` row on ECharts rather than as a normalization step);
+- parse DTCG composites (`shadow`, `typography`, `border`, `transition`) member by member, by each member's DTCG type: a color member canonicalizes like a color token, a member alias resolves per mode (deferred past DERIVE when it names a derived slot, like a top-level alias), a missing required member or a malformed one is `TST1106` under the member's path (`….shadow.color`, `….shadow.1.color` for a stacked shadow's second layer). Member aliases are kept in provenance (`members`) for `explain`;
 - flatten group-level `$type` inheritance.
 
 Output: **authored IR** — complete graph of what the user actually said, with provenance `authored` or `aliased`.

@@ -285,7 +285,7 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
   const entry = map.get(tokenPath);
   if (!entry) return undefined;
   if (entry.value !== undefined) return entry;
-  if (entry.pendingAlias) return DEFERRED;
+  if (entry.pendingAlias || entry.pendingMembers) return DEFERRED;
   if (stack.includes(tokenPath)) {
     reportCycle(diagnostics, [...stack, tokenPath]);
     // AL5: a distinct sentinel, not `undefined`. Returning `undefined` made the
@@ -321,12 +321,162 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode };
     return entry;
   }
+  if (COMPOSITES[entry.type]) {
+    const memberStack = [...stack, tokenPath];
+    return resolveComposite(entry, tokenPath, diagnostics, (memberTarget) =>
+      map.has(memberTarget) ? resolveEntry(map, memberTarget, memberStack, diagnostics) : DEFERRED,
+    );
+  }
   try {
     entry.value = entry.type === 'color' ? parseColor(raw) : raw;
   } catch (e) {
     diagnostics.error('TST1106', `${tokenPath}: ${e.message}`);
     return undefined;
   }
+  return entry;
+}
+
+/**
+ * DTCG composite types and the type of each member (DTCG format, "Composite
+ * types"). A composite's `$value` is an object of sub-values, and each member
+ * is a value of its own type: `shadow.color` is a color, `shadow.blur` a
+ * dimension, `typography.fontSize` a dimension, and so on.
+ *
+ * NORMALIZE used to parse only top-level `color` tokens and pass every other
+ * type through as authored. Derived composites (the elevation ladder's shadows,
+ * the type roles) are built in DERIVE with their members already in IR form, so
+ * nothing noticed until a design system authored one: `shadow.color` reached
+ * the exporters as the string `"#00000033"`, `formatColor()` read `.l/.c/.h`
+ * off a string, and css-variables shipped `oklch(NaN NaN NaN)` with no
+ * diagnostic. Members are now held to the same rules as top-level tokens:
+ * colors parse to OKLCH (or fail with TST1106 naming the member), aliases
+ * resolve per mode — deferred to after DERIVE when they point at a slot DERIVE
+ * fills, exactly like a top-level alias — and everything else is carried as
+ * authored, as top-level dimensions are.
+ *
+ * `required` lists the members an exporter renders positionally (a box-shadow,
+ * a border shorthand): a missing one would print `undefined` into a
+ * stylesheet, so it is a TST1106 here instead. `typography` has none: the
+ * engine's own type roles omit members whose source is absent, and every
+ * consumer already reads its members by name. `layers` marks the one composite
+ * DTCG lets author as an array (stacked shadows).
+ */
+const COMPOSITES = {
+  shadow: {
+    members: { color: 'color', offsetX: 'dimension', offsetY: 'dimension', blur: 'dimension', spread: 'dimension', inset: 'boolean' },
+    required: ['color', 'offsetX', 'offsetY', 'blur', 'spread'],
+    layers: true,
+  },
+  typography: {
+    members: { fontFamily: 'fontFamily', fontSize: 'dimension', fontWeight: 'fontWeight', letterSpacing: 'dimension', lineHeight: 'number' },
+    required: [],
+  },
+  border: {
+    members: { color: 'color', width: 'dimension', style: 'strokeStyle' },
+    required: ['color', 'width', 'style'],
+  },
+  transition: {
+    members: { duration: 'duration', delay: 'duration', timingFunction: 'cubicBezier' },
+    required: ['duration', 'delay', 'timingFunction'],
+  },
+};
+
+/** Parse one composite member by its DTCG member type. Throws with a reason. */
+function parseMember(type, value) {
+  if (type === 'color') {
+    // An alias to a color token arrives already parsed.
+    if (value !== null && typeof value === 'object' && ['l', 'c', 'h'].every((k) => typeof value[k] === 'number')) {
+      return { ...value };
+    }
+    return parseColor(value);
+  }
+  if (type === 'boolean' && typeof value !== 'boolean') {
+    throw new Error(`expected true or false, got ${JSON.stringify(value)}`);
+  }
+  return value;
+}
+
+/**
+ * Resolve a composite token's members. `lookup(target)` resolves one member
+ * alias and returns its entry, DEFERRED (target not materialized yet), CYCLE,
+ * or undefined (dangling) — NORMALIZE and the post-DERIVE pass differ only in
+ * that function. Every bad member is reported before giving up, each under its
+ * own path (`semantic.color.elevation.1.shadow.color`, or `….shadow.1.color`
+ * for the second layer of a stacked shadow), so one build shows them all.
+ *
+ * Member aliases are recorded in `provenance.members` (member path → target)
+ * for `explain`. The token itself stays `authored`: the composite is what the
+ * user wrote, its members point wherever they point.
+ */
+function resolveComposite(entry, tokenPath, diagnostics, lookup) {
+  const spec = COMPOSITES[entry.type];
+  const raw = entry.rawValue;
+  const layered = Array.isArray(raw);
+  const shape = `a DTCG ${entry.type} object (${Object.keys(spec.members).join(', ')})`;
+  if (layered && (!spec.layers || raw.length === 0)) {
+    diagnostics.error(
+      'TST1106',
+      spec.layers
+        ? `${tokenPath}: an empty ${entry.type} array — author at least one layer`
+        : `${tokenPath}: expected ${shape}, got an array (only shadow composites may be authored as a list of layers)`,
+    );
+    return undefined;
+  }
+
+  const members = {};
+  let failed = false;
+  let pending = false;
+  let cycle = false;
+  const parsed = (layered ? raw : [raw]).map((layer, i) => {
+    const at = layered ? `${tokenPath}.${i}` : tokenPath;
+    if (layer === null || typeof layer !== 'object' || Array.isArray(layer)) {
+      diagnostics.error('TST1106', `${at}: expected ${shape}, got ${JSON.stringify(layer)}`);
+      failed = true;
+      return undefined;
+    }
+    for (const name of spec.required) {
+      if (!(name in layer)) {
+        diagnostics.error('TST1106', `${at}.${name}: missing — a ${entry.type} needs ${spec.required.join(', ')}`);
+        failed = true;
+      }
+    }
+    const out = {};
+    for (const [name, authored] of Object.entries(layer)) {
+      const memberPath = `${at}.${name}`;
+      let value = authored;
+      const target = aliasTarget(authored);
+      if (target) {
+        const resolved = lookup(target);
+        if (resolved === DEFERRED) { pending = true; continue; }
+        if (resolved === CYCLE) { cycle = true; continue; } // already reported as TST1104
+        if (!resolved || resolved.value === undefined) {
+          diagnostics.error('TST1105', `Dangling alias in ${memberPath}: {${target}}`, {
+            hint: `Nothing resolves to "${target}" — not authored, and not produced by derivation. Check the tier prefix (option./semantic./component.) and the spelling.`,
+          });
+          failed = true;
+          continue;
+        }
+        value = resolved.value;
+        members[memberPath.slice(tokenPath.length + 1)] = target;
+      }
+      try {
+        out[name] = parseMember(spec.members[name], value);
+      } catch (e) {
+        diagnostics.error('TST1106', `${memberPath}${target ? ` (via {${target}})` : ''}: ${e.message}`);
+        failed = true;
+      }
+    }
+    return out;
+  });
+
+  if (cycle) return CYCLE;
+  if (failed) return undefined;
+  if (pending) {
+    entry.pendingMembers = true;
+    return DEFERRED;
+  }
+  entry.value = layered ? parsed : parsed[0];
+  if (Object.keys(members).length) entry.provenance = { ...entry.provenance, members };
   return entry;
 }
 
@@ -347,11 +497,23 @@ export function resolveDeferredAliases(normalized, diagnostics) {
 
 function resolvePending(map, tokenPath, stack, diagnostics) {
   const entry = map.get(tokenPath);
-  if (!entry || !entry.pendingAlias) return entry;
+  if (!entry || !(entry.pendingAlias || entry.pendingMembers)) return entry;
   if (stack.includes(tokenPath)) {
     reportCycle(diagnostics, [...stack, tokenPath]);
     delete entry.pendingAlias;
+    delete entry.pendingMembers;
     return CYCLE;
+  }
+  if (entry.pendingMembers) {
+    // A composite with a member aliasing a derived slot (`"color":
+    // "{semantic.color.scrim}"`). Same rule as a whole-token alias: a target
+    // that still doesn't exist is dangling now.
+    const memberStack = [...stack, tokenPath];
+    const resolved = resolveComposite(entry, tokenPath, diagnostics, (memberTarget) =>
+      map.has(memberTarget) ? resolvePending(map, memberTarget, memberStack, diagnostics) : undefined,
+    );
+    delete entry.pendingMembers;
+    return resolved;
   }
   const target = entry.pendingAlias;
   const resolved = map.has(target)

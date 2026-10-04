@@ -116,6 +116,35 @@ try {
   }
 }
 
+// ---------- #26: explain an authored composite ----------
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-explain-'));
+  try {
+    run(['init', 'explain-ds', '--cwd', dir]);
+    const tp = join(dir, 'tokens/brand.tokens.json');
+    const tree = JSON.parse(readFileSync(tp, 'utf8'));
+    tree.semantic.color.elevation = {
+      2: {
+        shadow: {
+          $type: 'shadow',
+          $value: [
+            { color: '{semantic.color.scrim}', offsetX: '0px', offsetY: '1px', blur: '2px', spread: '0px' },
+            { color: '#00000033', offsetX: '0px', offsetY: '4px', blur: '12px', spread: '-2px', inset: true },
+          ],
+        },
+      },
+    };
+    writeFileSync(tp, JSON.stringify(tree, null, 2));
+    const r = run(['explain', 'elevation.2.shadow', '--cwd', dir]);
+    expect('explain composite: exit 0', r.code === 0, r.out);
+    expect('explain composite: renders every layer with a parsed color', /= 0px 1px 2px 0px \/ oklch\([\d.]+ [\d.]+ [\d.]+ \/ [\d.]+\), inset 0px 4px 12px -2px \/ oklch\(/.test(r.out), r.out);
+    expect('explain composite: lists members with their alias target', r.out.includes('0.color = oklch(') && r.out.includes('← {semantic.color.scrim}'), r.out);
+    expect('explain composite: lists literal members', r.out.includes('1.inset = true'), r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- P6: diff against a git ref ----------
 {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-diff-'));

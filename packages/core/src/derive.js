@@ -688,9 +688,11 @@ function resolve(ctx, path, type, compute, rule, inputs, kind = PROVENANCE.DERIV
   const existing = ctx.map.get(path);
   if (existing?.value !== undefined) return existing.value;
   // An authored alias waiting on a slot DERIVE fills later (normalize.js
-  // DEFERRED) has no value yet but must still win over the default — filling
-  // it here would silently discard what the author wrote.
-  if (existing?.pendingAlias) return undefined;
+  // DEFERRED) — or an authored composite with such a member, like a shadow
+  // whose color is `{semantic.color.scrim}` — has no value yet but must still
+  // win over the default: filling it here would silently discard what the
+  // author wrote.
+  if (existing?.pendingAlias || existing?.pendingMembers) return undefined;
   const value = compute();
   ctx.map.set(path, {
     type,
