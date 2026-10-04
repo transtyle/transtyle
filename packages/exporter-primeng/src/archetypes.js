@@ -108,15 +108,24 @@ export function navigation(map) {
   };
 }
 
+/**
+ * An elevation shadow as a CSS `box-shadow` value, or undefined when the slot
+ * is absent. DTCG lets a shadow be authored as an array of layers; CSS takes
+ * the same list comma-separated.
+ */
+export function shadowCss(shadow, ctx) {
+  if (!shadow) return undefined;
+  return (Array.isArray(shadow) ? shadow : [shadow])
+    .map((s) => `${s.inset ? 'inset ' : ''}${s.offsetX} ${s.offsetY} ${s.blur} ${s.spread} ${ctx.formatColor(s.color)}`)
+    .join(', ');
+}
+
 /** kind: 'popover' | 'modal' | 'navigation' | 'select' — each picks an elevation level. */
 const OVERLAY_LEVEL = { select: 2, popover: 2, modal: 3, navigation: 2 };
 
 export function overlay(map, kind, ctx) {
   const n = OVERLAY_LEVEL[kind] ?? 2;
-  const shadow = map.get(`semantic.color.elevation.${n}.shadow`)?.value;
-  const shadowStr = shadow
-    ? `${shadow.offsetX} ${shadow.offsetY} ${shadow.blur} ${shadow.spread} ${ctx.formatColor(shadow.color)}`
-    : undefined;
+  const shadowStr = shadowCss(map.get(`semantic.color.elevation.${n}.shadow`)?.value, ctx);
   return {
     // borderRadius/shadow are mode-invariant at this position in PrimeNG's own
     // type (verified: aura/base's top-level `overlay.*` carries no background/color at

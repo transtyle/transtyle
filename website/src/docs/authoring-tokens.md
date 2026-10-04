@@ -23,7 +23,43 @@ A token is a node with `$value`; groups may declare `$type` for their children:
 }
 ```
 
-Supported `$type`s today: `color` (values: `oklch()`, `#hex` incl. 4/8-digit alpha, `rgb()`/`rgba()`, `hsl()`/`hsla()`, CSS named colors, `transparent`), `dimension` (explicit units: `0.5rem`, `16px`), `fontFamily` (array of family names). The full DTCG type set — `shadow`, `typography`, `duration`, `cubicBezier`, composites — is specced for the full catalog.
+Supported `$type`s today: `color` (values: `oklch()`, `#hex` incl. 4/8-digit alpha, `rgb()`/`rgba()`, `hsl()`/`hsla()`, CSS named colors, `transparent`), `dimension` (explicit units: `0.5rem`, `16px`), `fontFamily` (array of family names), and the composites `shadow`, `typography`, `border` and `transition`. Other DTCG types are carried through as authored, without type-specific parsing.
+
+A composite's members follow the same rules as top-level tokens: a color member parses like a `color` token, any member may be an alias — including to a slot the engine derives, like `scrim` — and a malformed or missing member is reported under its own path (`TST1106` on `semantic.color.elevation.1.shadow.color`). Members a stylesheet writes positionally are required, as DTCG specifies: all five of a `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), and all three of a `border` (`color`, `width`, `style`) or a `transition` (`duration`, `delay`, `timingFunction`). A `shadow` may also be an array of layers, stacked first-on-top as in CSS, each with an optional `inset: true`:
+
+```json
+{
+  "semantic": {
+    "color": {
+      "elevation": {
+        "2": {
+          "shadow": {
+            "$type": "shadow",
+            "$value": [
+              {
+                "color": "{semantic.color.scrim}",
+                "offsetX": "0px",
+                "offsetY": "1px",
+                "blur": "2px",
+                "spread": "0px"
+              },
+              {
+                "color": "#00000014",
+                "offsetX": "0px",
+                "offsetY": "4px",
+                "blur": "12px",
+                "spread": "-2px"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+`transtyle explain semantic.color.elevation.2.shadow` lists each member with the alias it came through.
 
 ## Aliases
 

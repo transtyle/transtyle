@@ -59,7 +59,9 @@ export default {
     for (const slot of slots) {
       const entry = light.get(slot);
       if (entry?.value === undefined) continue;
-      const isColor = slot.startsWith('semantic.color.');
+      // A composite carrying a color member varies by color-scheme like a
+      // color does, wherever it lives in the tree (`semantic.border.focus`).
+      const isColor = slot.startsWith('semantic.color.') || entry.type === 'shadow' || entry.type === 'border';
       const rendered = renderEntry(entry, ctx);
       if (!rendered) continue;
 
@@ -176,11 +178,27 @@ function renderEntry(entry, ctx) {
     ].filter(([, v]) => v !== undefined);
   }
   if (type === 'shadow') {
-    return [['', `${value.offsetX} ${value.offsetY} ${value.blur} ${value.spread} ${ctx.formatColor(value.color)}`]];
+    // DTCG allows a stacked shadow as an array of layers; CSS takes the same
+    // list comma-separated, first layer on top.
+    const layers = Array.isArray(value) ? value : [value];
+    return [['', layers.map((s) => `${s.inset ? 'inset ' : ''}${s.offsetX} ${s.offsetY} ${s.blur} ${s.spread} ${ctx.formatColor(s.color)}`).join(', ')]];
+  }
+  if (type === 'border') {
+    // A DTCG strokeStyle may also be an object (dash array + line cap), which
+    // the `border` shorthand cannot express: no declaration rather than a
+    // malformed one.
+    if (typeof value.style !== 'string') return [];
+    return [['', `${value.width} ${value.style} ${ctx.formatColor(value.color)}`]];
+  }
+  if (type === 'transition') {
+    return [['', `${value.duration} ${cubicBezier(value.timingFunction)} ${value.delay}`]];
   }
   if (Array.isArray(value)) return [['', fontList(value)]];
   return [['', String(value)]];
 }
+
+/** DTCG writes a cubicBezier as four numbers; the catalog's own easings are already CSS. */
+const cubicBezier = (value) => (Array.isArray(value) ? `cubic-bezier(${value.join(', ')})` : String(value));
 
 const fontList = (value) => value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ');
 

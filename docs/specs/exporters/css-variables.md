@@ -18,11 +18,13 @@ Strip the `semantic.` prefix, dots become dashes. Color-role grid cells and the 
 ## Composite values
 
 - `type.role.<role>.<size>` (DTCG `typography`) expands to four longhand properties: `-size`, `-weight`, `-leading`, `-family` (e.g. `--type-role-body-md-size`).
-- `elevation.N.shadow` (DTCG `shadow`) collapses to one box-shadow-shaped value: `<offsetX> <offsetY> <blur> <spread> <color>`, consumable directly as `box-shadow: var(--elevation-1-shadow)`.
+- `elevation.N.shadow` (DTCG `shadow`) collapses to one box-shadow-shaped value: `[inset] <offsetX> <offsetY> <blur> <spread> <color>`, consumable directly as `box-shadow: var(--elevation-1-shadow)`. An authored array of layers renders as the comma-separated list CSS takes, first layer on top.
+- An authored DTCG `border` renders as the `border` shorthand `<width> <style> <color>`, and a `transition` as `<duration> <timingFunction> <delay>` (a DTCG four-number `cubicBezier` becomes `cubic-bezier(…)`). A `border` whose `style` is a strokeStyle object (dash array + line cap) has no shorthand form and emits nothing.
+- A `shadow` or `border` composite varies by mode like a color, wherever it sits in the tree: it carries a color member.
 
 ## Mode handling
 
-Mode polarity rule applies: `:root` always carries the **light** map, `[data-color-scheme="dark"]` the dark map (mode names, never the default flag — a dark-native DS like Cathode still emits this way). Only `semantic.color.*` slots (including the elevation ladder, which lives under `color.` internally) vary by mode and are duplicated across both blocks; every other catalog area is mode-invariant and appears once in `:root`. Override the dark selector via `options.darkSelector`; prefix every variable via `options.prefix`.
+Mode polarity rule applies: `:root` always carries the **light** map, `[data-color-scheme="dark"]` the dark map (mode names, never the default flag — a dark-native DS like Cathode still emits this way). Only `semantic.color.*` slots (including the elevation ladder, which lives under `color.` internally) and `shadow`/`border` composites vary by mode and are duplicated across both blocks; every other catalog area is mode-invariant and appears once in `:root`. Override the dark selector via `options.darkSelector`; prefix every variable via `options.prefix`.
 
 ## Coverage
 
