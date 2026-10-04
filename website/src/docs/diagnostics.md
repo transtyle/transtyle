@@ -22,7 +22,7 @@ The first line says **what is wrong**; the `↳` hint says **what to change**. T
 Two behaviors worth knowing:
 
 - **Identical diagnostics are printed once.** Derivation runs once per mode combination, so a single authoring mistake used to be reported once per combination — a two-token alias cycle printed twelve lines. Anything genuinely per-mode still says which mode in its message.
-- **Consequences are suppressed in favor of causes.** A dangling alias makes `semantic.color.primary.solid` unresolvable, but you're shown the dangling alias (`TST1105`), not the missing token (`TST1201`) — fixing the symptom would not have helped. Likewise an alias cycle reports `TST1104` alone, not a "dangling alias" for each token in the loop.
+- **Consequences are suppressed in favor of causes.** A dangling alias makes `semantic.color.primary.solid` unresolvable, but you're shown the dangling alias (`TST1105`), not the missing token (`TST1201`) — fixing the symptom would not have helped. Likewise an alias cycle reports `TST1104` alone, not a "dangling alias" for each token in the loop. And a role whose `.solid` failed to resolve (`TST1105`, `TST1104`, `TST1106`) draws no dark-mode carry-over note (`TST1204`): there is no light-mode colour to carry over.
 
 ## Diagnostic code reference
 

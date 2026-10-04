@@ -228,7 +228,12 @@ export function reportModeCarryOver(normalized, config, diagnostics) {
       // compares — never second-guessed here.
       if (entry.provenance?.mode === `${DIM}=${scheme}`) continue;
       const baseline = base.get(tokenPath);
-      if (!baseline || !sameValue(entry.value, baseline.value)) continue;
+      // A slot that resolved to nothing in the default mode (dangling alias
+      // TST1105, cycle TST1104, unparseable color TST1106 — each already
+      // reported) has no value to carry over. Without this, `undefined` equals
+      // `undefined` and the note claims an unchanged colour that never
+      // existed: a consequence printed next to its cause.
+      if (baseline?.value === undefined || !sameValue(entry.value, baseline.value)) continue;
 
       const dedupeKey = `${tokenPath}|${scheme}`;
       if (reported.has(dedupeKey)) continue;

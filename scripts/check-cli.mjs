@@ -79,6 +79,43 @@ try {
   })());
 }
 
+// ---------- TST1204 is not a consequence of a broken primary ----------
+// A role whose `.solid` never resolved has no light value to carry into dark,
+// so the carry-over note must not appear next to the error that explains it.
+// The clean scaffold is the control: it does report TST1204 (primary has no
+// dark value), so its absence below is the fix, not a note that stopped firing.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-1204-'));
+  const tp = join(dir, 'tokens/brand.tokens.json');
+  const codes = () => {
+    const r = run(['check', '--cwd', dir, '--json']);
+    try { return JSON.parse(r.stdout).diagnostics.map((d) => d.code); } catch { return [`unparseable: ${r.out}`]; }
+  };
+  try {
+    run(['init', 'tst1204-ds', '--cwd', dir]);
+    const scaffold = readFileSync(tp, 'utf8');
+    let c = codes();
+    expect('TST1204 control: the clean scaffold reports the carry-over', c.includes('TST1204'), c.join(', '));
+
+    const broken = {
+      'dangling alias (TST1105)': ['TST1105', scaffold.replace('{option.color.brand.500}', '{option.color.brand.999}')],
+      'alias cycle (TST1104)': ['TST1104', scaffold
+        .replace('{option.color.brand.500}', '{semantic.color.text.base}')
+        .replace('"oklch(0.2 0.01 255)"', '"{semantic.color.primary.solid}"')],
+      'unparseable color (TST1106)': ['TST1106', scaffold.replace('"{option.color.brand.500}"', '"not-a-color"')],
+    };
+    for (const [label, [cause, tokens]] of Object.entries(broken)) {
+      expect(`TST1204 fixture edit applies: ${label}`, tokens !== scaffold);
+      writeFileSync(tp, tokens);
+      c = codes();
+      expect(`primary.solid ${label}: reports ${cause}`, c.includes(cause), c.join(', '));
+      expect(`primary.solid ${label}: no TST1204 carry-over note`, !c.includes('TST1204'), c.join(', '));
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- P6: diff against a git ref ----------
 {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-diff-'));
