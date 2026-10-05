@@ -6,6 +6,7 @@ import { Code } from 'astro:components';
 import { withBase } from '../url.js';
 import { EXAMPLES, TARGETS, discoverDemos, repoRoot } from '../../../scripts/lib/demos.mjs';
 import { demoThemes } from '../demo-themes.js';
+import { parseColor, contrastRatio } from '../../../packages/core/src/color.js';
 
 // The markdown pipeline's code theme (set by @deramond.dev/astro), so
 // highlighted code looks identical on the homepage and in the docs.
@@ -14,6 +15,17 @@ const shiki = codeProps;
 const root = repoRoot();
 const demoCount = discoverDemos(root).length;
 const themes = await demoThemes(EXAMPLES, root);
+
+// The coverage bar and the contrast claim are read from the compile of
+// examples/acme (shadcn), never typed: a change to Acme moves them, and the
+// hero transcript below is held to the same compile by check:doc-numbers.
+const acmeLight = themes.acme.light;
+const cov = themes.acme.coverage.shadcn;
+const covCount = (k) => cov.counts[k] ?? 0;
+const covPct = (k) => (covCount(k) / cov.total) * 100;
+const covOther = covCount('dropped') + covCount('unsupported');
+const covOtherPct = (covOther / cov.total) * 100;
+const primaryContrast = contrastRatio(parseColor(acmeLight.primary), parseColor(acmeLight.onPrimary)).toFixed(1);
 
 const authoredTokens = `{
   "semantic": {
@@ -27,7 +39,7 @@ const authoredTokens = `{
 }`;
 
 const derivedCss = `--primary: oklch(0.55 0.18 255);
---primary-foreground: oklch(1 0 0);  /* contrast-picked, AA ✓ */
+--primary-foreground: oklch(1 0 0);  /* contrast-picked, ${primaryContrast}:1 */
 --accent: oklch(0.95 0.017 255);     /* brand-tinted */
 --chart-1: #026fd7;                  /* hue-rotated palette */
 /* …plus every hover/active state, light + dark,
@@ -245,13 +257,15 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       <p class="band-sub">Translation between ecosystems is lossy. Transtyle doesn't hide it — it measures it. Every build classifies every variable, so trust is a number, not a vibe.</p>
       <div class="coverage">
         <div class="cov-bar">
-          <span class="seg native" style="width:42%">native</span><span class="seg derived" style="width:53%">derived</span><span class="seg approx" style="width:5%"></span>
+          <span class="seg native" style={`width:${covPct('native')}%`}></span><span class="seg derived" style={`width:${covPct('derived')}%`}></span><span class="seg approx" style={`width:${covPct('approximated')}%`}></span><span class="seg other" style={`width:${covOtherPct}%`}></span>
         </div>
         <div class="cov-legend">
           <span><i class="dot native" aria-hidden="true"></i> native — lossless, first-class mapping</span>
           <span><i class="dot derived" aria-hidden="true"></i> derived — synthesized by rules, provenance recorded</span>
           <span><i class="dot approx" aria-hidden="true"></i> approximated — mapped, meaning changed; reason given</span>
+          <span><i class="dot other" aria-hidden="true"></i> dropped — this target can't say it</span>
         </div>
+        <p class="cov-counts">Acme on shadcn: {covCount('native')} native · {covCount('derived')} derived · {covCount('approximated')} approximated · {covOther} dropped, of {cov.total} variables.</p>
       </div>
     </section>
 
@@ -419,6 +433,8 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .seg.native, .dot.native { background: var(--cov-native); }
     .seg.derived, .dot.derived { background: var(--cov-derived); }
     .seg.approx, .dot.approx { background: var(--cov-approx); }
+    .seg.other, .dot.other { background: color-mix(in oklch, var(--text-muted) 45%, transparent); }
+    .cov-counts { text-align: center; margin: 0.8rem 0 0; font-size: 0.85rem; color: var(--text-muted); }
     .cov-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; justify-content: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); }
     .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; }
 
