@@ -71,7 +71,7 @@ $btn-border-radius  dropped  nothing to bind: this design system has no
                              derives from) and this variable starts being driven.
 ```
 
-The target's own default then applies, which is what "we have nothing to say about this" should mean. `check:minimal-ds` compiles a three-token design system against every exporter on each CI run, asserting none of them crashes and none writes a JavaScript value into a stylesheet.
+The target's own default then applies, which is what "we have nothing to say about this" should mean. A Bootstrap theme map is the one place an entry can't simply go missing, because the exporter replaces Bootstrap's whole map: the entry keeps Bootstrap's own variable (`"dark": $dark-text-emphasis`) and is reported as `$theme-colors-text.dark`, `dropped`. `check:minimal-ds` compiles a one-token design system (only `primary.solid`) and a three-token one against every exporter on each CI run, asserting none of them crashes and none writes a JavaScript value into a stylesheet.
 
 ### My dark-native system comes out light-first
 
