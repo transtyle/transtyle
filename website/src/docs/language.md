@@ -8,13 +8,62 @@ order: 4
 
 Machine translation between many languages doesn't build a translator per pair — it translates through a pivot language, an _interlingua_. Transtyle's semantic catalog is exactly that. Your design system's semantics map **into** the catalog (manually via aliases, or automatically via derivation); each target library's semantics map **out of** it (via each exporter's mapping table). N design systems × M libraries, through one vocabulary.
 
-```
-your semantics            the catalog (pivot)          each library's semantics
-──────────────            ───────────────────           ────────────────────────
-"brand-action"   ─alias→  primary.solid        ─table→  --primary (shadcn)
-"flame-soft"     ─alias→  primary.tint         ─table→  color[0] (ECharts)
-(nothing)        ─rule──→ primary.on-solid     ─table→  --primary-foreground
-```
+<figure class="dg" id="dg-pivot">
+  <div class="dg__scroll">
+    <svg viewBox="0 0 720 248" role="img" aria-labelledby="dg-pivot-t dg-pivot-d">
+      <title id="dg-pivot-t">The pivot vocabulary: your semantics, the catalog, each library's semantics</title>
+      <desc id="dg-pivot-d">Three columns. In your semantics, "brand-action" aliases the catalog slot primary.solid and "flame-soft" aliases primary.tint; nothing is authored for primary.on-solid, so a rule fills it. In the catalog, primary.solid maps by table to --primary (shadcn), primary.tint maps by table to color[0] (ECharts), and primary.on-solid maps by table to --primary-foreground.</desc>
+      <defs>
+        <marker id="dg-pivot-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L8,4 L0,8 Z" class="dg-head" />
+        </marker>
+      </defs>
+      <text class="dg-title" x="16" y="28"><tspan class="dg-num">01</tspan> Your semantics</text>
+      <text class="dg-title" x="258" y="28"><tspan class="dg-num">02</tspan> The catalog (pivot)</text>
+      <text class="dg-title" x="516" y="28"><tspan class="dg-num">03</tspan> Library semantics</text>
+      <g class="dg-node"><rect x="16" y="56" width="152" height="48" /><text class="dg-code" x="92" y="80">"brand-action"</text></g>
+      <g class="dg-node"><rect x="16" y="120" width="152" height="48" /><text class="dg-code" x="92" y="144">"flame-soft"</text></g>
+      <g class="dg-node is-empty"><rect x="16" y="184" width="152" height="48" /><text class="dg-code" x="92" y="208">(nothing)</text></g>
+      <g class="dg-node"><rect x="258" y="56" width="168" height="48" /><text class="dg-code" x="342" y="80">primary.solid</text></g>
+      <g class="dg-node"><rect x="258" y="120" width="168" height="48" /><text class="dg-code" x="342" y="144">primary.tint</text></g>
+      <g class="dg-node"><rect x="258" y="184" width="168" height="48" /><text class="dg-code" x="342" y="208">primary.on-solid</text></g>
+      <g class="dg-node"><rect x="516" y="56" width="188" height="48" /><text class="dg-code" x="610" y="80">--primary <tspan class="dg-aside">(shadcn)</tspan></text></g>
+      <g class="dg-node"><rect x="516" y="120" width="188" height="48" /><text class="dg-code" x="610" y="144">color[0] <tspan class="dg-aside">(ECharts)</tspan></text></g>
+      <g class="dg-node"><rect x="516" y="184" width="188" height="48" /><text class="dg-code" x="610" y="208">--primary-foreground</text></g>
+      <path class="dg-edge" d="M168,80 H256" pathLength="1" marker-end="url(#dg-pivot-arrow)" />
+      <path class="dg-edge" d="M168,144 H256" pathLength="1" marker-end="url(#dg-pivot-arrow)" />
+      <path class="dg-edge" d="M168,208 H256" pathLength="1" marker-end="url(#dg-pivot-arrow)" />
+      <path class="dg-edge" d="M426,80 H514" pathLength="1" marker-end="url(#dg-pivot-arrow)" />
+      <path class="dg-edge" d="M426,144 H514" pathLength="1" marker-end="url(#dg-pivot-arrow)" />
+      <path class="dg-edge" d="M426,208 H514" pathLength="1" marker-end="url(#dg-pivot-arrow)" />
+      <text class="dg-label" x="213" y="72">alias</text>
+      <text class="dg-label" x="213" y="136">alias</text>
+      <text class="dg-label" x="213" y="200">rule</text>
+      <text class="dg-label" x="470" y="72">table</text>
+      <text class="dg-label" x="470" y="136">table</text>
+      <text class="dg-label" x="470" y="200">table</text>
+    </svg>
+  </div>
+  <figcaption>Figure 1 · the pivot vocabulary: your names alias catalog slots, or a rule fills a slot nobody wrote; each slot then maps by table to one variable per library.</figcaption>
+</figure>
+<style>
+  #dg-pivot { margin: var(--space-6) 0; border: var(--stroke-hairline) solid var(--color-line); background: var(--color-bg); }
+  #dg-pivot .dg__scroll { overflow-x: auto; }
+  #dg-pivot svg { display: block; width: 100%; height: auto; min-width: 655px; }
+  #dg-pivot figcaption { padding: var(--space-2) var(--space-3); border-top: var(--stroke-hairline) solid var(--color-line);
+    font: var(--font-size-xs) / var(--font-line-height-body) var(--font-family-mono); color: var(--color-muted); }
+  #dg-pivot .dg-node rect { fill: var(--color-panel); stroke: var(--color-line); stroke-width: 1; }
+  #dg-pivot .dg-node.is-empty rect { fill: none; stroke: var(--color-muted); stroke-dasharray: 4 3; }
+  #dg-pivot .dg-node.is-empty text { fill: var(--color-muted); }
+  #dg-pivot .dg-code { fill: var(--color-fg); text-anchor: middle; dominant-baseline: middle; font: var(--font-weight-regular) 13px var(--font-family-mono); }
+  #dg-pivot .dg-aside { fill: var(--color-muted); }
+  #dg-pivot .dg-title { font: var(--font-weight-semibold) 11px var(--font-family-display); letter-spacing: var(--font-letter-spacing-eyebrow);
+    text-transform: uppercase; fill: var(--color-muted); }
+  #dg-pivot .dg-num { font-family: var(--font-family-mono); fill: var(--color-primary); }
+  #dg-pivot .dg-label { font: 11px var(--font-family-mono); fill: var(--color-muted); text-anchor: middle; }
+  #dg-pivot .dg-edge { fill: none; stroke: var(--color-primary); stroke-width: 1.5; }
+  #dg-pivot .dg-head { fill: var(--color-primary); }
+</style>
 
 This page is the full pivot vocabulary as implemented today — <span class="badge live">compiled</span> unless marked <span class="badge spec">specced</span> (exists in the [IR specification](/docs/internals/), not yet compiled). Swatches show real derived values from the [Acme example](/docs/examples/)'s single blue brand color.
 
