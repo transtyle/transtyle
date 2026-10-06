@@ -1,12 +1,14 @@
-<p align="center"><a href="https://transtyle.github.io/transtyle/"><picture><source srcset=".github/header.svg" type="image/svg+xml"><img src=".github/header.png" width="830" alt="Transtyle, a design system compiler: describe your design system once, in design tokens, and compile native themes for every ecosystem you ship in."></picture></a></p>
-
 <h1 align="center">Transtyle</h1>
 
+<hr>
+
 <p align="center">
-  <strong>A design system compiler.</strong><br>
-  Describe your design system once, in design tokens.<br>
-  Compile native themes for every ecosystem you ship in.
+  A design system compiler: describe your design system once, in design tokens, and compile native themes for every ecosystem you ship in.
+  <br>
+  <a href="https://transtyle.github.io/transtyle/"><strong>Open the docs »</strong></a>
 </p>
+
+<p align="center"><a href="https://transtyle.github.io/transtyle/"><picture><source srcset=".github/header.svg" type="image/svg+xml"><img src=".github/header.png" width="830" alt="Transtyle, a design system compiler: describe your design system once, in design tokens, and compile native themes for every ecosystem you ship in."></picture></a></p>
 
 <p align="center">
   <a href="https://transtyle.github.io/transtyle/">Documentation</a> ·
@@ -14,6 +16,11 @@
   <a href="https://www.npmjs.com/org/transtyle">npm</a> ·
   <a href="ROADMAP.md">Roadmap</a> ·
   <a href="VISION.md">Vision</a>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@transtyle/cli"><img src="https://img.shields.io/npm/v/@transtyle/cli?style=flat&amp;label=npm&amp;labelColor=16181E&amp;color=3AB9BF" alt="npm: @transtyle/cli"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/transtyle/transtyle?style=flat&amp;labelColor=16181E&amp;color=2D7579" alt="Licence"></a>
 </p>
 
 <p align="center"><img src="media/demo.gif" width="830" alt="The same fake app, Nimbus Console, built in Bootstrap from two design systems compiled by Transtyle: Acme, corporate blue with rounded corners, on the left and Cathode, phosphor green with square corners, on the right. Both panes scroll through the buttons, a form and a card, switch to the other color mode and come back."></p>
