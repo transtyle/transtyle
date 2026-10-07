@@ -86,10 +86,12 @@ Mode variants go in **separate pure-DTCG files** — the recommended layout, bec
 ```json
 // transtyle.config.json
 "tokens": [
-  "tokens/*.tokens.json",
+  "tokens/base.tokens.json",
   { "files": "tokens/dark.tokens.json", "mode": { "color-scheme": "dark" } }
 ]
 ```
+
+List the base files one by one, as here, rather than with a `tokens/*.tokens.json` glob: the glob would also match `dark.tokens.json`, loading the dark values a second time as a base layer over the light ones.
 
 (The [inline `$extensions` form](/docs/authoring-tokens/#modes) exists too, for small hand-edited systems.)
 
