@@ -66,10 +66,11 @@ const SURFACES = [
   ['website/astro.config.mjs', "mark: './src/brand/mark.svg'", 'the header mark and the Open Graph badge'],
   ['website/astro.config.mjs', "favicons: './src/brand/favicons/'", 'the favicons, app icons and web manifest'],
   ['website/src/pages/blog/rss.xml.js', "withBase('/feed-icon-144.png')", 'the RSS channel image'],
-  ['README.md', '.github/header.svg', 'the README header'],
-  ['README.md', '.github/header.png', 'the README header, for hosts that refuse SVG'],
+  ['README.md', '.github/logo-title-dark.svg', 'the README logo-title, dark'],
+  ['README.md', '.github/logo-title-light.svg', 'the README logo-title, light'],
+  ['README.md', '.github/logo-title-light.png', 'the README logo-title, for hosts that refuse SVG'],
 ];
-for (const file of ['.github/header.svg', '.github/header.png']) {
+for (const file of ['.github/logo-title-dark.svg', '.github/logo-title-light.svg', '.github/logo-title-light.png']) {
   if (!existsSync(join(root, file))) fail(`${file} is missing — the README opens with it`);
 }
 for (const [file, needle, what] of SURFACES) {
