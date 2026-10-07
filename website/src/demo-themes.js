@@ -98,7 +98,15 @@ export async function demoThemes(examples, repoRoot) {
     if (!light?.primary) {
       throw new Error(`demo gallery: examples/${example.id} has no --color-primary-solid to preview`);
     }
-    themes[example.id] = { light, dark, modes: dark ? ['light', 'dark'] : ['light'] };
+    // Per-target coverage counts, from the same compile (the homepage's
+    // "Honest about lossiness" bar draws from these, not from typed widths).
+    const coverage = {};
+    for (const r of result.results) {
+      const counts = {};
+      for (const c of r.coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
+      coverage[r.target] = { total: r.coverage.length, counts };
+    }
+    themes[example.id] = { light, dark, modes: dark ? ['light', 'dark'] : ['light'], coverage };
   }
   cache.set(key, themes);
   return themes;
