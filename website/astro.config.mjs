@@ -82,6 +82,10 @@ export default defineConfig({
         mark: './src/brand/mark.svg',
         favicons: './src/brand/favicons/',
         accounts: [{ label: 'GitHub', href: 'https://github.com/transtyle/transtyle' }],
+        // The home page's schema.org identity is the project, not a person: an
+        // Organization named after the site, at its home page, whose profile is
+        // the repository above. The author stays the meta author and copyright.
+        identity: { type: 'Organization' },
       },
       nav: [
         { label: 'Docs', href: `${root}/docs/` },
@@ -89,7 +93,30 @@ export default defineConfig({
         { label: 'Blog', href: `${root}/blog/` },
         { label: 'For AI agents', href: `${root}/docs/ai-agents/` },
       ],
-      og: { art: './src/brand/og-art.png' },
+      // The author's other tools, in a quiet row of the docs footer; the same
+      // list on each of them, each leaving itself out. "More by Julien
+      // Déramond" (the default) ends the row.
+      related: [
+        {
+          name: 'dtgraph',
+          description: 'Interactive dependency graph for DTCG design tokens',
+          href: 'https://julien-deramond.github.io/dtgraph/',
+        },
+        {
+          name: 'Component Anatomy',
+          description: 'Interactive component anatomy for design system docs',
+          href: 'https://julien-deramond.github.io/component-anatomy/',
+        },
+        {
+          name: 'Bootstrap Tokens',
+          description: 'Bootstrap 6 as design tokens, with a theme builder',
+          href: 'https://julien-deramond.github.io/bootstrap-tokens/',
+        },
+      ],
+      // The site card (/og/index.png) prints its subtitle on one line, cut
+      // with an ellipsis: the site description doesn't fit, so it gets the
+      // same short line as the footer blurb and /og/default.png.
+      og: { art: './src/brand/og-art.png', subtitle: 'A design system compiler' },
       docs: {
         route: false,
         tool: { version: `v${version}` },
