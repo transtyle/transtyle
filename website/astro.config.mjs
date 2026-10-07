@@ -93,6 +93,26 @@ export default defineConfig({
         { label: 'Blog', href: `${root}/blog/` },
         { label: 'For AI agents', href: `${root}/docs/ai-agents/` },
       ],
+      // The author's other tools, in a quiet row of the docs footer; the same
+      // list on each of them, each leaving itself out. "More by Julien
+      // Déramond" (the default) ends the row.
+      related: [
+        {
+          name: 'dtgraph',
+          description: 'Interactive dependency graph for DTCG design tokens',
+          href: 'https://julien-deramond.github.io/dtgraph/',
+        },
+        {
+          name: 'Component Anatomy',
+          description: 'Interactive component anatomy for design system docs',
+          href: 'https://julien-deramond.github.io/component-anatomy/',
+        },
+        {
+          name: 'Bootstrap Tokens',
+          description: 'Bootstrap 6 as design tokens, with a theme builder',
+          href: 'https://julien-deramond.github.io/bootstrap-tokens/',
+        },
+      ],
       og: { art: './src/brand/og-art.png' },
       docs: {
         route: false,
