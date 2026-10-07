@@ -82,6 +82,10 @@ export default defineConfig({
         mark: './src/brand/mark.svg',
         favicons: './src/brand/favicons/',
         accounts: [{ label: 'GitHub', href: 'https://github.com/transtyle/transtyle' }],
+        // The home page's schema.org identity is the project, not a person: an
+        // Organization named after the site, at its home page, whose profile is
+        // the repository above. The author stays the meta author and copyright.
+        identity: { type: 'Organization' },
       },
       nav: [
         { label: 'Docs', href: `${root}/docs/` },
