@@ -113,7 +113,10 @@ export default defineConfig({
           href: 'https://julien-deramond.github.io/bootstrap-tokens/',
         },
       ],
-      og: { art: './src/brand/og-art.png' },
+      // The site card (/og/index.png) prints its subtitle on one line, cut
+      // with an ellipsis: the site description doesn't fit, so it gets the
+      // same short line as the footer blurb and /og/default.png.
+      og: { art: './src/brand/og-art.png', subtitle: 'A design system compiler' },
       docs: {
         route: false,
         tool: { version: `v${version}` },
