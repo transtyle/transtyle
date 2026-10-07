@@ -78,9 +78,9 @@ which also draws the header, the docs shell and the Open Graph cards. The site
 mark is the glyph alone in `currentColor`, so it takes the header's colour;
 `check:brand` holds its geometry, and the favicon's, to the generator's.
 
-The README opens with [`.github/header.svg`](../.github/header.svg) (and a PNG
-for hosts that refuse SVG): the name, the one-line description and the same
-artwork as the Open Graph cards.
+The README opens with the logo-title, the mark and the name as one image
+([dark](../.github/logo-title-dark.svg), [light](../.github/logo-title-light.svg),
+and a light PNG for hosts that refuse SVG), as its centred title.
 
 ## The lockup
 

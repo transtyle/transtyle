@@ -1,14 +1,10 @@
-<h1 align="center">Transtyle</h1>
-
-<hr>
+<h1 align="center"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/logo-title-dark.svg"><source media="(prefers-color-scheme: light)" srcset=".github/logo-title-light.svg"><img src=".github/logo-title-light.png" width="343" alt="Transtyle"></picture></h1>
 
 <p align="center">
   A design system compiler: describe your design system once, in design tokens, and compile native themes for every ecosystem you ship in.
   <br>
   <a href="https://transtyle.github.io/transtyle/"><strong>Open the docs »</strong></a>
 </p>
-
-<p align="center"><a href="https://transtyle.github.io/transtyle/"><picture><source srcset=".github/header.svg" type="image/svg+xml"><img src=".github/header.png" width="830" alt="Transtyle, a design system compiler: describe your design system once, in design tokens, and compile native themes for every ecosystem you ship in."></picture></a></p>
 
 <p align="center">
   <a href="https://transtyle.github.io/transtyle/">Documentation</a> ·
