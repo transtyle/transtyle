@@ -1,0 +1,13 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "primary": { "solid": { "$value": "oklch(0.7 0.15 255)" } },
+      "elevation": {
+        "0": { "surface": { "$value": "oklch(0.15 0.01 255)" } },
+        "1": { "surface": { "$value": "oklch(0.2 0.01 255)" } }
+      },
+      "text": { "base": { "$value": "oklch(0.95 0.005 255)" } }
+    }
+  }
+}

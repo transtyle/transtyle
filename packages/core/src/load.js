@@ -48,12 +48,26 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export async function loadTokenTrees(cwd, entries, diagnostics) {
   const trees = [];
   const seenExtensionNamespaces = new Set(); // compile-wide, so TST1304 fires once per namespace, not once per file
+  // A file a mode-scoped entry matches is that mode's overlay, never also a
+  // base layer, whatever the order of the entries: `["tokens/*.tokens.json",
+  // { files: "tokens/dark.tokens.json", mode: … }]` loads dark.tokens.json
+  // once, as the overlay (docs/specs/configuration.md#token-layering). Merged
+  // as a base layer too, its dark values overwrote the light ones and every
+  // token in it raised TST1103. So the overlays' files are collected first.
+  const claimed = new Set();
+  for (const entry of entries) {
+    if (typeof entry === 'string') continue;
+    for (const g of [].concat(entry.files)) for (const f of await expandGlob(cwd, g)) claimed.add(f);
+  }
   for (const entry of entries) {
     const globs = typeof entry === 'string' ? [entry] : [].concat(entry.files);
     const modeScope = typeof entry === 'string' ? undefined : entry.mode;
     for (const g of globs) {
-      const files = await expandGlob(cwd, g);
-      if (files.length === 0)
+      const matched = await expandGlob(cwd, g);
+      // TST1001 still means "matched nothing on disk": a glob whose only
+      // matches are overlays did its job.
+      const files = modeScope ? matched : matched.filter((f) => !claimed.has(f));
+      if (matched.length === 0)
         diagnostics.warn('TST1001', `Token glob matched no files: ${g}`, {
           // AL5: this is usually the whole story behind every error that
           // follows, so it should be the one that tells you where it looked.

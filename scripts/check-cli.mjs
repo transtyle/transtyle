@@ -8,7 +8,7 @@
  * target, unknown slot) behave as specced.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -77,6 +77,51 @@ try {
   expect('check --json: prints a parseable JSON report', (() => {
     try { return Array.isArray(JSON.parse(r.stdout).diagnostics); } catch { return false; }
   })());
+}
+
+// ---------- #121: a glob that also matches a mode-scoped overlay ----------
+// `["tokens/*.tokens.json", { files: "tokens/dark.tokens.json", mode: dark }]`,
+// the layout `init` plus authoring-tokens.md lead to, loaded dark.tokens.json
+// twice: once as the overlay and once as a base layer, so every token in it
+// raised TST1103 and its dark values replaced the light ones (light text on a
+// light surface at 1.1:1). The overlay claims its file whatever the order of
+// the entries, so both orders are graded; `overlay-first/` reads the same
+// token files from `../tokens/`.
+{
+  const base = join(root, 'packages/core/test-fixtures/glob-plus-overlay');
+  const light = 'oklch(0.2 0.01 255)';
+  const dark = 'oklch(0.95 0.005 255)';
+  const value = (cwd, mode) => {
+    const r = run(['explain', 'semantic.color.text.base', '--cwd', cwd, ...(mode ? ['--mode', mode] : [])]);
+    return r.out.match(/^semantic\.color\.text\.base = (oklch\([^)]*\))/m)?.[1] ?? `unreadable: ${r.out}`;
+  };
+  for (const [label, cwd] of [['glob first', base], ['overlay first', join(base, 'overlay-first')]]) {
+    const r = run(['check', '--cwd', cwd, '--json']);
+    let codes;
+    try { codes = JSON.parse(r.stdout).diagnostics.map((d) => d.code); } catch { codes = [`unparseable: ${r.out}`]; }
+    expect(`glob + overlay (${label}): the overlay is not also a base layer (no TST1103)`, !codes.includes('TST1103'),
+      `${codes.join(', ')} — packages/core/src/load.js must skip files a mode-scoped entry claims`);
+    let got = value(cwd);
+    expect(`glob + overlay (${label}): light text.base keeps the base value`, got === light, `got ${got}, expected ${light}`);
+    got = value(cwd, 'dark');
+    expect(`glob + overlay (${label}): dark text.base is the overlay's`, got === dark, `got ${got}, expected ${dark}`);
+  }
+
+  // TST1001 keeps meaning "matched nothing on disk": a plain glob whose only
+  // match is the overlay's file did match something, so it does not warn.
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-121-'));
+  try {
+    cpSync(join(base, 'tokens'), join(dir, 'tokens'), { recursive: true });
+    const config = JSON.parse(readFileSync(join(base, 'transtyle.config.json'), 'utf8'));
+    config.tokens = ['tokens/base.tokens.json', 'tokens/dark*.tokens.json', config.tokens[1]];
+    writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify(config));
+    const r = run(['check', '--cwd', dir, '--json']);
+    let codes;
+    try { codes = JSON.parse(r.stdout).diagnostics.map((d) => d.code); } catch { codes = [`unparseable: ${r.out}`]; }
+    expect('glob + overlay: a glob matching only the overlay\'s file is not TST1001', !codes.includes('TST1001') && !codes.includes('TST1103'), codes.join(', '));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 // ---------- TST1204 is not a consequence of a broken primary ----------
