@@ -77,9 +77,12 @@ Seven scripts here render rather than check:
   nothing here and belongs to the post it was rendered for.
 - `record-demo.mjs` re-records the README's hero GIF (`media/demo.gif`): it builds the Acme and Cathode
   Bootstrap demos, serves them side by side and drives them with Playwright, encoding with the
-  `ffmpeg-static` binary under 2 MB. It has no checker and no CI job, because it needs a browser:
-  run `npx playwright install chromium` once, then `npm run demo:record`, whenever the demos'
-  look changes, and commit the new GIF.
+  `ffmpeg-static` binary under 2 MB. That binary is its own package, `scripts/record-demo/` (not a
+  workspace), because installing it downloads from GitHub releases and every CI job runs the root
+  `npm ci`. It has no checker and no CI job, because it needs a browser: run
+  `npm ci --prefix scripts/record-demo` and `npx playwright install chromium` once, then
+  `npm run demo:record`, whenever the demos' look
+  changes, and commit the new GIF.
 - `sync-latest-tag.mjs` moves the `latest` npm dist-tag after a release.
 - `release-notes.mjs` renders the GitHub Release body, taking the union of the
   twelve lockstep changelogs so the page says each change once instead of twelve

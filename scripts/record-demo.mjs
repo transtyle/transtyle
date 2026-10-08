@@ -8,13 +8,14 @@
  *
  * The GIF is a recording of the real thing, so it is re-recorded by hand when the demos' look
  * changes; nothing in CI runs it (it needs a browser) and no checker reads it. Nothing is
- * installed by it: it needs `npm ci` plus `npx playwright install chromium` once.
+ * installed by it: it needs `npm ci`, `npm ci --prefix scripts/record-demo` (the ffmpeg binary, kept
+ * out of the workspaces so CI never downloads it) and `npx playwright install chromium`, once each.
  *
  * How: builds the two demo projects the shot needs (`acme-demo-bootstrap`,
  * `cathode-demo-bootstrap`; each compiles its own tokens first), serves their `dist/` folders on two
  * free ports, writes a small page to the OS temp directory with one frame per design system, drives
  * it with Playwright (Chromium) at a fixed viewport, and encodes the video with the ffmpeg binary
- * from `ffmpeg-static` (palettegen; widths tried in turn until the file is under 2 MB).
+ * from `ffmpeg-static` (installed under `scripts/record-demo/`; palettegen; widths tried in turn until the file is under 2 MB).
  *
  * Why two iframes and not the website's compare view: that view needs all 32 demos assembled
  * (`npm run demos:all`, several minutes); this builds two and is reproducible in about a minute.
@@ -28,11 +29,21 @@ import { createReadStream, existsSync, mkdirSync, mkdtempSync, rmSync, statSync,
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import ffmpegPath from 'ffmpeg-static';
 import { chromium } from 'playwright';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const here = dirname(fileURLToPath(import.meta.url));
+const root = resolve(here, '..');
+// ffmpeg-static downloads its binary from GitHub releases when installed. It lives in its own
+// package, outside the workspaces, so the root `npm ci` (every CI job) never fetches it.
+let ffmpegPath;
+try {
+  ffmpegPath = createRequire(join(here, 'record-demo/'))('ffmpeg-static');
+} catch {
+  console.error('ffmpeg-static is not installed. Run `npm ci --prefix scripts/record-demo` once, then retry.');
+  process.exit(1);
+}
 const OUT_GIF = join(root, 'media/demo.gif');
 const GIF_LIMIT = 2 * 1024 * 1024;
 const VIEWPORT = { width: 1280, height: 720 };
