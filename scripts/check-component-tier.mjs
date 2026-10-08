@@ -7,6 +7,9 @@
  * authored `component.*` token must win over that default, unconditionally.
  * Run: node scripts/check-component-tier.mjs (also: npm run check:component-tier).
  */
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { compile } from '@transtyle/core';
 
 // Permissive optionsSchema: this test exercises the engine, not option
@@ -106,12 +109,41 @@ async function main() {
   if (authoredTooltip?.provenance.kind !== 'authored')
     errors.push(`fixture: component.tooltip.max-width provenance = "${authoredTooltip?.provenance.kind}", expected "authored"`);
 
+  // (f) A semantic source that is itself an authored alias to a slot DERIVE
+  // fills: `radius.control` bound to `{semantic.radius.full}`. The component
+  // loop runs after the scales are derived, so it must see the alias's value
+  // and materialize the component slots — not skip them as "no source" while
+  // the alias resolves only after DERIVE.
+  const aliasDir = mkdtempSync(join(tmpdir(), 'transtyle-component-alias-'));
+  try {
+    mkdirSync(join(aliasDir, 'tokens'));
+    writeFileSync(
+      join(aliasDir, 'tokens', 'base.tokens.json'),
+      JSON.stringify({
+        semantic: {
+          color: { primary: { solid: { $type: 'color', $value: '#0d6efd' } } },
+          radius: { md: { $type: 'dimension', $value: '6px' }, control: { $value: '{semantic.radius.full}' } },
+        },
+      }),
+    );
+    writeFileSync(join(aliasDir, 'transtyle.config.json'), JSON.stringify({ name: 'component-alias', tokens: ['tokens/*.tokens.json'], targets: {} }));
+    const aliased = await compile({ cwd: aliasDir, targets: [], emit: false, loadExporter });
+    if (aliased.diagnostics.errors.length) errors.push(`radius.control → radius.full: compile errors: ${aliased.diagnostics.errors.map((e) => e.message).join('; ')}`);
+    const lMap = aliased.normalized.modes.light;
+    for (const slot of ['component.control.radius', 'component.button.radius']) {
+      const v = lMap?.get(slot)?.value;
+      if (v !== '9999px') errors.push(`radius.control → radius.full: ${slot} = ${v}, expected 9999px (the alias's value, seen by the component loop)`);
+    }
+  } finally {
+    rmSync(aliasDir, { recursive: true, force: true });
+  }
+
   if (errors.length) {
     console.error(`✖ check-component-tier failed — ${errors.length} issue(s):\n`);
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored');
+  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored; a semantic source bound to a derived slot (radius.control → radius.full) feeds the component tier');
 }
 
 main();

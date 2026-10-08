@@ -15,12 +15,12 @@ already made once.
 | `check-encoding.mjs`          | Tracked text files are clean UTF-8 — no NUL bytes, no BOM                                             |
 | `check-color.mjs`             | The colour engine against reference values: parsing, round-trips, contrast, mixing                    |
 | `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                                 |
-| `check-grid.mjs`              | Catalog completeness and the frozen Phase 0 values                                                    |
+| `check-grid.mjs`              | Catalog completeness and the frozen Phase 0 values; a role bound to a derived slot gets its grid      |
 | `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                     |
 | `check-determinism.mjs`       | Two builds of every example, byte-compared                                                            |
 | `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                  |
 | `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` golden paths and error cases                            |
-| `check-component-tier.mjs`    | The empty tier defaults correctly; an authored tier reaches both component targets                    |
+| `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a bound semantic source feeds it      |
 | `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                           |
 | `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap                   |
 | `check-minimal-ds.mjs`        | Eight exporters survive a three-token design system in six mode shapes, and authored composites       |
