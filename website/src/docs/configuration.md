@@ -74,13 +74,25 @@ Worked example. Three files, in this order:
 
 The mode-scoped layer never has to repeat anything: it lists only the tokens that genuinely differ in that mode, which on a real design system is usually a handful of neutrals. Everything else — including every derived value — recomputes per mode from what's underneath.
 
-| Rule                                         | Diagnostic                   |
-| -------------------------------------------- | ---------------------------- |
-| Glob matches nothing                         | `TST1001` warning            |
-| Token defined twice across base layers       | `TST1103` warning, last wins |
-| Mode value overrides an earlier one          | `TST1108` warning            |
-| Mode value for a token with no default value | `TST1107` warning, skipped   |
-| Mode not declared in `modes`                 | `TST1109` error              |
+A glob can cover the folder that holds the overlays. The overlay claims its file, so the glob skips it, whichever entry comes first:
+
+```json
+"tokens": [
+  "tokens/*.tokens.json",
+  { "files": "tokens/dark.tokens.json", "mode": { "color-scheme": "dark" } }
+]
+```
+
+`dark.tokens.json` loads once, as the dark overlay; every other file in `tokens/` is a base layer.
+
+| Rule                                           | Diagnostic                                  |
+| ---------------------------------------------- | ------------------------------------------- |
+| Glob matches nothing                           | `TST1001` warning                           |
+| Token defined twice across base layers         | `TST1103` warning, last wins                |
+| Mode value overrides an earlier one            | `TST1108` warning                           |
+| Mode value for a token with no default value   | `TST1107` warning, skipped                  |
+| Mode not declared in `modes`                   | `TST1109` error                             |
+| File matched by a glob and a mode-scoped entry | Loaded once, as the overlay (no diagnostic) |
 
 ## `modes`
 

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "glob-plus-overlay-fixture",
+  "tokens": [
+    "tokens/*.tokens.json",
+    { "files": "tokens/dark.tokens.json", "mode": { "color-scheme": "dark" } }
+  ],
+  "modes": {
+    "color-scheme": { "values": ["light", "dark"], "default": "light" }
+  },
+  "derivation": {
+    "rules": "standard@1",
+    "autoDark": false,
+    "require": ["semantic.color.primary"]
+  },
+  "targets": {}
+}

@@ -15,6 +15,7 @@ Discover and parse inputs: `transtyle.config.*`, token files it references, and 
 
 - Config discovery follows the cosmiconfig-style convention ([specs/configuration.md](../specs/configuration.md)).
 - Token files are parsed as DTCG JSON. Importers (Tailwind config, Figma export…) run here and must output _the same raw DTCG-superset structure_ as if the user had authored files — importers get no private path into the IR. This keeps `import` explainable: you can materialize what an importer produced (`transtyle import --write`) and inspect it.
+- Each file is loaded once. A file matched by a mode-scoped entry is that mode's overlay only: plain globs skip it, whatever the order of the entries ([ADR-0009](../adr/0009-token-layering.md#amendment-2026-10-08-an-overlay-claims-its-file)).
 - Output: raw token forest + config object. Each tree remembers the file it came from and the mode layer it was scoped to; **specced:** per-token file/line source maps, and surfacing either in a diagnostic (today a message names the token path, not its location).
 
 ## 2. NORMALIZE
