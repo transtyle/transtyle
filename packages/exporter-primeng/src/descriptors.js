@@ -410,11 +410,12 @@ export function buildMenu(light, dark, ctx) {
 export function buildPopover(light, dark, ctx) {
   const ol = overlay(light, 'popover', ctx),
     od = overlay(dark, 'popover', ctx);
+  // padding lives on semantic.overlay.popover (Aura's content reads it); Root has no such key.
+  const { padding: _padding, ...root } = ol.structural;
   return {
     tokens: {
-      root: { ...ol.structural },
+      root,
       colorScheme: { light: { root: ol.colorScheme }, dark: { root: od.colorScheme } },
-      content: { padding: ol.padding },
     },
     coverage: [
       { variable: 'popover.root.*', slot: 'exporter-private: overlay(popover)', class: 'derived' },
@@ -425,13 +426,12 @@ export function buildPopover(light, dark, ctx) {
 export function buildDialog(light, dark, ctx) {
   const ol = overlay(light, 'modal', ctx),
     od = overlay(dark, 'modal', ctx);
+  // padding lives on semantic.overlay.modal (Aura's header/content/footer read it); Root has no such key.
+  const { padding: _padding, ...root } = ol.structural;
   return {
     tokens: {
-      root: { ...ol.structural },
+      root,
       colorScheme: { light: { root: ol.colorScheme }, dark: { root: od.colorScheme } },
-      header: { padding: ol.padding },
-      content: { padding: ol.padding },
-      footer: { padding: ol.padding },
     },
     coverage: [
       { variable: 'dialog.root.*', slot: 'exporter-private: overlay(modal)', class: 'derived' },

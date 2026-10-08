@@ -75,18 +75,18 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 <!-- measured: acme.bootstrap.approximated = 35 -->
 <!-- measured: acme.bootstrap.dropped = 71 -->
 <!-- measured: acme.bootstrap.unsupported = 56 -->
-<!-- measured: acme.primeng.driven = 80 -->
-<!-- measured: acme.primeng.inherited = 1552 -->
-<!-- measured: acme.primeng.base = 1127 -->
+<!-- measured: acme.primeng.driven = 78 -->
+<!-- measured: acme.primeng.inherited = 1566 -->
+<!-- measured: acme.primeng.base = 1115 -->
 
 |                                          | Bootstrap                                                               | PrimeNG                                                              |
 | ---------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                        |
-| Driven                                   | 59 native + 493 derived = 552 of 714 rows (77%), plus 35 `approximated` | 80 driven + 1552 inherited = 1632 (59%), 1127 left on Aura's default |
+| Driven                                   | 59 native + 493 derived = 552 of 714 rows (77%), plus 35 `approximated` | 78 driven + 1566 inherited = 1644 (60%), 1115 left on Aura's default |
 | Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | see the family rows in `report.json`                                 |
 | Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                              |
 
-The 59% is the target with room to grow; the 77% is the one that has converged. The reason is architectural:
+The 60% is the target with room to grow; the 77% is the one that has converged. The reason is architectural:
 
 <!-- measured: acme.bootstrap.undriven = 127 -->
 

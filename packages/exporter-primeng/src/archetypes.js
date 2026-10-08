@@ -131,18 +131,19 @@ export function overlay(map, kind, ctx) {
     // type (verified: aura/base's top-level `overlay.*` carries no background/color at
     // all) — `shadow` is computed from whichever map is passed; callers pass the light
     // map once for this half, matching PrimeNG's own single (non-mode-varying) shadow.
-    // `padding` is NOT part of this object — verified it belongs on each component's
-    // own `content.padding` (Popover/Dialog), not on the shared semantic.overlay.* shape.
+    // `padding` IS on the shared shape for modal/popover (Aura base:
+    // `overlay.modal.padding`, `overlay.popover.padding`). Dialog's header/content/footer
+    // and Popover's content read it by reference with their own top-less shape, so the
+    // component tokens must not override it with one flat value.
     structural: {
       ...(kind !== 'navigation' && {
         borderRadius: get(map, kind === 'modal' ? 'radius.container' : 'radius.field'),
       }),
+      ...((kind === 'modal' || kind === 'popover') && {
+        padding: get(map, kind === 'modal' ? 'space.6' : 'space.3'),
+      }),
       shadow: shadowStr,
     },
-    padding:
-      kind === 'navigation' || kind === 'select'
-        ? undefined
-        : get(map, kind === 'modal' ? 'space.6' : 'space.3'),
     // navigation has no colorScheme-scoped entry in real PrimeNG (Menu's root reads
     // `content.*` for its own background/color instead) — callers skip this for 'navigation'.
     colorScheme:
