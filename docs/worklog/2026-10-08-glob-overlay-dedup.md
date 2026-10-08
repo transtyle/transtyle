@@ -58,5 +58,7 @@ value in both orders, plus the `TST1001` case) and by counting `TST1001` after
 the skip instead of before it (the `TST1001` case alone fails). No example's
 output moves: they never combined a glob with an overlay.
 
-The adoption guide's step 2 needs no change once this lands: its glob form is
-correct again.
+The adoption guide's step 2 had been changed to list the base file one by one,
+with a note warning against the glob (#123), while the loader was fixed. With
+the fix in, its glob form is correct again: the example is back to
+`tokens/*.tokens.json` and the note is gone.
