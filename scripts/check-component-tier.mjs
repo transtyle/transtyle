@@ -138,12 +138,48 @@ async function main() {
     rmSync(aliasDir, { recursive: true, force: true });
   }
 
+  // (g) Tier violations (TST1113): a semantic token aliasing a component token
+  // is backwards. A chain semantic -> semantic -> component is reported once,
+  // on the token that points the wrong way. component -> semantic and
+  // component -> component (button defaulting from control) stay clean.
+  const tierDir = mkdtempSync(join(tmpdir(), 'transtyle-tier-violation-'));
+  try {
+    mkdirSync(join(tierDir, 'tokens'));
+    const writeTokens = (tokens) => writeFileSync(join(tierDir, 'tokens', 'base.tokens.json'), JSON.stringify(tokens));
+    writeFileSync(join(tierDir, 'transtyle.config.json'), JSON.stringify({ name: 'tier-violation', tokens: ['tokens/*.tokens.json'], targets: {} }));
+    const primary = { color: { primary: { solid: { $type: 'color', $value: '#0d6efd' } } } };
+    const tierCodes = async () => (await compile({ cwd: tierDir, targets: [], emit: false, loadExporter })).diagnostics.items.filter((i) => i.code === 'TST1113');
+
+    writeTokens({
+      semantic: { ...primary, radius: { card: { $type: 'dimension', $value: '{component.button.radius}' }, tile: { $type: 'dimension', $value: '{semantic.radius.card}' } } },
+      component: { button: { radius: { $type: 'dimension', $value: '4px' } } },
+    });
+    const violations = await tierCodes();
+    if (violations.length !== 1) errors.push(`tier violation: expected exactly one TST1113 (on semantic.radius.card, not on the chained semantic.radius.tile), got ${violations.map((v) => v.message).join(' | ') || 'none'}`);
+    else {
+      const [v] = violations;
+      if (v.severity !== 'error') errors.push(`tier violation: TST1113 must be an error, got ${v.severity}`);
+      if (!v.message.includes('semantic.radius.card') || !v.message.includes('component.button.radius')) errors.push(`tier violation: message must name both tokens, got "${v.message}"`);
+      if (!v.hint) errors.push('tier violation: TST1113 carries no hint');
+    }
+
+    // Positive control: legitimate layering, no TST1113.
+    writeTokens({
+      semantic: { ...primary, radius: { md: { $type: 'dimension', $value: '6px' } } },
+      component: { control: { radius: { $type: 'dimension', $value: '{semantic.radius.md}' } }, button: { radius: { $type: 'dimension', $value: '{component.control.radius}' } } },
+    });
+    const clean = await tierCodes();
+    if (clean.length) errors.push(`tier control: component -> semantic and component -> component must not raise TST1113, got ${clean.map((v) => v.message).join(' | ')}`);
+  } finally {
+    rmSync(tierDir, { recursive: true, force: true });
+  }
+
   if (errors.length) {
     console.error(`✖ check-component-tier failed — ${errors.length} issue(s):\n`);
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log('✔ check-component-tier: empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored; a semantic source bound to a derived slot (radius.control → radius.full) feeds the component tier');
+  console.log('✔ check-component-tier: a semantic token aliasing a component one raises TST1113 once, on the direct edge; component -> semantic/component stays clean; empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored; a semantic source bound to a derived slot (radius.control → radius.full) feeds the component tier');
 }
 
 main();

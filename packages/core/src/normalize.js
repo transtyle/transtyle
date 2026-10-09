@@ -253,6 +253,39 @@ export function reportModeCarryOver(normalized, config, diagnostics) {
 }
 
 /**
+ * Post-DERIVE pass: TST1113, a `semantic.*` token whose alias points straight at
+ * a `component.*` token. The tiers layer option -> semantic -> component, so the
+ * semantic tier is the stable surface that component tokens read from; reading
+ * the other way inverts the layering and makes every exporter that binds the
+ * semantic token depend on a component refinement. Tier is structural (the
+ * top-level group name), so this is a prefix test, no inference.
+ *
+ * Only the direct edge is flagged: `semantic.a -> semantic.b -> component.c`
+ * reports `semantic.b`, the token that actually points the wrong way. The
+ * message does not mention the mode, so the collector's de-duplication reports
+ * a token once however many mode combinations carry the same alias. An
+ * unresolved alias has no `aliased` provenance and is never double-reported
+ * here (TST1104/TST1105 already name it).
+ */
+export function reportTierViolations(normalized, diagnostics) {
+  const seen = new Set();
+  for (const map of Object.values(normalized.modes)) {
+    if (!map || seen.has(map)) continue; // modes.light/dark alias the combo maps
+    seen.add(map);
+    for (const [tokenPath, entry] of map) {
+      if (!tokenPath.startsWith('semantic.')) continue;
+      const target = entry.provenance?.kind === 'aliased' ? entry.provenance.target : undefined;
+      if (typeof target !== 'string' || !target.startsWith('component.')) continue;
+      diagnostics.error(
+        'TST1113',
+        `${tokenPath} aliases ${target}: a semantic token cannot point into the component tier`,
+        { hint: `Tiers layer option -> semantic -> component. Alias ${target}'s own source instead, or move ${tokenPath} under \`component.\`.` },
+      );
+    }
+  }
+}
+
+/**
  * An alias whose target isn't in the map *yet*. Catalog slots the DERIVE stage
  * materializes (`radius.full`, the role grid, the elevation ladder) don't exist
  * at NORMALIZE time, so authoring `{semantic.radius.full}` — the very style
