@@ -27,6 +27,8 @@
 
 Any step whose OKLCH value falls outside the sRGB gamut (`ctx.formatHex(...).clamped`) is additionally marked `approximated` with a note — browsers gamut-map `oklch()` on render, which can look noticeably different from the intended color. Building this exporter surfaced exactly this gap in the `text-strong` derivation rule (F20): it re-anchors a role at the _content_ text lightness while keeping the role's _full_ chroma, which could leave the sRGB gamut for vivid brand colors in dark mode (a very light, fully saturated color has very little gamut headroom). Fixed at the source: F20 now runs the result through `clampChromaToGamut` (`packages/core/src/color.js`), which reduces chroma at the same lightness/hue until the color is representable, rather than letting per-channel clipping distort it downstream. See the worklog for the fix and its one (expected, corrected) fixture-value change.
 
+Radix also ships a P3 (wide-gamut) variant of every scale. That is a themable slot the IR does not cover (one OKLCH value per slot, no gamut-mapped pair), so the coverage row `(P3/wide-gamut variants)` is `unsupported` with meaning `color.wide-gamut`, a catalog-growth signal rather than a deliberate non-mapping.
+
 ## `@radix-ui/themes` integration
 
 Radix's `<Theme accentColor="...">` component only accepts its own preset names — it can't take an arbitrary string. To drive real Radix Themes components from a compiled brand, **override an existing preset's CSS variables** with your role's scale (e.g. `--violet-1` through `--violet-12`, `-a1..a12`, `-contrast`), then pass that preset's name to `accentColor`. `--gray-*` needs no override — it's already Radix's own name.

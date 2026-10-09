@@ -96,7 +96,7 @@ export default {
     const lightLines = buildMode(light, true);
     const darkLines = dark ? buildMode(dark, false) : [];
 
-    coverage.push({ variable: '(P3/wide-gamut variants)', slot: '—', class: 'dropped', note: 'Radix ships a P3 pair per scale for wide-gamut displays; the engine has one OKLCH value per slot, not a gamut-mapped pair' });
+    coverage.push({ variable: '(P3/wide-gamut variants)', slot: '—', class: 'unsupported', meaning: 'color.wide-gamut', note: 'Radix ships a P3 pair per scale for wide-gamut displays; the engine has one OKLCH value per slot, not a gamut-mapped pair' });
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));

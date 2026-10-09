@@ -11,6 +11,11 @@
       "summary": "Series-type styling (candlestick colours, gauge bands): chart configuration, not design-token semantics.",
       "ref": "docs/specs/exporters/echarts.md"
     },
+    "color.wide-gamut": {
+      "status": "watch",
+      "summary": "A wide-gamut (P3) variant of each colour. Radix ships a P3 pair per scale; the IR holds one OKLCH value per slot. Single-source so far.",
+      "ref": "docs/specs/exporters/radix.md"
+    },
     "geometry.component": {
       "status": "rejected",
       "summary": "Bespoke component geometry (spinner, popover, modal widths, offcanvas, dropdown and toast widths): one-sided or false friends when measured against the second reference target.",
@@ -44,6 +49,11 @@
     "shadow.inset": {
       "status": "open",
       "summary": "An inset shadow: the elevation shadows have no inset counterpart in the IR."
+    },
+    "style.effect": {
+      "status": "watch",
+      "summary": "Theme-level stylistic effects and control-size scales (daisyUI --depth, --noise, --size-selector, --size-field): themable, but the IR has no vocabulary for them. Single-source so far.",
+      "ref": "docs/specs/exporters/daisyui.md"
     },
     "type.display-ladder": {
       "status": "disagreement",

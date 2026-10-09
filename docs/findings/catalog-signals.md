@@ -12,13 +12,15 @@ PrimeNG reports one row per component family, so for PrimeNG the unit is the slo
 
 | Exporter       | `unsupported` | With a meaning | Without |
 | -------------- | ------------- | -------------- | ------- |
+| daisyUI        | 1 row         | 1              | 0       |
 | Apache ECharts | 1 row         | 1              | 0       |
 | Bootstrap      | 56 rows       | 56             | 0       |
+| Radix Themes   | 1 row         | 1              | 0       |
 | PrimeNG        | 1105 slots    | 57             | 1048    |
 
 Every row and slot below is reported by all the examples, except PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
 
-shadcn/ui, daisyUI, Storybook, Radix Themes, Mantine, Chakra UI, CSS variables report no `unsupported` row: only exporters that inventory their target's whole surface can say what they leave undriven.
+shadcn/ui, Storybook, Mantine, Chakra UI, CSS variables report no `unsupported` row: only exporters that inventory their target's whole surface can say what they leave undriven.
 
 ## By meaning
 
@@ -28,7 +30,9 @@ shadcn/ui, daisyUI, Storybook, Radix Themes, Mantine, Chakra UI, CSS variables r
 | `opacity.compositional` | open            | 1         | Bootstrap (1 row)                      |                                                                                      |
 | `shadow.inset`          | open            | 1         | Bootstrap (1 row)                      |                                                                                      |
 | `icon.size`             | watch           | 2         | Bootstrap (3 rows), PrimeNG (57 slots) | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
+| `color.wide-gamut`      | watch           | 1         | Radix Themes (1 row)                   | [radix](../specs/exporters/radix.md)                                                 |
 | `icon.asset`            | watch           | 1         | Bootstrap (16 rows)                    | [backlog](../backlog.md#bl-19)                                                       |
+| `style.effect`          | watch           | 1         | daisyUI (1 row)                        | [daisyui](../specs/exporters/daisyui.md)                                             |
 | `breakpoint.ladder`     | disagreement    | 1         | Bootstrap (1 row)                      | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
 | `geometry.indicator`    | disagreement    | 1         | Bootstrap (4 rows)                     | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
 | `type.display-ladder`   | disagreement    | 1         | Bootstrap (1 row)                      | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
@@ -71,11 +75,23 @@ Component icon sizes. PrimeNG models them systematically, Bootstrap has a few ad
 - Bootstrap: `$accordion-icon-width`, `$btn-close-width`, `$carousel-control-icon-width`.
 - PrimeNG: 57 slots in 30 families: avatar (3), breadcrumb (1), cascadeselect (1), checkbox (3), chip (2), confirmdialog (1), confirmpopup (1), contextmenu (2), datatable (2), galleria (3), gallery (2), image (2), inlinemessage (1), megamenu (2), menu (2), menubar (2), message (6), metergroup (1), organizationchart (1), panelmenu (1), radiobutton (3), rating (1), semantic (1), sidebar (4), tag (1), tieredmenu (2), toast (2), tree (1), treetable (2), virtualscroller (1).
 
+#### `color.wide-gamut`
+
+A wide-gamut (P3) variant of each colour. Radix ships a P3 pair per scale; the IR holds one OKLCH value per slot. Single-source so far. See [radix](../specs/exporters/radix.md).
+
+- Radix Themes: `(P3/wide-gamut variants)`.
+
 #### `icon.asset`
 
 Embedded icon and glyph images (SVG data URIs): the IR has no asset vocabulary. Single-source so far. See [backlog](../backlog.md#bl-19).
 
 - Bootstrap: `$accordion-button-active-icon`, `$accordion-button-icon`, `$btn-close-bg`, `$carousel-control-next-icon-bg`, `$carousel-control-prev-icon-bg`, `$form-check-input-checked-bg-image`, `$form-check-input-indeterminate-bg-image`, `$form-check-radio-checked-bg-image`, `$form-feedback-icon-invalid`, `$form-feedback-icon-valid`, `$form-select-indicator`, `$form-switch-bg-image`, `$form-switch-checked-bg-image`, `$form-switch-focus-bg-image`, `$navbar-dark-toggler-icon-bg`, `$navbar-light-toggler-icon-bg`.
+
+#### `style.effect`
+
+Theme-level stylistic effects and control-size scales (daisyUI --depth, --noise, --size-selector, --size-field): themable, but the IR has no vocabulary for them. Single-source so far. See [daisyui](../specs/exporters/daisyui.md).
+
+- daisyUI: `--depth / --noise / --size-*`.
 
 #### `breakpoint.ladder`
 
@@ -162,4 +178,4 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 | `semantic.type.role.display.*`                                                                                                                             | Mantine                                                                                             |
 | `semantic.z.*`                                                                                                                                             | Mantine                                                                                             |
 
-The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): daisyUI 1, Bootstrap 71, Storybook 2, Radix Themes 1, Mantine 10, Chakra UI 1. Each one's reason is in that target's `report.json`.
+The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): Bootstrap 71, Storybook 2, Mantine 10, Chakra UI 1. Each one's reason is in that target's `report.json`.
