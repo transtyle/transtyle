@@ -28,13 +28,13 @@ For your own design system and targets, run `transtyle check --matrix` (add `--j
 
 ## Reading a cell
 
-| Cell                                    | Meaning                                                                                                                                                                                                    |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <span class="sm native">native</span>   | A target variable maps to this slot one to one.                                                                                                                                                            |
-| <span class="sm derived">derived</span> | A target variable is computed from this slot (a mix, a ramp step, a unit conversion).                                                                                                                      |
-| <span class="sm approx">approx.</span>  | A target variable is the closest fit to this slot, with a loss the coverage report spells out.                                                                                                             |
-| <span class="sm input">input</span>     | The exporter reads the slot, but no coverage row names it: it feeds a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface, a Bootstrap chained variable, ECharts' `color[]`). |
-| (empty)                                 | The target never reads the slot. Authoring it changes nothing there.                                                                                                                                       |
+| Cell                                    | Meaning                                                                                                                                                                                |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <span class="sm native">native</span>   | A target variable maps to this slot one to one.                                                                                                                                        |
+| <span class="sm derived">derived</span> | A target variable is computed from this slot (a mix, a ramp step, a unit conversion).                                                                                                  |
+| <span class="sm approx">approx.</span>  | A target variable is the closest fit to this slot, with a loss the coverage report spells out.                                                                                         |
+| <span class="sm input">input</span>     | The exporter reads the slot, but no coverage row names it: it feeds a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface, a Bootstrap chained variable). |
+| (empty)                                 | The target never reads the slot. Authoring it changes nothing there.                                                                                                                   |
 
 A read is counted whether or not the value ends up in the output, so the matrix errs on the safe side: an empty cell is a guarantee, a filled one is a dependency.
 
@@ -340,16 +340,16 @@ Each slot below is `semantic.opacity.<slot>`.
 
 Each slot below is `semantic.palette.<slot>`.
 
-| Slot            | Read by | shadcn                                  | daisyUI | ECharts                                | Bootstrap | Storybook | Radix | PrimeNG | Mantine | CSS vars                              |
-| --------------- | ------- | --------------------------------------- | ------- | -------------------------------------- | --------- | --------- | ----- | ------- | ------- | ------------------------------------- |
-| `categorical.1` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm input">input</span>    |           |           |       |         |         | <span class="sm native">native</span> |
-| `categorical.2` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm input">input</span>    |           |           |       |         |         | <span class="sm native">native</span> |
-| `categorical.3` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm input">input</span>    |           |           |       |         |         | <span class="sm native">native</span> |
-| `categorical.4` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm input">input</span>    |           |           |       |         |         | <span class="sm native">native</span> |
-| `categorical.5` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm input">input</span>    |           |           |       |         |         | <span class="sm native">native</span> |
-| `categorical.6` | 2/9     |                                         |         | <span class="sm approx">approx.</span> |           |           |       |         |         | <span class="sm native">native</span> |
-| `categorical.7` | 2/9     |                                         |         | <span class="sm input">input</span>    |           |           |       |         |         | <span class="sm native">native</span> |
-| `categorical.8` | 2/9     |                                         |         | <span class="sm input">input</span>    |           |           |       |         |         | <span class="sm native">native</span> |
+| Slot            | Read by | shadcn                                  | daisyUI | ECharts                                 | Bootstrap | Storybook | Radix | PrimeNG | Mantine | CSS vars                              |
+| --------------- | ------- | --------------------------------------- | ------- | --------------------------------------- | --------- | --------- | ----- | ------- | ------- | ------------------------------------- |
+| `categorical.1` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm derived">derived</span> |           |           |       |         |         | <span class="sm native">native</span> |
+| `categorical.2` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm derived">derived</span> |           |           |       |         |         | <span class="sm native">native</span> |
+| `categorical.3` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm derived">derived</span> |           |           |       |         |         | <span class="sm native">native</span> |
+| `categorical.4` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm derived">derived</span> |           |           |       |         |         | <span class="sm native">native</span> |
+| `categorical.5` | 3/9     | <span class="sm derived">derived</span> |         | <span class="sm derived">derived</span> |           |           |       |         |         | <span class="sm native">native</span> |
+| `categorical.6` | 2/9     |                                         |         | <span class="sm derived">derived</span> |           |           |       |         |         | <span class="sm native">native</span> |
+| `categorical.7` | 2/9     |                                         |         | <span class="sm derived">derived</span> |           |           |       |         |         | <span class="sm native">native</span> |
+| `categorical.8` | 2/9     |                                         |         | <span class="sm derived">derived</span> |           |           |       |         |         | <span class="sm native">native</span> |
 
 ## Radius
 

@@ -89,8 +89,9 @@ function buildTheme(map, mode, ctx) {
   for (let i = 1; i <= PALETTE_SIZE; i++) {
     const c = hex(`${P}${i}`);
     if (c) palette.push(c);
+    // One row per entry so the slot matrix (#158) sees each palette slot.
+    cov(`color[${i - 1}]`, `${P}${i}`, 'native');
   }
-  cov('color[]', `${P}1–${PALETTE_SIZE}`, 'native', undefined, `${P}1`);
 
   const background = hex(`${S}elevation.0.surface`);
   const text = hex(`${S}text.base`);

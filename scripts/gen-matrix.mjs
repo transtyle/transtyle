@@ -148,7 +148,7 @@ const lines = [
   `| ${cell0('native')}  | A target variable maps to this slot one to one. |`,
   `| ${cell0('derived')} | A target variable is computed from this slot (a mix, a ramp step, a unit conversion). |`,
   `| ${cell0('approximated')} | A target variable is the closest fit to this slot, with a loss the coverage report spells out. |`,
-  `| ${cell0('input')}   | The exporter reads the slot, but no coverage row names it: it feeds a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface, a Bootstrap chained variable, ECharts\' \`color[]\`). |`,
+  `| ${cell0('input')}   | The exporter reads the slot, but no coverage row names it: it feeds a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface, a Bootstrap chained variable). |`,
   '| (empty)   | The target never reads the slot. Authoring it changes nothing there.                                                           |',
   '',
   'A read is counted whether or not the value ends up in the output, so the matrix errs on the safe side: an empty cell is a guarantee, a filled one is a dependency.',
