@@ -105,7 +105,7 @@ One small file of aliases connects [the Transtyle language](/docs/language/) to 
       "primary": { "solid": { "$value": "{semantic.color.brand-action}" } },
       "elevation": { "0": { "surface": { "$value": "{semantic.color.canvas}" } } },
       "text": { "base": { "$value": "{option.color.coal.900}" } },
-      "border": { "$value": "{option.color.sand.200}" }
+      "border": { "base": { "$value": "{option.color.sand.200}" } }
     }
   }
 }

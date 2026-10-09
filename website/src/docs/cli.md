@@ -206,19 +206,19 @@ Prints the config's [`bindings`](/docs/configuration/#binding-rules) pattern rul
 
 ### `transtyle bind --suggest`
 
-Drafts the bindings of an existing design system: for every catalog slot nothing binds yet, the project token that fills it, read from your own token names and colors ([adopting an existing system](/docs/adopt-existing/), step 3). Deterministic, offline, byte-identical on every run: a versioned name table (`synonyms@1`) plus color measurements, no model.
+Drafts the bindings of an existing design system: for every catalog slot nothing binds yet, the project token that fills it, read from your own token names and colors ([adopting an existing system](/docs/adopt-existing/), step 3). Deterministic, offline, byte-identical on every run: a versioned name table (`synonyms@2`) plus color measurements, no model.
 
 ```bash
 npx transtyle bind --suggest --cwd examples/cathode   # with its bindings file left out of the config
 # Proposed (9):
-#   semantic.color.border               ← semantic.color.crt.scanline  medium  low chroma, 1.6 | 1.4:1 on the page; next: option.color.paper.rule
+#   semantic.color.border.base          ← semantic.color.crt.scanline  medium  low chroma, 1.6 | 1.4:1 on the page; next: option.color.paper.rule
 #   semantic.color.primary.solid        ← semantic.color.crt.ink       low     chroma 0.24 in dark; next: semantic.color.crt.meltdown
 #   semantic.color.text.base            ← semantic.color.crt.ink       high    name "ink" → text.base; 14.6 | 13.5:1 on the page; …
 #   semantic.color.warning.solid        ← semantic.color.crt.amber     medium  hue 5° | 5° off the warning anchor (85), …
 #   ...
 ```
 
-- **What it proposes**: the role `.solid`s but `neutral`, the text rungs, `elevation.0/1.surface`, `border`, `ring`, `link.*`, `font.sans/mono/display`. Candidates are your own `semantic.*` tokens; an `option.*` token only on name evidence, at `low`. A slot already authored or aliased (by a file or a `bindings` rule) is left alone.
+- **What it proposes**: the role `.solid`s but `neutral`, the text rungs, `elevation.0/1.surface`, `border.base`, `ring`, `inverse.surface/text`, `link.*`, `font.sans/mono/display`. Candidates are your own `semantic.*` tokens; an `option.*` token only on name evidence, at `low`. A slot already authored or aliased (by a file or a `bindings` rule) is left alone.
 - **How**: a name is read by structure, not similarity: a family word (text, link, focus, surface, border) decides before a role word, so `text-primary` is a text rung, not the brand, and `focus-text` is no text slot. A value is checked against the slot's shape in every mode (the page is low chroma at the end of the lightness range, a border sits 1.2–3:1 off it, body text reads at 4.5:1), or against what derivation would give the slot; a status color is matched on hue against its role's anchor.
 - **Confidence**: `high` when name and value agree, `medium` for one of them, `low` for `primary` on value alone (one mode decides it) or an `option.*` token. Two candidates nothing separates are **contested**: listed on stderr and in the file's `$description`, never written as an alias.
 - **Output**: stdout is a token file, each alias carrying its reason in `$description`; redirect it to a file, review it, then add it to `tokens`. `--rules` prints the same proposals as `{ "bindings": [...] }` [rules](/docs/configuration/#binding-rules) for the config, generalized with `{role}`, `{rung}` or `{level}` where your names are regular and checked to expand to exactly the same aliases. `--json` prints the whole report (every slot `bound`, `proposed`, `contested` or `none`, with its ranked candidates). The table above goes to stderr.

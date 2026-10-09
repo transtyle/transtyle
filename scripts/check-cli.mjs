@@ -1475,25 +1475,25 @@ try {
     writeManifest({ irSpec: 'v1', pluginApi: '0' });
     let r = run(['build', '--cwd', dir]);
     expect('#14 irSpec mismatch: exit 1', r.code === 1, `exit ${r.code}: ${r.out}`);
-    expect('#14 irSpec mismatch: TST1311 names the package, its version and both IR specs',
-      r.out.includes('TST1311 Exporter "acme" (acme-exporter 2.1.0) is built for IR spec "v1"; this @transtyle/core produces "v0-draft"'), r.out);
+    expect('#14 irSpec mismatch: TST1309 names the package, its version and both IR specs',
+      r.out.includes('TST1309 Exporter "acme" (acme-exporter 2.1.0) is built for IR spec "v1"; this @transtyle/core produces "v0-draft"'), r.out);
     expect('#14 irSpec mismatch: the hint says what to change', r.out.includes('Use a release of acme-exporter built for IR spec "v0-draft"'), r.out);
     expect('#14 irSpec mismatch: nothing is written for any target', !existsSync(join(dir, 'dist')), r.out);
-    expect('#14 irSpec mismatch: later targets are still checked (one run reports every incompatible exporter)', r.out.includes('TST1311 Exporter "acme-again"'), r.out);
+    expect('#14 irSpec mismatch: later targets are still checked (one run reports every incompatible exporter)', r.out.includes('TST1309 Exporter "acme-again"'), r.out);
 
     writeManifest({ irSpec: 'v0-draft', pluginApi: '^1' });
     r = run(['build', '--cwd', dir]);
-    expect('#14 pluginApi mismatch: TST1311 with the range and the implemented version',
+    expect('#14 pluginApi mismatch: TST1309 with the range and the implemented version',
       r.code === 1 && r.out.includes('requires plugin API "^1"; this @transtyle/core implements "0.0.0"'), r.out);
 
     writeManifest({ irSpec: 'v1', pluginApi: '1' });
     r = run(['check', '--json', '--cwd', dir]);
     const json = (() => { try { return JSON.parse(r.stdout); } catch { return null; } })();
-    expect('#14 both wrong: two TST1311 per target in one run', !!json && json.diagnostics.filter((d) => d.code === 'TST1311' && d.message.startsWith('Exporter "acme"')).length === 2, r.out);
+    expect('#14 both wrong: two TST1309 per target in one run', !!json && json.diagnostics.filter((d) => d.code === 'TST1309' && d.message.startsWith('Exporter "acme"')).length === 2, r.out);
 
     writeManifest({ irSpec: 'v0-draft', pluginApi: '>=0 <2' });
     r = run(['build', '--cwd', dir]);
-    expect('#14 a range that admits this core builds clean', r.code === 0 && !r.out.includes('TST1311') && !r.out.includes('TST1310'), `exit ${r.code}: ${r.out}`);
+    expect('#14 a range that admits this core builds clean', r.code === 0 && !r.out.includes('TST1309') && !r.out.includes('TST1310'), `exit ${r.code}: ${r.out}`);
     expect('#14 compatible exporter: its files are written', existsSync(join(dir, 'dist/acme/acme.css')), r.out);
 
     writeManifest(null);
@@ -1503,7 +1503,7 @@ try {
 
     writeManifest({ irSpec: 'v1', pluginApi: '0' });
     r = run(['check', '--matrix', '--cwd', dir]);
-    expect('#14 check --matrix: the recording loader keeps the manifest (TST1311)', r.code === 1 && r.out.includes('TST1311'), `exit ${r.code}: ${r.out}`);
+    expect('#14 check --matrix: the recording loader keeps the manifest (TST1309)', r.code === 1 && r.out.includes('TST1309'), `exit ${r.code}: ${r.out}`);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

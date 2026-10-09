@@ -126,7 +126,8 @@ export async function suggestBindings({ cwd }) {
   const scope = [
     ...SCOPED_ROLES.map((r) => `${S}${r}.solid`),
     ...TEXT_RUNGS.map((r) => `${S}text.${r}`),
-    `${S}elevation.0.surface`, `${S}elevation.1.surface`, `${S}border`, `${S}ring`,
+    `${S}elevation.0.surface`, `${S}elevation.1.surface`, `${S}border.base`, `${S}ring`,
+    `${S}inverse.surface`, `${S}inverse.text`,
     `${S}link.base`, `${S}link.hover`, `${S}link.visited`,
     'semantic.font.sans', 'semantic.font.mono', 'semantic.font.display',
   ];
@@ -304,7 +305,7 @@ export async function suggestBindings({ cwd }) {
     better: lowerIsBetter,
     close: within(T.margin.deltaE),
   });
-  run(`${S}border`, {
+  run(`${S}border.base`, {
     exclude: (c) => wonAny(c),
     measure: (c) => {
       const k = onPage(c);
@@ -329,7 +330,7 @@ export async function suggestBindings({ cwd }) {
     // Value alone reads the default mode only: the brand's native expression,
     // but one mode, so never more than low.
     valueOnlyConfidence: 'low',
-    exclude: (c) => wonAny(c, [canvas, `${S}elevation.1.surface`, `${S}border`]),
+    exclude: (c) => wonAny(c, [canvas, `${S}elevation.1.surface`, `${S}border.base`]),
     measure: (c) => {
       const C = c.values[defaultMode].c;
       return { pass: C >= T.vividChroma, metric: C, text: `chroma ${f2(C)} in ${defaultMode}` };
@@ -351,7 +352,7 @@ export async function suggestBindings({ cwd }) {
   }
 
   // Phase 2: text rungs.
-  const firstWinners = () => [canvas, `${S}elevation.1.surface`, `${S}border`, `${S}text.base`, `${S}primary.solid`];
+  const firstWinners = () => [canvas, `${S}elevation.1.surface`, `${S}border.base`, `${S}text.base`, `${S}primary.solid`];
   for (const rung of TEXT_RUNGS) {
     if (rung === 'base') continue;
     const slot = `${S}text.${rung}`;
@@ -407,7 +408,7 @@ export async function suggestBindings({ cwd }) {
   }
 
   // Phase 4: name-only slots, confirmed by their distance to the derived value.
-  for (const slot of [`${S}secondary.solid`, `${S}accent.solid`, `${S}ring`]) {
+  for (const slot of [`${S}secondary.solid`, `${S}accent.solid`, `${S}ring`, `${S}inverse.surface`, `${S}inverse.text`]) {
     run(slot, { valueOnly: false, measure: derivedDelta(slot), better: lowerIsBetter, close: within(T.margin.deltaE) });
   }
   // A link name is confirmed by the link's shape: readable on the page (3:1) in every mode.
