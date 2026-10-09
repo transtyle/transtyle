@@ -1,0 +1,11 @@
+{
+  "color": {
+    "brand": {
+      "primary": { "value": "#0d6efd", "comment": "Brand blue" },
+      "link": { "value": "{color.brand.primary.value}", "type": "color" }
+    }
+  },
+  "size": {
+    "base": { "value": "16px", "attributes": { "category": "size" } }
+  }
+}

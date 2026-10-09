@@ -103,6 +103,36 @@ const TIERS = new Set(['option', 'semantic', 'component']);
 const KNOWN_EXTENSION_NAMESPACES = new Set(['transtyle.modes', 'transtyle.role', 'transtyle.state-mechanism']);
 
 /**
+ * The path of the first Style Dictionary v3 leaf in a tree that has no `$value`
+ * anywhere, else null. A leaf is an object with a `value` key that is a
+ * primitive or array (a composite object value counts only with a sibling
+ * `type`/`comment`/`attributes`, so a group that merely has a child called
+ * `value` is not mistaken for a token).
+ */
+function findStyleDictionaryLeaf(tree) {
+  let legacy = null;
+  let hasDtcg = false;
+  const walk = (node, path_) => {
+    if (hasDtcg || node === null || typeof node !== 'object' || Array.isArray(node)) return;
+    if ('$value' in node) { hasDtcg = true; return; }
+    if ('value' in node) {
+      const v = node.value;
+      const plainObject = v !== null && typeof v === 'object' && !Array.isArray(v);
+      const sdSibling = ['type', 'comment', 'attributes'].some((k) => k in node);
+      if (!plainObject || sdSibling) {
+        legacy ??= path_;
+        return;
+      }
+    }
+    for (const [key, child] of Object.entries(node)) {
+      if (!key.startsWith('$')) walk(child, [...path_, key]);
+    }
+  };
+  walk(tree, []);
+  return hasDtcg ? null : legacy;
+}
+
+/**
  * Catches authoring mistakes `collectTokens()`'s permissive walk would
  * otherwise silently swallow: a top-level group outside the three tiers, a
  * node that clearly meant to be a token but has no `$value`, an unrecognized
@@ -112,6 +142,21 @@ const KNOWN_EXTENSION_NAMESPACES = new Set(['transtyle.modes', 'transtyle.role',
  * the whole `loadTokenTrees()` call so TST1304 fires once per compile.
  */
 export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new Set()) {
+  // A Style Dictionary v3 file (`value`/`type` without `$`) has no `$value`
+  // anywhere, so every check below would see an empty tree and the user would
+  // get TST1305/TST1201 noise that never names the real cause. Say it once and
+  // stop (issue #54).
+  const legacyAt = findStyleDictionaryLeaf(tree);
+  if (legacyAt) {
+    diagnostics.error(
+      'TST1307',
+      `${file}: looks like a Style Dictionary (v3) token file — tokens use "value"/"type" without the "$" prefix (first one: ${legacyAt.join('.') || '(root)'}), so none of them is a DTCG token`,
+      {
+        hint: 'Rename "value" → "$value", "type" → "$type" and "comment" → "$description", strip ".value" from "{a.b.c.value}" references, and put the tokens under option/semantic/component. `transtyle migrate --from style-dictionary` is planned to do this for you (docs/specs/cli.md).',
+      },
+    );
+    return;
+  }
   for (const key of Object.keys(tree)) {
     if (key.startsWith('$')) continue;
     if (!TIERS.has(key)) {

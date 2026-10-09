@@ -1,0 +1,10 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "style-dictionary-legacy-fixture",
+  "tokens": ["tokens/*.json"],
+  "modes": {
+    "color-scheme": { "values": ["light"], "default": "light" }
+  },
+  "derivation": { "rules": "standard@1", "autoDark": false },
+  "targets": {}
+}

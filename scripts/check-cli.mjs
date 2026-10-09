@@ -79,6 +79,21 @@ try {
   })());
 }
 
+// ---------- #54: a Style Dictionary v3 file is named, not silently empty ----------
+// `value`/`type` without `$` loads as a DTCG tree with zero tokens, which used
+// to end in a TST1305 warning per group and `TST1201 primary.solid is not
+// authored`, never naming the dialect. LOAD now reports TST1307 once per file
+// and the compile stops blaming the missing primary.
+{
+  const fixture = join(root, 'packages/core/test-fixtures/style-dictionary-legacy');
+  const r = run(['check', '--cwd', fixture, '--json']);
+  let codes;
+  try { codes = JSON.parse(r.stdout).diagnostics.map((d) => d.code); } catch { codes = [`unparseable: ${r.out}`]; }
+  expect('style dictionary legacy: exits 1', r.code === 1, `exit ${r.code}`);
+  expect('style dictionary legacy: reports TST1307 once', codes.filter((c) => c === 'TST1307').length === 1, codes.join(', '));
+  expect('style dictionary legacy: no TST1201 / TST1305 noise', !codes.includes('TST1201') && !codes.includes('TST1305'), codes.join(', '));
+}
+
 // ---------- #121: a glob that also matches a mode-scoped overlay ----------
 // `["tokens/*.tokens.json", { files: "tokens/dark.tokens.json", mode: dark }]`,
 // the layout `init` plus authoring-tokens.md lead to, loaded dark.tokens.json
