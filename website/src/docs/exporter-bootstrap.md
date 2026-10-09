@@ -75,3 +75,11 @@ Authoring is optional refinement: an empty `component` tier compiles forever fro
 Dark mode follows Bootstrap's own mechanism (`data-bs-theme="dark"`) on both paths. One Sass-path caveat inherited from Bootstrap itself: `$primary` is a single value, so brand colors don't flip per mode — exactly how Bootstrap's own dark mode behaves.
 
 See it running on real Bootstrap components: `npm run dev -w acme-demo-bootstrap` (or `cathode-demo-bootstrap` for the CRT version) in the [examples](/docs/examples/).
+
+## Contrast, motion and brand
+
+For a design system declaring [`contrast`, `motion` or `brand`](/docs/configuration/#contrast-motion-and-brand):
+
+- **CSS path.** `bootstrap-theme.css` gains `[data-contrast="more"]` and `[data-brand="globex"]` blocks, for the `--bs-*` variables and for the button variants (`[data-brand="globex"] .btn-primary`), plus compound blocks like `[data-bs-theme="dark"][data-brand="globex"]` where the separate ones would be wrong on a dark page. `contrast: more` also follows `prefers-contrast: more` until `data-contrast` is set.
+- **Sass path.** Sass compiles one theme, so `_variables.transtyle.scss` and `_maps.transtyle.scss` come once per brand (`_variables.transtyle.globex.scss`): build one Bootstrap per brand. They hold the standard-contrast values; load `bootstrap-theme.css` after the build for the contrast blocks (the report's `(mode:contrast)` row says so).
+- **Motion.** Bootstrap's own `$enable-reduced-motion` already removes every transition under `prefers-reduced-motion: reduce`: `native` when the design system's reduced durations are all `0ms`, `approximated` when it only shortens them.

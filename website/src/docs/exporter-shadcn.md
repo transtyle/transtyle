@@ -71,3 +71,7 @@ A slot's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describi
 ## Using the output
 
 Each build writes a `usage.md` with era-specific paste-in steps next to the theme. Short version, v4: import `globals.transtyle.css` after Tailwind, toggle `dark` on `<html>`. v3: import the globals file, merge the `.cjs` theme into `tailwind.config`, set `darkMode: ["class"]`.
+
+## Contrast, motion and brand
+
+When a design system declares [`contrast` or `brand`](/docs/configuration/#contrast-motion-and-brand), the theme gains blocks after `.dark`: `[data-contrast="more"]`, `[data-brand="globex"]`, and a compound block such as `.dark[data-brand="globex"]` wherever the separate blocks would leave a light value on the dark page. Each holds only the variables that change. The `more` contrast block is repeated inside `@media (prefers-contrast: more)`, so the user's system setting applies until you set `data-contrast` yourself. Put the attributes next to the `dark` class: `<html class="dark" data-brand="globex">`. `motion` is reported `dropped`: shadcn's theme has no duration variable.

@@ -18,3 +18,4 @@ Format: [MADR](https://adr.github.io/madr/)-lite — Status / Context / Decision
 | [0012](0012-binding-rules.md)                | Binding rules: the config declares data that expands into plain aliases at LOAD | accepted |
 | [0013](0013-apca-optional-peer.md)           | APCA comes from the `apca-w3` package, an optional peer dependency of core      | accepted |
 | [0014](0014-tokens-studio-input.md)          | Tokens Studio exports load in place, in core, as a layer form                   | accepted |
+| [0015](0015-mode-combinations.md)            | Combo layers; contrast, motion and brand as attribute, media or per-file blocks | accepted |

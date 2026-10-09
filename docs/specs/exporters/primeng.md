@@ -47,6 +47,10 @@ Current split: **88 driven · 1566 inherited · 1105 on Aura's default** on Cath
 
 Components with no builder yet (DataTable, Galleria, Tree, Splitter, Timeline, …) keep Aura's defaults. They are no longer listed from a hand-maintained array — the inventory measures them, so the list cannot go stale.
 
+## Reserved dimensions: contrast, motion, brand
+
+A preset has no runtime brand axis, so `preset.transtyle.ts` is emitted once per brand, `preset.transtyle.<brand>.ts` (file-per-value, `emitPerValue()` in `@transtyle/ir`, [ADR-0015](../../adr/0015-mode-combinations.md)); `usage.md` lists the files. `contrast` and `motion` are `dropped` with their reasons: a preset switches light and dark only, and its transition duration is one constant.
+
 ## Ground-truth testing
 
 `examples/*/demo/primeng/` — real, standalone Angular applications (`providePrimeNG({ theme: { preset } })`), the first non-Vite/React demo profile in the repo (`docs/specs/demo-app.md`'s Angular profile). Every emitted preset is type-checked against PrimeNG's own `DesignTokens` types as part of `ng build` — a stronger verification path than any prior exporter gets from its own demo, since Vite doesn't type-check on build the way Angular's compiler does.

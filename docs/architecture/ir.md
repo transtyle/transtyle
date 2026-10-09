@@ -89,7 +89,12 @@ strong         —                —               —                text-stro
 
 ### Reserved mode dimensions
 
-Names only — every dimension stays optional and a design system declares only what it uses: `color-scheme`, `density` (`compact|comfortable|spacious`), `contrast` (`standard|more`), `motion` (`full|reduced`), `platform` (`desktop|touch`).
+Names only — every dimension stays optional and a design system declares only what it uses: `color-scheme`, `density` (`compact|comfortable|spacious`), `contrast` (`standard|more`), `motion` (`full|reduced`), `platform` (`desktop|touch`), `brand` (free-form values such as `acme|globex`).
+
+What the names bind ([ADR-0015](../adr/0015-mode-combinations.md)):
+
+- `contrast: more` and `motion: reduced` are what CSS calls `prefers-contrast: more` and `prefers-reduced-motion: reduce`: CSS targets write their blocks a second time inside those media queries, so the OS setting applies until the page sets the attribute. In DERIVE, a `contrast: more` combination aims the contrast walks at 7:1 (rule `contrast-more`) and a `motion: reduced` one makes every unauthored duration `0ms` (rule `motion-reduced`); see [derivation.md](derivation.md#reserved-dimensions-contrast-and-motion). `check` holds `contrast: more` combinations to 7:1.
+- `brand` values become file names, CSS attribute values and theme names, so the config schema holds them to `^[a-z0-9][a-z0-9-]*$`. The dimension is not `targets.storybook.options.brand` (Storybook's manager branding), not the `option.color.brand.*` tokens `transtyle init` scaffolds, and not this repository's own `brand/` assets.
 
 Users may add custom semantic tokens beyond the catalog (they flow to exporters that look them up), but only catalog slots are _guaranteed_ and derivable. The catalog grows via minor IR spec versions; slots are never removed within a major (once the freeze re-arms — see the status banner).
 
@@ -117,7 +122,12 @@ Per-mode values have two equivalent authoring forms — inline `$extensions` (be
 }
 ```
 
-Rules: the mode matrix is the cross-product of dimensions, resolved per-dimension independently (a token may vary by scheme and density; combinations are compositional, with an explicit override syntax for the rare pathological pair). Unspecified mode values fall back to the default-mode value — or to a derivation rule (e.g. auto-dark, see [derivation.md](derivation.md)) if enabled. Exporters receive the expanded matrix and decide the native encoding (CSS `.dark` class for shadcn, `data-bs-theme` for Bootstrap, separate theme JSON per mode for ECharts). Exporters declare which mode dimensions they can express; inexpressible dimensions surface in the coverage report.
+Rules: the mode matrix is the cross-product of dimensions, resolved per-dimension independently (a token may vary by scheme and density; combinations are compositional). A value for one exact combination is a **combo layer**, a mode-scoped layer naming several dimensions (`"mode": { "color-scheme": "dark", "contrast": "more" }`, [ADR-0015](../adr/0015-mode-combinations.md)): it applies only where every named dimension has the named value, and wins there over the one-dimension values; between combo layers the one naming more dimensions wins, then the later one. Without one, a token with values on two non-default dimensions takes the later-declared dimension's value and raises `TST1125`. That is the case a high-contrast palette (light and dark) or a brand with its own dark value always hits. Unspecified mode values fall back to the default-mode value — or to a derivation rule (e.g. auto-dark, see [derivation.md](derivation.md)) if enabled. Exporters receive the expanded matrix and decide the native encoding (CSS `.dark` class for shadcn, `data-bs-theme` for Bootstrap, separate theme JSON per mode for ECharts). Exporters declare which mode dimensions they can express; inexpressible dimensions surface in the coverage report.
+
+A dimension beyond the first is expressed one of two ways, both helpers in `@transtyle/ir`:
+
+- **selector-per-value** (`modeBlocks`), for CSS targets: a block per non-default value (`[data-brand="globex"]`) and one per combination whose values the separate blocks would get wrong through the cascade (`.dark[data-brand="globex"]`), each holding only the declarations that differ from what the blocks before it give. A value with a media feature also gets an `@media` copy guarded by `:not([data-<dimension>])`. Every attribute sits on the element that carries the scheme (usually `<html>`).
+- **file-per-value** (`emitPerValue`), for targets with no runtime axis: the files are emitted once per value, `<file>.<value>.<ext>`, each from the IR pinned to that value (`pinDimension`).
 
 **Mode polarity rule:** `default` declares the design system's _native_ mode (which mode plain-DTCG readers see as `$value`) — it does not reorder anything for targets. Exporters bind mode **names** (`light`, `dark`), never the default flag: a dark-native design system still compiles to shadcn's light-first `:root`/`.dark` structure. Found the hard way by the [Cathode example](../../examples/cathode/), which is dark-native.
 

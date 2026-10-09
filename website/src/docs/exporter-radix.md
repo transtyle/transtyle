@@ -57,3 +57,7 @@ Radix's `<Theme accentColor="...">` only accepts its own preset names, so to dri
 ```
 
 See it running on real `@radix-ui/themes` components: `npm run dev -w acme-demo-radix` (or `cathode-demo-radix`) in the [examples](/docs/examples/).
+
+## Contrast, motion and brand
+
+A design system declaring [`contrast` or `brand`](/docs/configuration/#contrast-motion-and-brand) gets extra blocks after `.dark`, with every scale step (alpha steps included) that changes: `[data-contrast="more"]`, `[data-brand="globex"]`, and compound blocks like `.dark[data-brand="globex"]` where the separate ones would be wrong on a dark page. `contrast: more` also follows `prefers-contrast: more` until `data-contrast` is set. `motion` is reported `dropped`: Radix Colors are color scales only.

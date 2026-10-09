@@ -19,7 +19,7 @@
  * paired-gray name, alongside `--neutral-*`.
  */
 
-import { COLOR_ROLES, droppedDimensions } from '@transtyle/ir';
+import { COLOR_ROLES, droppedDimensions, modeBlocks, formatModeBlocks, modeBlocksUsage } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const ALPHA_RAMP = [0.05, 0.1, 0.15, 0.22, 0.3, 0.4, 0.5, 0.6, 0.75, 0.85, 0.92, 0.97];
@@ -36,6 +36,9 @@ export default {
       const surface0 = map.get(`${S}elevation.0.surface`)?.value;
       const surface1 = map.get(`${S}elevation.1.surface`)?.value;
       const lines = [];
+      // Each declaration as { name, value, line }: the lines are written, the
+      // values compared by modeBlocks() for the other dimensions' blocks.
+      const decl = (name, value) => lines.push({ name, value, line: `  ${name}: ${value};` });
       for (const role of COLOR_ROLES) {
         const get = (cell) => map.get(`${S}${role}.${cell}`)?.value;
         const solid = get('solid');
@@ -80,7 +83,7 @@ export default {
           const slots = stepSlots[step];
           for (const sl of slots) roleSlots.add(sl);
           const name = `--${role}-${step}`;
-          lines.push(`  ${name}: ${ctx.formatColor(value)};`);
+          decl(name, ctx.formatColor(value));
           if (isFirst) {
             const mixed = step === '2' || step === '6';
             const clamped = ctx.formatHex(value).clamped;
@@ -92,35 +95,43 @@ export default {
           }
           const alpha = ALPHA_RAMP[Number(step) - 1];
           const aName = `--${role}-a${step}`;
-          lines.push(`  ${aName}: ${ctx.formatColor({ ...value, alpha })};`);
+          decl(aName, ctx.formatColor({ ...value, alpha }));
           if (isFirst) coverage.push({ variable: aName, slot: `${S}${role}.*`, slots, class: 'approximated', note: 'fixed alpha ramp, not a colorimetric derivation of Radix\'s real per-color alpha' });
         }
 
         const onSolid = get('on-solid');
         if (onSolid) {
-          lines.push(`  --${role}-contrast: ${ctx.formatColor(onSolid)};`);
+          decl(`--${role}-contrast`, ctx.formatColor(onSolid));
           if (isFirst) coverage.push({ variable: `--${role}-contrast`, slot: `${S}${role}.on-solid`, slots: [`${S}${role}.on-solid`], class: 'native' });
         }
 
         if (role === 'neutral') {
           for (const [step] of Object.entries(steps)) {
-            lines.push(`  --gray-${step}: var(--neutral-${step});`);
-            lines.push(`  --gray-a${step}: var(--neutral-a${step});`);
+            decl(`--gray-${step}`, `var(--neutral-${step})`);
+            decl(`--gray-a${step}`, `var(--neutral-a${step})`);
           }
-          lines.push('  --gray-contrast: var(--neutral-contrast);');
+          decl('--gray-contrast', 'var(--neutral-contrast)');
           if (isFirst) coverage.push({ variable: '--gray-*', slot: `${S}neutral.*`, slots: [...roleSlots].sort(), class: 'native', note: 'Radix\'s conventional paired-gray name, aliased from neutral' });
         }
       }
       return lines;
     };
 
-    const lightLines = buildMode(light, true);
-    const darkLines = dark ? buildMode(dark, false) : [];
+    const lightLines = buildMode(light, true).map((d) => d.line);
+    const darkLines = dark ? buildMode(dark, false).map((d) => d.line) : [];
+    // `contrast` and `brand` blocks next to `.dark` (#49, #50).
+    const blocks = modeBlocks(normalized, {
+      dims: ['contrast', 'brand'],
+      darkSelector: darkLines.length ? '.dark' : undefined,
+      render: (map) => buildMode(map, false),
+    });
 
     coverage.push({ variable: '(P3/wide-gamut variants)', slot: '—', class: 'unsupported', meaning: 'color.wide-gamut', note: 'Radix ships a P3 pair per scale for wide-gamut displays; the engine has one OKLCH value per slot, not a gamut-mapped pair' });
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
-    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', 'contrast', 'brand'], {
+      motion: 'Radix Colors are color scales only, with no duration or easing to reduce',
+    }));
 
     const css = [
       '/*',
@@ -135,13 +146,14 @@ export default {
       ...lightLines,
       '}',
       ...(darkLines.length ? ['', '.dark {', ...darkLines, '}'] : []),
+      ...formatModeBlocks(blocks),
       '',
     ].join('\n');
 
     return {
       files: [
         { path: 'radix-colors.transtyle.css', contents: css, kind: 'stylesheet' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage), kind: 'doc' },
+        { path: 'usage.md', contents: renderUsage(ctx, coverage) + modeBlocksUsage(normalized, blocks, { scheme: 'the `dark` class' }), kind: 'doc' },
       ],
       coverage,
     };

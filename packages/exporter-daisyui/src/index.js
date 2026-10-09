@@ -8,7 +8,7 @@
  * (docs/language.md "false friends").
  */
 
-import { droppedDimensions, entryNotes, blockComment } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, blockComment, comboKey } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 
@@ -59,27 +59,27 @@ export default {
     const radius = light.get('semantic.radius.md');
     const blocks = [];
 
-    const themeBlock = (map, mode, flags) => {
+    const themeBlock = (map, mode, flags, name = `${ctx.projectName}-${mode}`, first = mode === 'light') => {
       const lines = [
         `@plugin "daisyui/theme" {`,
-        `  name: "${ctx.projectName}-${mode}";`,
+        `  name: "${name}";`,
         ...flags,
         `  color-scheme: ${mode};`,
       ];
       for (const m of COLOR_MAPPING) {
         const entry = map.get(m.slot);
         if (!entry?.value) {
-          if (mode === 'light') coverage.push({ variable: m.css, slot: m.slot, class: 'unsupported', note: 'slot missing from IR' });
+          if (first) coverage.push({ variable: m.css, slot: m.slot, class: 'unsupported', note: 'slot missing from IR' });
           continue;
         }
-        if (mode === 'light') {
+        if (first) {
           const provKind = entry.provenance.kind;
           const cls = m.cls === 'approximated' ? 'approximated' : (provKind === 'derived' ? 'derived' : m.cls);
           coverage.push({ variable: m.css, slot: m.slot, class: cls, provenance: provKind, ...(m.note && { note: m.note }) });
         }
         // The slot's own $description / $deprecated (#30), in the light
         // theme only: the dark theme re-declares the same variables.
-        if (mode === 'light') for (const note of entryNotes(entry)) lines.push(`  ${blockComment(note)}`);
+        if (first) for (const note of entryNotes(entry)) lines.push(`  ${blockComment(note)}`);
         lines.push(`  ${m.css}: ${ctx.formatColor(entry.value)}; /* ${m.slot.replace('semantic.', '')} */`);
       }
       // Custom archetyped roles (T7): daisyUI has an open color set — any
@@ -88,13 +88,13 @@ export default {
         const solid = map.get(`${S}${name}.solid`);
         if (!solid?.value) continue;
         const onSolid = map.get(`${S}${name}.on-solid`);
-        if (mode === 'light') {
+        if (first) {
           coverage.push({ variable: `--color-${name}`, slot: `${S}${name}.solid`, class: 'native', note: 'custom role archetype (open role set)' });
         }
-        if (mode === 'light') for (const note of entryNotes(solid)) lines.push(`  ${blockComment(note)}`);
+        if (first) for (const note of entryNotes(solid)) lines.push(`  ${blockComment(note)}`);
         lines.push(`  --color-${name}: ${ctx.formatColor(solid.value)}; /* ${name}.solid */`);
         if (onSolid?.value) {
-          if (mode === 'light') coverage.push({ variable: `--color-${name}-content`, slot: `${S}${name}.on-solid`, class: 'native' });
+          if (first) coverage.push({ variable: `--color-${name}-content`, slot: `${S}${name}.on-solid`, class: 'native' });
           lines.push(`  --color-${name}-content: ${ctx.formatColor(onSolid.value)}; /* ${name}.on-solid */`);
         }
       }
@@ -111,13 +111,55 @@ export default {
     blocks.push(themeBlock(light, 'light', ['  default: true;', '  prefersdark: false;']));
     if (dark) blocks.push(themeBlock(dark, 'dark', ['  prefersdark: true;']));
 
+    // `brand` and `contrast` (#49, #50): daisyUI selects a theme by name, so
+    // every other combination is one more theme, named after its values
+    // (`<project>-<brand>-<scheme>-<contrast>`, default values left out). Only
+    // the default brand at standard contrast carries `default` /
+    // `prefersdark`, so adding a dimension never changes which theme a page
+    // gets by default.
+    const names = normalized.dimensionNames ?? [normalized.modeDimension];
+    const dims = ['brand', 'contrast'].filter((d) => names.includes(d) && normalized.dimensions[d].values.length > 1);
+    const extraThemes = [];
+    if (dims.length) {
+      const defaults = Object.fromEntries(names.map((n) => [n, normalized.dimensions[n].default]));
+      let combos = [{}];
+      for (const d of dims) combos = combos.flatMap((c) => normalized.dimensions[d].values.map((v) => ({ ...c, [d]: v })));
+      for (const combo of combos) {
+        if (dims.every((d) => combo[d] === defaults[d])) continue;
+        for (const scheme of ['light', ...(dark ? ['dark'] : [])]) {
+          if (!normalized.modes[scheme]) continue;
+          const primaryValue = normalized.modes.light ? scheme : normalized.defaultMode;
+          const map = normalized.modes[comboKey(names, { ...defaults, ...combo, [normalized.modeDimension]: primaryValue })];
+          if (!map) continue;
+          const name = [
+            ctx.projectName,
+            ...(combo.brand && combo.brand !== defaults.brand ? [combo.brand] : []),
+            scheme,
+            ...(combo.contrast && combo.contrast !== defaults.contrast ? [combo.contrast] : []),
+          ].join('-');
+          extraThemes.push(name);
+          blocks.push(themeBlock(map, scheme, [], name, false));
+        }
+      }
+    }
+
     if (radius) {
       coverage.push({ variable: '--radius-{selector,field,box}', slot: 'semantic.radius.md', class: 'approximated', provenance: radius.provenance.kind, note: 'one radius feeds three component families' });
     }
     coverage.push({ variable: '--depth / --noise / --size-*', slot: '—', class: 'unsupported', meaning: 'style.effect', note: 'daisyUI themable stylistic effects and control sizes (depth, noise, size-selector, size-field) the IR has no vocabulary for; theme uses daisyUI defaults' });
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
-    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', 'contrast', 'brand'], {
+      motion: "daisyUI themes carry no duration or easing variable, so reduced-motion values have nowhere to go",
+    }));
+    if (dims.includes('contrast')) {
+      coverage.push({
+        variable: '(mode:contrast)',
+        slot: '—',
+        class: 'approximated',
+        note: 'one theme per contrast value, picked by name (data-theme); daisyUI selects themes by name or prefers-color-scheme only, so prefers-contrast is not followed',
+      });
+    }
 
     const css = [
       '/*',
@@ -132,14 +174,14 @@ export default {
     return {
       files: [
         { path: 'daisyui.transtyle.css', contents: css, kind: 'stylesheet' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage, Boolean(dark)), kind: 'doc' },
+        { path: 'usage.md', contents: renderUsage(ctx, coverage, Boolean(dark), extraThemes), kind: 'doc' },
       ],
       coverage,
     };
   },
 };
 
-function renderUsage(ctx, coverage, hasDark = true) {
+function renderUsage(ctx, coverage, hasDark = true, extraThemes = []) {
   const counts = {};
   for (const c of coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
   const summary = Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(' · ');
@@ -168,5 +210,9 @@ ${hasDark
 - daisyUI's \`secondary\`/\`accent\` are mapped from your **brand** secondary/accent — in shadcn the same words mean subtle surfaces. Same design system, correct meaning in each ecosystem.
 - \`--color-base-300\` is approximated from your border tone (daisyUI wants a third background-ramp step the IR doesn't define; see report.json).
 - Regenerate with \`transtyle build daisyui\`; never edit this file.
-`;
+${extraThemes.length ? `
+## Other brands and contrast levels
+
+This design system declares more than one brand or contrast level, so the file also holds one theme per combination, named after its values: ${extraThemes.map((t) => `\`${t}\``).join(', ')}. List the ones you use in the plugin's \`themes\` and select one with \`data-theme\` (daisyUI follows \`prefers-color-scheme\` for the default pair only, and has no \`prefers-contrast\` switch).
+` : ''}`;
 }

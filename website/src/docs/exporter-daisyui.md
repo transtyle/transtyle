@@ -56,3 +56,7 @@ A slot's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describi
 ## Custom roles (role archetypes)
 
 daisyUI's color set is **open** — any `--color-<name>` custom property is a real Tailwind utility color — so a custom role declaring `$extensions.transtyle.role` (docs/architecture/ir.md's [role archetypes](/docs/language/#color-roles-the-role-grid)) gets `--color-<name>` + `--color-<name>-content` emitted alongside the built-ins, `native`. Cathode's `crt-amber` role (archetype `status`) demonstrates this: it's authored once, with no other bindings, purely to show the open-role-set path — contrast Bootstrap/shadcn, whose closed sets can't take it at all.
+
+## Contrast, motion and brand
+
+daisyUI picks a theme by name, so each [`brand` and `contrast`](/docs/configuration/#contrast-motion-and-brand) combination is one more theme in the same file, named after its values with the defaults left out: `acme-globex-light`, `acme-dark-more`. Only the default pair keeps `--default` and `--prefersdark`; select the others with `data-theme`. daisyUI has no `prefers-contrast` switch, so `contrast` is reported `approximated`, and `motion` `dropped` (themes carry no duration).

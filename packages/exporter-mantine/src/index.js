@@ -28,7 +28,7 @@
  * so it keeps the IR's own `oklch()` (and its alpha, e.g. `text.disabled`).
  */
 
-import { COLOR_ROLES, droppedDimensions, fontStack } from '@transtyle/ir';
+import { COLOR_ROLES, droppedDimensions, fontStack, emitPerValue } from '@transtyle/ir';
 import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
@@ -141,340 +141,349 @@ const BLACK = { l: 0, c: 0, h: 0, alpha: 1 };
 export default {
   name: 'mantine',
 
+  // `brand` (#49) is file-per-value: this target's theme has no runtime brand
+  // switch, so it is emitted once per brand (`<file>.<brand>.<ext>`).
   emit(normalized, ctx) {
-    const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
-    const dark = normalized.modes.dark;
-    const coverage = [];
-    const row = (variable, slot, cls, note) =>
-      coverage.push({ variable, slot, class: cls, ...(note ? { note } : {}) });
-    const sem = (map, path) => map?.get(`semantic.${path}`)?.value;
-    const hex = (color) => ctx.formatHex(color).text;
-
-    const roles = [...COLOR_ROLES, ...normalized.roleArchetypes.keys()].filter((r) =>
-      sem(light, `color.${r}.solid`),
-    );
-
-    // ---------- colours: one virtual colour per role ----------
-    const colors = {};
-    const virtuals = [];
-    const tupleOf = (map, role) => {
-      const values = TUPLE.map((cell) => sem(map, `color.${role}.${cell}`));
-      return values.every(Boolean) ? values : null;
-    };
-    for (const role of roles) {
-      const lightTuple = tupleOf(light, role);
-      if (!lightTuple) continue;
-      const darkTuple = dark && tupleOf(dark, role);
-      colors[`${role}-light`] = lightTuple.map(hex);
-      if (darkTuple) colors[`${role}-dark`] = darkTuple.map(hex);
-      virtuals.push({ name: role, light: `${role}-light`, dark: darkTuple ? `${role}-dark` : `${role}-light` });
-      const clamped = [...lightTuple, ...(darkTuple ?? [])].some((c) => ctx.formatHex(c).clamped);
-      row(
-        `colors.${role}-{light${darkTuple ? ',dark' : ''}}[0-9]`,
-        `${S}${role}.*`,
-        clamped ? 'approximated' : 'native',
-        clamped
-          ? 'one or more cells are out of sRGB gamut; Mantine tuples are hex, so they are clipped here (the resolver variables keep oklch())'
-          : undefined,
-      );
-      if (!darkTuple) {
-        row(
-          `colors.${role} (dark scheme)`,
-          '—',
-          'dropped',
-          'the design system publishes no dark scheme; the virtual colour points at the light tuple in both',
-        );
-      }
-    }
-
-    // gray: the light neutral ladder. dark: the dark ladder.
-    const grayValues = GRAY.map((p) => sem(light, `color.${p}`));
-    if (grayValues.every(Boolean)) {
-      colors.gray = grayValues.map(hex);
-      row('colors.gray[0-9]', `${S}neutral.* + text.* + border`, 'native', "Mantine's light neutral tuple, filled from the light neutral ladder at the indices Mantine's own page variables read");
-    }
-    if (dark) {
-      const base = sem(dark, 'color.text.base');
-      const muted = sem(dark, 'color.text.muted');
-      const page = sem(dark, 'color.elevation.0.surface');
-      const darkValues = DARK.map((p, i) => {
-        if (p) return sem(dark, `color.${p}`);
-        if (i === 1) return base && muted && ctx.mix(base, muted, 0.5);
-        return page && ctx.mix(page, BLACK, i === 8 ? 0.2 : 0.4);
-      });
-      if (darkValues.every(Boolean)) {
-        colors.dark = darkValues.map(hex);
-        row('colors.dark[0,2-7]', `${S}text.* + border + neutral.tint-hover + elevation.{0,1}.surface`, 'native', "Mantine's dark neutral tuple, filled from the dark ladder at the indices Mantine's own dark defaults read");
-        row('colors.dark[1,8,9]', '—', 'approximated', 'no rung between text.base and text.muted (1), and nothing darker than elevation.0 (8, 9): mixed');
-      }
-    } else {
-      row('colors.dark', '—', 'dropped', "no dark scheme published; Mantine's own dark tuple stays");
-    }
-
-    // ---------- resolver: per-scheme variables ----------
-    const schemeVars = (map, first) => {
-      const out = {};
-      for (const role of roles) {
-        if (!sem(map, `color.${role}.solid`)) continue;
-        for (const v of VARIANT_VARS) {
-          const value = sem(map, `color.${role}.${v.cell}`);
-          if (!value) continue;
-          const name = `--mantine-color-${role}-${v.suffix}`;
-          out[name] = ctx.formatColor(value);
-          if (first) row(name, `${S}${role}.${v.cell}`, v.cls, v.note);
-        }
-      }
-      const onSolid = sem(map, 'color.primary.on-solid');
-      if (onSolid) {
-        out['--mantine-primary-color-contrast'] = ctx.formatColor(onSolid);
-        if (first) row('--mantine-primary-color-contrast', `${S}primary.on-solid`, 'native');
-      }
-      for (const [name, slot, cls, note] of PAGE_VARS) {
-        const value = sem(map, `color.${slot}`);
-        if (!value) continue;
-        out[`--mantine-color-${name}`] = ctx.formatColor(value);
-        if (first) row(`--mantine-color-${name}`, `${S}${slot}`, cls, note);
-      }
-      // Mantine's light scheme paints its raised surfaces (Card, inputs,
-      // popovers, menus) with `--mantine-color-white`, where the dark scheme
-      // reads `dark-6` (elevation 1 above). Light only: in dark, white stays
-      // the icon colour on filled controls it also is.
-      const raised = sem(map, 'color.elevation.1.surface');
-      if (first && raised) {
-        out['--mantine-color-white'] = ctx.formatColor(raised);
-        row(
-          '--mantine-color-white (light scheme)',
-          `${S}elevation.1.surface`,
-          'approximated',
-          "Mantine's light scheme uses white both for raised surfaces (cards, inputs, popovers) and for icons on filled controls such as the checkbox tick; the raised surface wins",
-        );
-      }
-      return out;
-    };
-    const lightVars = schemeVars(light, true);
-    const darkVars = dark ? schemeVars(dark, false) : null;
-
-    // ---------- typography ----------
-    const theme = {
-      primaryColor: 'primary',
-      primaryShade: { light: PRIMARY_SHADE, dark: PRIMARY_SHADE },
-      autoContrast: true,
-    };
-    row('primaryColor / primaryShade', `${S}primary.solid`, 'native', `primaryShade ${PRIMARY_SHADE} is the solid cell in both schemes`);
-
-    const sans = sem(light, 'font.sans');
-    const mono = sem(light, 'font.mono');
-    if (sans) {
-      theme.fontFamily = fontStack(sans);
-      row('fontFamily', 'semantic.font.sans', 'native');
-    }
-    if (mono) {
-      theme.fontFamilyMonospace = fontStack(mono);
-      row('fontFamilyMonospace', 'semantic.font.mono', 'native');
-    }
-
-    const HEADINGS = [
-      ['h1', 'heading.lg'],
-      ['h2', 'heading.md'],
-      ['h3', 'heading.sm'],
-      ['h4', 'title.lg'],
-      ['h5', 'title.md'],
-      ['h6', 'title.sm'],
-    ];
-    const headingSizes = {};
-    for (const [h, role] of HEADINGS) {
-      const t = sem(light, `type.role.${role}`);
-      if (!t?.fontSize) continue;
-      headingSizes[h] = {
-        fontSize: t.fontSize,
-        ...(t.lineHeight !== undefined ? { lineHeight: String(t.lineHeight) } : {}),
-        ...(t.fontWeight !== undefined ? { fontWeight: String(t.fontWeight) } : {}),
-      };
-      row(`headings.sizes.${h}`, `semantic.type.role.${role}`, 'native');
-    }
-    const headingRole = sem(light, 'type.role.heading.lg');
-    const display = sem(light, 'font.display');
-    const headingFamily = display ?? headingRole?.fontFamily;
-    if (headingFamily || Object.keys(headingSizes).length) {
-      theme.headings = {
-        ...(headingFamily ? { fontFamily: fontStack(headingFamily) } : {}),
-        ...(headingRole?.fontWeight !== undefined ? { fontWeight: String(headingRole.fontWeight) } : {}),
-        ...(Object.keys(headingSizes).length ? { sizes: headingSizes } : {}),
-      };
-      if (headingFamily) row('headings.fontFamily', display ? 'semantic.font.display' : 'semantic.type.role.heading.lg', 'native');
-    }
-    if (sem(light, 'type.role.display.lg')) {
-      row('(display type roles)', 'semantic.type.role.display.*', 'dropped', 'Mantine has six heading levels and no display tier; h1–h6 take heading.* and title.*');
-    }
-
-    theme.fontSizes = scale(light, 'type.size', SIZES, row, 'fontSizes');
-    const leading = { xs: 'tight', sm: 'tight', md: 'normal', lg: 'loose', xl: 'loose' };
-    theme.lineHeights = {};
-    for (const size of SIZES) {
-      const value = sem(light, `type.leading.${leading[size]}`);
-      if (value === undefined) continue;
-      theme.lineHeights[size] = String(value);
-      row(
-        `lineHeights.${size}`,
-        `semantic.type.leading.${leading[size]}`,
-        size === 'sm' || size === 'lg' ? 'approximated' : 'native',
-        size === 'sm' || size === 'lg' ? 'three catalog rungs for five Mantine sizes: this one repeats its neighbour' : undefined,
-      );
-    }
-    theme.fontWeights = {};
-    for (const w of ['regular', 'medium', 'bold']) {
-      const value = sem(light, `type.weight.${w}`);
-      if (value === undefined) continue;
-      theme.fontWeights[w] = String(value);
-      row(`fontWeights.${w}`, `semantic.type.weight.${w}`, 'native');
-    }
-
-    // ---------- scales ----------
-    theme.radius = {};
-    const radiusSm = sem(light, 'radius.sm');
-    const halfSm = radiusSm && scaleDim(radiusSm, 0.5);
-    if (halfSm) {
-      theme.radius.xs = halfSm;
-      row('radius.xs', 'semantic.radius.sm', 'approximated', 'no rung below radius.sm: half of it');
-    }
-    Object.assign(theme.radius, scale(light, 'radius', ['sm', 'md', 'lg', 'xl'], row, 'radius'));
-    const radiusControl = sem(light, 'radius.control');
-    if (radiusControl !== undefined) {
-      theme.defaultRadius = String(radiusControl);
-      row('defaultRadius', 'semantic.radius.control', 'native');
-    }
-
-    const SPACING = { xs: 'space.2', sm: 'space.3', md: 'space.4', lg: 'space.5', xl: 'space.8' };
-    theme.spacing = {};
-    for (const size of SIZES) {
-      const value = sem(light, SPACING[size]);
-      if (value === undefined) continue;
-      theme.spacing[size] = String(value);
-      row(
-        `spacing.${size}`,
-        `semantic.${SPACING[size]}`,
-        size === 'xs' ? 'approximated' : 'native',
-        size === 'xs' ? "Mantine's xs (10px) sits between space.2 and space.3; the smaller rung is used" : undefined,
-      );
-    }
-
-    const SHADOWS = { xs: 1, sm: 2, md: 3, lg: 4, xl: 4 };
-    theme.shadows = {};
-    for (const size of SIZES) {
-      const value = sem(light, `color.elevation.${SHADOWS[size]}.shadow`);
-      if (!value) continue;
-      theme.shadows[size] = shadowCss(value, ctx);
-      row(
-        `shadows.${size}`,
-        `${S}elevation.${SHADOWS[size]}.shadow`,
-        size === 'xl' ? 'approximated' : 'native',
-        size === 'xl' ? 'four elevation shadows for five Mantine sizes: xl repeats lg' : undefined,
-      );
-    }
-
-    theme.breakpoints = {};
-    for (const size of SIZES) {
-      const value = sem(light, `breakpoint.${size}`);
-      if (value === undefined) continue;
-      const em = toEm(String(value));
-      theme.breakpoints[size] = em ?? String(value);
-      row(`breakpoints.${size}`, `semantic.breakpoint.${size}`, 'native', em ? 'converted to em, the unit Mantine writes its media queries in' : undefined);
-    }
-    if (sem(light, 'breakpoint.2xl') !== undefined) {
-      row('(breakpoint 2xl)', 'semantic.breakpoint.2xl', 'dropped', 'Mantine has five breakpoints, xs to xl');
-    }
-
-    for (const key of ['fontSizes', 'lineHeights', 'fontWeights', 'radius', 'spacing', 'shadows', 'breakpoints']) {
-      if (!Object.keys(theme[key]).length) delete theme[key];
-    }
-
-    // ---------- component tier (data-only routes: defaultProps and styles) ----------
-    const comp = (path) => light.get(`component.${path}`)?.value;
-    const components = {};
-    const controlHeights = {};
-    for (const [mantineSize, rung] of [['xs', 'sm'], ['sm', 'md'], ['md', 'lg']]) {
-      const value = sem(light, `size.control.${rung}`);
-      if (value !== undefined) controlHeights[mantineSize] = String(value);
-    }
-    const buttonRoot = {};
-    const buttonPadding = comp('button.padding-x');
-    if (buttonPadding !== undefined) {
-      buttonRoot['--button-padding-x-sm'] = String(buttonPadding);
-      row('Button --button-padding-x-sm', 'component.button.padding-x', 'native', "Mantine's default button size is sm; the other sizes keep their own padding");
-    }
-    for (const [size, value] of Object.entries(controlHeights)) buttonRoot[`--button-height-${size}`] = value;
-    const buttonRadius = comp('button.radius');
-    if (buttonRadius !== undefined || Object.keys(buttonRoot).length) {
-      components.Button = {
-        ...(buttonRadius !== undefined ? { defaultProps: { radius: String(buttonRadius) } } : {}),
-        ...(Object.keys(buttonRoot).length ? { styles: { root: buttonRoot } } : {}),
-      };
-      if (buttonRadius !== undefined) row('Button defaultProps.radius', 'component.button.radius', 'native');
-    }
-    const inputWrapper = {};
-    for (const [size, value] of Object.entries(controlHeights)) inputWrapper[`--input-height-${size}`] = value;
-    const controlRadius = comp('control.radius');
-    if (controlRadius !== undefined || Object.keys(inputWrapper).length) {
-      components.Input = {
-        ...(controlRadius !== undefined ? { defaultProps: { radius: String(controlRadius) } } : {}),
-        ...(Object.keys(inputWrapper).length ? { styles: { wrapper: inputWrapper } } : {}),
-      };
-      if (controlRadius !== undefined) row('Input defaultProps.radius', 'component.control.radius', 'native');
-    }
-    if (Object.keys(controlHeights).length) {
-      row(
-        'Button/Input --{button,input}-height-{xs,sm,md}',
-        'semantic.size.control.{sm,md,lg}',
-        'native',
-        "default size to default size: the catalog's md control is Mantine's sm (its default), sm is xs and lg is md; Mantine's lg and xl keep their own heights",
-      );
-    }
-    if (comp('control.padding-x') !== undefined) {
-      row('(control padding)', 'component.control.{padding-x,padding-y}, component.button.padding-y', 'dropped', 'Mantine inputs and buttons are height-driven: input padding is a third of the height and there is no vertical padding variable');
-    }
-    const container = sem(light, 'radius.container');
-    if (container !== undefined) {
-      components.Card = { defaultProps: { radius: String(container) } };
-      row('Card defaultProps.radius', 'semantic.radius.container', 'native');
-    }
-    const tooltipMax = comp('tooltip.max-width');
-    if (tooltipMax !== undefined) {
-      components.Tooltip = { styles: { tooltip: { maxWidth: String(tooltipMax) } } };
-      row('Tooltip styles.tooltip.maxWidth', 'component.tooltip.max-width', 'approximated', 'a Mantine tooltip only wraps when it is multiline, so the measure applies to multiline tooltips');
-    }
-    if (Object.keys(components).length) theme.components = components;
-
-    theme.colors = colors;
-
-    // ---------- what Mantine has no slot for ----------
-    row('(focus ring)', `${S}ring`, 'dropped', "Mantine draws every focus outline from --mantine-primary-color-filled (the primary solid), in its stylesheet; there is no ring variable to set");
-    row('(z-index ladder)', 'semantic.z.*', 'dropped', "Mantine components take their z-index from getDefaultZIndex() in JS; the --mantine-z-index-* variables are not read by its stylesheet");
-    row('(link hover / visited)', `${S}link.{hover,visited}`, 'dropped', 'Mantine has one anchor colour');
-    row('(motion, scrim, text.inverse, opacity.disabled)', '—', 'dropped', 'no theme slot: transitions are per-component props and overlays take their colour as a prop');
-    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
-
-    // AL3: measure what was emitted against Mantine's whole theming surface
-    // (surface-inventory.json, extracted from @mantine/core's DEFAULT_THEME and
-    // defaultCssVariablesResolver).
-    coverage.push(
-      ...surfaceRows({
-        theme,
-        colorNames: [...Object.keys(colors), ...virtuals.map((v) => v.name)],
-        blocks: { variables: {}, light: lightVars, dark: darkVars ?? {} },
-        hasDark: !!darkVars,
-      }),
-    );
-
-    const ts = renderTheme(ctx, theme, virtuals, lightVars, darkVars);
-    return {
-      files: [
-        { path: 'theme.transtyle.ts', contents: ts, kind: 'source' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage, !!dark), kind: 'doc' },
-      ],
-      coverage,
-    };
+    return emitPerValue(normalized, 'brand', (view) => emitOne(view, ctx));
   },
 };
+
+function emitOne(normalized, ctx) {
+  const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
+  const dark = normalized.modes.dark;
+  const coverage = [];
+  const row = (variable, slot, cls, note) =>
+    coverage.push({ variable, slot, class: cls, ...(note ? { note } : {}) });
+  const sem = (map, path) => map?.get(`semantic.${path}`)?.value;
+  const hex = (color) => ctx.formatHex(color).text;
+
+  const roles = [...COLOR_ROLES, ...normalized.roleArchetypes.keys()].filter((r) =>
+    sem(light, `color.${r}.solid`),
+  );
+
+  // ---------- colours: one virtual colour per role ----------
+  const colors = {};
+  const virtuals = [];
+  const tupleOf = (map, role) => {
+    const values = TUPLE.map((cell) => sem(map, `color.${role}.${cell}`));
+    return values.every(Boolean) ? values : null;
+  };
+  for (const role of roles) {
+    const lightTuple = tupleOf(light, role);
+    if (!lightTuple) continue;
+    const darkTuple = dark && tupleOf(dark, role);
+    colors[`${role}-light`] = lightTuple.map(hex);
+    if (darkTuple) colors[`${role}-dark`] = darkTuple.map(hex);
+    virtuals.push({ name: role, light: `${role}-light`, dark: darkTuple ? `${role}-dark` : `${role}-light` });
+    const clamped = [...lightTuple, ...(darkTuple ?? [])].some((c) => ctx.formatHex(c).clamped);
+    row(
+      `colors.${role}-{light${darkTuple ? ',dark' : ''}}[0-9]`,
+      `${S}${role}.*`,
+      clamped ? 'approximated' : 'native',
+      clamped
+        ? 'one or more cells are out of sRGB gamut; Mantine tuples are hex, so they are clipped here (the resolver variables keep oklch())'
+        : undefined,
+    );
+    if (!darkTuple) {
+      row(
+        `colors.${role} (dark scheme)`,
+        '—',
+        'dropped',
+        'the design system publishes no dark scheme; the virtual colour points at the light tuple in both',
+      );
+    }
+  }
+
+  // gray: the light neutral ladder. dark: the dark ladder.
+  const grayValues = GRAY.map((p) => sem(light, `color.${p}`));
+  if (grayValues.every(Boolean)) {
+    colors.gray = grayValues.map(hex);
+    row('colors.gray[0-9]', `${S}neutral.* + text.* + border`, 'native', "Mantine's light neutral tuple, filled from the light neutral ladder at the indices Mantine's own page variables read");
+  }
+  if (dark) {
+    const base = sem(dark, 'color.text.base');
+    const muted = sem(dark, 'color.text.muted');
+    const page = sem(dark, 'color.elevation.0.surface');
+    const darkValues = DARK.map((p, i) => {
+      if (p) return sem(dark, `color.${p}`);
+      if (i === 1) return base && muted && ctx.mix(base, muted, 0.5);
+      return page && ctx.mix(page, BLACK, i === 8 ? 0.2 : 0.4);
+    });
+    if (darkValues.every(Boolean)) {
+      colors.dark = darkValues.map(hex);
+      row('colors.dark[0,2-7]', `${S}text.* + border + neutral.tint-hover + elevation.{0,1}.surface`, 'native', "Mantine's dark neutral tuple, filled from the dark ladder at the indices Mantine's own dark defaults read");
+      row('colors.dark[1,8,9]', '—', 'approximated', 'no rung between text.base and text.muted (1), and nothing darker than elevation.0 (8, 9): mixed');
+    }
+  } else {
+    row('colors.dark', '—', 'dropped', "no dark scheme published; Mantine's own dark tuple stays");
+  }
+
+  // ---------- resolver: per-scheme variables ----------
+  const schemeVars = (map, first) => {
+    const out = {};
+    for (const role of roles) {
+      if (!sem(map, `color.${role}.solid`)) continue;
+      for (const v of VARIANT_VARS) {
+        const value = sem(map, `color.${role}.${v.cell}`);
+        if (!value) continue;
+        const name = `--mantine-color-${role}-${v.suffix}`;
+        out[name] = ctx.formatColor(value);
+        if (first) row(name, `${S}${role}.${v.cell}`, v.cls, v.note);
+      }
+    }
+    const onSolid = sem(map, 'color.primary.on-solid');
+    if (onSolid) {
+      out['--mantine-primary-color-contrast'] = ctx.formatColor(onSolid);
+      if (first) row('--mantine-primary-color-contrast', `${S}primary.on-solid`, 'native');
+    }
+    for (const [name, slot, cls, note] of PAGE_VARS) {
+      const value = sem(map, `color.${slot}`);
+      if (!value) continue;
+      out[`--mantine-color-${name}`] = ctx.formatColor(value);
+      if (first) row(`--mantine-color-${name}`, `${S}${slot}`, cls, note);
+    }
+    // Mantine's light scheme paints its raised surfaces (Card, inputs,
+    // popovers, menus) with `--mantine-color-white`, where the dark scheme
+    // reads `dark-6` (elevation 1 above). Light only: in dark, white stays
+    // the icon colour on filled controls it also is.
+    const raised = sem(map, 'color.elevation.1.surface');
+    if (first && raised) {
+      out['--mantine-color-white'] = ctx.formatColor(raised);
+      row(
+        '--mantine-color-white (light scheme)',
+        `${S}elevation.1.surface`,
+        'approximated',
+        "Mantine's light scheme uses white both for raised surfaces (cards, inputs, popovers) and for icons on filled controls such as the checkbox tick; the raised surface wins",
+      );
+    }
+    return out;
+  };
+  const lightVars = schemeVars(light, true);
+  const darkVars = dark ? schemeVars(dark, false) : null;
+
+  // ---------- typography ----------
+  const theme = {
+    primaryColor: 'primary',
+    primaryShade: { light: PRIMARY_SHADE, dark: PRIMARY_SHADE },
+    autoContrast: true,
+  };
+  row('primaryColor / primaryShade', `${S}primary.solid`, 'native', `primaryShade ${PRIMARY_SHADE} is the solid cell in both schemes`);
+
+  const sans = sem(light, 'font.sans');
+  const mono = sem(light, 'font.mono');
+  if (sans) {
+    theme.fontFamily = fontStack(sans);
+    row('fontFamily', 'semantic.font.sans', 'native');
+  }
+  if (mono) {
+    theme.fontFamilyMonospace = fontStack(mono);
+    row('fontFamilyMonospace', 'semantic.font.mono', 'native');
+  }
+
+  const HEADINGS = [
+    ['h1', 'heading.lg'],
+    ['h2', 'heading.md'],
+    ['h3', 'heading.sm'],
+    ['h4', 'title.lg'],
+    ['h5', 'title.md'],
+    ['h6', 'title.sm'],
+  ];
+  const headingSizes = {};
+  for (const [h, role] of HEADINGS) {
+    const t = sem(light, `type.role.${role}`);
+    if (!t?.fontSize) continue;
+    headingSizes[h] = {
+      fontSize: t.fontSize,
+      ...(t.lineHeight !== undefined ? { lineHeight: String(t.lineHeight) } : {}),
+      ...(t.fontWeight !== undefined ? { fontWeight: String(t.fontWeight) } : {}),
+    };
+    row(`headings.sizes.${h}`, `semantic.type.role.${role}`, 'native');
+  }
+  const headingRole = sem(light, 'type.role.heading.lg');
+  const display = sem(light, 'font.display');
+  const headingFamily = display ?? headingRole?.fontFamily;
+  if (headingFamily || Object.keys(headingSizes).length) {
+    theme.headings = {
+      ...(headingFamily ? { fontFamily: fontStack(headingFamily) } : {}),
+      ...(headingRole?.fontWeight !== undefined ? { fontWeight: String(headingRole.fontWeight) } : {}),
+      ...(Object.keys(headingSizes).length ? { sizes: headingSizes } : {}),
+    };
+    if (headingFamily) row('headings.fontFamily', display ? 'semantic.font.display' : 'semantic.type.role.heading.lg', 'native');
+  }
+  if (sem(light, 'type.role.display.lg')) {
+    row('(display type roles)', 'semantic.type.role.display.*', 'dropped', 'Mantine has six heading levels and no display tier; h1–h6 take heading.* and title.*');
+  }
+
+  theme.fontSizes = scale(light, 'type.size', SIZES, row, 'fontSizes');
+  const leading = { xs: 'tight', sm: 'tight', md: 'normal', lg: 'loose', xl: 'loose' };
+  theme.lineHeights = {};
+  for (const size of SIZES) {
+    const value = sem(light, `type.leading.${leading[size]}`);
+    if (value === undefined) continue;
+    theme.lineHeights[size] = String(value);
+    row(
+      `lineHeights.${size}`,
+      `semantic.type.leading.${leading[size]}`,
+      size === 'sm' || size === 'lg' ? 'approximated' : 'native',
+      size === 'sm' || size === 'lg' ? 'three catalog rungs for five Mantine sizes: this one repeats its neighbour' : undefined,
+    );
+  }
+  theme.fontWeights = {};
+  for (const w of ['regular', 'medium', 'bold']) {
+    const value = sem(light, `type.weight.${w}`);
+    if (value === undefined) continue;
+    theme.fontWeights[w] = String(value);
+    row(`fontWeights.${w}`, `semantic.type.weight.${w}`, 'native');
+  }
+
+  // ---------- scales ----------
+  theme.radius = {};
+  const radiusSm = sem(light, 'radius.sm');
+  const halfSm = radiusSm && scaleDim(radiusSm, 0.5);
+  if (halfSm) {
+    theme.radius.xs = halfSm;
+    row('radius.xs', 'semantic.radius.sm', 'approximated', 'no rung below radius.sm: half of it');
+  }
+  Object.assign(theme.radius, scale(light, 'radius', ['sm', 'md', 'lg', 'xl'], row, 'radius'));
+  const radiusControl = sem(light, 'radius.control');
+  if (radiusControl !== undefined) {
+    theme.defaultRadius = String(radiusControl);
+    row('defaultRadius', 'semantic.radius.control', 'native');
+  }
+
+  const SPACING = { xs: 'space.2', sm: 'space.3', md: 'space.4', lg: 'space.5', xl: 'space.8' };
+  theme.spacing = {};
+  for (const size of SIZES) {
+    const value = sem(light, SPACING[size]);
+    if (value === undefined) continue;
+    theme.spacing[size] = String(value);
+    row(
+      `spacing.${size}`,
+      `semantic.${SPACING[size]}`,
+      size === 'xs' ? 'approximated' : 'native',
+      size === 'xs' ? "Mantine's xs (10px) sits between space.2 and space.3; the smaller rung is used" : undefined,
+    );
+  }
+
+  const SHADOWS = { xs: 1, sm: 2, md: 3, lg: 4, xl: 4 };
+  theme.shadows = {};
+  for (const size of SIZES) {
+    const value = sem(light, `color.elevation.${SHADOWS[size]}.shadow`);
+    if (!value) continue;
+    theme.shadows[size] = shadowCss(value, ctx);
+    row(
+      `shadows.${size}`,
+      `${S}elevation.${SHADOWS[size]}.shadow`,
+      size === 'xl' ? 'approximated' : 'native',
+      size === 'xl' ? 'four elevation shadows for five Mantine sizes: xl repeats lg' : undefined,
+    );
+  }
+
+  theme.breakpoints = {};
+  for (const size of SIZES) {
+    const value = sem(light, `breakpoint.${size}`);
+    if (value === undefined) continue;
+    const em = toEm(String(value));
+    theme.breakpoints[size] = em ?? String(value);
+    row(`breakpoints.${size}`, `semantic.breakpoint.${size}`, 'native', em ? 'converted to em, the unit Mantine writes its media queries in' : undefined);
+  }
+  if (sem(light, 'breakpoint.2xl') !== undefined) {
+    row('(breakpoint 2xl)', 'semantic.breakpoint.2xl', 'dropped', 'Mantine has five breakpoints, xs to xl');
+  }
+
+  for (const key of ['fontSizes', 'lineHeights', 'fontWeights', 'radius', 'spacing', 'shadows', 'breakpoints']) {
+    if (!Object.keys(theme[key]).length) delete theme[key];
+  }
+
+  // ---------- component tier (data-only routes: defaultProps and styles) ----------
+  const comp = (path) => light.get(`component.${path}`)?.value;
+  const components = {};
+  const controlHeights = {};
+  for (const [mantineSize, rung] of [['xs', 'sm'], ['sm', 'md'], ['md', 'lg']]) {
+    const value = sem(light, `size.control.${rung}`);
+    if (value !== undefined) controlHeights[mantineSize] = String(value);
+  }
+  const buttonRoot = {};
+  const buttonPadding = comp('button.padding-x');
+  if (buttonPadding !== undefined) {
+    buttonRoot['--button-padding-x-sm'] = String(buttonPadding);
+    row('Button --button-padding-x-sm', 'component.button.padding-x', 'native', "Mantine's default button size is sm; the other sizes keep their own padding");
+  }
+  for (const [size, value] of Object.entries(controlHeights)) buttonRoot[`--button-height-${size}`] = value;
+  const buttonRadius = comp('button.radius');
+  if (buttonRadius !== undefined || Object.keys(buttonRoot).length) {
+    components.Button = {
+      ...(buttonRadius !== undefined ? { defaultProps: { radius: String(buttonRadius) } } : {}),
+      ...(Object.keys(buttonRoot).length ? { styles: { root: buttonRoot } } : {}),
+    };
+    if (buttonRadius !== undefined) row('Button defaultProps.radius', 'component.button.radius', 'native');
+  }
+  const inputWrapper = {};
+  for (const [size, value] of Object.entries(controlHeights)) inputWrapper[`--input-height-${size}`] = value;
+  const controlRadius = comp('control.radius');
+  if (controlRadius !== undefined || Object.keys(inputWrapper).length) {
+    components.Input = {
+      ...(controlRadius !== undefined ? { defaultProps: { radius: String(controlRadius) } } : {}),
+      ...(Object.keys(inputWrapper).length ? { styles: { wrapper: inputWrapper } } : {}),
+    };
+    if (controlRadius !== undefined) row('Input defaultProps.radius', 'component.control.radius', 'native');
+  }
+  if (Object.keys(controlHeights).length) {
+    row(
+      'Button/Input --{button,input}-height-{xs,sm,md}',
+      'semantic.size.control.{sm,md,lg}',
+      'native',
+      "default size to default size: the catalog's md control is Mantine's sm (its default), sm is xs and lg is md; Mantine's lg and xl keep their own heights",
+    );
+  }
+  if (comp('control.padding-x') !== undefined) {
+    row('(control padding)', 'component.control.{padding-x,padding-y}, component.button.padding-y', 'dropped', 'Mantine inputs and buttons are height-driven: input padding is a third of the height and there is no vertical padding variable');
+  }
+  const container = sem(light, 'radius.container');
+  if (container !== undefined) {
+    components.Card = { defaultProps: { radius: String(container) } };
+    row('Card defaultProps.radius', 'semantic.radius.container', 'native');
+  }
+  const tooltipMax = comp('tooltip.max-width');
+  if (tooltipMax !== undefined) {
+    components.Tooltip = { styles: { tooltip: { maxWidth: String(tooltipMax) } } };
+    row('Tooltip styles.tooltip.maxWidth', 'component.tooltip.max-width', 'approximated', 'a Mantine tooltip only wraps when it is multiline, so the measure applies to multiline tooltips');
+  }
+  if (Object.keys(components).length) theme.components = components;
+
+  theme.colors = colors;
+
+  // ---------- what Mantine has no slot for ----------
+  row('(focus ring)', `${S}ring`, 'dropped', "Mantine draws every focus outline from --mantine-primary-color-filled (the primary solid), in its stylesheet; there is no ring variable to set");
+  row('(z-index ladder)', 'semantic.z.*', 'dropped', "Mantine components take their z-index from getDefaultZIndex() in JS; the --mantine-z-index-* variables are not read by its stylesheet");
+  row('(link hover / visited)', `${S}link.{hover,visited}`, 'dropped', 'Mantine has one anchor colour');
+  row('(motion, scrim, text.inverse, opacity.disabled)', '—', 'dropped', 'no theme slot: transitions are per-component props and overlays take their colour as a prop');
+  coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', 'brand'], {
+    contrast: "Mantine's color-scheme manager knows light and dark only, and its cssVariablesResolver has no contrast axis",
+    motion: "Mantine has no theme slot for durations: transitions are per-component props",
+  }));
+
+  // AL3: measure what was emitted against Mantine's whole theming surface
+  // (surface-inventory.json, extracted from @mantine/core's DEFAULT_THEME and
+  // defaultCssVariablesResolver).
+  coverage.push(
+    ...surfaceRows({
+      theme,
+      colorNames: [...Object.keys(colors), ...virtuals.map((v) => v.name)],
+      blocks: { variables: {}, light: lightVars, dark: darkVars ?? {} },
+      hasDark: !!darkVars,
+    }),
+  );
+
+  const ts = renderTheme(ctx, theme, virtuals, lightVars, darkVars);
+  return {
+    files: [
+      { path: 'theme.transtyle.ts', contents: ts, kind: 'source' },
+      { path: 'usage.md', contents: renderUsage(ctx, coverage, !!dark), kind: 'doc' },
+    ],
+    coverage,
+  };
+}
 
 // ---------- helpers ----------
 

@@ -214,9 +214,69 @@ export function runChecks(normalized, config, diagnostics, contrast = wcagContra
       }
     }
   }
+  checkOtherCombos(normalized, contrast, diagnostics);
   checkDistinguishability(normalized, diagnostics);
   checkOutOfGamut(normalized, diagnostics);
   checkPartialScales(normalized, config, diagnostics);
+}
+
+/**
+ * The combos the loop above doesn't reach (#50): it checks the primary
+ * dimension's values (`light`, `dark`), each the combo where every other
+ * dimension sits at its default. Every other combo is checked here too, and
+ * reported only when it adds something: a pair whose two colors are the ones
+ * already checked under the scheme's own name (density changes no color) is
+ * the same finding, not a new one. A `contrast: more` combo is held one level
+ * up, since asking for more contrast is what that value means: 7:1 (WCAG AAA)
+ * for every pair, or APCA Lc 90 for body text and Lc 75 for the rest. One
+ * pair failing the same way in several combos (the motion or brand axes don't
+ * change it) is one warning naming them all.
+ */
+function checkOtherCombos(normalized, contrast, diagnostics) {
+  const primary = normalized.modeDimension;
+  const aliased = new Set(normalized.modeValues.map((v) => normalized.modes[v]));
+  const pairs = contrastPairs(normalized);
+  const apca = contrast.standard === 'apca';
+  const moreThreshold = (use) => (apca ? (use === 'body' ? 90 : 75) : Math.max(contrast.threshold(use), 7));
+  const moreLabel = (use) => (apca ? `Lc ${moreThreshold(use)} apca` : `${moreThreshold(use)}:1 wcag21-aaa`);
+  const findings = new Map();
+  for (const key of normalized.allCombos ?? []) {
+    const map = normalized.modes[key];
+    if (!map || aliased.has(map)) continue;
+    const dims = normalized.comboDims[key] ?? {};
+    const more = dims.contrast === 'more';
+    const schemeMap = normalized.modes[dims[primary]];
+    for (const [fg, bg, use] of pairs) {
+      const value = pairContrast(map, fg, bg, contrast);
+      if (value === null) continue;
+      if (contrast.score(value) >= (more ? moreThreshold(use) : contrast.threshold(use))) continue;
+      const same = (p) => JSON.stringify(map.get(`${S}${p}`)?.value) === JSON.stringify(schemeMap?.get(`${S}${p}`)?.value);
+      if (!more && same(fg) && same(bg)) continue;
+      const shown = contrast.format(value);
+      const id = `${fg}|${bg}|${shown}|${more}`;
+      if (!findings.has(id)) {
+        const kind = map.get(`${S}${fg}`)?.provenance?.kind;
+        findings.set(id, { fg, bg, use, shown, more, kind, combos: [] });
+      }
+      findings.get(id).combos.push(key);
+    }
+  }
+  const list = (keys) => (keys.length < 2 ? keys.join('') : `${keys.slice(0, -1).join(', ')} and ${keys.at(-1)}`);
+  for (const { fg, bg, use, shown, more, kind, combos } of findings.values()) {
+    const onSolid = /\.on-solid$/.test(fg) && kind === 'derived';
+    const hint = !more
+      ? undefined
+      : onSolid
+        ? `${fg} is already the better of white and near-black, so only a darker (light scheme) or lighter (dark scheme) ${bg} reaches it: author ${bg} for contrast: more.`
+        : ['authored', 'aliased'].includes(kind)
+          ? `${fg} is authored, and an authored value is never re-derived: author its contrast: more value (a mode-scoped layer with "contrast": "more", plus "color-scheme" when light and dark need different ones).`
+          : `Even the contrast: more derivation can't reach it from these colors: author ${fg} (or what it is derived from) for contrast: more.`;
+    diagnostics.warn(
+      'TST2101',
+      `${fg} vs ${bg} is ${shown} in ${list(combos)} mode${combos.length > 1 ? 's' : ''} (< ${more ? `${moreLabel(use)}, contrast: more` : `${contrast.formatThreshold(use)} ${contrast.standard}`})`,
+      hint ? { path: `${S}${fg}`, hint } : { path: `${S}${fg}` },
+    );
+  }
 }
 
 /** Epsilon for "the same colour written two ways": far below a visible difference. */

@@ -160,16 +160,30 @@
  * says which modes it holds, and every exporter survives it; a bad subset
  * (default omitted, undeclared value or dimension) is TST1308 and emits nothing.
  *
+ * **Reserved mode dimensions** (#49, #50): the `contrast-motion` and
+ * `scheme-brand` shapes run through every invariant above, and the
+ * `packages/core/test-fixtures/mode-dimensions` fixture (color-scheme ×
+ * contrast × motion × brand, with one-dimension and combo layers) is checked
+ * end to end. For the five CSS targets, a small cascade
+ * (scripts/lib/css-cascade.mjs) resolves every combination of the full
+ * stylesheet, by attributes, by the OS media features, and both mixed, and
+ * compares it with the stylesheet the exporter writes for that combination
+ * alone. It is the only way to see a block that loses the cascade: the old
+ * css-variables output passed every text check while `dark + more` resolved to
+ * light values. Validated by planning the blocks without putting the
+ * exporter's own :root and dark blocks first: 98 failures.
+ *
  * Run: node scripts/check-minimal-ds.mjs   (npm run check:minimal-ds)
  */
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, cpSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compile, explainToken } from '@transtyle/core';
-import { comboKey } from '@transtyle/ir';
+import { compile, explainToken, formatColor, formatHslTriplet, formatHex, contrastRatio, mix, makeUnits } from '@transtyle/core';
+import { comboKey, pinDimension, MODE_MEDIA_QUERIES } from '@transtyle/ir';
 import { LEAK, LEAK_INSIDE } from '@transtyle/plugin-kit';
 import { compileString } from 'sass';
+import { parseRules, computed } from './lib/css-cascade.mjs';
 
 const EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -257,6 +271,18 @@ const MODE_SHAPES = {
   'two-dimension': {
     'color-scheme': { values: ['light', 'dark'], default: 'light' },
     density: { values: ['comfortable', 'compact'], default: 'comfortable' },
+  },
+  // The reserved dimensions exporters bind (#49, #50): contrast and motion,
+  // which CSS targets also follow through media queries, and brand, which
+  // file-based targets emit once per value.
+  'contrast-motion': {
+    'color-scheme': { values: ['light', 'dark'], default: 'light' },
+    contrast: { values: ['standard', 'more'], default: 'standard' },
+    motion: { values: ['full', 'reduced'], default: 'full' },
+  },
+  'scheme-brand': {
+    'color-scheme': { values: ['light', 'dark'], default: 'light' },
+    brand: { values: ['acme', 'globex'], default: 'acme' },
   },
 };
 
@@ -464,7 +490,10 @@ for (const [fixture, shape, modes] of sweep) {
             if (m.get(`semantic.color.${slot}`)?.value === undefined) errors.push(`${at} [${combo}]: ${slot} is not derived from the default text.base`);
           }
         }
-        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101');
+        // A role's on-solid under `contrast: more` is held to 7:1, which the
+        // derived mid-tone solids can't reach whatever text sits on them:
+        // that is about the roles, not the default page/text pair.
+        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101' && !/^[\w-]+\.on-solid vs .*contrast: more\)$/.test(d.message));
         if (failing.length) errors.push(`${at}: the default page/text pair fails a contrast check — ${failing.map((d) => d.message).join('; ')}`);
       }
       if (fixture === 'late-text') {
@@ -523,7 +552,8 @@ for (const [fixture, shape, modes] of sweep) {
         }
         const notes = result.diagnostics.items.filter((d) => d.code === 'TST1206');
         if (notes.length !== (swaps ? 1 : 0)) errors.push(`${at}: ${notes.length} TST1206 note(s) for ${swaps} swapped combo(s), expected ${swaps ? 'one' : 'none'}`);
-        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101');
+        // As above: a role's on-solid held to 7:1 under `contrast: more` is about the roles, not the pair.
+        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101' && !/^[\w-]+\.on-solid vs .*contrast: more\)$/.test(d.message));
         if (shape !== 'dark-only' && failing.length) errors.push(`${at}: the swapped pair fails a contrast check — ${failing.map((d) => d.message).join('; ')}`);
       }
 
@@ -1207,6 +1237,244 @@ for (const slot of ['semantic.mismatch.top', 'semantic.mismatch.member.color']) 
   if (!d || d.severity !== 'warning') errors.push(`an srgb color whose hex disagrees with its components (${slot}) must warn TST1123 under its own path — got ${malformed.diagnostics.items.filter((x) => x.code === 'TST1123').map((x) => x.message).join('; ') || 'nothing'}`);
 }
 
+// Reserved mode dimensions (#49, #50): `packages/core/test-fixtures/mode-dimensions`
+// declares color-scheme × contrast × motion × brand, authors high-contrast
+// values with a one-dimension layer (light) and a combo layer (dark + more),
+// and a second brand the same way. What must hold:
+//  - CSS targets: for every combination, the full stylesheet with the matching
+//    attributes on <html> (or the OS media feature instead of the attribute,
+//    for contrast and motion, in every mix) resolves every variable to exactly
+//    what the stylesheet emitted for that one combination alone does. This is
+//    the cascade the attribute and media blocks exist for; it caught the light
+//    `more` values winning on a dark page, which a text check cannot see. An
+//    explicit default value (`data-contrast="standard"`) wins over the OS.
+//  - daisyUI: one theme per brand × scheme × contrast, named after its values.
+//  - file targets: one file set per brand, each with its own primary.
+//  - Storybook: a toolbar global per extra dimension.
+//  - coverage: no exporter leaves a declared dimension silent: expressed, or a
+//    `dropped` row with its reason; never `(mode:brand)` dropped.
+//  - engine: the combo layer wins in its combination, the contrast-more and
+//    motion-reduced rules fill what is not authored, `check` measures the more
+//    combos at 7:1, a token overridden on two dimensions without a combo value
+//    is TST1125, explain lists combo keys, brand values are file-name safe.
+const MD = 'packages/core/test-fixtures/mode-dimensions';
+const mdLoad = async (n) => (await import(EXPORTERS[n] ?? `@transtyle/exporter-${n}`)).default;
+const md = await compile({ cwd: MD, emit: false, loadExporter: mdLoad });
+let cascadeChecks = 0;
+if (md.diagnostics.errors.length) {
+  errors.push(`mode dimensions: the fixture produced errors — ${md.diagnostics.errors.map((d) => `${d.code} ${d.message}`).join('; ')}`);
+} else {
+  const n = md.normalized;
+  const out = (target) => md.results.find((r) => r.target === target);
+  const file = (target, path) => out(target)?.emitted.find((f) => f.path === path)?.contents;
+  const ctxOf = (target) => ({
+    config: md.config,
+    targetConfig: md.config.targets[target],
+    projectName: md.config.name,
+    units: makeUnits(md.config),
+    formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
+    siblings: [],
+  });
+  const comboKeys = (dims) => {
+    let combos = [{}];
+    for (const d of dims) combos = combos.flatMap((c) => n.dimensions[d].values.map((v) => ({ ...c, [d]: v })));
+    return combos;
+  };
+
+  const CSS_TARGETS = {
+    'css-variables': { file: 'variables.transtyle.css', dark: { attrs: { 'data-color-scheme': 'dark' } }, dims: ['contrast', 'motion', 'brand'] },
+    shadcn: { file: 'globals.transtyle.css', dark: { classes: ['dark'] }, dims: ['contrast', 'brand'] },
+    'shadcn-v3': { file: 'globals.transtyle.css', dark: { classes: ['dark'] }, dims: ['contrast', 'brand'] },
+    radix: { file: 'radix-colors.transtyle.css', dark: { classes: ['dark'] }, dims: ['contrast', 'brand'] },
+    bootstrap: { file: 'bootstrap-theme.css', dark: { attrs: { 'data-bs-theme': 'dark' } }, dims: ['contrast', 'brand'], scopes: ['.btn-primary', '.btn-outline-danger'] },
+  };
+  for (const [target, spec] of Object.entries(CSS_TARGETS)) {
+    const exporter = await mdLoad(md.config.targets[target].exporter ?? target);
+    const css = file(target, spec.file);
+    if (!css) {
+      errors.push(`mode dimensions: ${target} emitted no ${spec.file}`);
+      continue;
+    }
+    const rules = parseRules(css);
+    for (const combo of comboKeys(spec.dims)) {
+      const alone = exporter.emit(pinDimension(n, combo), ctxOf(target)).files.find((f) => f.path === spec.file).contents;
+      const aloneRules = parseRules(alone);
+      for (const scheme of ['light', 'dark']) {
+        const sch = scheme === 'dark' ? spec.dark : {};
+        const attrs = { ...(sch.attrs ?? {}) };
+        for (const d of spec.dims) attrs[`data-${d}`] = combo[d];
+        const states = [{ attrs, features: [], how: 'attributes' }];
+        const viaMedia = spec.dims.filter((d) => MODE_MEDIA_QUERIES[d]?.[combo[d]]);
+        for (let mask = 1; mask < 1 << viaMedia.length; mask++) {
+          const sub = viaMedia.filter((_, i) => mask & (1 << i));
+          const a = { ...attrs };
+          for (const d of sub) delete a[`data-${d}`];
+          states.push({ attrs: a, features: sub.map((d) => MODE_MEDIA_QUERIES[d][combo[d]]), how: `OS ${sub.join(' + ')}` });
+        }
+        const forcedDefault = spec.dims.filter((d) => combo[d] === n.dimensions[d].default && MODE_MEDIA_QUERIES[d]);
+        if (forcedDefault.length) states.push({ attrs, features: forcedDefault.flatMap((d) => Object.values(MODE_MEDIA_QUERIES[d])), how: 'default attribute over the OS setting' });
+        for (const st of states) {
+          for (const scope of [undefined, ...(spec.scopes ?? [])]) {
+            const want = computed(aloneRules, { attrs: sch.attrs ?? {}, classes: sch.classes ?? [] }, [], scope);
+            const got = computed(rules, { attrs: st.attrs, classes: sch.classes ?? [] }, st.features, scope);
+            for (const [name, value] of want) {
+              cascadeChecks++;
+              if (got.get(name) !== value) {
+                errors.push(`mode dimensions: ${target}, ${scheme} ${JSON.stringify(combo)} via ${st.how}${scope ? ` on ${scope}` : ''}: ${name} resolves to ${got.get(name)}, the combination's own value is ${value}`);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // daisyUI: a theme per combination, the default pair alone carrying the flags.
+  const daisy = file('daisyui', 'daisyui.transtyle.css') ?? '';
+  for (const brand of n.dimensions.brand.values) {
+    for (const contrast of n.dimensions.contrast.values) {
+      for (const scheme of ['light', 'dark']) {
+        const name = ['modes', ...(brand !== 'acme' ? [brand] : []), scheme, ...(contrast !== 'standard' ? [contrast] : [])].join('-');
+        if (!daisy.includes(`name: "${name}";`)) errors.push(`mode dimensions: daisyUI has no theme "${name}"`);
+      }
+    }
+  }
+  if ((daisy.match(/default: true;/g) ?? []).length !== 1 || (daisy.match(/prefersdark: true;/g) ?? []).length !== 1) {
+    errors.push('mode dimensions: daisyUI must mark exactly one default and one prefersdark theme (the default brand at standard contrast)');
+  }
+
+  // File targets: one set per brand, and the brands differ.
+  for (const [target, files] of Object.entries({
+    primeng: ['preset.transtyle.acme.ts', 'preset.transtyle.globex.ts'],
+    mantine: ['theme.transtyle.acme.ts', 'theme.transtyle.globex.ts'],
+    chakra: ['theme.transtyle.acme.ts', 'theme.transtyle.globex.ts'],
+    mui: ['theme.transtyle.acme.ts', 'theme.transtyle.globex.ts'],
+    bootstrap: ['_variables.transtyle.acme.scss', '_variables.transtyle.globex.scss'],
+    echarts: ['theme.modes-acme-light.json', 'theme.modes-globex-dark.json'],
+  })) {
+    const got = files.map((f) => file(target, f));
+    if (got.some((c) => c === undefined)) errors.push(`mode dimensions: ${target} should emit ${files.join(' and ')}, got ${out(target)?.emitted.map((f) => f.path).join(', ')}`);
+    else if (got[0] === got[1]) errors.push(`mode dimensions: ${target}'s ${files.join(' and ')} are identical — the brand never reached the second file`);
+    if (target !== 'echarts' && out(target)?.emitted.some((f) => f.path === files[0].replace('.acme', ''))) errors.push(`mode dimensions: ${target} still emits the unsuffixed ${files[0].replace('.acme', '')} next to the per-brand files`);
+  }
+  const echartsThemes = (out('echarts')?.emitted ?? []).filter((f) => f.path.endsWith('.json'));
+  if (echartsThemes.length !== 4) errors.push(`mode dimensions: ECharts should emit one theme per brand × scheme (4), got ${echartsThemes.length}`);
+  const sbPreview = file('storybook', 'preview.transtyle.ts') ?? '';
+  for (const d of ['contrast', 'motion', 'brand']) {
+    if (!sbPreview.includes(`root.setAttribute('data-${d}', ${d});`)) errors.push(`mode dimensions: the Storybook preview has no ${d} toolbar setting data-${d}`);
+  }
+
+  // Coverage: every declared dimension is expressed or dropped with a reason.
+  for (const r of md.results) {
+    const rows = r.coverage.filter((c) => c.variable.startsWith('(mode:'));
+    if (rows.some((c) => c.variable === '(mode:brand)' && c.class === 'dropped')) errors.push(`mode dimensions: ${r.target} drops the brand dimension`);
+    for (const c of rows.filter((x) => x.class === 'dropped' && ['(mode:contrast)', '(mode:motion)'].includes(x.variable))) {
+      if (!/not expressed by this target: \S/.test(c.note ?? '')) errors.push(`mode dimensions: ${r.target}'s ${c.variable} dropped row gives no reason (${c.note})`);
+    }
+  }
+  for (const [target, dim] of [['shadcn', 'motion'], ['radix', 'motion'], ['daisyui', 'motion'], ['primeng', 'contrast'], ['echarts', 'motion'], ['mantine', 'contrast'], ['chakra', 'motion'], ['mui', 'contrast'], ['mui', 'motion']]) {
+    if (!out(target)?.coverage.some((c) => c.variable === `(mode:${dim})` && c.class === 'dropped')) errors.push(`mode dimensions: ${target} expresses no ${dim} yet reports no (mode:${dim}) dropped row`);
+  }
+
+  // Engine.
+  const at = (combo, slot) => n.modes[combo]?.get(slot);
+  const muted = (combo) => JSON.stringify(at(combo, 'semantic.color.text.muted')?.value);
+  if (at('dark+more+full+acme', 'semantic.color.text.muted')?.provenance?.mode !== 'color-scheme=dark, contrast=more') {
+    errors.push(`mode dimensions: the dark + more combo layer does not decide text.muted in dark+more (${JSON.stringify(at('dark+more+full+acme', 'semantic.color.text.muted')?.provenance)})`);
+  }
+  if (muted('dark+more+full+acme') === muted('light+more+full+acme')) errors.push('mode dimensions: dark+more text.muted is the light more value — the combo layer did not apply');
+  const onTint = at('light+more+full+acme', 'semantic.color.primary.on-tint');
+  if (!onTint?.provenance?.rule?.startsWith('contrast-more(') || contrastRatio(onTint.value, at('light+more+full+acme', 'semantic.color.primary.tint').value) < 7) {
+    errors.push(`mode dimensions: primary.on-tint in light+more is not the contrast-more walk at 7:1 (${JSON.stringify(onTint?.provenance)})`);
+  }
+  for (const combo of n.allCombos) {
+    const fast = at(combo, 'semantic.duration.fast');
+    const reduced = n.comboDims[combo].motion === 'reduced';
+    if (reduced ? fast?.value !== '0ms' || fast?.provenance?.rule !== 'motion-reduced@standard@1' : fast?.value === '0ms') {
+      errors.push(`mode dimensions: duration.fast in ${combo} is ${fast?.value} (${fast?.provenance?.rule}), expected ${reduced ? '0ms by motion-reduced' : 'the catalog default'}`);
+    }
+  }
+  const pairs = md.diagnostics.items.filter((d) => d.code === 'TST2101' && /^text\.(base|muted) vs/.test(d.message));
+  if (pairs.length) errors.push(`mode dimensions: the fixture authors its more values to pass 7:1, yet check reports ${pairs.map((d) => d.message).join('; ')}`);
+  if (!md.diagnostics.items.some((d) => d.code === 'TST1125' && d.message.startsWith('semantic.color.ring has a value for color-scheme=dark and one for brand=globex'))) {
+    errors.push('mode dimensions: semantic.color.ring varies by color-scheme and by brand with no combo value, and TST1125 did not say which value wins');
+  }
+  if (md.diagnostics.items.some((d) => d.code === 'TST1125' && !d.message.startsWith('semantic.color.ring'))) {
+    errors.push(`mode dimensions: TST1125 fired on a token a combo layer settles — ${md.diagnostics.items.filter((d) => d.code === 'TST1125').map((d) => d.message).join('; ')}`);
+  }
+  try {
+    const { explainToken } = await import('@transtyle/core');
+    const e = explainToken(n, 'primary.on-tint', { mode: 'light+more+reduced+acme' });
+    if (!e.entry.provenance.rule.startsWith('contrast-more(')) errors.push('mode dimensions: explain on a combo key does not show the contrast-more rule');
+    try {
+      explainToken(n, 'primary.on-tint', { mode: 'standard+reduced' });
+      errors.push('mode dimensions: explain accepted an unknown mode');
+    } catch (err) {
+      if (!err.available?.includes('dark+more+reduced+globex')) errors.push(`mode dimensions: explain's unknown-mode error does not list the combo keys (${err.message})`);
+    }
+  } catch (err) {
+    errors.push(`mode dimensions: explain threw on a combo key — ${err.message}`);
+  }
+}
+
+// The same fixture without its dark + more combo layer: the more value written
+// for light lands on the dark page, and both diagnostics must say so.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-modes-'));
+  cpSync(MD, dir, { recursive: true, filter: (src) => !/[\\/]dist([\\/]|$)/.test(src) });
+  const cfg = JSON.parse(readFileSync(join(dir, 'transtyle.config.json'), 'utf8'));
+  cfg.tokens = cfg.tokens.filter((t) => typeof t === 'string' || !t.files.includes('dark-contrast-more'));
+  cfg.targets = {};
+  writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify(cfg, null, 2));
+  const r = await compile({ cwd: dir, emit: false, loadExporter: loadNoop });
+  if (!r.diagnostics.items.some((d) => d.code === 'TST2101' && /^text\.muted vs elevation\.\d\.surface is [\d.]+:1 in .*\bdark\+more\+full\+acme\b.* \(< 7:1 wcag21-aaa, contrast: more\)$/.test(d.message))) {
+    errors.push(`mode dimensions (no dark+more layer): check did not report dark+more text.muted against 7:1 — ${r.diagnostics.items.filter((d) => d.code === 'TST2101').map((d) => d.message).join('; ') || 'no TST2101'}`);
+  }
+  if (!r.diagnostics.items.some((d) => d.code === 'TST1125' && d.message.startsWith('semantic.color.text.muted has a value for color-scheme=dark and one for contrast=more'))) {
+    errors.push('mode dimensions (no dark+more layer): TST1125 did not report text.muted varying by scheme and contrast with no combo value');
+  }
+
+  // Brand values become file names and selectors; a combo layer must name declared modes.
+  for (const [why, mutate, code] of [
+    ['a brand value with a space', (c) => { c.modes.brand.values = ['acme', 'Acme Corp']; }, 'TST1010'],
+    ['a brand value with +', (c) => { c.modes.brand.values = ['acme', 'a+b']; }, 'TST1010'],
+    ['a combo layer naming an undeclared value', (c) => { c.tokens.push({ files: 'tokens/globex.tokens.json', mode: { 'color-scheme': 'dim', brand: 'globex' } }); }, 'TST1109'],
+    ['a mode-scoped layer naming no dimension', (c) => { c.tokens.push({ files: 'tokens/globex.tokens.json', mode: {} }); }, 'TST1110'],
+  ]) {
+    const c = structuredClone(cfg);
+    mutate(c);
+    writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify(c, null, 2));
+    const bad = await compile({ cwd: dir, emit: false, loadExporter: loadNoop });
+    if (!bad.diagnostics.errors.some((d) => d.code === code)) errors.push(`mode dimensions (${why}): expected ${code}, got ${bad.diagnostics.errors.map((d) => `${d.code} ${d.message}`).join('; ') || 'no errors'}`);
+  }
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// Acme (color-scheme × density), through the same cascade: the planner that
+// now writes the contrast and brand blocks must still give density its old
+// block and nothing for dark + compact, which changes no color.
+{
+  const acme = await compile({ cwd: 'examples/acme', targets: ['css-variables'], emit: false, loadExporter: mdLoad });
+  const css = acme.results[0]?.emitted.find((f) => f.path === 'variables.transtyle.css')?.contents ?? '';
+  const rules = parseRules(css);
+  if (/\[data-color-scheme="dark"\]\[data-density/.test(css)) errors.push('mode dimensions: Acme css-variables gained a dark + compact block, though density changes no color');
+  for (const density of ['comfortable', 'compact']) {
+    for (const dark of [false, true]) {
+      const want = computed(parseRules(acme.results[0].emitted[0].contents), dark ? { attrs: { 'data-color-scheme': 'dark' } } : {}, []);
+      const attrs = { ...(dark ? { 'data-color-scheme': 'dark' } : {}), 'data-density': density };
+      const got = computed(rules, { attrs }, []);
+      const key = `${dark ? 'dark' : 'light'}+${density}`;
+      for (const [slot, entry] of acme.normalized.modes[key]) {
+        if (!slot.startsWith('semantic.space.')) continue;
+        cascadeChecks++;
+        const name = `--${slot.replace('semantic.', '').replaceAll('.', '-')}`;
+        if (got.get(name) !== String(entry.value)) errors.push(`mode dimensions: Acme ${key}: ${name} resolves to ${got.get(name)}, expected ${entry.value}`);
+      }
+      void want;
+    }
+  }
+}
+
 if (errors.length) {
   console.error(`✘ minimal-ds check: ${errors.length} problem(s)`);
   for (const e of errors) console.error('  - ' + e);
@@ -1215,4 +1483,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text, a 2-token (text, no page) and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; a light text with no page is swapped into the other polarity, and only there; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms, colors in five color spaces included, compile byte-identical to their string twin (${twinFiles} files; an out-of-sRGB one raises TST1120 in both) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106, and an srgb hex that disagrees with its components warns TST1123; per-target mode subsets drop the excluded values with no \`dropped\` row and a bad subset is TST1308 (nothing emitted)`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text, a 2-token (text, no page) and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; a light text with no page is swapped into the other polarity, and only there; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms, colors in five color spaces included, compile byte-identical to their string twin (${twinFiles} files; an out-of-sRGB one raises TST1120 in both) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106, and an srgb hex that disagrees with its components warns TST1123; per-target mode subsets drop the excluded values with no \`dropped\` row and a bad subset is TST1308 (nothing emitted); the reserved contrast, motion and brand dimensions resolve through the cascade to every combination's own values in five CSS targets (${cascadeChecks} variable checks, attributes and media queries), as themes in daisyUI, as one file set per brand in the file targets and as toolbars in Storybook, with a reason for every dimension a target drops`);

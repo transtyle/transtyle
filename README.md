@@ -88,6 +88,11 @@ Eleven exporters ship today:
 The core knows nothing about any of them: every one is a plugin on the same public API, so a
 third-party exporter is a package name in your config.
 
+Modes go beyond light and dark. `density`, `contrast`, `motion` and `brand` (or any dimension you
+declare) compile to attribute blocks in the CSS targets, with `prefers-contrast` and
+`prefers-reduced-motion` media blocks for the two that have one, and to one file set per brand
+where a target has no runtime switch; a target that can't express a dimension says so in its report.
+
 ## How it works
 
 The mental model is Babel's, or LLVM's:

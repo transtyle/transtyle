@@ -76,6 +76,15 @@ Approximate OKLCH values in this table are produced by real color math in `packa
 
 The on-color picks (`on-solid`, `on-tint`, a role's `text`) aim at WCAG 2.1 AA by default. With [`derivation.contrast: "apca"`](/docs/configuration/#derivation) (the default when `check.contrast.standard` is `apca`) they pick by APCA instead: the candidate with the larger `|Lc|`, and walks that stop at Lc 60. The rule names then carry it (`contrast-pick(apca)`, `contrast-pick(subtle, apca)`), so `transtyle explain` shows which contrast picked a value. On a mid-tone fill the two often disagree: see [WCAG 2.1 or APCA](/docs/configuration/#wcag-21-or-apca).
 
+## More contrast, reduced motion
+
+Two rules read the [reserved dimensions](/docs/configuration/#contrast-motion-and-brand) of the combination they run in, and like every rule they only fill holes:
+
+- **`contrast: more`** — the on-brand walks (`<role>.on-tint`, `<role>.text`) step until **7:1** (WCAG AAA) instead of 4.5:1, and `text.muted` / `text.subtle` mix toward the surface only as far as 7:1 / 4.5:1 allow. Provenance reads `contrast-more(<rule>)`, e.g. `contrast-more(mix-toward-surface(0.12))`. `on-solid` is still the better of white and near-black; when that falls short of 7:1, the warning asks for a darker or lighter `solid` for `contrast: more`.
+- **`motion: reduced`** — every unauthored `duration.*` is `0ms` (rule `motion-reduced`, `derived`). Easings are unchanged.
+
+An authored value, including one carried over from the default mode, is never re-derived for either: `check` measures every `contrast: more` combination at 7:1 and names the authored value to write. `transtyle explain primary.on-tint --mode light+more` shows which rule ran (the mode is the combination's key, one value per declared dimension in declaration order; an unknown one lists them all).
+
 ## The component tier: defaults that layer
 
 `component.*` slots derive too, but by a different mechanism: each one declares a `defaultFrom` — the semantic slot it falls back to when you say nothing.

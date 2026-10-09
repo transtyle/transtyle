@@ -101,8 +101,10 @@ clean is worth more than all of them, because it exposes something the catalog c
 **The open question is which one**, and it should be chosen for the shape it attacks rather than for
 fame:
 
-- **multi-brand** — one system, several brands as a declared mode axis. Nothing in the examples
-  exercises a non-colour-scheme axis except Acme's toy `density`.
+- **multi-brand** — one system, several brands as a declared mode axis. The `brand` dimension
+  ships ([#49](https://github.com/transtyle/transtyle/issues/49)) and a test fixture
+  (`packages/core/test-fixtures/mode-dimensions`) compiles it on every target, but no example does:
+  besides it, only Acme's toy `density` exercises a non-colour-scheme axis.
 - **a container/`on-*` system** — Material 3 is named in the post as one of the grid's samples but
   has never been compiled. It would test the role grid against the vocabulary most unlike it.
 - **a system with a real type and spacing story** — every current example is colour-dominated;

@@ -33,6 +33,10 @@ Radix also ships a P3 (wide-gamut) variant of every scale. That is a themable sl
 
 Radix's `<Theme accentColor="...">` component only accepts its own preset names — it can't take an arbitrary string. To drive real Radix Themes components from a compiled brand, **override an existing preset's CSS variables** with your role's scale (e.g. `--violet-1` through `--violet-12`, `-a1..a12`, `-contrast`), then pass that preset's name to `accentColor`. `--gray-*` needs no override — it's already Radix's own name.
 
+## Reserved dimensions: contrast, motion, brand
+
+`contrast` and `brand` are blocks after `.dark` ([ADR-0015](../../adr/0015-mode-combinations.md)), planned by `modeBlocks()` (`@transtyle/ir`): `[data-contrast="more"]`, `[data-brand="globex"]`, and compound blocks such as `.dark[data-brand="globex"]` where the cascade of the separate blocks would be wrong. Every step that differs is restated, alpha steps included. `contrast: more` is also written inside `@media (prefers-contrast: more)` (`:not([data-contrast])`). `motion` is `dropped`: Radix Colors are color scales only.
+
 ## Ground-truth testing
 
 `examples/*/demo/radix/` — a real `@radix-ui/themes` React app overriding one preset with the compiled `primary` scale and `gray` with `neutral`, rendering the same fake page other demos use, with real Radix `Button`/`Card`/`Dialog` components.

@@ -40,3 +40,7 @@ A custom color role (role archetypes) lands in `components.button.extend.<name>.
 `examples/*/demo/primeng/` are real, standalone Angular applications — `providePrimeNG({ theme: { preset } })` in `app.config.ts`. Every emitted preset is type-checked against PrimeNG's own `DesignTokens` types as part of the build, catching real structural mistakes (a flat object where PrimeNG expects `{ light, dark }`, a component-specific type narrower than the shared semantic group) that a looser toolchain wouldn't have caught.
 
 See it running: `npm run dev -w acme-demo-primeng` (or `cathode-demo-primeng`, `govuk-demo-primeng`, `carbon-demo-primeng`) in the [examples](/docs/examples/).
+
+## Contrast, motion and brand
+
+A preset has no runtime brand switch, so a design system declaring [`brand`](/docs/configuration/#contrast-motion-and-brand) gets one preset per brand, `preset.transtyle.acme.ts` and `preset.transtyle.globex.ts`; `usage.md` lists them. `contrast` and `motion` are reported `dropped`, each with its reason: a preset switches light and dark only, and its transition duration is one constant.

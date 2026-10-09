@@ -151,6 +151,10 @@ Like Bootstrap, PrimeNG and Mantine, Chakra carries a checked-in surface invento
 
 Acme sets three more entries than Cathode and Carbon because it authors its button layer and its tooltip measure (the component tier, above). On Acme, 140 of the defaults are token-tier entries, each on its own row: Chakra's hue palettes and ramps (kept by design), the rungs its scales have beyond the catalog's (half and large spacing steps, the thin to black weights, `faster` and `slowest`, `docked`, `skipNav` and `max`, shadows `xs` and `2xl`), its measure scale (`sizes.xs` … `8xl`), constants (`transparent`, fractions, viewport sizes, cursors, aspect ratios), the text styles' literal line heights, blurs and animations. The other 633 are recipe leaves that read one of those; most read a `sizes` step, the icon and control sizes Chakra writes as literal steps rather than through `spacing`, or a half spacing step. GOV.UK adds its missing `font.mono` and `text.inverse`; having no dark scheme changes nothing here, because a semantic token with one value is still set.
 
+## Reserved dimensions: contrast, motion, brand
+
+`theme.transtyle.ts` is emitted once per brand, `theme.transtyle.<brand>.ts` (file-per-value, [ADR-0015](../../adr/0015-mode-combinations.md)): create the system from the brand's file. `contrast` and `motion` are `dropped` with their reasons: the semantic tokens switch on `_light` / `_dark` only, and the theme emits no duration token.
+
 ## Ground-truth testing
 
 `examples/*/demo/chakra/` — a Vite + React 19 app on real `@chakra-ui/react` 3 components, rendering the Nimbus Console plus the four Alert statuses. `main.tsx` passes `system` to `<ChakraProvider value={system}>` exactly as `usage.md` prescribes; the mode toggle sets `.dark` on `<html>`. The demo's build runs `tsc --noEmit` first, so the emitted config is type-checked against Chakra's own `SystemConfig` types on every CI run, the same guarantee Mantine's and PrimeNG's demos give. Role names type-check without `chakra typegen` because Chakra's `colorPalette` prop accepts any string; typegen only adds autocompletion.

@@ -83,6 +83,26 @@ const modeDimension = {
   },
 };
 
+// The reserved `brand` dimension (#49): its values become file names
+// (`preset.transtyle.<brand>.ts`), CSS attribute values and theme names, so
+// they are held to a file-name-safe pattern. `+` would also collide with the
+// combo-key separator (`dark+globex`).
+const brandDimension = {
+  ...modeDimension,
+  properties: {
+    ...modeDimension.properties,
+    values: {
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'string',
+        pattern: '^[a-z0-9][a-z0-9-]*$',
+        description: 'a brand value is a lowercase name of letters, digits and hyphens such as "globex" (it becomes part of file names and CSS selectors)',
+      },
+    },
+  },
+};
+
 const target = {
   type: 'object',
   additionalProperties: false,
@@ -118,7 +138,7 @@ export const configSchema = {
     $schema: { type: 'string' },
     name: { type: 'string' },
     tokens: { type: 'array', minItems: 1, items: tokenLayer },
-    modes: { type: 'object', additionalProperties: modeDimension },
+    modes: { type: 'object', properties: { brand: brandDimension }, additionalProperties: modeDimension },
     bindings: { type: 'array', items: bindingRule },
     derivation: {
       type: 'object',

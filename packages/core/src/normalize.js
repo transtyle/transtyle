@@ -156,17 +156,28 @@ export function normalize(tokenTrees, config, diagnostics) {
   const bindingRules = new Map(tokenTrees.flatMap((t) => (t.bindingRules ? [...t.bindingRules] : [])));
   const roleArchetypes = collectRoleArchetypes(merged, diagnostics);
 
+  // Mode-scoped layers. A layer naming one dimension feeds the same per-token
+  // `modeValues` the inline form does (ADR-0009). A layer naming several
+  // (`"mode": { "color-scheme": "dark", "contrast": "more" }`) is a combo layer
+  // (ADR-0015): its values apply only where every named dimension has the named
+  // value, and win over the one-dimension values there. That is the override
+  // syntax ir.md#modes promised for a token that varies on two dimensions at
+  // once, which a high-contrast palette (light and dark) or a brand with its own
+  // dark value always does.
+  const dimOrder = dimEntries.map(([n]) => n);
   for (const layer of tokenTrees.filter((t) => t.modeScope)) {
     const scopeEntries = Object.entries(layer.modeScope);
-    if (scopeEntries.length !== 1) {
-      diagnostics.error('TST1110', `${layer.file}: a mode-scoped layer must target exactly one dimension`);
+    if (scopeEntries.length === 0) {
+      diagnostics.error('TST1110', `${layer.file}: a mode-scoped layer must name at least one dimension`, {
+        hint: 'Write the dimension and value the layer is for, e.g. "mode": { "color-scheme": "dark" }, or several for one combination.',
+      });
       continue;
     }
-    const [scopeDim, scopeMode] = scopeEntries[0];
-    if (!config.modes?.[scopeDim]?.values.includes(scopeMode)) {
-      diagnostics.error('TST1109', `${layer.file}: unknown mode "${scopeDim}: ${scopeMode}" (not declared in config.modes)`);
-      continue;
+    const unknown = scopeEntries.filter(([dim, value]) => !config.modes?.[dim]?.values.includes(value));
+    for (const [dim, value] of unknown) {
+      diagnostics.error('TST1109', `${layer.file}: unknown mode "${dim}: ${value}" (not declared in config.modes)`);
     }
+    if (unknown.length) continue;
     // The token's key in THIS layer's file: for TST1108 that is the later
     // definition, the one that wins.
     const layerAt = (tokenPath) => ({
@@ -174,12 +185,26 @@ export function normalize(tokenTrees, config, diagnostics) {
       file: layer.file,
       ...(layer.positions?.get(tokenPath) ?? {}),
     });
+    const combo = scopeEntries.length > 1;
+    const scope = Object.fromEntries([...scopeEntries].sort((a, b) => dimOrder.indexOf(a[0]) - dimOrder.indexOf(b[0])));
+    const label = Object.entries(scope).map(([d, v]) => `${d}=${v}`).join(', ');
     for (const [tokenPath, tok] of collectTokens(layer.tree)) {
       const base = raw.get(tokenPath);
       if (!base) {
         diagnostics.warn('TST1107', `${layer.file}: mode value for unknown token "${tokenPath}" (no default-mode value exists) — skipped`, layerAt(tokenPath));
         continue;
       }
+      if (combo) {
+        base.comboValues ??= [];
+        const same = base.comboValues.find((c) => c.label === label);
+        if (same && !layer.override) {
+          diagnostics.warn('TST1108', `${tokenPath}: ${label} value overridden by later layer ${layer.file}`, layerAt(tokenPath));
+        }
+        if (same) same.value = tok.value;
+        else base.comboValues.push({ scope, label, value: tok.value, originKey: scopeEntries.map(([d, v]) => `${d}=${v}`).join() });
+        continue;
+      }
+      const [[scopeDim, scopeMode]] = scopeEntries;
       base.modeValues[scopeDim] ??= {};
       if (base.modeValues[scopeDim][scopeMode] !== undefined && !layer.override) {
         diagnostics.warn('TST1108', `${tokenPath}: ${scopeDim}=${scopeMode} value overridden by later layer ${layer.file}`, layerAt(tokenPath));
@@ -196,27 +221,47 @@ export function normalize(tokenTrees, config, diagnostics) {
   const combos = expandModeMatrix(dimEntries);
   const modes = {};
   const comboDims = {};
+  // Tokens whose value in some combo had two one-dimension values to choose
+  // from and no combo value to settle it (TST1125), keyed token + dimensions.
+  const contested = new Map();
   for (const { key, values } of combos) {
     const map = new Map();
     for (const [tokenPath, tok] of raw) {
       // Per-dimension resolution, applied independently and left-to-right
-      // (docs/architecture/ir.md#modes "resolved per-dimension independently"):
-      // a token overriding on more than one non-default dimension at once is
-      // the rare pathological pair the spec defers; last dimension wins there.
+      // (docs/architecture/ir.md#modes "resolved per-dimension independently").
+      // A token overriding on more than one non-default dimension at once takes
+      // the last dimension's value, unless a combo layer authored that exact
+      // combination (ADR-0015); without one, TST1125 says which value won.
       let value = tok.value;
       let overriddenMode = null;
       let autoDarkCarried = false;
+      const overrides = [];
       for (const [dimName] of dimEntries) {
         const v = values[dimName];
         if (v === dimDefaults.get(dimName).default) continue;
         const override = tok.modeValues?.[dimName]?.[v];
-        if (override !== undefined) { value = override; overriddenMode = `${dimName}=${v}`; }
-        else if (dimName === 'color-scheme' && autoDark) {
+        if (override !== undefined) {
+          value = override;
+          overriddenMode = `${dimName}=${v}`;
+          overrides.push({ label: overriddenMode, value: override });
+        } else if (dimName === 'color-scheme' && autoDark) {
           const role = tokenPath.match(ROLE_SOLID)?.[1];
           if (role && (COLOR_ROLES.includes(role) || roleArchetypes.has(role))) autoDarkCarried = true;
         }
       }
-      const origin = (overriddenMode ? origins.modes.get(overriddenMode) : origins.base)?.get(tokenPath);
+      const comboValue = pickComboValue(tok.comboValues, values);
+      if (comboValue) {
+        value = comboValue.value;
+        overriddenMode = comboValue.label;
+        autoDarkCarried = false;
+      } else if (overrides.length > 1 && new Set(overrides.map((o) => JSON.stringify(o.value))).size > 1) {
+        const id = `${tokenPath}|${overrides.map((o) => o.label).join('|')}`;
+        if (!contested.has(id)) contested.set(id, { tokenPath, overrides, combos: [] });
+        contested.get(id).combos.push(key);
+      }
+      // A Tokens Studio origin is keyed like its overlay's mode scope (`dim=value`, comma-joined).
+      const originKey = comboValue ? comboValue.originKey : overriddenMode;
+      const origin = (originKey ? origins.modes.get(originKey) : origins.base)?.get(tokenPath);
       map.set(tokenPath, {
         type: tok.type,
         rawValue: value,
@@ -243,6 +288,19 @@ export function normalize(tokenTrees, config, diagnostics) {
     comboDims[key] = values;
   }
 
+  for (const { tokenPath, overrides, combos: where } of contested.values()) {
+    const winner = overrides.at(-1).label;
+    const names = overrides.map((o) => o.label);
+    diagnostics.warn(
+      'TST1125',
+      `${tokenPath} has a value for ${names.slice(0, -1).join(', ')} and one for ${winner}: in ${where.join(', ')} the ${winner} value applies, because its dimension is declared later`,
+      {
+        path: tokenPath,
+        hint: `Author the value for that combination in a mode-scoped layer naming every dimension of it, e.g. { "files": "…", "mode": { ${names.map((n) => n.replace(/^([^=]+)=(.*)$/, '"$1": "$2"')).join(', ')} } }. If ${winner}'s value is meant for every ${names[0].split('=')[0]}, nothing is wrong.`,
+      },
+    );
+  }
+
   // Back-compat aliases: `modes.light` / `modes.dark` (or whatever the first
   // dimension's values are) point at the combo where every OTHER dimension
   // sits at ITS OWN default — exactly what every pre-T8 exporter means.
@@ -264,6 +322,21 @@ export function normalize(tokenTrees, config, diagnostics) {
     roleArchetypes,
     sources,
   };
+}
+
+/**
+ * The combo-layer value (ADR-0015) that applies to one combination: every
+ * dimension the layer names has the named value there. The most specific one
+ * wins (most dimensions named); on a tie, the later layer.
+ */
+function pickComboValue(comboValues, values) {
+  let best = null;
+  for (const c of comboValues ?? []) {
+    const entries = Object.entries(c.scope);
+    if (!entries.every(([d, v]) => values[d] === v)) continue;
+    if (!best || entries.length >= Object.keys(best.scope).length) best = c;
+  }
+  return best;
 }
 
 /** Structural equality for resolved values (colors are `{l,c,h,alpha}`). */
@@ -290,7 +363,8 @@ const sameValue = (a, b) =>
  */
 export function carriesOver(entry, baseline, scheme) {
   if (!['authored', 'aliased'].includes(entry?.provenance?.kind)) return false;
-  if (entry.provenance.mode === `color-scheme=${scheme}`) return false;
+  // A combo-layer value (ADR-0015) names its modes `color-scheme=dark, contrast=more`.
+  if (String(entry.provenance.mode ?? '').split(', ').includes(`color-scheme=${scheme}`)) return false;
   return baseline?.value !== undefined && sameValue(entry.value, baseline.value);
 }
 

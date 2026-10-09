@@ -158,6 +158,7 @@ A layer that redefines tokens from earlier layers on purpose (core system, then 
 | Mode value overrides an earlier one            | `TST1108` warning                           |
 | Mode value for a token with no default value   | `TST1107` warning, skipped                  |
 | Mode not declared in `modes`                   | `TST1109` error                             |
+| Mode-scoped layer naming no dimension          | `TST1110` error                             |
 | File matched by a glob and a mode-scoped entry | Loaded once, as the overlay (no diagnostic) |
 
 ### Tokens Studio exports
@@ -210,8 +211,41 @@ which resolves to four full token maps: `light+comfortable`, `light+compact`, `d
 Two constraints worth knowing:
 
 - **The first dimension carries light/dark.** Order matters: the first dimension listed is the _polarity axis_ — the one exporters bind as light/dark. So if you use `color-scheme`, list it first. Declaring it after another dimension (e.g. `density` first) would make dark mode silently never reach any exporter — the dark values still resolve into their combinations, but no target reads them, so every exporter emits a dark block filled with light values. Because that output is guaranteed wrong, Transtyle makes it a build **error** (`TST1112`), not a warning — reorder `modes` to fix it.
-- **One dimension per layer.** A mode-scoped token file targets `{ "color-scheme": "dark" }`, never two axes at once (`TST1110`). Compose combinations from single-axis layers; that is what keeps "which file set this value?" answerable.
+- **One combination per layer.** A mode-scoped token file usually targets one value of one dimension, `{ "color-scheme": "dark" }`. When a value belongs to a _combination_, the layer names every dimension of it: see [Combo layers](#combo-layers).
 - **Exporters express what their target can express.** `color-scheme` maps everywhere; `density` has no Bootstrap or PrimeNG counterpart, so it appears in those reports as an honest `dropped` row naming the dimension, rather than being silently flattened.
+
+### Combo layers
+
+A token that varies on two dimensions at once needs a value for the combination. A high-contrast palette is the usual case: the `more` text color written for light can't be the dark one. Name both dimensions in the layer's `mode`, and its values apply only to that combination, winning there over the one-dimension layers:
+
+```json
+"tokens": [
+  "tokens/base.tokens.json",
+  { "files": "tokens/contrast-more.tokens.json", "mode": { "contrast": "more" } },
+  { "files": "tokens/dark-contrast-more.tokens.json", "mode": { "color-scheme": "dark", "contrast": "more" } }
+]
+```
+
+Without the second layer, `dark + more` takes the `more` value written for light (the dimension declared later wins), and Transtyle says so with `TST1125`, naming the combinations and the layer to add. Two combo layers matching the same combination: the one naming more dimensions wins, then the later one. The same pattern authors a brand's own dark value (`{ "color-scheme": "dark", "brand": "globex" }`).
+
+### Contrast, motion and brand
+
+Three reserved dimension names mean something to the exporters:
+
+- **`contrast`** (`standard` / `more`). CSS targets write the `more` values in a `[data-contrast="more"]` block and again inside `@media (prefers-contrast: more)`, so the user's system setting applies until the page sets the attribute. Unauthored on-colors and role text aim at 7:1 there, and `check` holds the `more` combinations to 7:1 (WCAG AAA). Authored values are never re-derived: write the `more` value for every authored text or border color that falls short, and the warning names them.
+- **`motion`** (`full` / `reduced`). Every unauthored `duration.*` is `0ms` under `reduced`; CSS targets follow `prefers-reduced-motion: reduce` the same way.
+- **`brand`** (your brand names). CSS targets add a `[data-brand="<name>"]` block per brand; targets with no runtime switch (Bootstrap's Sass path, PrimeNG, Mantine, Chakra, MUI) emit their files once per brand (`preset.transtyle.globex.ts`), ECharts one theme per brand and scheme, daisyUI one theme per combination. Brand values become file names and selectors, so they are lowercase letters, digits and hyphens (`TST1010` otherwise). This dimension is not Storybook's `options.brand`, which brands the Storybook manager itself.
+
+```json
+"modes": {
+  "color-scheme": { "values": ["light", "dark"], "default": "light" },
+  "contrast": { "values": ["standard", "more"], "default": "standard" },
+  "motion": { "values": ["full", "reduced"], "default": "full" },
+  "brand": { "values": ["acme", "globex"], "default": "acme" }
+}
+```
+
+Set the attributes on the same element as the scheme's own class or attribute, usually `<html>`: `<html class="dark" data-contrast="more" data-brand="globex">`. Each exporter page says how it expresses each dimension, and every target that can't reports a `dropped` row with the reason.
 
 ## `derivation`
 

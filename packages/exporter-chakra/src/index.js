@@ -26,7 +26,7 @@
  *     per-size proportions with catalog defaults.
  */
 
-import { COLOR_ROLES, droppedDimensions, fontStack } from '@transtyle/ir';
+import { COLOR_ROLES, droppedDimensions, fontStack, emitPerValue } from '@transtyle/ir';
 import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
@@ -142,358 +142,367 @@ const CONTROL_SIZES = ['sm', 'md', 'lg'];
 export default {
   name: 'chakra',
 
+  // `brand` (#49) is file-per-value: this target's theme has no runtime brand
+  // switch, so it is emitted once per brand (`<file>.<brand>.<ext>`).
   emit(normalized, ctx) {
-    const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
-    const dark = normalized.modes.dark;
-    const coverage = [];
-    const row = (variable, slot, cls, note) =>
-      coverage.push({ variable, slot, class: cls, ...(note ? { note } : {}) });
-    const sem = (map, path) => map?.get(`semantic.${path}`)?.value;
-    // Inventory id → the catalog slot this exporter writes it from, recorded
-    // whether or not this design system defines the slot, so an entry left on
-    // Chakra's default for want of it says which slot (surface-coverage.js).
-    const mapped = new Map();
-    const maps = (id, slot) => mapped.set(id, slot);
-
-    /** A semantic token value: `{ _light, _dark }` when the design system has both schemes. */
-    const colorToken = (path) => {
-      const l = sem(light, `color.${path}`);
-      if (!l) return undefined;
-      const d = dark && sem(dark, `color.${path}`);
-      return { value: d ? { _light: ctx.formatColor(l), _dark: ctx.formatColor(d) } : ctx.formatColor(l) };
-    };
-    const ringToken = colorToken('ring');
-
-    const roles = [...COLOR_ROLES, ...normalized.roleArchetypes.keys()].filter((r) => sem(light, `color.${r}.solid`));
-
-    // ---------- colours: one Chakra palette per role ----------
-    const colors = {};
-    for (const role of roles) {
-      const palette = {};
-      for (const p of PALETTE_KEYS) {
-        const token = p.slot ? ringToken : colorToken(`${role}.${p.cell}`);
-        if (!token) continue;
-        palette[p.key] = token;
-        row(`colors.${role}.${p.key}`, p.slot ?? `${S}${role}.${p.cell}`, p.cls, p.note);
-      }
-      colors[role] = palette;
-      row(
-        `colors.${role} (state cells)`,
-        `${S}${role}.{${UNMAPPED_CELLS.join(',')}}`,
-        'dropped',
-        'Chakra has no palette key for them: its recipes derive hover and active as solid/90 and muted, pair subtle with fg, and have no strong text rung',
-      );
-    }
-    if (!dark) {
-      row('(dark scheme)', '—', 'dropped', 'the design system publishes no dark scheme: every semantic token carries one value for both');
-    }
-
-    for (const [group, key, slot, cls, note] of GLOBAL_COLORS) {
-      maps(`semanticTokens.colors.${group}${key === 'DEFAULT' ? '' : `.${key}`}`, `${S}${slot}`);
-      const token = colorToken(slot);
-      if (!token) continue;
-      colors[group] ??= {};
-      colors[group][key] = token;
-      row(`colors.${group}${key === 'DEFAULT' ? '' : `.${key}`}`, `${S}${slot}`, cls, note);
-    }
-    for (const [status, role] of STATUSES) {
-      for (const [group, cell, note] of [
-        ['bg', 'tint'],
-        ['fg', 'text'],
-        ['border', 'solid', status === 'error' ? 'also the border of an invalid field' : undefined],
-      ]) {
-        maps(`semanticTokens.colors.${group}.${status}`, `${S}${role}.${cell}`);
-        const token = colorToken(`${role}.${cell}`);
-        if (!token) continue;
-        colors[group] ??= {};
-        colors[group][status] = token;
-        row(`colors.${group}.${status}`, `${S}${role}.${cell}`, 'native', note);
-      }
-    }
-
-    const scrim = colorToken('scrim');
-    if (scrim) {
-      colors.scrim = scrim;
-      row('colors.scrim (dialog and drawer backdrops)', `${S}scrim`, 'native', "replaces Chakra's blackAlpha.500 on both backdrops");
-    }
-
-    // ---------- tokens ----------
-    const tokens = {};
-    const put = (category, key, value) => {
-      tokens[category] ??= {};
-      tokens[category][key] = { value };
-    };
-
-    const sans = sem(light, 'font.sans');
-    const display = sem(light, 'font.display');
-    const mono = sem(light, 'font.mono');
-    const serif = sem(light, 'font.serif');
-    maps('tokens.fonts.body', 'semantic.font.sans');
-    maps('tokens.fonts.heading', 'semantic.font.{display,sans}');
-    maps('tokens.fonts.mono', 'semantic.font.mono');
-    if (sans) {
-      put('fonts', 'body', fontStack(sans));
-      row('fonts.body', 'semantic.font.sans', 'native');
-    }
-    if (display ?? sans) {
-      put('fonts', 'heading', fontStack(display ?? sans));
-      row('fonts.heading', display ? 'semantic.font.display' : 'semantic.font.sans', 'native', display ? undefined : 'no display face authored: headings take the sans');
-    }
-    if (mono) {
-      put('fonts', 'mono', fontStack(mono));
-      row('fonts.mono', 'semantic.font.mono', 'native');
-    }
-    if (serif) {
-      put('fonts', 'serif', fontStack(serif));
-      row('fonts.serif', 'semantic.font.serif', 'native', 'an extra key: Chakra has no serif face of its own');
-    }
-
-    for (const k of SCALES.fontSizes) {
-      maps(`tokens.fontSizes.${k}`, `semantic.type.size.${k}`);
-      const v = sem(light, `type.size.${k}`);
-      if (v === undefined) continue;
-      put('fontSizes', k, String(v));
-      row(`fontSizes.${k}`, `semantic.type.size.${k}`, 'native');
-    }
-    for (const [chakra, rung] of FONT_WEIGHTS) {
-      maps(`tokens.fontWeights.${chakra}`, `semantic.type.weight.${rung}`);
-      const v = sem(light, `type.weight.${rung}`);
-      if (v === undefined) continue;
-      put('fontWeights', chakra, String(v));
-      row(`fontWeights.${chakra}`, `semantic.type.weight.${rung}`, 'native');
-    }
-    for (const [chakra, rung] of LINE_HEIGHTS) {
-      maps(`tokens.lineHeights.${chakra}`, `semantic.type.leading.${rung}`);
-      const v = sem(light, `type.leading.${rung}`);
-      if (v === undefined) continue;
-      put('lineHeights', chakra, v);
-      row(`lineHeights.${chakra}`, `semantic.type.leading.${rung}`, 'approximated', "by rank: three catalog rungs for Chakra's five; Chakra's text styles carry their own line heights, so leading does not reach them");
-    }
-    for (const [chakra, rung] of LETTER_SPACINGS) {
-      maps(`tokens.letterSpacings.${chakra}`, `semantic.type.tracking.${rung}`);
-      const v = sem(light, `type.tracking.${rung}`);
-      if (v === undefined) continue;
-      put('letterSpacings', chakra, String(v));
-      row(`letterSpacings.${chakra}`, `semantic.type.tracking.${rung}`, 'native', chakra === 'normal' ? 'an extra key: Chakra has no normal rung' : undefined);
-    }
-
-    for (const k of SCALES.radii) {
-      maps(`tokens.radii.${k}`, `semantic.radius.${k}`);
-      const v = sem(light, `radius.${k}`);
-      if (v === undefined) continue;
-      put('radii', k, String(v));
-      row(`radii.${k}`, `semantic.radius.${k}`, 'native');
-    }
-
-    const spaceKeys = [...light.keys()]
-      .map((k) => /^semantic\.space\.(\d+)$/.exec(k)?.[1])
-      .filter((k) => k !== undefined)
-      .sort((a, b) => Number(a) - Number(b));
-    for (const k of spaceKeys) {
-      put('spacing', k, String(sem(light, `space.${k}`)));
-      row(`spacing.${k}`, `semantic.space.${k}`, 'native');
-    }
-
-    for (const [chakra, rung, cls, note] of DURATIONS) {
-      maps(`tokens.durations.${chakra}`, `semantic.duration.${rung}`);
-      const v = sem(light, `duration.${rung}`);
-      if (v === undefined) continue;
-      put('durations', chakra, String(v));
-      row(`durations.${chakra}`, `semantic.duration.${rung}`, cls, note);
-    }
-    for (const [chakra, rung] of EASINGS) {
-      maps(`tokens.easings.${chakra}`, `semantic.easing.${rung}`);
-      const v = sem(light, `easing.${rung}`);
-      if (v === undefined) continue;
-      put('easings', chakra, String(v));
-      row(`easings.${chakra}`, `semantic.easing.${rung}`, 'native', ['emphasized', 'spring'].includes(chakra) ? 'an extra key' : undefined);
-    }
-    for (const k of Z) {
-      maps(`tokens.zIndex.${k}`, `semantic.z.${k}`);
-      const v = sem(light, `z.${k}`);
-      if (v === undefined) continue;
-      put('zIndex', k, v);
-      row(`zIndex.${k}`, `semantic.z.${k}`, 'native');
-    }
-
-    const breakpoints = {};
-    for (const k of BREAKPOINTS) {
-      maps(`breakpoints.${k}`, `semantic.breakpoint.${k}`);
-      const v = sem(light, `breakpoint.${k}`);
-      if (v === undefined) continue;
-      breakpoints[k] = String(v);
-      row(`breakpoints.${k}`, `semantic.breakpoint.${k}`, 'native');
-    }
-    if (sem(light, 'breakpoint.xs') !== undefined) {
-      row('(breakpoint xs)', 'semantic.breakpoint.xs', 'dropped', "Chakra's smallest breakpoint is base (0), then sm");
-    }
-
-    // ---------- semantic radii and shadows ----------
-    const semanticTokens = { colors };
-    const radii = {};
-    for (const [key, slot, cls, note] of [
-      ['l1', 'radius.sm', 'approximated', 'l1 rounds inner items (menu and listbox items, checkmarks, tags); the small radius is the nearest rung'],
-      ['l2', 'radius.control', 'approximated', 'l2 rounds controls (buttons, inputs, selects) and also badges, tooltips and toasts'],
-      ['l3', 'radius.container', 'native', 'l3 rounds containers (cards, dialogs, popovers, drawers, alerts)'],
-    ]) {
-      maps(`semanticTokens.radii.${key}`, `semantic.${slot}`);
-      const v = sem(light, slot);
-      if (v === undefined) continue;
-      radii[key] = { value: String(v) };
-      row(`radii.${key} (semantic)`, `semantic.${slot}`, cls, note);
-    }
-    if (Object.keys(radii).length) semanticTokens.radii = radii;
-
-    const shadows = {};
-    for (const [key, level] of SHADOWS) {
-      maps(`semanticTokens.shadows.${key}`, `${S}elevation.${level}.shadow`);
-      const l = sem(light, `color.elevation.${level}.shadow`);
-      if (!l) continue;
-      const d = dark && sem(dark, `color.elevation.${level}.shadow`);
-      shadows[key] = { value: d ? { _light: shadowCss(l, ctx), _dark: shadowCss(d, ctx) } : shadowCss(l, ctx) };
-      row(`shadows.${key}`, `${S}elevation.${level}.shadow`, 'approximated', "by rank: four elevation shadows for Chakra's sm to xl; xs, 2xl and inset stay Chakra's");
-    }
-    if (Object.keys(shadows).length) semanticTokens.shadows = shadows;
-
-    // ---------- text styles: one per type role ----------
-    const textStyles = {};
-    const roleKeys = [...light.keys()].filter((k) => k.startsWith('semantic.type.role.')).sort();
-    for (const key of roleKeys) {
-      const t = light.get(key).value;
-      if (!t || typeof t !== 'object') continue;
-      const name = key.slice('semantic.type.role.'.length);
-      textStyles[name] = {
-        value: {
-          ...(t.fontFamily !== undefined ? { fontFamily: fontStack(t.fontFamily) } : {}),
-          ...(t.fontSize !== undefined ? { fontSize: String(t.fontSize) } : {}),
-          ...(t.fontWeight !== undefined ? { fontWeight: String(t.fontWeight) } : {}),
-          ...(t.lineHeight !== undefined ? { lineHeight: String(t.lineHeight) } : {}),
-          ...(t.letterSpacing !== undefined ? { letterSpacing: String(t.letterSpacing) } : {}),
-        },
-      };
-    }
-    if (Object.keys(textStyles).length) {
-      row('textStyles.<role>.<size>', 'semantic.type.role.*', 'native', `${Object.keys(textStyles).length} named text styles (textStyle="heading.lg"); Chakra's own size-named styles stay`);
-    }
-
-    // ---------- layer styles ----------
-    const layerStyles = {};
-    const disabled = sem(light, 'opacity.disabled');
-    if (disabled !== undefined) {
-      layerStyles.disabled = { value: { opacity: String(disabled) } };
-      row('layerStyles.disabled.opacity', 'semantic.opacity.disabled', 'native', 'every Chakra control reads the disabled layer style');
-    }
-    row('(disabled text colour)', `${S}text.disabled`, 'dropped', "Chakra dims disabled controls with the disabled layer style's opacity, not with a colour");
-
-    // ---------- recipes: routing and the component tier ----------
-    const recipes = {};
-    const slotRecipes = {};
-    const set = (root, path, value) => {
-      let node = root;
-      const keys = path.split('.');
-      for (const k of keys.slice(0, -1)) node = node[k] ??= {};
-      node[keys.at(-1)] = value;
-    };
-
-    // Route Chakra's own defaults at roles.
-    const globalCss = { html: { colorPalette: 'neutral' } };
-    row('globalCss.html.colorPalette', `${S}neutral.*`, 'native', "Chakra's default palette (gray) becomes the neutral role, so components without a colorPalette wear the design system's neutral grid");
-    for (const [status, role] of [...STATUSES, ['neutral', 'neutral']]) {
-      set(slotRecipes, `alert.variants.status.${status}.root.colorPalette`, role);
-    }
-    row('Alert status → colorPalette', `${S}{info,warning,success,danger,neutral}.*`, 'native', "Chakra hard-codes blue, orange, green, red and gray; the statuses now read the roles of the same meaning");
-    set(recipes, 'checkmark.base._invalid.colorPalette', 'danger');
-    set(recipes, 'radiomark.base._invalid.colorPalette', 'danger');
-    set(recipes, 'radiomark.base._invalid.borderColor', 'border.error');
-    row('Checkbox and Radio _invalid → colorPalette', `${S}danger.*`, 'native', 'Chakra hard-codes red on invalid checkmarks and radio marks');
-    if (scrim) {
-      set(slotRecipes, 'dialog.base.backdrop.bg', 'scrim');
-      set(slotRecipes, 'drawer.base.backdrop.bg', 'scrim');
-    }
-
-    // Control heights: semantic tier, emitted like every other scale.
-    for (const size of CONTROL_SIZES) {
-      const v = sem(light, `size.control.${size}`);
-      if (v === undefined) continue;
-      set(recipes, `button.variants.size.${size}.h`, String(v));
-      set(recipes, `button.variants.size.${size}.minW`, String(v));
-      set(recipes, `input.variants.size.${size}.--input-height`, String(v));
-    }
-    if (CONTROL_SIZES.some((s) => sem(light, `size.control.${s}`) !== undefined)) {
-      row('Button and Input size sm/md/lg height', 'semantic.size.control.{sm,md,lg}', 'native', "same rung names; Chakra's 2xs, xs, xl and 2xl keep their own heights");
-    }
-
-    // Component tier: only what the design system authored somewhere in the chain.
-    const comp = (path) => light.get(`component.${path}`);
-    const authored = (path) => {
-      const entry = comp(path);
-      if (!entry) return false;
-      const kind = entry.provenance?.kind;
-      if (kind === 'authored' || kind === 'aliased') return true;
-      const via = /^alias\((control\.[\w-]+)\)/.exec(entry.provenance?.rule ?? '')?.[1];
-      return via ? authored(via) : false;
-    };
-    const tier = [
-      ['button.radius', ['button.base.borderRadius'], 'native'],
-      ['button.padding-x', ['button.variants.size.md.px'], 'approximated', "Chakra pads each size separately and the tier has one value: it lands on the default size, md"],
-      ['control.radius', ['input.base.borderRadius', 'textarea.base.borderRadius'], 'native'],
-      ['control.padding-x', ['input.variants.size.md.px', 'textarea.variants.size.md.px'], 'approximated', 'one value for the default size, md, as for buttons'],
-    ];
-    let tierEmitted = false;
-    for (const [path, targets, cls, note] of tier) {
-      if (!authored(path)) continue;
-      const v = String(comp(path).value);
-      for (const t of targets) set(recipes, t, v);
-      row(`recipes.${targets.join(' + recipes.')}`, `component.${path}`, cls, note);
-      tierEmitted = true;
-    }
-    if (!tierEmitted) {
-      row('(component tier)', 'component.{button,control}.*', 'native', "nothing authored: Chakra's recipes already read l2 (radius.control) and the spacing scale, so its own per-size proportions stay");
-    }
-    if (comp('control.padding-y') || comp('button.padding-y')) {
-      row('(vertical padding)', 'component.{control,button}.padding-y', 'dropped', 'Chakra buttons and inputs are height-driven: their size variants set h and px, never py');
-    }
-    const tooltipMax = comp('tooltip.max-width');
-    if (tooltipMax) {
-      set(slotRecipes, 'tooltip.base.content.maxW', String(tooltipMax.value));
-      row('slotRecipes.tooltip.base.content.maxW', 'component.tooltip.max-width', 'native', "Chakra's own ceiling is sizes.xs (20rem)");
-    }
-
-    // A slot recipe override must name its slots (Chakra's type requires it);
-    // they come from Chakra's own anatomy, so the list is never copied here.
-    // Arrays merge index by index, so the same list merges onto itself.
-    for (const name of Object.keys(slotRecipes)) slotRecipes[name] = { slots: new Raw(`${name}Anatomy.keys()`), ...slotRecipes[name] };
-
-    // ---------- what Chakra has no slot for ----------
-    row('(link colours)', `${S}link.{base,hover,visited}`, 'dropped', "Chakra's Link reads colorPalette.fg: links follow the palette they sit in (colorPalette=\"primary\" for brand links)");
-    row('(categorical palette)', 'semantic.palette.categorical.*', 'dropped', "no chart slot in Chakra's theme");
-    row('(border widths)', 'semantic.border-width.*', 'dropped', "Chakra's recipes write borderWidth: 1px literally; its borders tokens are shorthands");
-    row('(elevation surfaces 2–5)', `${S}elevation.{2,3,4,5}.surface`, 'dropped', 'Chakra has two surfaces, bg and bg.panel');
-    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
-
-    const theme = {
-      ...(Object.keys(breakpoints).length ? { breakpoints } : {}),
-      tokens,
-      semanticTokens,
-      ...(Object.keys(textStyles).length ? { textStyles } : {}),
-      ...(Object.keys(layerStyles).length ? { layerStyles } : {}),
-      recipes,
-      slotRecipes,
-    };
-
-    // AL3: measure what was emitted against Chakra's whole theming surface
-    // (surface-inventory.json, extracted from @chakra-ui/react's defaultConfig).
-    coverage.push(...surfaceRows({ globalCss, theme }, mapped));
-
-    return {
-      files: [
-        { path: 'theme.transtyle.ts', contents: renderConfig(ctx, { globalCss, theme }, Object.keys(slotRecipes)), kind: 'source' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage, !!dark), kind: 'doc' },
-      ],
-      coverage,
-    };
+    return emitPerValue(normalized, 'brand', (view) => emitOne(view, ctx));
   },
 };
+
+function emitOne(normalized, ctx) {
+  const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
+  const dark = normalized.modes.dark;
+  const coverage = [];
+  const row = (variable, slot, cls, note) =>
+    coverage.push({ variable, slot, class: cls, ...(note ? { note } : {}) });
+  const sem = (map, path) => map?.get(`semantic.${path}`)?.value;
+  // Inventory id → the catalog slot this exporter writes it from, recorded
+  // whether or not this design system defines the slot, so an entry left on
+  // Chakra's default for want of it says which slot (surface-coverage.js).
+  const mapped = new Map();
+  const maps = (id, slot) => mapped.set(id, slot);
+
+  /** A semantic token value: `{ _light, _dark }` when the design system has both schemes. */
+  const colorToken = (path) => {
+    const l = sem(light, `color.${path}`);
+    if (!l) return undefined;
+    const d = dark && sem(dark, `color.${path}`);
+    return { value: d ? { _light: ctx.formatColor(l), _dark: ctx.formatColor(d) } : ctx.formatColor(l) };
+  };
+  const ringToken = colorToken('ring');
+
+  const roles = [...COLOR_ROLES, ...normalized.roleArchetypes.keys()].filter((r) => sem(light, `color.${r}.solid`));
+
+  // ---------- colours: one Chakra palette per role ----------
+  const colors = {};
+  for (const role of roles) {
+    const palette = {};
+    for (const p of PALETTE_KEYS) {
+      const token = p.slot ? ringToken : colorToken(`${role}.${p.cell}`);
+      if (!token) continue;
+      palette[p.key] = token;
+      row(`colors.${role}.${p.key}`, p.slot ?? `${S}${role}.${p.cell}`, p.cls, p.note);
+    }
+    colors[role] = palette;
+    row(
+      `colors.${role} (state cells)`,
+      `${S}${role}.{${UNMAPPED_CELLS.join(',')}}`,
+      'dropped',
+      'Chakra has no palette key for them: its recipes derive hover and active as solid/90 and muted, pair subtle with fg, and have no strong text rung',
+    );
+  }
+  if (!dark) {
+    row('(dark scheme)', '—', 'dropped', 'the design system publishes no dark scheme: every semantic token carries one value for both');
+  }
+
+  for (const [group, key, slot, cls, note] of GLOBAL_COLORS) {
+    maps(`semanticTokens.colors.${group}${key === 'DEFAULT' ? '' : `.${key}`}`, `${S}${slot}`);
+    const token = colorToken(slot);
+    if (!token) continue;
+    colors[group] ??= {};
+    colors[group][key] = token;
+    row(`colors.${group}${key === 'DEFAULT' ? '' : `.${key}`}`, `${S}${slot}`, cls, note);
+  }
+  for (const [status, role] of STATUSES) {
+    for (const [group, cell, note] of [
+      ['bg', 'tint'],
+      ['fg', 'text'],
+      ['border', 'solid', status === 'error' ? 'also the border of an invalid field' : undefined],
+    ]) {
+      maps(`semanticTokens.colors.${group}.${status}`, `${S}${role}.${cell}`);
+      const token = colorToken(`${role}.${cell}`);
+      if (!token) continue;
+      colors[group] ??= {};
+      colors[group][status] = token;
+      row(`colors.${group}.${status}`, `${S}${role}.${cell}`, 'native', note);
+    }
+  }
+
+  const scrim = colorToken('scrim');
+  if (scrim) {
+    colors.scrim = scrim;
+    row('colors.scrim (dialog and drawer backdrops)', `${S}scrim`, 'native', "replaces Chakra's blackAlpha.500 on both backdrops");
+  }
+
+  // ---------- tokens ----------
+  const tokens = {};
+  const put = (category, key, value) => {
+    tokens[category] ??= {};
+    tokens[category][key] = { value };
+  };
+
+  const sans = sem(light, 'font.sans');
+  const display = sem(light, 'font.display');
+  const mono = sem(light, 'font.mono');
+  const serif = sem(light, 'font.serif');
+  maps('tokens.fonts.body', 'semantic.font.sans');
+  maps('tokens.fonts.heading', 'semantic.font.{display,sans}');
+  maps('tokens.fonts.mono', 'semantic.font.mono');
+  if (sans) {
+    put('fonts', 'body', fontStack(sans));
+    row('fonts.body', 'semantic.font.sans', 'native');
+  }
+  if (display ?? sans) {
+    put('fonts', 'heading', fontStack(display ?? sans));
+    row('fonts.heading', display ? 'semantic.font.display' : 'semantic.font.sans', 'native', display ? undefined : 'no display face authored: headings take the sans');
+  }
+  if (mono) {
+    put('fonts', 'mono', fontStack(mono));
+    row('fonts.mono', 'semantic.font.mono', 'native');
+  }
+  if (serif) {
+    put('fonts', 'serif', fontStack(serif));
+    row('fonts.serif', 'semantic.font.serif', 'native', 'an extra key: Chakra has no serif face of its own');
+  }
+
+  for (const k of SCALES.fontSizes) {
+    maps(`tokens.fontSizes.${k}`, `semantic.type.size.${k}`);
+    const v = sem(light, `type.size.${k}`);
+    if (v === undefined) continue;
+    put('fontSizes', k, String(v));
+    row(`fontSizes.${k}`, `semantic.type.size.${k}`, 'native');
+  }
+  for (const [chakra, rung] of FONT_WEIGHTS) {
+    maps(`tokens.fontWeights.${chakra}`, `semantic.type.weight.${rung}`);
+    const v = sem(light, `type.weight.${rung}`);
+    if (v === undefined) continue;
+    put('fontWeights', chakra, String(v));
+    row(`fontWeights.${chakra}`, `semantic.type.weight.${rung}`, 'native');
+  }
+  for (const [chakra, rung] of LINE_HEIGHTS) {
+    maps(`tokens.lineHeights.${chakra}`, `semantic.type.leading.${rung}`);
+    const v = sem(light, `type.leading.${rung}`);
+    if (v === undefined) continue;
+    put('lineHeights', chakra, v);
+    row(`lineHeights.${chakra}`, `semantic.type.leading.${rung}`, 'approximated', "by rank: three catalog rungs for Chakra's five; Chakra's text styles carry their own line heights, so leading does not reach them");
+  }
+  for (const [chakra, rung] of LETTER_SPACINGS) {
+    maps(`tokens.letterSpacings.${chakra}`, `semantic.type.tracking.${rung}`);
+    const v = sem(light, `type.tracking.${rung}`);
+    if (v === undefined) continue;
+    put('letterSpacings', chakra, String(v));
+    row(`letterSpacings.${chakra}`, `semantic.type.tracking.${rung}`, 'native', chakra === 'normal' ? 'an extra key: Chakra has no normal rung' : undefined);
+  }
+
+  for (const k of SCALES.radii) {
+    maps(`tokens.radii.${k}`, `semantic.radius.${k}`);
+    const v = sem(light, `radius.${k}`);
+    if (v === undefined) continue;
+    put('radii', k, String(v));
+    row(`radii.${k}`, `semantic.radius.${k}`, 'native');
+  }
+
+  const spaceKeys = [...light.keys()]
+    .map((k) => /^semantic\.space\.(\d+)$/.exec(k)?.[1])
+    .filter((k) => k !== undefined)
+    .sort((a, b) => Number(a) - Number(b));
+  for (const k of spaceKeys) {
+    put('spacing', k, String(sem(light, `space.${k}`)));
+    row(`spacing.${k}`, `semantic.space.${k}`, 'native');
+  }
+
+  for (const [chakra, rung, cls, note] of DURATIONS) {
+    maps(`tokens.durations.${chakra}`, `semantic.duration.${rung}`);
+    const v = sem(light, `duration.${rung}`);
+    if (v === undefined) continue;
+    put('durations', chakra, String(v));
+    row(`durations.${chakra}`, `semantic.duration.${rung}`, cls, note);
+  }
+  for (const [chakra, rung] of EASINGS) {
+    maps(`tokens.easings.${chakra}`, `semantic.easing.${rung}`);
+    const v = sem(light, `easing.${rung}`);
+    if (v === undefined) continue;
+    put('easings', chakra, String(v));
+    row(`easings.${chakra}`, `semantic.easing.${rung}`, 'native', ['emphasized', 'spring'].includes(chakra) ? 'an extra key' : undefined);
+  }
+  for (const k of Z) {
+    maps(`tokens.zIndex.${k}`, `semantic.z.${k}`);
+    const v = sem(light, `z.${k}`);
+    if (v === undefined) continue;
+    put('zIndex', k, v);
+    row(`zIndex.${k}`, `semantic.z.${k}`, 'native');
+  }
+
+  const breakpoints = {};
+  for (const k of BREAKPOINTS) {
+    maps(`breakpoints.${k}`, `semantic.breakpoint.${k}`);
+    const v = sem(light, `breakpoint.${k}`);
+    if (v === undefined) continue;
+    breakpoints[k] = String(v);
+    row(`breakpoints.${k}`, `semantic.breakpoint.${k}`, 'native');
+  }
+  if (sem(light, 'breakpoint.xs') !== undefined) {
+    row('(breakpoint xs)', 'semantic.breakpoint.xs', 'dropped', "Chakra's smallest breakpoint is base (0), then sm");
+  }
+
+  // ---------- semantic radii and shadows ----------
+  const semanticTokens = { colors };
+  const radii = {};
+  for (const [key, slot, cls, note] of [
+    ['l1', 'radius.sm', 'approximated', 'l1 rounds inner items (menu and listbox items, checkmarks, tags); the small radius is the nearest rung'],
+    ['l2', 'radius.control', 'approximated', 'l2 rounds controls (buttons, inputs, selects) and also badges, tooltips and toasts'],
+    ['l3', 'radius.container', 'native', 'l3 rounds containers (cards, dialogs, popovers, drawers, alerts)'],
+  ]) {
+    maps(`semanticTokens.radii.${key}`, `semantic.${slot}`);
+    const v = sem(light, slot);
+    if (v === undefined) continue;
+    radii[key] = { value: String(v) };
+    row(`radii.${key} (semantic)`, `semantic.${slot}`, cls, note);
+  }
+  if (Object.keys(radii).length) semanticTokens.radii = radii;
+
+  const shadows = {};
+  for (const [key, level] of SHADOWS) {
+    maps(`semanticTokens.shadows.${key}`, `${S}elevation.${level}.shadow`);
+    const l = sem(light, `color.elevation.${level}.shadow`);
+    if (!l) continue;
+    const d = dark && sem(dark, `color.elevation.${level}.shadow`);
+    shadows[key] = { value: d ? { _light: shadowCss(l, ctx), _dark: shadowCss(d, ctx) } : shadowCss(l, ctx) };
+    row(`shadows.${key}`, `${S}elevation.${level}.shadow`, 'approximated', "by rank: four elevation shadows for Chakra's sm to xl; xs, 2xl and inset stay Chakra's");
+  }
+  if (Object.keys(shadows).length) semanticTokens.shadows = shadows;
+
+  // ---------- text styles: one per type role ----------
+  const textStyles = {};
+  const roleKeys = [...light.keys()].filter((k) => k.startsWith('semantic.type.role.')).sort();
+  for (const key of roleKeys) {
+    const t = light.get(key).value;
+    if (!t || typeof t !== 'object') continue;
+    const name = key.slice('semantic.type.role.'.length);
+    textStyles[name] = {
+      value: {
+        ...(t.fontFamily !== undefined ? { fontFamily: fontStack(t.fontFamily) } : {}),
+        ...(t.fontSize !== undefined ? { fontSize: String(t.fontSize) } : {}),
+        ...(t.fontWeight !== undefined ? { fontWeight: String(t.fontWeight) } : {}),
+        ...(t.lineHeight !== undefined ? { lineHeight: String(t.lineHeight) } : {}),
+        ...(t.letterSpacing !== undefined ? { letterSpacing: String(t.letterSpacing) } : {}),
+      },
+    };
+  }
+  if (Object.keys(textStyles).length) {
+    row('textStyles.<role>.<size>', 'semantic.type.role.*', 'native', `${Object.keys(textStyles).length} named text styles (textStyle="heading.lg"); Chakra's own size-named styles stay`);
+  }
+
+  // ---------- layer styles ----------
+  const layerStyles = {};
+  const disabled = sem(light, 'opacity.disabled');
+  if (disabled !== undefined) {
+    layerStyles.disabled = { value: { opacity: String(disabled) } };
+    row('layerStyles.disabled.opacity', 'semantic.opacity.disabled', 'native', 'every Chakra control reads the disabled layer style');
+  }
+  row('(disabled text colour)', `${S}text.disabled`, 'dropped', "Chakra dims disabled controls with the disabled layer style's opacity, not with a colour");
+
+  // ---------- recipes: routing and the component tier ----------
+  const recipes = {};
+  const slotRecipes = {};
+  const set = (root, path, value) => {
+    let node = root;
+    const keys = path.split('.');
+    for (const k of keys.slice(0, -1)) node = node[k] ??= {};
+    node[keys.at(-1)] = value;
+  };
+
+  // Route Chakra's own defaults at roles.
+  const globalCss = { html: { colorPalette: 'neutral' } };
+  row('globalCss.html.colorPalette', `${S}neutral.*`, 'native', "Chakra's default palette (gray) becomes the neutral role, so components without a colorPalette wear the design system's neutral grid");
+  for (const [status, role] of [...STATUSES, ['neutral', 'neutral']]) {
+    set(slotRecipes, `alert.variants.status.${status}.root.colorPalette`, role);
+  }
+  row('Alert status → colorPalette', `${S}{info,warning,success,danger,neutral}.*`, 'native', "Chakra hard-codes blue, orange, green, red and gray; the statuses now read the roles of the same meaning");
+  set(recipes, 'checkmark.base._invalid.colorPalette', 'danger');
+  set(recipes, 'radiomark.base._invalid.colorPalette', 'danger');
+  set(recipes, 'radiomark.base._invalid.borderColor', 'border.error');
+  row('Checkbox and Radio _invalid → colorPalette', `${S}danger.*`, 'native', 'Chakra hard-codes red on invalid checkmarks and radio marks');
+  if (scrim) {
+    set(slotRecipes, 'dialog.base.backdrop.bg', 'scrim');
+    set(slotRecipes, 'drawer.base.backdrop.bg', 'scrim');
+  }
+
+  // Control heights: semantic tier, emitted like every other scale.
+  for (const size of CONTROL_SIZES) {
+    const v = sem(light, `size.control.${size}`);
+    if (v === undefined) continue;
+    set(recipes, `button.variants.size.${size}.h`, String(v));
+    set(recipes, `button.variants.size.${size}.minW`, String(v));
+    set(recipes, `input.variants.size.${size}.--input-height`, String(v));
+  }
+  if (CONTROL_SIZES.some((s) => sem(light, `size.control.${s}`) !== undefined)) {
+    row('Button and Input size sm/md/lg height', 'semantic.size.control.{sm,md,lg}', 'native', "same rung names; Chakra's 2xs, xs, xl and 2xl keep their own heights");
+  }
+
+  // Component tier: only what the design system authored somewhere in the chain.
+  const comp = (path) => light.get(`component.${path}`);
+  const authored = (path) => {
+    const entry = comp(path);
+    if (!entry) return false;
+    const kind = entry.provenance?.kind;
+    if (kind === 'authored' || kind === 'aliased') return true;
+    const via = /^alias\((control\.[\w-]+)\)/.exec(entry.provenance?.rule ?? '')?.[1];
+    return via ? authored(via) : false;
+  };
+  const tier = [
+    ['button.radius', ['button.base.borderRadius'], 'native'],
+    ['button.padding-x', ['button.variants.size.md.px'], 'approximated', "Chakra pads each size separately and the tier has one value: it lands on the default size, md"],
+    ['control.radius', ['input.base.borderRadius', 'textarea.base.borderRadius'], 'native'],
+    ['control.padding-x', ['input.variants.size.md.px', 'textarea.variants.size.md.px'], 'approximated', 'one value for the default size, md, as for buttons'],
+  ];
+  let tierEmitted = false;
+  for (const [path, targets, cls, note] of tier) {
+    if (!authored(path)) continue;
+    const v = String(comp(path).value);
+    for (const t of targets) set(recipes, t, v);
+    row(`recipes.${targets.join(' + recipes.')}`, `component.${path}`, cls, note);
+    tierEmitted = true;
+  }
+  if (!tierEmitted) {
+    row('(component tier)', 'component.{button,control}.*', 'native', "nothing authored: Chakra's recipes already read l2 (radius.control) and the spacing scale, so its own per-size proportions stay");
+  }
+  if (comp('control.padding-y') || comp('button.padding-y')) {
+    row('(vertical padding)', 'component.{control,button}.padding-y', 'dropped', 'Chakra buttons and inputs are height-driven: their size variants set h and px, never py');
+  }
+  const tooltipMax = comp('tooltip.max-width');
+  if (tooltipMax) {
+    set(slotRecipes, 'tooltip.base.content.maxW', String(tooltipMax.value));
+    row('slotRecipes.tooltip.base.content.maxW', 'component.tooltip.max-width', 'native', "Chakra's own ceiling is sizes.xs (20rem)");
+  }
+
+  // A slot recipe override must name its slots (Chakra's type requires it);
+  // they come from Chakra's own anatomy, so the list is never copied here.
+  // Arrays merge index by index, so the same list merges onto itself.
+  for (const name of Object.keys(slotRecipes)) slotRecipes[name] = { slots: new Raw(`${name}Anatomy.keys()`), ...slotRecipes[name] };
+
+  // ---------- what Chakra has no slot for ----------
+  row('(link colours)', `${S}link.{base,hover,visited}`, 'dropped', "Chakra's Link reads colorPalette.fg: links follow the palette they sit in (colorPalette=\"primary\" for brand links)");
+  row('(categorical palette)', 'semantic.palette.categorical.*', 'dropped', "no chart slot in Chakra's theme");
+  row('(border widths)', 'semantic.border-width.*', 'dropped', "Chakra's recipes write borderWidth: 1px literally; its borders tokens are shorthands");
+  row('(elevation surfaces 2–5)', `${S}elevation.{2,3,4,5}.surface`, 'dropped', 'Chakra has two surfaces, bg and bg.panel');
+  coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', 'brand'], {
+    contrast: "Chakra's semantic tokens switch on the _light / _dark conditions this theme uses; a contrast condition is not emitted yet",
+    motion: "this theme emits no duration tokens, so reduced-motion values have nowhere to go",
+  }));
+
+  const theme = {
+    ...(Object.keys(breakpoints).length ? { breakpoints } : {}),
+    tokens,
+    semanticTokens,
+    ...(Object.keys(textStyles).length ? { textStyles } : {}),
+    ...(Object.keys(layerStyles).length ? { layerStyles } : {}),
+    recipes,
+    slotRecipes,
+  };
+
+  // AL3: measure what was emitted against Chakra's whole theming surface
+  // (surface-inventory.json, extracted from @chakra-ui/react's defaultConfig).
+  coverage.push(...surfaceRows({ globalCss, theme }, mapped));
+
+  return {
+    files: [
+      { path: 'theme.transtyle.ts', contents: renderConfig(ctx, { globalCss, theme }, Object.keys(slotRecipes)), kind: 'source' },
+      { path: 'usage.md', contents: renderUsage(ctx, coverage, !!dark), kind: 'doc' },
+    ],
+    coverage,
+  };
+}
 
 // ---------- helpers ----------
 

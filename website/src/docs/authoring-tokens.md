@@ -170,6 +170,22 @@ The **inline** alternative, via the sanctioned `$extensions` mechanism, keeps a 
 
 Both forms produce the identical internal representation and may be mixed; later layers win, with a warning (`TST1108`) when a mode value is overridden.
 
+### A value for a combination of modes
+
+A layer may name several dimensions. Its values then apply to that one combination only, which is how a high-contrast palette gets its dark version, or a brand its own dark color:
+
+```json
+"tokens": [
+  "tokens/base.tokens.json",
+  { "files": "tokens/globex.tokens.json", "mode": { "brand": "globex" } },
+  { "files": "tokens/globex-dark.tokens.json", "mode": { "color-scheme": "dark", "brand": "globex" } }
+]
+```
+
+`globex.tokens.json` holds Globex's light primary, `globex-dark.tokens.json` its dark one. Leave the second file out and dark + Globex gets Globex's light primary, with a `TST1125` warning naming the combination. See [Combo layers](/docs/configuration/#combo-layers), and [Contrast, motion and brand](/docs/configuration/#contrast-motion-and-brand) for what the exporters do with those three dimensions.
+
+Another way to give each brand its own dark value, with no combo layer: keep the brand's colors at the option tier, overridden per brand (`option.color.brand.accent` and `option.color.brand.accent-dark` in `globex.tokens.json`), and let the semantic token alias one per scheme (`primary.solid` aliases `accent` in light and `accent-dark` in dark). A brand layer can only change tokens the base already defines (`TST1107` otherwise), so every brand overrides the same option tokens.
+
 ## The layered layout (recommended for teams)
 
 The pattern the [Cathode example](/docs/examples/#cathode--the-hostile-example) demonstrates — three kinds of files, every one pure DTCG:

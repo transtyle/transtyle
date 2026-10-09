@@ -6,7 +6,7 @@
  * options.era in transtyle.config.json — never via CLI flags.
  */
 
-import { droppedDimensions, entryNotes, blockComment, fontNames, fontStack } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, blockComment, fontNames, fontStack, modeBlocks, formatModeBlocks, modeBlocksUsage } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
@@ -107,12 +107,34 @@ export default {
     }
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
-    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
+    // `contrast` and `brand` are expressed as attribute blocks next to `.dark`
+    // (#49, #50); shadcn's theme has no duration variable for `motion`.
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', 'contrast', 'brand'], {
+      motion: "shadcn's theme carries no duration or easing variable, so reduced-motion values have nowhere to go",
+    }));
+
+    // Blocks for the extra dimensions: the same variables, rendered per combo.
+    const fmt = era === 'tailwind-v4' ? (c) => ctx.formatColor(c) : (c) => ctx.formatHslTriplet(c).text;
+    const blocks = modeBlocks(normalized, {
+      dims: ['contrast', 'brand'],
+      darkSelector: dark ? '.dark' : undefined,
+      render: (map) =>
+        vars.flatMap((v) => {
+          const e = map.get(v.slot);
+          if (!e?.value) return [];
+          const value = fmt(e.value);
+          return [{ name: v.css, value, line: cssLine(v.css, value, v.slot, e.provenance.kind) }];
+        }),
+    });
 
     // EMIT: era profile decides artifacts
-    const shared = { vars, radius, fontSans, fontMono, ctx };
+    const shared = { vars, radius, fontSans, fontMono, ctx, blocks };
     const files = era === 'tailwind-v4' ? emitV4(shared) : emitV3(shared);
-    files.push({ path: 'usage.md', contents: renderUsage(ctx, coverage, era, Boolean(normalized.modes.dark)), kind: 'doc' });
+    files.push({
+      path: 'usage.md',
+      contents: renderUsage(ctx, coverage, era, Boolean(normalized.modes.dark)) + modeBlocksUsage(normalized, blocks, { scheme: 'the `dark` class' }),
+      kind: 'doc',
+    });
     const collapsed = radius && collapsedRungs(radius.value, era, ctx.units);
     const diagnostics = collapsed ? [collapsed] : [];
     return { files, coverage, diagnostics };
@@ -175,7 +197,7 @@ function colorBlocks(vars, fmt) {
 
 // ---------- tailwind-v4 profile ----------
 
-function emitV4({ vars, radius, fontSans, fontMono, ctx }) {
+function emitV4({ vars, radius, fontSans, fontMono, ctx, blocks }) {
   const lines = colorBlocks(vars, (c) => ctx.formatColor(c));
   const themeVars = vars.map((v) => `  --color${v.css.slice(1)}: var(${v.css});`);
   const extras = [];
@@ -197,6 +219,7 @@ function emitV4({ vars, radius, fontSans, fontMono, ctx }) {
     '.dark {',
     ...lines.dark,
     '}',
+    ...formatModeBlocks(blocks),
     '',
     '@theme inline {',
     ...themeVars,
@@ -209,7 +232,7 @@ function emitV4({ vars, radius, fontSans, fontMono, ctx }) {
 
 // ---------- tailwind-v3 profile ----------
 
-function emitV3({ vars, radius, fontSans, fontMono, ctx }) {
+function emitV3({ vars, radius, fontSans, fontMono, ctx, blocks }) {
   const lines = colorBlocks(vars, (c) => ctx.formatHslTriplet(c).text);
   const css = [
     header(ctx, 'tailwind-v3'),
@@ -222,6 +245,7 @@ function emitV3({ vars, radius, fontSans, fontMono, ctx }) {
     '  .dark {',
     ...lines.dark.map((l) => '  ' + l),
     '  }',
+    ...formatModeBlocks(blocks, '  '),
     '}',
     '',
   ].join('\n');

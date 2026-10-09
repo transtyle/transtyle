@@ -28,7 +28,7 @@
  *    private exporter fallback table.
  */
 
-import { droppedDimensions, entryNotes, fontStack, lineComment } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, fontStack, lineComment, emitPerValue, modeBlocks, formatModeBlocks, modeBlocksUsage } from '@transtyle/ir';
 import { componentVariables, componentCssBlocks, buttonVariantBlocks } from './components.js';
 
 const S = 'semantic.color.';
@@ -55,76 +55,167 @@ export default {
   name: 'bootstrap',
 
   emit(normalized, ctx) {
-    // Mode polarity: bind mode NAMES (ir.md#modes) — :root/[data-bs-theme=light]
-    // is always the light map, even for dark-native design systems.
-    const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
-    const dark = normalized.modes.dark;
-    const r = resolve(light, dark, ctx);
-    // A catalog slot's own $description / $deprecated (#30), as Sass `//`
-    // lines for the declarations that map exactly one slot.
-    r.notes = (slot) => entryNotes(light.get(slot)).map(lineComment);
-    // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
-    // no-op unless the compile actually declares one, e.g. `density`.
-    r.coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
-
-    // AL5: a semantic slot an exporter reads can legitimately be unauthored and
-    // underivable — `semantic.color.border` is aliased in every example, but a
-    // minimal design system has none, and `$border-color: undefined;` is not a
-    // stylesheet. Dropping the declaration is right: Bootstrap's own default
-    // then applies, which is exactly what "we have nothing to say about this"
-    // should mean. Each dropped declaration becomes a coverage row, so it is
-    // visible rather than merely absent. Guarded repo-wide by check:minimal-ds.
-    const drop = (name, note) => {
-      // Reconcile with the row the resolution pass already wrote (AL5 sweep):
-      // pushing a second row left `$border-color` reported as BOTH `native`
-      // and `dropped` in the same report. The declaration is the ground
-      // truth — if it isn't in the file, no earlier claim about it survives.
-      const existing = r.coverage.filter((c) => c.variable === name);
-      if (existing.length) {
-        for (const c of existing) {
-          c.class = 'dropped';
-          c.slot = '—';
-          delete c.slots;
-          delete c.via;
-          c.note = note;
-        }
-      } else {
-        r.coverage.push({ variable: name, slot: '—', class: 'dropped', note });
-      }
+    // `brand` (#49): Sass has no runtime axis, so the Sass path is emitted once
+    // per brand (`_variables.transtyle.<brand>.scss`, file-per-value), while
+    // `bootstrap-theme.css` stays one file with a `[data-brand]` block per
+    // brand, like the other CSS targets. Without a brand dimension this is the
+    // single emit it always was.
+    if ((normalized.dimensions?.brand?.values.length ?? 0) < 2) return emitAll(normalized, ctx);
+    const all = emitAll(normalized, ctx);
+    const usage = all.files.find((f) => f.path === 'usage.md');
+    const sass = emitPerValue(normalized, 'brand', (view) => {
+      const out = emitAll(view, ctx);
+      return { ...out, files: [...out.files.filter((f) => f.path.endsWith('.scss')), usage] };
+    });
+    return {
+      files: [...sass.files.filter((f) => f.path !== 'usage.md'), ...all.files.filter((f) => f.path.endsWith('.css')), ...sass.files.filter((f) => f.path === 'usage.md')],
+      coverage: all.coverage,
+      diagnostics: sass.diagnostics,
     };
-    // A line can hold several declarations (`--bs-dark: …;  --bs-dark-rgb: …;`)
-    // and end with a comment: only the undefined declarations go, each under
-    // its own name, and the comment goes with the last of them (#23).
-    const dropUndefined = (contents, file) =>
-      contents
-        .split('\n')
-        .flatMap((l) => {
-          if (!/:\s*undefined\s*;/.test(l)) return [l];
-          const indent = /^\s*/.exec(l)[0];
-          const comment = /\s+(\/\/.*|\/\*.*\*\/)$/.exec(l);
-          const body = comment ? l.slice(0, comment.index) : l;
-          const kept = body
-            .trim()
-            .split(/(?<=;)\s+/)
-            .filter((decl) => {
-              const m = /^(--?[\w-]+|\$[\w-]+)\s*:\s*undefined\s*;$/.exec(decl);
-              if (!m) return true;
-              drop(m[1], `not emitted in ${file}: this design system provides no value for it, so Bootstrap's own default stands`);
-              return false;
-            });
-          return kept.length ? [indent + kept.join('  ') + (comment ? comment[0] : '')] : [];
-        })
-        .join('\n');
-
-    const files = [
-      { path: '_variables.transtyle.scss', contents: dropUndefined(renderVariables(r, ctx), '_variables.transtyle.scss'), kind: 'stylesheet' },
-      { path: '_maps.transtyle.scss', contents: renderMaps(r, ctx, drop), kind: 'stylesheet' },
-      { path: 'bootstrap-theme.css', contents: dropUndefined(renderCss(r, ctx), 'bootstrap-theme.css'), kind: 'stylesheet' },
-      { path: 'usage.md', contents: renderUsage(ctx, r.coverage, Boolean(normalized.modes.dark)), kind: 'doc' },
-    ];
-    return { files, coverage: r.coverage };
   },
 };
+
+function emitAll(normalized, ctx) {
+  // Mode polarity: bind mode NAMES (ir.md#modes) — :root/[data-bs-theme=light]
+  // is always the light map, even for dark-native design systems.
+  const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
+  const dark = normalized.modes.dark;
+  const r = resolve(light, dark, ctx);
+  // A catalog slot's own $description / $deprecated (#30), as Sass `//`
+  // lines for the declarations that map exactly one slot.
+  r.notes = (slot) => entryNotes(light.get(slot)).map(lineComment);
+  // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
+  // no-op unless the compile actually declares one, e.g. `density`.
+  // `contrast` and `brand` are blocks in bootstrap-theme.css (#49, #50);
+  // `motion` is Bootstrap's own reduced-motion switch (below).
+  r.coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', 'contrast', 'motion', 'brand']));
+  r.coverage.push(...extraDimensionRows(normalized));
+  r.blocks = modeBlocks(normalized, {
+    dims: ['contrast', 'brand'],
+    darkSelector: dark ? '[data-bs-theme="dark"]' : undefined,
+    render: (map, { dark: isDark }) => cssEntries(map, isDark, ctx),
+  });
+
+  // AL5: a semantic slot an exporter reads can legitimately be unauthored and
+  // underivable — `semantic.color.border` is aliased in every example, but a
+  // minimal design system has none, and `$border-color: undefined;` is not a
+  // stylesheet. Dropping the declaration is right: Bootstrap's own default
+  // then applies, which is exactly what "we have nothing to say about this"
+  // should mean. Each dropped declaration becomes a coverage row, so it is
+  // visible rather than merely absent. Guarded repo-wide by check:minimal-ds.
+  const drop = (name, note) => {
+    // Reconcile with the row the resolution pass already wrote (AL5 sweep):
+    // pushing a second row left `$border-color` reported as BOTH `native`
+    // and `dropped` in the same report. The declaration is the ground
+    // truth — if it isn't in the file, no earlier claim about it survives.
+    const existing = r.coverage.filter((c) => c.variable === name);
+    if (existing.length) {
+      for (const c of existing) {
+        c.class = 'dropped';
+        c.slot = '—';
+        delete c.slots;
+        delete c.via;
+        c.note = note;
+      }
+    } else {
+      r.coverage.push({ variable: name, slot: '—', class: 'dropped', note });
+    }
+  };
+  // A line can hold several declarations (`--bs-dark: …;  --bs-dark-rgb: …;`)
+  // and end with a comment: only the undefined declarations go, each under
+  // its own name, and the comment goes with the last of them (#23).
+  const dropUndefined = (contents, file) =>
+    contents
+      .split('\n')
+      .flatMap((l) => {
+        if (!/:\s*undefined\s*;/.test(l)) return [l];
+        const indent = /^\s*/.exec(l)[0];
+        const comment = /\s+(\/\/.*|\/\*.*\*\/)$/.exec(l);
+        const body = comment ? l.slice(0, comment.index) : l;
+        const kept = body
+          .trim()
+          .split(/(?<=;)\s+/)
+          .filter((decl) => {
+            const m = /^(--?[\w-]+|\$[\w-]+)\s*:\s*undefined\s*;$/.exec(decl);
+            if (!m) return true;
+            drop(m[1], `not emitted in ${file}: this design system provides no value for it, so Bootstrap's own default stands`);
+            return false;
+          });
+        return kept.length ? [indent + kept.join('  ') + (comment ? comment[0] : '')] : [];
+      })
+      .join('\n');
+
+  const files = [
+    { path: '_variables.transtyle.scss', contents: dropUndefined(renderVariables(r, ctx), '_variables.transtyle.scss'), kind: 'stylesheet' },
+    { path: '_maps.transtyle.scss', contents: renderMaps(r, ctx, drop), kind: 'stylesheet' },
+    { path: 'bootstrap-theme.css', contents: dropUndefined(renderCss(r, ctx), 'bootstrap-theme.css'), kind: 'stylesheet' },
+    {
+      path: 'usage.md',
+      contents: renderUsage(ctx, r.coverage, Boolean(normalized.modes.dark)) + modeBlocksUsage(normalized, r.blocks, { scheme: '`data-bs-theme="dark"`' }),
+      kind: 'doc',
+    },
+  ];
+  return { files, coverage: r.coverage };
+}
+
+/**
+ * Coverage rows for the reserved dimensions Bootstrap expresses in a way that
+ * isn't a plain block (#50). `contrast`: the blocks are on the CSS path; the
+ * Sass path compiles the standard values. `motion`: Bootstrap's own
+ * `$enable-reduced-motion` (on by default) removes every transition under
+ * `prefers-reduced-motion: reduce`, which is exactly a reduced combo whose
+ * durations are all 0ms, and an approximation of one that only shortens them.
+ */
+function extraDimensionRows(normalized) {
+  const rows = [];
+  const values = (d) => normalized.dimensions?.[d]?.values ?? [];
+  if (values('contrast').length > 1) {
+    rows.push({
+      variable: '(mode:contrast)',
+      slot: '—',
+      class: 'approximated',
+      note: 'the CSS path (bootstrap-theme.css) carries the contrast blocks; the Sass path compiles the standard-contrast values, so load bootstrap-theme.css after a Sass build to get them',
+    });
+  }
+  if (values('motion').includes('reduced')) {
+    const reduced = (normalized.allCombos ?? []).filter((k) => normalized.comboDims[k]?.motion === 'reduced');
+    const allZero = reduced.every((k) =>
+      [...normalized.modes[k].entries()].filter(([p]) => p.startsWith('semantic.duration.')).every(([, e]) => parseFloat(e.value) === 0),
+    );
+    rows.push(
+      allZero
+        ? { variable: '(mode:motion)', slot: 'semantic.duration.*', class: 'native', note: "Bootstrap's own $enable-reduced-motion turns every transition off under prefers-reduced-motion: reduce, which is what this design system's reduced durations (all 0ms) ask for" }
+        : { variable: '(mode:motion)', slot: 'semantic.duration.*', class: 'approximated', note: "Bootstrap's own $enable-reduced-motion turns every transition off under prefers-reduced-motion: reduce, while this design system authors shorter, non-zero reduced durations" },
+    );
+  }
+  return rows;
+}
+
+/**
+ * The declarations bootstrap-theme.css writes for one resolved mode map, as
+ * modeBlocks() entries: the variable block (light or dark shape) plus the
+ * button variant blocks, each declaration on its own line. A declaration with
+ * no value is left out, as dropUndefined() does for the main blocks.
+ */
+function cssEntries(map, isDark, ctx) {
+  const r = resolve(map, undefined, ctx);
+  const out = [];
+  const decls = (line, scope) => {
+    for (const m of line.matchAll(/(--[\w-]+):\s*([^;]*);/g)) {
+      if (/undefined/.test(m[2])) continue;
+      out.push({ name: m[1], value: m[2], line: `  ${m[1]}: ${m[2]};`, ...(scope ? { scope } : {}) });
+    }
+  };
+  for (const line of modeBlockLines(r.light, isDark, r.hx)) decls(line);
+  let scope = null;
+  for (const line of buttonVariantBlocks(ROLES, r.gridCell(map), rgbTriplet)) {
+    const open = /^(\S.*)\s*\{$/.exec(line);
+    if (open) scope = ` ${open[1].trim()}`;
+    else if (line === '}') scope = null;
+    else decls(line, scope);
+  }
+  return out;
+}
 
 // ---------- resolution ----------
 
@@ -575,55 +666,58 @@ function renderMaps(r, ctx, drop) {
 
 // ---------- bootstrap-theme.css (CSS-variable path) ----------
 
+/** The variable declarations of one mode block of bootstrap-theme.css (light shape, or dark shape). */
+function modeBlockLines(M, isDark, hx) {
+  const lines = [];
+  if (!isDark) {
+    for (const name of [...ROLES, 'light', 'dark']) {
+      const h = hx(M.roles[name].base);
+      lines.push(`  --bs-${name}: ${h};  --bs-${name}-rgb: ${rgbTriplet(h)};`);
+    }
+    lines.push('');
+  }
+  for (const name of [...ROLES, 'light', 'dark']) {
+    const x = M.roles[name];
+    lines.push(
+      `  --bs-${name}-text-emphasis: ${hx(x.text)};  --bs-${name}-bg-subtle: ${hx(x.bgSubtle)};  --bs-${name}-border-subtle: ${hx(x.borderSubtle)};`,
+    );
+  }
+  lines.push('');
+  const bg = hx(M.bodyBg),
+    color = hx(M.bodyColor),
+    emph = hx(M.emphasis);
+  lines.push(`  --bs-body-bg: ${bg};  --bs-body-bg-rgb: ${rgbTriplet(bg)};`);
+  lines.push(`  --bs-body-color: ${color};  --bs-body-color-rgb: ${rgbTriplet(color)};`);
+  lines.push(`  --bs-emphasis-color: ${emph};  --bs-emphasis-color-rgb: ${rgbTriplet(emph)};`);
+  lines.push(`  --bs-secondary-color: ${hx(M.secondaryColor)};  /* text.muted */`);
+  lines.push(`  --bs-secondary-bg: ${hx(M.secondaryBg)};  /* neutral.tint */`);
+  lines.push(`  --bs-tertiary-bg: ${hx(M.tertiaryBg)};  /* elevation.1.surface */`);
+  lines.push(`  --bs-border-color: ${hx(M.border)};  /* border */`);
+  lines.push('');
+  // Link asymmetry (F13): light links ← primary; dark links ← ring[dark]
+  // because CDN users have Bootstrap's stock literals baked in.
+  const link = isDark ? hx(M.ring) : hx(M.primary);
+  const linkHover = isDark ? hx(M.ringHover) : hx(M.primaryHover);
+  lines.push(`  --bs-link-color: ${link};  --bs-link-color-rgb: ${rgbTriplet(link)};`);
+  lines.push(
+    `  --bs-link-hover-color: ${linkHover};  --bs-link-hover-color-rgb: ${rgbTriplet(linkHover)};`,
+  );
+  lines.push(
+    `  --bs-focus-ring-color: rgba(${rgbTriplet(isDark ? hx(M.ring) : hx(M.primary))}, 0.25);`,
+  );
+  lines.push('');
+  for (const s of SHADOWS) {
+    const alpha = isDark ? s.dark : s.light;
+    lines.push(
+      `  --bs-box-shadow${s.name ? '-' + s.name : ''}: ${s.geometry} rgba(${rgbTriplet(hx(M.scrim))}, ${alpha});`,
+    );
+  }
+  return lines;
+}
+
 function renderCss(r, ctx) {
   const { hx } = r;
-  const modeBlock = (M, isDark) => {
-    const lines = [];
-    if (!isDark) {
-      for (const name of [...ROLES, 'light', 'dark']) {
-        const h = hx(M.roles[name].base);
-        lines.push(`  --bs-${name}: ${h};  --bs-${name}-rgb: ${rgbTriplet(h)};`);
-      }
-      lines.push('');
-    }
-    for (const name of [...ROLES, 'light', 'dark']) {
-      const x = M.roles[name];
-      lines.push(
-        `  --bs-${name}-text-emphasis: ${hx(x.text)};  --bs-${name}-bg-subtle: ${hx(x.bgSubtle)};  --bs-${name}-border-subtle: ${hx(x.borderSubtle)};`,
-      );
-    }
-    lines.push('');
-    const bg = hx(M.bodyBg),
-      color = hx(M.bodyColor),
-      emph = hx(M.emphasis);
-    lines.push(`  --bs-body-bg: ${bg};  --bs-body-bg-rgb: ${rgbTriplet(bg)};`);
-    lines.push(`  --bs-body-color: ${color};  --bs-body-color-rgb: ${rgbTriplet(color)};`);
-    lines.push(`  --bs-emphasis-color: ${emph};  --bs-emphasis-color-rgb: ${rgbTriplet(emph)};`);
-    lines.push(`  --bs-secondary-color: ${hx(M.secondaryColor)};  /* text.muted */`);
-    lines.push(`  --bs-secondary-bg: ${hx(M.secondaryBg)};  /* neutral.tint */`);
-    lines.push(`  --bs-tertiary-bg: ${hx(M.tertiaryBg)};  /* elevation.1.surface */`);
-    lines.push(`  --bs-border-color: ${hx(M.border)};  /* border */`);
-    lines.push('');
-    // Link asymmetry (F13): light links ← primary; dark links ← ring[dark]
-    // because CDN users have Bootstrap's stock literals baked in.
-    const link = isDark ? hx(M.ring) : hx(M.primary);
-    const linkHover = isDark ? hx(M.ringHover) : hx(M.primaryHover);
-    lines.push(`  --bs-link-color: ${link};  --bs-link-color-rgb: ${rgbTriplet(link)};`);
-    lines.push(
-      `  --bs-link-hover-color: ${linkHover};  --bs-link-hover-color-rgb: ${rgbTriplet(linkHover)};`,
-    );
-    lines.push(
-      `  --bs-focus-ring-color: rgba(${rgbTriplet(isDark ? hx(M.ring) : hx(M.primary))}, 0.25);`,
-    );
-    lines.push('');
-    for (const s of SHADOWS) {
-      const alpha = isDark ? s.dark : s.light;
-      lines.push(
-        `  --bs-box-shadow${s.name ? '-' + s.name : ''}: ${s.geometry} rgba(${rgbTriplet(hx(M.scrim))}, ${alpha});`,
-      );
-    }
-    return lines;
-  };
+  const modeBlock = (M, isDark) => modeBlockLines(M, isDark, hx);
 
   const lines = [
     '/*',
@@ -676,6 +770,9 @@ function renderCss(r, ctx) {
       }),
     );
   }
+  // Blocks for `contrast` and `brand` (#49, #50): variable blocks and button
+  // variant blocks per combination, after everything they refine.
+  lines.push(...formatModeBlocks(r.blocks ?? []));
   lines.push('');
   return lines.join('\n');
 }

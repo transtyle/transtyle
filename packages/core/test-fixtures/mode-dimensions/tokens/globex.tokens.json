@@ -1,0 +1,8 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "primary": { "solid": { "$value": "{option.color.violet.600}" } }
+    }
+  }
+}

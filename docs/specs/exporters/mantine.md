@@ -130,6 +130,10 @@ Like Bootstrap and PrimeNG, Mantine carries a checked-in surface inventory, `pac
 
 The 31 kept on every example are behaviour switches with no design value (`focusRing`, `focusClassName`, `activeClassName`, `respectReducedMotion`, `cursorType`, `fontSmoothing`), slots the catalog has no concept for (`headings.textWrap`, the gradient variant's `defaultGradient`, `luminanceThreshold`, `scale`), Mantine's `white` and `black` (their colours are set through the resolver instead), the `red` and `teal` palettes (the page reads them only for the error and success colours, which are set from `danger.text` and `success.text`), the five z-index variables (not read by Mantine's stylesheet: `dropped`) and each scheme's `--mantine-color-scheme` name. GOV.UK adds its missing dark scheme and `font.mono`.
 
+## Reserved dimensions: contrast, motion, brand
+
+`theme.transtyle.ts` is emitted once per brand, `theme.transtyle.<brand>.ts` (file-per-value, [ADR-0015](../../adr/0015-mode-combinations.md)): pass the brand's theme to `MantineProvider`. `contrast` and `motion` are `dropped` with their reasons: Mantine's color-scheme manager knows light and dark only, and transitions are per-component props.
+
 ## Ground-truth testing
 
 `examples/*/demo/mantine/` — a Vite + React 19 app on real `@mantine/core` 9 components, rendering the Nimbus Console. `main.tsx` passes `theme` and `cssVariablesResolver` to `<MantineProvider>` exactly as `usage.md` prescribes; the mode toggle drives `useMantineColorScheme()`. The demo's build runs `tsc --noEmit` first, so the emitted module is type-checked against Mantine's own `MantineThemeOverride` and `CSSVariablesResolver` types on every CI run, the same guarantee the Angular build gives PrimeNG's preset. Cathode's filled buttons are the `autoContrast` proof: they carry the design system's dark `on-solid` text, where Mantine's default would put white on phosphor green.
