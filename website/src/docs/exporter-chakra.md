@@ -8,7 +8,7 @@ order: 17
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/chakra/">Acme</a> · <a href="/demo/cathode/chakra/">Cathode</a> · <a href="/demo/govuk/chakra/">GOV.UK</a> · <a href="/demo/carbon/chakra/">Carbon</a> — one page, four design systems, compiled to Chakra UI. <a href="/demo/">All 40 demos →</a></p>
+  <p><a href="/demo/acme/chakra/">Acme</a> · <a href="/demo/cathode/chakra/">Cathode</a> · <a href="/demo/govuk/chakra/">GOV.UK</a> · <a href="/demo/carbon/chakra/">Carbon</a> — one page, four design systems, compiled to Chakra UI. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
 [Chakra UI](https://chakra-ui.com/) v3 colours its components through eight semantic keys per palette, each with a light and a dark value, and its recipes read those keys rather than numbered shades. That is [the role grid](/docs/language/#color-roles-the-role-grid) under other names, so this exporter is the closest thing to a rename among the targets. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `config`, a `defineConfig()` object holding only overrides and additions, and `system`, Chakra's own `createSystem(defaultConfig, config)`.

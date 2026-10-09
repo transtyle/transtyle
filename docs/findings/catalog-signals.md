@@ -18,6 +18,7 @@ PrimeNG reports one row per component family, so for PrimeNG the unit is the slo
 | Radix Themes   | 1 row         | 1              | 0       |
 | PrimeNG        | 1105 slots    | 57             | 1048    |
 | Mantine        | 28 rows       | 26             | 2       |
+| Material UI    | 1 row         | 1              | 0       |
 
 Every row and slot below is reported by all the examples, except Mantine `theme.fontFamilyMonospace` (govuk only), Mantine `variables.--mantine-font-family-monospace` (govuk only), PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
 
@@ -25,24 +26,24 @@ shadcn/ui, Storybook, Chakra UI, CSS variables report no `unsupported` row: only
 
 ## By meaning
 
-| Meaning                 | Status          | Exporters | Evidence                               | Settled by                                                                           |
-| ----------------------- | --------------- | --------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
-| `color.gradient`        | open            | 1         | Mantine (3 rows)                       |                                                                                      |
-| `opacity.component`     | open            | 1         | Bootstrap (12 rows)                    |                                                                                      |
-| `opacity.compositional` | open            | 1         | Bootstrap (1 row)                      |                                                                                      |
-| `shadow.inset`          | open            | 1         | Bootstrap (1 row)                      |                                                                                      |
-| `type.text-wrap`        | open            | 1         | Mantine (2 rows)                       |                                                                                      |
-| `icon.size`             | watch           | 2         | Bootstrap (3 rows), PrimeNG (57 slots) | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
-| `color.wide-gamut`      | watch           | 1         | Radix Themes (1 row)                   | [radix](../specs/exporters/radix.md)                                                 |
-| `icon.asset`            | watch           | 1         | Bootstrap (16 rows)                    | [backlog](../backlog.md#bl-19)                                                       |
-| `style.effect`          | watch           | 1         | daisyUI (1 row)                        | [daisyui](../specs/exporters/daisyui.md)                                             |
-| `breakpoint.ladder`     | disagreement    | 1         | Bootstrap (1 row)                      | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
-| `geometry.indicator`    | disagreement    | 1         | Bootstrap (4 rows)                     | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
-| `type.display-ladder`   | disagreement    | 1         | Bootstrap (1 row)                      | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
-| `geometry.component`    | rejected        | 1         | Bootstrap (17 rows)                    | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
-| `chart.series-style`    | target-specific | 1         | Apache ECharts (1 row)                 | [echarts](../specs/exporters/echarts.md)                                             |
-| `color.named-palette`   | target-specific | 1         | Mantine (7 rows)                       | [mantine](../specs/exporters/mantine.md)                                             |
-| `target.config`         | target-specific | 1         | Mantine (14 rows)                      | [mantine](../specs/exporters/mantine.md)                                             |
+| Meaning                 | Status          | Exporters | Evidence                                 | Settled by                                                                           |
+| ----------------------- | --------------- | --------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| `opacity.component`     | open            | 2         | Bootstrap (12 rows), Material UI (1 row) |                                                                                      |
+| `color.gradient`        | open            | 1         | Mantine (3 rows)                         |                                                                                      |
+| `opacity.compositional` | open            | 1         | Bootstrap (1 row)                        |                                                                                      |
+| `shadow.inset`          | open            | 1         | Bootstrap (1 row)                        |                                                                                      |
+| `type.text-wrap`        | open            | 1         | Mantine (2 rows)                         |                                                                                      |
+| `icon.size`             | watch           | 2         | Bootstrap (3 rows), PrimeNG (57 slots)   | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
+| `color.wide-gamut`      | watch           | 1         | Radix Themes (1 row)                     | [radix](../specs/exporters/radix.md)                                                 |
+| `icon.asset`            | watch           | 1         | Bootstrap (16 rows)                      | [backlog](../backlog.md#bl-19)                                                       |
+| `style.effect`          | watch           | 1         | daisyUI (1 row)                          | [daisyui](../specs/exporters/daisyui.md)                                             |
+| `breakpoint.ladder`     | disagreement    | 1         | Bootstrap (1 row)                        | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
+| `geometry.indicator`    | disagreement    | 1         | Bootstrap (4 rows)                       | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
+| `type.display-ladder`   | disagreement    | 1         | Bootstrap (1 row)                        | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
+| `geometry.component`    | rejected        | 1         | Bootstrap (17 rows)                      | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
+| `chart.series-style`    | target-specific | 1         | Apache ECharts (1 row)                   | [echarts](../specs/exporters/echarts.md)                                             |
+| `color.named-palette`   | target-specific | 1         | Mantine (7 rows)                         | [mantine](../specs/exporters/mantine.md)                                             |
+| `target.config`         | target-specific | 1         | Mantine (14 rows)                        | [mantine](../specs/exporters/mantine.md)                                             |
 
 Statuses:
 
@@ -55,17 +56,18 @@ Statuses:
 
 ### What each meaning holds
 
-#### `color.gradient`
-
-A default gradient (start colour, end colour, angle) for a gradient variant: the IR has no gradient. Single-source so far (Mantine's `defaultGradient`). See [mantine](../specs/exporters/mantine.md).
-
-- Mantine: `theme.defaultGradient.deg`, `theme.defaultGradient.from`, `theme.defaultGradient.to`.
-
 #### `opacity.component`
 
 Per-component opacities that are not `semantic.opacity.disabled`: a veil strength, a shimmer range, a glyph alpha. A candidate only once a second target needs the identical one. See [2026-07-23-bootstrap-coverage-chase](../worklog/2026-07-23-bootstrap-coverage-chase.md).
 
 - Bootstrap: `$btn-close-focus-opacity`, `$btn-close-hover-opacity`, `$btn-close-opacity`, `$carousel-control-hover-opacity`, `$carousel-control-opacity`, `$carousel-indicator-active-opacity`, `$carousel-indicator-opacity`, `$form-floating-label-opacity`, `$hr-opacity`, `$placeholder-opacity-max`, `$placeholder-opacity-min`, `$tooltip-opacity`.
+- Material UI: `colorSchemes.*.opacity.{inputPlaceholder,inputUnderline,switchTrackDisabled,switchTrack}`.
+
+#### `color.gradient`
+
+A default gradient (start colour, end colour, angle) for a gradient variant: the IR has no gradient. Single-source so far (Mantine's `defaultGradient`). See [mantine](../specs/exporters/mantine.md).
+
+- Mantine: `theme.defaultGradient.deg`, `theme.defaultGradient.from`, `theme.defaultGradient.to`.
 
 #### `opacity.compositional`
 
@@ -185,31 +187,44 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 
 `dropped` is the opposite direction: the IR expresses something the target can't. It is not catalog-growth signal, but it says which catalog slots and mode dimensions a target leaves out. Rows naming a catalog slot or a mode dimension:
 
-| Catalog slot or mode                                                                                                                                       | Dropped by                                                                                          |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `(mode:density)` (acme only)                                                                                                                               | shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI |
-| `semantic.z.*`                                                                                                                                             | Mantine                                                                                             |
-| `component.control.{padding-x,padding-y}, component.button.padding-y`                                                                                      | Mantine                                                                                             |
-| `component.{control,button}.padding-y`                                                                                                                     | Chakra UI                                                                                           |
-| `semantic.*`                                                                                                                                               | Storybook                                                                                           |
-| `semantic.border-width.*`                                                                                                                                  | Chakra UI                                                                                           |
-| `semantic.breakpoint.2xl`                                                                                                                                  | Mantine                                                                                             |
-| `semantic.breakpoint.xs`                                                                                                                                   | Chakra UI                                                                                           |
-| `semantic.color.accent.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                   | Chakra UI                                                                                           |
-| `semantic.color.crt-amber.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}` (cathode only) | Chakra UI                                                                                           |
-| `semantic.color.danger.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                   | Chakra UI                                                                                           |
-| `semantic.color.elevation.{2,3,4,5}.surface`                                                                                                               | Chakra UI                                                                                           |
-| `semantic.color.info.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                     | Chakra UI                                                                                           |
-| `semantic.color.link.{base,hover,visited}`                                                                                                                 | Chakra UI                                                                                           |
-| `semantic.color.link.{hover,visited}`                                                                                                                      | Mantine                                                                                             |
-| `semantic.color.neutral.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                           |
-| `semantic.color.primary.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                           |
-| `semantic.color.ring`                                                                                                                                      | Mantine                                                                                             |
-| `semantic.color.secondary.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                | Chakra UI                                                                                           |
-| `semantic.color.success.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                           |
-| `semantic.color.text.disabled`                                                                                                                             | Chakra UI                                                                                           |
-| `semantic.color.warning.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                           |
-| `semantic.palette.categorical.*`                                                                                                                           | Chakra UI                                                                                           |
-| `semantic.type.role.display.*`                                                                                                                             | Mantine                                                                                             |
+| Catalog slot or mode                                                                                                                                       | Dropped by                                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `(mode:density)` (acme only)                                                                                                                               | shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI |
+| `semantic.z.*`                                                                                                                                             | Mantine                                                                                                          |
+| `semantic.border-width.*`                                                                                                                                  | Chakra UI, Material UI                                                                                           |
+| `semantic.breakpoint.2xl`                                                                                                                                  | Mantine, Material UI                                                                                             |
+| `semantic.breakpoint.xs`                                                                                                                                   | Chakra UI, Material UI                                                                                           |
+| `semantic.color.link.{base,hover,visited}`                                                                                                                 | Chakra UI, Material UI                                                                                           |
+| `semantic.palette.categorical.*`                                                                                                                           | Chakra UI, Material UI                                                                                           |
+| `component.control.{padding-x,padding-y}, component.button.padding-y`                                                                                      | Mantine                                                                                                          |
+| `component.{control,button}.padding-y`                                                                                                                     | Chakra UI                                                                                                        |
+| `semantic.*`                                                                                                                                               | Storybook                                                                                                        |
+| `semantic.color.accent.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,on-tint,text-hover,text-active,text-strong}`                      | Material UI                                                                                                      |
+| `semantic.color.accent.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                   | Chakra UI                                                                                                        |
+| `semantic.color.crt-amber.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,on-tint,text-hover,text-active,text-strong}` (cathode only)    | Material UI                                                                                                      |
+| `semantic.color.crt-amber.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}` (cathode only) | Chakra UI                                                                                                        |
+| `semantic.color.danger.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,text-hover,text-active,text-strong}`                              | Material UI                                                                                                      |
+| `semantic.color.danger.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                   | Chakra UI                                                                                                        |
+| `semantic.color.elevation.{2,3,4,5}.surface`                                                                                                               | Chakra UI                                                                                                        |
+| `semantic.color.elevation.{4,5}.surface`                                                                                                                   | Material UI                                                                                                      |
+| `semantic.color.info.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,text-hover,text-active,text-strong}`                                | Material UI                                                                                                      |
+| `semantic.color.info.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                     | Chakra UI                                                                                                        |
+| `semantic.color.link.{hover,visited}`                                                                                                                      | Mantine                                                                                                          |
+| `semantic.color.neutral.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,on-tint,text-hover,text-active,text-strong}`                     | Material UI                                                                                                      |
+| `semantic.color.neutral.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                                        |
+| `semantic.color.primary.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,on-tint,text-hover,text-active,text-strong}`                     | Material UI                                                                                                      |
+| `semantic.color.primary.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                                        |
+| `semantic.color.ring`                                                                                                                                      | Mantine                                                                                                          |
+| `semantic.color.secondary.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,on-tint,text-hover,text-active,text-strong}`                   | Material UI                                                                                                      |
+| `semantic.color.secondary.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                | Chakra UI                                                                                                        |
+| `semantic.color.success.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,text-hover,text-active,text-strong}`                             | Material UI                                                                                                      |
+| `semantic.color.success.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                                        |
+| `semantic.color.text.disabled`                                                                                                                             | Chakra UI                                                                                                        |
+| `semantic.color.text.{strong,subtle,inverse}`                                                                                                              | Material UI                                                                                                      |
+| `semantic.color.warning.{solid-active,solid-selected,tint-hover,tint-active,tint-selected,text-hover,text-active,text-strong}`                             | Material UI                                                                                                      |
+| `semantic.color.warning.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                                        |
+| `semantic.font.mono` (acme, cathode, carbon only)                                                                                                          | Material UI                                                                                                      |
+| `semantic.size.control.{sm,md,lg}`                                                                                                                         | Material UI                                                                                                      |
+| `semantic.type.role.display.*`                                                                                                                             | Mantine                                                                                                          |
 
-The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): Bootstrap 71, Storybook 2, Mantine 37, Chakra UI 1. Each one's reason is in that target's `report.json`.
+The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): Bootstrap 71, Storybook 2, Mantine 37, Chakra UI 1, Material UI 1. Each one's reason is in that target's `report.json`.

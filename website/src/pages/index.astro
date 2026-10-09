@@ -63,7 +63,7 @@ const derivedCss = `--primary: oklch(0.55 0.18 255);
 --accent: oklch(0.95 0.017 255);     /* brand-tinted */
 --chart-1: #026fd7;                  /* hue-rotated palette */
 /* …plus every hover/active state, light + dark,
-   for all ten targets, from the same tokens */`;
+   for all eleven targets, from the same tokens */`;
 
 // Expanded rather than one-lined: this card sits in a narrow column, and short
 // lines beat horizontal scrolling for something meant to be read at a glance.
@@ -95,8 +95,8 @@ npx transtyle build`;
       <h1>One design system.<br /><span class="grad">Every ecosystem.</span></h1>
       <p class="sub">
         Describe your design system once, as standard W3C design tokens. Transtyle compiles it into
-        native, idiomatic themes for <strong>ten ecosystems today</strong> — shadcn/ui, daisyUI,
-        Apache&nbsp;ECharts, Bootstrap, Storybook, Radix&nbsp;Themes, PrimeNG, Mantine, Chakra&nbsp;UI, and plain CSS variables.
+        native, idiomatic themes for <strong>eleven ecosystems today</strong> — shadcn/ui, daisyUI,
+        Apache&nbsp;ECharts, Bootstrap, Storybook, Radix&nbsp;Themes, PrimeNG, Mantine, Chakra&nbsp;UI, Material&nbsp;UI, and plain CSS variables.
         Deterministic. Explainable. Zero runtime.
       </p>
       <div class="cta">
@@ -163,6 +163,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
           <div class="chip">PrimeNG</div>
           <div class="chip">Mantine</div>
           <div class="chip">Chakra UI</div>
+          <div class="chip">Material UI</div>
           <div class="chip">CSS variables</div>
           <p class="pipe-note">Idiomatic files per ecosystem — plus a coverage report saying how faithful each one is.</p>
         </div>

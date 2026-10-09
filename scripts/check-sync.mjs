@@ -63,6 +63,7 @@ const NAMES = {
   primeng: ['primeng', 'PrimeNG'],
   mantine: ['mantine', 'Mantine'],
   chakra: ['chakra', 'Chakra'],
+  mui: ['mui', 'MUI', 'Material UI'],
 };
 const mentions = (text, name) => (NAMES[name] ?? [name]).some((n) => text.includes(n));
 

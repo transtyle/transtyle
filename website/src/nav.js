@@ -14,7 +14,7 @@ export const sections = [
   { title: 'Concepts', slugs: ['concepts', 'derivation', 'internals'] },
   { title: 'Guides', slugs: ['authoring-tokens', 'examples', 'govuk-showcase', 'write-an-exporter', 'ai-agents'] },
   { title: 'Reference', slugs: ['language', 'slot-matrix', 'configuration', 'cli', 'diagnostics'] },
-  { title: 'Targets', slugs: ['exporter-shadcn', 'exporter-daisyui', 'exporter-echarts', 'exporter-bootstrap', 'exporter-storybook', 'exporter-css-variables', 'exporter-radix', 'exporter-primeng', 'exporter-mantine', 'exporter-chakra'] },
+  { title: 'Targets', slugs: ['exporter-shadcn', 'exporter-daisyui', 'exporter-echarts', 'exporter-bootstrap', 'exporter-storybook', 'exporter-css-variables', 'exporter-radix', 'exporter-primeng', 'exporter-mantine', 'exporter-chakra', 'exporter-mui'] },
   { title: 'Project', slugs: ['roadmap'] },
 ];
 

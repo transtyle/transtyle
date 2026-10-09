@@ -154,6 +154,7 @@ const EXPORTERS = {
   primeng: '@transtyle/exporter-primeng',
   mantine: '@transtyle/exporter-mantine',
   chakra: '@transtyle/exporter-chakra',
+  mui: '@transtyle/exporter-mui',
 };
 
 /**

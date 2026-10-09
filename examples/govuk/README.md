@@ -27,12 +27,12 @@ cd examples/govuk
 npx transtyle build
 ```
 
-All ten targets are configured — `shadcn`, `echarts`, `daisyui`, `bootstrap`, `storybook`, `css-variables`, `radix`, `primeng`, `mantine`, `chakra`. `npx transtyle check --json` prints diagnostics + coverage as JSON.
+All eleven targets are configured — `shadcn`, `echarts`, `daisyui`, `bootstrap`, `storybook`, `css-variables`, `radix`, `primeng`, `mantine`, `chakra`, `mui`. `npx transtyle check --json` prints diagnostics + coverage as JSON.
 
 From the **repo root**, without `cd`-ing in: `npm run example:build:govuk` / `npm run example:check:govuk`.
 
-**See it rendered:** [demo/](demo/) — the same ten demo projects as Acme/Cathode, themed with GOV.UK's real colors instead of a fictional brand. From the repo root:
+**See it rendered:** [demo/](demo/) — the same eleven demo projects as Acme/Cathode, themed with GOV.UK's real colors instead of a fictional brand. From the repo root:
 
 ```bash
-npm run dev -w govuk-demo-bootstrap   # port 4301   (also: -daisyui 4302, -shadcn 4303, -echarts 4304, -storybook 6301, -css-variables 4305, -radix 4306, -primeng 4307, -mantine 4308, -chakra 4309)
+npm run dev -w govuk-demo-bootstrap   # port 4301   (also: -daisyui 4302, -shadcn 4303, -echarts 4304, -storybook 6301, -css-variables 4305, -radix 4306, -primeng 4307, -mantine 4308, -chakra 4309, -mui 4310)
 ```

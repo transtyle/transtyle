@@ -725,8 +725,8 @@ try {
     !!json && Array.isArray(json.diagnostics) && Array.isArray(json.targets) && Array.isArray(m?.targets), r.stdout.slice(0, 400));
   expect('check --matrix --json: palette.categorical.1 → shadcn, shadcn-v3, echarts, css-variables',
     readers(m, 'semantic.palette.categorical.1') === 'css-variables, echarts, shadcn, shadcn-v3', readers(m, 'semantic.palette.categorical.1'));
-  expect('check --matrix --json: elevation.3.surface → shadcn, shadcn-v3, echarts, css-variables, primeng',
-    readers(m, 'semantic.color.elevation.3.surface') === 'css-variables, echarts, primeng, shadcn, shadcn-v3', readers(m, 'semantic.color.elevation.3.surface'));
+  expect('check --matrix --json: elevation.3.surface → shadcn, shadcn-v3, echarts, css-variables, primeng, mui',
+    readers(m, 'semantic.color.elevation.3.surface') === 'css-variables, echarts, mui, primeng, shadcn, shadcn-v3', readers(m, 'semantic.color.elevation.3.surface'));
   expect('check --matrix --json: a named reader carries its class and variables',
     m?.slots?.['semantic.color.elevation.0.surface']?.shadcn?.class === 'native' && m.slots['semantic.color.elevation.0.surface'].shadcn.variables.includes('--background'),
     JSON.stringify(m?.slots?.['semantic.color.elevation.0.surface']?.shadcn));
@@ -909,12 +909,12 @@ try {
 // ---------- #99: init's answers — flags, presets, layouts, prompts ----------
 // Every answer has a flag, validated before anything is written; without a
 // terminal nothing is asked; the same answers give the same bytes; every
-// preset × layout × schemes builds clean on all ten targets; the prompts
+// preset × layout × schemes builds clean on all eleven targets; the prompts
 // (driven here by scripted streams, as a terminal would) re-ask a wrong answer
 // and give up cleanly when input ends.
 {
   const { promptAnswers, scaffold, INIT_DEFAULTS } = await import(join(root, 'packages/cli/src/init.js'));
-  const ALL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css-variables', 'radix', 'primeng', 'mantine', 'chakra'];
+  const ALL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css-variables', 'radix', 'primeng', 'mantine', 'chakra', 'mui'];
   const fresh = (label) => mkdtempSync(join(tmpdir(), `transtyle-check-99-${label}-`));
   const report = (cwd) => {
     const r = run(['check', '--cwd', cwd, '--json']);
@@ -945,7 +945,7 @@ try {
       .every((f) => readFileSync(join(dir, f), 'utf8').replace(/"name": "[^"]*"/, '') === readFileSync(join(twin, f), 'utf8').replace(/"name": "[^"]*"/, ''));
     expect('init: same answers give byte-identical files (target order ignored)', same);
 
-    // Every preset × layout × schemes, all ten targets, no error, no warning, each file loaded once.
+    // Every preset × layout × schemes, all eleven targets, no error, no warning, each file loaded once.
     for (const preset of ['recommended', 'minimal']) {
       for (const layout of ['single', 'layered']) {
         for (const schemes of ['light,dark', 'light']) {
@@ -953,7 +953,7 @@ try {
           r = run(['init', '--cwd', dir, '--brand', '#e8590c', '--preset', preset, '--layout', layout, '--schemes', schemes, '--targets', ALL.join(',')]);
           j = report(dir);
           const label = `init --preset ${preset} --layout ${layout} --schemes ${schemes}`;
-          expect(`${label}: builds on all ten targets with no error or warning`, r.code === 0 && j.targets.length === 10 && loud(j).length === 0, `${r.out}\n${loud(j).join('\n')}`);
+          expect(`${label}: builds on all eleven targets with no error or warning`, r.code === 0 && j.targets.length === 11 && loud(j).length === 0, `${r.out}\n${loud(j).join('\n')}`);
           expect(`${label}: no file loaded twice (no TST1103)`, !j.diagnostics.some((d) => d.code === 'TST1103'));
         }
       }

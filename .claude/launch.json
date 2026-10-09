@@ -13,6 +13,7 @@
     { "name": "acme-primeng", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-primeng"], "port": 4107 },
     { "name": "acme-mantine", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-mantine"], "port": 4108 },
     { "name": "acme-chakra", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-chakra"], "port": 4109 },
+    { "name": "acme-mui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "acme-demo-mui"], "port": 4110 },
     { "name": "cathode-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-bootstrap"], "port": 4201 },
     { "name": "cathode-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-daisyui"], "port": 4202 },
     { "name": "cathode-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-shadcn"], "port": 4203 },
@@ -23,6 +24,7 @@
     { "name": "cathode-primeng", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-primeng"], "port": 4207 },
     { "name": "cathode-mantine", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-mantine"], "port": 4208 },
     { "name": "cathode-chakra", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-chakra"], "port": 4209 },
+    { "name": "cathode-mui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "cathode-demo-mui"], "port": 4210 },
     { "name": "govuk-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-bootstrap"], "port": 4301 },
     { "name": "govuk-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-daisyui"], "port": 4302 },
     { "name": "govuk-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-shadcn"], "port": 4303 },
@@ -33,6 +35,7 @@
     { "name": "govuk-primeng", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-primeng"], "port": 4307 },
     { "name": "govuk-mantine", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-mantine"], "port": 4308 },
     { "name": "govuk-chakra", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-chakra"], "port": 4309 },
+    { "name": "govuk-mui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "govuk-demo-mui"], "port": 4310 },
     { "name": "carbon-bootstrap", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-bootstrap"], "port": 4401 },
     { "name": "carbon-daisyui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-daisyui"], "port": 4402 },
     { "name": "carbon-shadcn", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-shadcn"], "port": 4403 },
@@ -42,6 +45,7 @@
     { "name": "carbon-radix", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-radix"], "port": 4406 },
     { "name": "carbon-primeng", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-primeng"], "port": 4407 },
     { "name": "carbon-mantine", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-mantine"], "port": 4408 },
-    { "name": "carbon-chakra", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-chakra"], "port": 4409 }
+    { "name": "carbon-chakra", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-chakra"], "port": 4409 },
+    { "name": "carbon-mui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "-w", "carbon-demo-mui"], "port": 4410 }
   ]
 }
