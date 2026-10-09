@@ -318,6 +318,44 @@ try {
   }
 }
 
+// ---------- #65: catalog, the semantic contract as data ----------
+// Needs no project: run from an empty directory, with no config anywhere up
+// the tree that could be read by accident. Same bytes on every run (the
+// catalog is a probe compile of the engine, not of a project).
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-catalog-'));
+  const runHere = (args) => {
+    const r = spawnSync('node', [cli, ...args], { cwd: dir, encoding: 'utf8' });
+    return { code: r.status ?? 1, out: (r.stdout ?? '') + (r.stderr ?? ''), stdout: r.stdout ?? '' };
+  };
+  try {
+    const { catalog } = await import('../packages/core/src/index.js');
+    const expected = catalog();
+    let r = runHere(['catalog', '--json']);
+    expect('catalog --json: exit 0 outside a project', r.code === 0, r.out);
+    let parsed;
+    try { parsed = JSON.parse(r.stdout); } catch { parsed = null; }
+    expect('catalog --json: prints parseable JSON on stdout', parsed !== null, r.out.slice(0, 300));
+    expect('catalog --json: lists exactly the slots core\'s catalog() returns',
+      parsed?.slots?.length === expected.slots.length && parsed.slots.every((s, i) => s.path === expected.slots[i].path),
+      `${parsed?.slots?.length} vs ${expected.slots.length}`);
+    expect('catalog --json: every slot carries path, tier, group, type, kind, rule, inputs, requires',
+      parsed?.slots?.every((s) => ['path', 'tier', 'group', 'type', 'kind', 'rule', 'inputs', 'requires'].every((k) => k in s)));
+    expect('catalog --json: byte-identical on a second run', runHere(['catalog', '--json']).stdout === r.stdout);
+
+    r = runHere(['catalog']);
+    expect('catalog: exit 0', r.code === 0, r.out);
+    const groups = [...new Set(expected.slots.map((s) => `${s.tier} · ${s.group}`))];
+    const missing = groups.filter((g) => !r.stdout.includes(`\n${g} (`));
+    expect('catalog: prints a heading for every group', missing.length === 0, `missing: ${missing.join(', ')}`);
+
+    r = runHere(['catalog', 'primary']);
+    expect('catalog: a positional argument is a usage error (exit 2)', r.code === 2, r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- P6: diff against a git ref ----------
 {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-diff-'));

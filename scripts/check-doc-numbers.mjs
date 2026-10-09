@@ -443,6 +443,13 @@ async function measure(metric) {
     return Number({ driven: m[1], inherited: m[2], base: m[3] }[parts[2]]);
   }
 
+  // catalog.<slots|semantic|component|derived|defaulted|authoredOnly> — the
+  // counts `transtyle catalog` prints, straight from core's catalog().
+  if (parts[0] === 'catalog' && parts.length === 2) {
+    const { catalog } = await import('../packages/core/src/index.js');
+    return memo(metric, () => catalog().counts[parts[1]] ?? null);
+  }
+
   const [example, ...rest] = parts;
   if (!exampleNames().includes(example)) return null;
 

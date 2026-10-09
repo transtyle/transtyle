@@ -37,6 +37,12 @@ Tier is structural (top-level group name: `option.*`, `semantic.*`, `component.*
 
 A fixed, versioned catalog of semantic slots that exporters may rely on existing after DERIVE. **The catalog — the role grid**, derived from a comparative study of ~14 design-system ecosystems ([proposal 0001](../proposals/0001-universal-token-ir.md)) to be the smallest set of concepts capable of representing all of them:
 
+<!-- measured: catalog.slots = 259 -->
+<!-- measured: catalog.semantic = 252 -->
+<!-- measured: catalog.component = 7 -->
+
+**Machine-readable form:** `catalog()` in `@transtyle/core`, printed by `transtyle catalog --json` ([cli.md](../specs/cli.md#catalog--the-contract-as-data)) — 259 slots today, 252 semantic and 7 component, each with its DTCG type, the rule that fills it when unauthored, that rule's inputs and the anchor it requires. It is read off the engine by a probe compile, so it is the implemented catalog; where this page and it disagree, this page is the one to fix.
+
 ### Color: the role grid
 
 Every color role is a **two-axis grid** — prominence × interaction state — not a flat set of named values. This is the central finding of proposal 0001: every mature ecosystem (Radix's 12 steps, Ant's map tokens, Bootstrap's subtle triad, Chakra's colorPalette, Material 3's container/on pairs) is sampling the same grid; naming it directly instead of re-deriving a private sample per exporter is what makes exporters composable and custom roles derivable.
@@ -76,7 +82,7 @@ strong         —                —               —                text-stro
 - **Spacing:** `space.{0,1,2,3,4,5,6,8,10,12,16,20,24}`.
 - **Sizing:** `size.control.{sm,md,lg}` — the one component-adjacent primitive every consuming library needs pre-component-tier.
 - **Layout:** `breakpoint.{xs,sm,md,lg,xl,2xl}`; `z.{hide,base,dropdown,sticky,banner,overlay,modal,popover,toast,tooltip}` — key _order_ is the contract, values are catalog defaults unless authored.
-- **Typography primitives:** `font.{sans,serif,mono,display}`; `type.size.{xs,sm,md,lg,xl,2xl,3xl,4xl}`; `type.weight.{regular,medium,semibold,bold}`; `type.leading.{tight,normal,loose}`; `type.tracking.{tight,normal,wide}`.
+- **Typography primitives:** `font.{sans,serif,mono,display}` (`font.serif` is a reserved name: nothing derives, defaults or reads it yet, so `catalog()` doesn't list it; `font.display`, when authored, replaces `font.sans` in `type.role.display.*`); `type.size.{xs,sm,md,lg,xl,2xl,3xl,4xl}`; `type.weight.{regular,medium,semibold,bold}`; `type.leading.{tight,normal,loose}`; `type.tracking.{tight,normal,wide}`.
 - **Typography roles** (DTCG `typography` composites, projecting the primitives): `type.role.{display,heading,title,body,label,code}.{sm,md,lg}`.
 - **Motion:** `duration.{instant,fast,normal,slow,slower}`; `easing.{standard,enter,exit,emphasized,spring}` (`enter` ≡ decelerate, `exit` ≡ accelerate; the old `bounce` renamed `spring`).
 - **Opacity:** `opacity.disabled` — a single slot, not a ladder, promoted by [proposal 0003](../proposals/0003-component-catalog-generalization.md) once both reference component-heavy targets independently needed the identical meaning (PrimeNG's `disabledOpacity` constant, Bootstrap's `*-disabled-opacity` variables). Other opacity knobs (veil strengths, shimmer ranges, glyph alphas) stay exporter-private until a second target needs the same one.

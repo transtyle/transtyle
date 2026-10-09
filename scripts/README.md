@@ -10,16 +10,16 @@ already made once.
 | Script                        | Guards                                                                                                |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `check-sync.mjs`              | Every shipped exporter exists on all five surfaces (code, spec, website, README, examples)            |
-| `check-docs.mjs`              | Website structure: nav reachability, links, anchors, CLI commands, diagnostic codes, blog posts       |
+| `check-docs.mjs`              | Website structure: nav, links, anchors, CLI commands, diagnostic codes, blog posts, language tables   |
 | `check-doc-numbers.mjs`       | Every number the docs copy out of a build, re-derived                                                 |
 | `check-encoding.mjs`          | Tracked text files are clean UTF-8 — no NUL bytes, no BOM                                             |
 | `check-color.mjs`             | The colour engine against reference values: parsing, round-trips, contrast, mixing                    |
 | `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                                 |
-| `check-grid.mjs`              | Catalog completeness and the frozen Phase 0 values; a role bound to a derived slot gets its grid      |
+| `check-grid.mjs`              | Catalog completeness against `catalog()`, both ways; the frozen Phase 0 values; bound roles get grids |
 | `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                     |
 | `check-determinism.mjs`       | Two builds of every example, byte-compared                                                            |
 | `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                  |
-| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` golden paths and error cases                            |
+| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` / `catalog` golden paths and error cases                |
 | `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a semantic alias into it is `TST1113` |
 | `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                           |
 | `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap                   |

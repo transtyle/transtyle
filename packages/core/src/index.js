@@ -22,6 +22,7 @@ export { Diagnostics } from './diagnostics.js';
 export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';
 export { explainToken } from './explain.js';
+export { catalog } from './catalog.js';
 
 /**
  * Run the pipeline. `emit: false` = `transtyle check` (pipeline minus EMIT —

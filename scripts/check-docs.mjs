@@ -42,6 +42,12 @@
  *                     records (worklogs, exercises, proposals, findings, ADRs,
  *                     plans) are deliberately excluded: they state what was
  *                     true on their date, and "fixing" them rewrites history.
+ *   7. language     — the slot tables on language.md and core's catalog()
+ *                     (`transtyle catalog`) name the same slots: every name
+ *                     a table row gives is a catalog slot, and every catalog
+ *                     slot has a row. The tables stay hand-written (they
+ *                     carry meaning and swatches the catalog doesn't); this
+ *                     is what keeps them from drifting off the engine.
  *
  * Run: node scripts/check-docs.mjs (also: npm run check:docs, part of
  * check:sync and check:all). Exits 1 with a list of violations. Extend it
@@ -363,6 +369,96 @@ for (const surface of claimSurfaces) {
   }
 }
 
+// ---------- 7. language page ↔ catalog() ----------
+// The slot tables on language.md (everything between "## Color roles" and
+// "## False friends") are read cell by cell. In a table's first column, and in
+// the component table's "Defaults from" column, each backticked name is a slot
+// path written the way the page writes them:
+//   - relative to `semantic.` or `semantic.color.` (`text.base`, `space.4`);
+//   - `<role>.<cell>` for every built-in role; a bare role name (`primary`) is
+//     a role, not a slot;
+//   - `component:x.y` for `component.x.y` (the catalog's own defaultFrom form);
+//   - `*` for any rest of the path, `1..4` or `1–8` for a numeric range;
+//   - after a full name in the same cell, `-hover` swaps the last segment's
+//     suffix (`<role>.solid-hover` / `-active` → `<role>.solid-active`) and
+//     `.hover` swaps the last segment (`link.base` / `.hover` → `link.hover`).
+// A name that matches no catalog slot is stale vocabulary on the page; a slot
+// no first-column name matches is a slot the page doesn't document.
+const { catalog } = await import('../packages/core/src/index.js');
+const cat = catalog();
+const catalogPaths = cat.slots.map((s) => s.path);
+const languagePage = read(`${DOCS_DIR}/language.md`);
+const slotTables = languagePage.split(/^## Color roles/m)[1]?.split(/^## False friends/m)[0] ?? '';
+if (!slotTables) fail('language: could not find the slot tables between "## Color roles" and "## False friends" in language.md');
+
+const escapeRe = (t) => t.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+/** One written name → the catalog paths it means (empty = names nothing). */
+function slotsNamed(name) {
+  const roles = name.includes('<role>') ? cat.roles : [null];
+  const out = new Set();
+  for (const role of roles) {
+    const n = role ? name.replace('<role>', role) : name;
+    const pattern = n
+      .split(/(\*|\d+(?:\.\.|–)\d+)/)
+      .map((part, i) => {
+        if (i % 2 === 0) return escapeRe(part);
+        if (part === '*') return '.+';
+        const [lo, hi] = part.split(/\.\.|–/).map(Number);
+        return `(?:${Array.from({ length: hi - lo + 1 }, (_, k) => lo + k).join('|')})`;
+      })
+      .join('');
+    const prefixes = n.startsWith('component.') ? [''] : ['', 'semantic.', 'semantic.color.'];
+    for (const prefix of prefixes) {
+      const re = new RegExp(`^${escapeRe(prefix)}${pattern}$`);
+      for (const p of catalogPaths) if (re.test(p)) out.add(p);
+    }
+  }
+  return out;
+}
+/** The full names one table cell gives, fragments expanded against the last full name. */
+function cellNames(cell) {
+  const names = [];
+  let last = null;
+  for (const [, raw] of cell.matchAll(/`([^`]+)`/g)) {
+    let n = raw.startsWith('component:') ? `component.${raw.slice('component:'.length)}` : raw;
+    if (last && (n.startsWith('-') || n.startsWith('.'))) {
+      const segs = last.split('.');
+      const tail = segs.pop();
+      n = n.startsWith('-')
+        ? [...segs, (tail.includes('-') ? tail.slice(0, tail.lastIndexOf('-')) : tail) + n].join('.')
+        : [...segs, n.slice(1)].join('.');
+    } else {
+      last = n;
+    }
+    names.push(n);
+  }
+  return names;
+}
+
+const documentedSlots = new Set();
+let header = null;
+for (const line of slotTables.split('\n')) {
+  if (!line.startsWith('|')) { header = null; continue; }
+  const cells = line.split('|').slice(1, -1).map((c) => c.trim());
+  if (/^-+$/.test(cells[0])) continue;
+  if (!header) { header = cells; continue; }
+  const columns = [0, header.indexOf('Defaults from')].filter((i) => i >= 0);
+  for (const col of columns) {
+    for (const name of cellNames(cells[col] ?? '')) {
+      if (col === 0 && !name.includes('.') && cat.roles.includes(name)) continue; // a role, not a slot
+      const matched = slotsNamed(name);
+      if (matched.size === 0) {
+        fail(`language: language.md names \`${name}\`, which is not a catalog slot (transtyle catalog lists them) — rename or remove it`);
+      }
+      if (col === 0) for (const p of matched) documentedSlots.add(p);
+    }
+  }
+}
+const undocumented = catalogPaths.filter((p) => !documentedSlots.has(p));
+if (undocumented.length) {
+  fail(`language: ${undocumented.length} catalog slot(s) have no row on language.md: ${undocumented.join(', ')} — add them to the table of their group`);
+}
+
 // ---------- verdict ----------
 if (errors.length) {
   console.error(`✖ docs check: ${errors.length} violation(s)\n`);
@@ -371,5 +467,6 @@ if (errors.length) {
 }
 console.log(
   `✔ docs check: ${slugs.length} pages all reachable; ${blogSlugs.length} blog post(s) well-formed; internal links + anchors resolve; ` +
-  `${commands.length} CLI commands and ${sourceCodes.size} diagnostic codes (severity included) match the docs exactly`,
+  `${commands.length} CLI commands and ${sourceCodes.size} diagnostic codes (severity included) match the docs exactly; ` +
+  `language.md's tables name all ${catalogPaths.length} catalog slots and nothing else`,
 );

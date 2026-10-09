@@ -14,7 +14,7 @@ Today there is exactly one rule source: the built-in **standard rule pack**, ver
 
 ## The standard rule pack (foundations)
 
-**Status: implemented 2026-07-20** — this table describes the revised catalog (the role grid, elevation ladder, and content hierarchy from [proposal 0001](../proposals/0001-universal-token-ir.md) / [ADR-0010](../adr/0010-pre-release-breaking-changes.md)), and `packages/core/src/derive.js` now implements it exactly ([docs/plan/catalog-revision.md](../plan/catalog-revision.md) task T2, verified by `scripts/check-grid.mjs`). Illustrative, not exhaustive; the full table ships as a generated reference doc in a later pass.
+**Status: implemented 2026-07-20** — this table describes the revised catalog (the role grid, elevation ladder, and content hierarchy from [proposal 0001](../proposals/0001-universal-token-ir.md) / [ADR-0010](../adr/0010-pre-release-breaking-changes.md)), and `packages/core/src/derive.js` now implements it exactly ([docs/plan/catalog-revision.md](../plan/catalog-revision.md) task T2, verified by `scripts/check-grid.mjs`). Illustrative, not exhaustive; the full table, every slot with its rule and inputs, is `transtyle catalog` (`--json` for tools, [cli.md](../specs/cli.md#catalog--the-contract-as-data)), read off this engine by a probe compile.
 
 Every color role is a **grid**: prominence (`solid`, `tint`, `outline`, `text`) × interaction state (rest, `-hover`, `-active`, `-selected`) + on-colors (`on-solid`, `on-tint`). The _rest_ state is the bare prominence name; the role's authored anchor is `<role>.solid`.
 
