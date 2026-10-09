@@ -53,6 +53,7 @@ jobs:
       - run: npm run check:encoding
       - run: npm run check:bootstrap-surface
       - run: npm run check:coverage-bar
+      - run: npm run check:gamut-rows
       - run: npm run check:minimal-ds
       - run: npm run check:demo-parity
       - run: npm run site:build
