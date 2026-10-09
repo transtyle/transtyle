@@ -151,55 +151,24 @@ function number(raw) {
   throw new ValueError(`number value must be a number, got ${show(raw)}`, 'Write a JSON number, e.g. 1.5.');
 }
 
-const dimension = measure('dimension', DIMENSION_UNITS, { value: 16, unit: 'px' });
-const duration = measure('duration', DURATION_UNITS, { value: 150, unit: 'ms' });
-
-/**
- * Composite members carry the same types (DTCG 2025.10). Only members whose
- * type has a parser are listed; the rest (`color`, `fontFamily`, `style`,
- * `inset`) are carried as authored, exactly as before.
- */
-const COMPOSITE_MEMBERS = {
-  shadow: { offsetX: dimension, offsetY: dimension, blur: dimension, spread: dimension },
-  typography: { fontSize: dimension, letterSpacing: dimension, fontWeight, lineHeight: number },
-  border: { width: dimension },
-  transition: { duration, delay: duration, timingFunction: cubicBezier },
-};
-
-function composite(type, members) {
-  const parseOne = (obj) => {
-    if (!isPlainObject(obj)) return obj; // a string shorthand stays as authored
-    const out = { ...obj };
-    for (const [key, parse] of Object.entries(members)) {
-      if (out[key] === undefined) continue;
-      try {
-        out[key] = parse(out[key]);
-      } catch (e) {
-        if (e instanceof ValueError) throw new ValueError(`${type} member "${key}": ${e.message}`, e.hint);
-        throw e;
-      }
-    }
-    return out;
-  };
-  // DTCG `shadow` may be a list of shadows; each layer is parsed the same way.
-  return (raw) => (type === 'shadow' && Array.isArray(raw) ? raw.map(parseOne) : parseOne(raw));
-}
-
 const PARSERS = {
   color: parseColor,
-  dimension,
-  duration,
+  dimension: measure('dimension', DIMENSION_UNITS, { value: 16, unit: 'px' }),
+  duration: measure('duration', DURATION_UNITS, { value: 150, unit: 'ms' }),
   cubicBezier,
   fontWeight,
   number,
-  ...Object.fromEntries(Object.entries(COMPOSITE_MEMBERS).map(([type, members]) => [type, composite(type, members)])),
 };
 
 /**
  * Parse an authored (non-alias) `$value` into its canonical IR value. Types
- * without a parser (`fontFamily`, `gradient`, `strokeStyle`, an unknown or
- * absent `$type`) are carried as authored. Throws on a malformed value; a
- * `ValueError` carries a hint for the TST1106 diagnostic.
+ * without a parser (`fontFamily`, `strokeStyle`, `boolean`, `gradient`, an
+ * unknown or absent `$type`) are carried as authored. Composites (`shadow`,
+ * `typography`, `border`, `transition`) never arrive whole: normalize.js
+ * resolves them member by member and calls this once per member with the
+ * member's own DTCG type, so `shadow.blur` is parsed exactly like a top-level
+ * dimension. Throws on a malformed value; a `ValueError` carries a hint for
+ * the TST1106 diagnostic.
  */
 export function parseValue(type, raw) {
   const parse = PARSERS[type];

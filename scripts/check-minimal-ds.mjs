@@ -99,17 +99,18 @@
  * caught a regression that flips the IR flag but never wires it into what an
  * exporter actually renders.
  *
- * **DTCG object forms** (issue #24) are the last case: the same design system
+ * **DTCG object forms** (issue #24) are another case: the same design system
  * authored twice, once with CSS strings (`"0.5rem"`, `"cubic-bezier(…)"`, `600`)
  * and once with the DTCG structured forms (`{ "value": 0.5, "unit": "rem" }`,
- * `[0.2, 0, 0, 1]`, `"semi-bold"`), must compile byte-identical on every
- * exporter. Before NORMALIZE parsed those forms, the object one wrote
- * `[object Object]` into six targets, dropped the value in two more, and broke
- * the derived radius scale with a false TST1105, all under a green build; the
- * leak pattern below never looked for `[object Object]` either. Malformed
- * structured values must stop the build with TST1106 naming the token and type.
- * Validated by reverting normalize.js to carry those values as authored: the
- * twin fails on all eight exporters.
+ * `[0.2, 0, 0, 1]`, `"semi-bold"`), at the top level and as typography
+ * members, must compile byte-identical on every exporter. Before NORMALIZE
+ * parsed those forms, the object one wrote `[object Object]` into six targets,
+ * dropped the value in two more, and broke the derived radius scale with a
+ * false TST1105, all under a green build; the leak pattern below never looked
+ * for `[object Object]` either. Malformed structured values must stop the build
+ * with TST1106 naming the token (or the composite member's own path), the type
+ * and the accepted forms. Validated by reverting normalize.js to carry those
+ * values as authored: the twin fails on all eight exporters.
  *
  * Run: node scripts/check-minimal-ds.mjs   (npm run check:minimal-ds)
  */
@@ -771,6 +772,13 @@ const MALFORMED = {
   'x-out-of-range': ['cubicBezier', [1.2, 0, 0, 1]],
   'unknown-weight': ['fontWeight', 'semi-boldish'],
 };
+// …and the same mistakes inside a composite, where resolveComposite() hands
+// each member to the same parser: reported under the member's own path, with
+// the member's type and the same hint.
+const MALFORMED_MEMBERS = {
+  'member-no-unit': ['shadow', { color: '#000', offsetX: '0px', offsetY: '2px', blur: { value: 8 }, spread: '0px' }, 'blur', 'dimension'],
+  'member-three-points': ['transition', { duration: '100ms', delay: '0ms', timingFunction: [0.2, 0, 0] }, 'timingFunction', 'cubicBezier'],
+};
 const badDir = mkdtempSync(join(tmpdir(), 'transtyle-malformed-'));
 mkdirSync(join(badDir, 'tokens'));
 writeFileSync(
@@ -778,7 +786,9 @@ writeFileSync(
   JSON.stringify({
     semantic: {
       ...MINIMAL_TOKENS.semantic,
-      probe: Object.fromEntries(Object.entries(MALFORMED).map(([k, [type, value]]) => [k, { $type: type, $value: value }])),
+      probe: Object.fromEntries(
+        [...Object.entries(MALFORMED), ...Object.entries(MALFORMED_MEMBERS)].map(([k, [type, value]]) => [k, { $type: type, $value: value }]),
+      ),
     },
   }),
 );
@@ -795,6 +805,13 @@ for (const [k, [type, value]] of Object.entries(MALFORMED)) {
   else if (!d.message.includes(type)) errors.push(`TST1106 for ${slot} does not name the type "${type}": ${d.message}`);
   else if (!d.hint) errors.push(`TST1106 for ${slot} carries no hint naming the accepted forms`);
 }
+for (const [k, [composite, value, member, type]] of Object.entries(MALFORMED_MEMBERS)) {
+  const slot = `semantic.probe.${k}.${member}`;
+  const d = malformed.diagnostics.errors.find((x) => x.code === 'TST1106' && x.message.startsWith(`${slot}:`));
+  if (!d) errors.push(`malformed ${composite} member ${JSON.stringify(value[member])} (${slot}) must fail with TST1106 under the member's path, but it did not — got ${malformed.diagnostics.errors.map((x) => `${x.code} ${x.message}`).join('; ') || 'no errors'}`);
+  else if (!d.message.includes(type)) errors.push(`TST1106 for ${slot} does not name the member's type "${type}": ${d.message}`);
+  else if (!d.hint) errors.push(`TST1106 for ${slot} carries no hint naming the accepted forms`);
+}
 
 if (errors.length) {
   console.error(`✘ minimal-ds check: ${errors.length} problem(s)`);
@@ -804,4 +821,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; the 1-token Bootstrap Sass path builds against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length} malformed values fail with TST1106`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; the 1-token Bootstrap Sass path builds against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106`);
