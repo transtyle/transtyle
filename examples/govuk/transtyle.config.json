@@ -32,7 +32,8 @@
     "css-variables": { "output": "dist/css-variables" },
     "radix": { "output": "dist/radix" },
     "primeng": { "output": "dist/primeng" },
-    "mantine": { "output": "dist/mantine" }
+    "mantine": { "output": "dist/mantine" },
+    "chakra": { "output": "dist/chakra" }
   },
   "check": {
     "failOn": "error",

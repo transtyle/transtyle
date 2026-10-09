@@ -62,6 +62,7 @@ const NAMES = {
   radix: ['radix', 'Radix'],
   primeng: ['primeng', 'PrimeNG'],
   mantine: ['mantine', 'Mantine'],
+  chakra: ['chakra', 'Chakra'],
 };
 const mentions = (text, name) => (NAMES[name] ?? [name]).some((n) => text.includes(n));
 
@@ -146,8 +147,11 @@ for (const name of exporters) {
 // `"background": { "$value" }` is left alone, an old `"background": { "base" }` is not.
 const DEAD_VOCAB = [
   { name: 'text-on-<role> foreground slots', re: /text-on-/ },
-  // (?<!text): text.subtle is a legitimate new content-hierarchy rung, not the old grid cell
-  { name: '.subtle color scale slot', re: /(?<!text)\.subtle\b/ },
+  // (?<!text): text.subtle is a legitimate new content-hierarchy rung, not the old grid cell.
+  // (?<!colorPalette|bg|fg|border): Chakra UI's own semantic tokens (`colorPalette.subtle`,
+  // `bg.subtle`, `fg.subtle`, `border.subtle`) are target vocabulary its docs and exporter
+  // must name; the dead slot was always `<role>.subtle`.
+  { name: '.subtle color scale slot', re: /(?<!text|colorPalette|bg|fg|border)\.subtle\b/ },
   { name: 'surface-raised slot', re: /surface-raised/ },
   // ---- dotted-path forms (code, prose, config values) ----
   // The nested-JSON form of this pattern already excused `text.base` and the
@@ -205,6 +209,8 @@ const DEAD_VOCAB_MUST_NOT = [
   'semantic.color.text.base',                         // dotted form of the ladder rung above
   'semantic.color.link.base',                         // dotted form of the link cells above
   'semantic.color.link.hover',
+  'colorPalette.subtle',                              // Chakra UI's palette key, target vocabulary
+  'bg.subtle',                                        // Chakra UI's global tokens, likewise
 ];
 for (const s of DEAD_VOCAB_MUST_MATCH) {
   if (!deadVocabHits(s)) fail(`dead-vocab self-test: expected a pattern to catch ${JSON.stringify(s)} but none did (a pattern was weakened)`);

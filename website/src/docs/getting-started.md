@@ -87,7 +87,7 @@ Values can also go inline per token — see [Authoring tokens](/docs/authoring-t
 ```bash
 npx transtyle build             # starts with css-variables
 npx transtyle add shadcn        # registers another target in the config
-npx transtyle add bootstrap     # …any of the nine official exporters
+npx transtyle add bootstrap     # …any of the ten official exporters
 npx transtyle build
 ```
 

@@ -8,7 +8,7 @@ order: 16
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/mantine/">Acme</a> · <a href="/demo/cathode/mantine/">Cathode</a> · <a href="/demo/govuk/mantine/">GOV.UK</a> · <a href="/demo/carbon/mantine/">Carbon</a> — one page, four design systems, compiled to Mantine. <a href="/demo/">All 36 demos →</a></p>
+  <p><a href="/demo/acme/mantine/">Acme</a> · <a href="/demo/cathode/mantine/">Cathode</a> · <a href="/demo/govuk/mantine/">GOV.UK</a> · <a href="/demo/carbon/mantine/">Carbon</a> — one page, four design systems, compiled to Mantine. <a href="/demo/">All 40 demos →</a></p>
 </div>
 
 [Mantine](https://mantine.dev/) themes through one object passed to `<MantineProvider>`: colours are named ten-shade tuples, `primaryShade` picks the filled shade per scheme, and `virtualColor()` lets one name stand for a different tuple in light and in dark. That is [the role grid](/docs/language/#color-roles-the-role-grid) in another shape, so this exporter is mostly a mapping table. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `theme` and `cssVariablesResolver`.

@@ -68,6 +68,7 @@ jobs:
           - acme-demo-radix
           - acme-demo-primeng
           - acme-demo-mantine
+          - acme-demo-chakra
           - cathode-demo-bootstrap
           - cathode-demo-shadcn
           - cathode-demo-daisyui
@@ -77,6 +78,7 @@ jobs:
           - cathode-demo-radix
           - cathode-demo-primeng
           - cathode-demo-mantine
+          - cathode-demo-chakra
           - govuk-demo-bootstrap
           - govuk-demo-shadcn
           - govuk-demo-daisyui
@@ -86,6 +88,7 @@ jobs:
           - govuk-demo-radix
           - govuk-demo-primeng
           - govuk-demo-mantine
+          - govuk-demo-chakra
           - carbon-demo-bootstrap
           - carbon-demo-shadcn
           - carbon-demo-daisyui
@@ -95,6 +98,7 @@ jobs:
           - carbon-demo-radix
           - carbon-demo-primeng
           - carbon-demo-mantine
+          - carbon-demo-chakra
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

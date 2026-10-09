@@ -76,6 +76,9 @@
     },
     "mantine": {
       "output": "dist/mantine"
+    },
+    "chakra": {
+      "output": "dist/chakra"
     }
   },
   "check": {

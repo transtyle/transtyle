@@ -1,0 +1,55 @@
+{
+  "name": "@transtyle/exporter-chakra",
+  "version": "0.1.0-alpha.3",
+  "description": "Transtyle exporter for Chakra UI v3: a defineConfig object whose semantic tokens give every role Chakra's eight colour-palette keys, per colour scheme.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "chakra-ui",
+    "chakra-theme",
+    "semantic-tokens",
+    "react"
+  ],
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.3"
+  },
+  "transtyle": {
+    "kind": "exporter",
+    "name": "chakra",
+    "irSpec": "v0-draft",
+    "pluginApi": "0",
+    "targets": {
+      "chakra": [
+        "*"
+      ]
+    },
+    "modes": [
+      "color-scheme"
+    ],
+    "capabilities": [
+      "build"
+    ]
+  },
+  "files": [
+    "src",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git",
+    "directory": "packages/exporter-chakra"
+  },
+  "homepage": "https://transtyle.github.io/transtyle/docs/exporter-chakra/",
+  "bugs": "https://github.com/transtyle/transtyle/issues",
+  "license": "MIT"
+}

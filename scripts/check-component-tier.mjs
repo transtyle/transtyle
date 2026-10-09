@@ -10,7 +10,8 @@
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { compile } from '@transtyle/core';
+import { compile, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
+import chakra from '@transtyle/exporter-chakra';
 
 // Permissive optionsSchema: this test exercises the engine, not option
 // validation (that's scripts/check-schemas.mjs). See check-grid.mjs.
@@ -174,12 +175,29 @@ async function main() {
     rmSync(tierDir, { recursive: true, force: true });
   }
 
+  // (h) An exporter whose target has recipes of its own (Chakra UI) writes a
+  // tier value only when the design system authored something in its chain;
+  // otherwise it would overwrite the target's own per-size proportions with
+  // catalog defaults. Three cases, read off the coverage rows the exporter
+  // reports: Acme authors only the button layer, so buttons move and inputs
+  // keep the control route; Cathode authors nothing, so no recipe is touched;
+  // the fixture authors tooltip.max-width, which reaches the tooltip recipe.
+  const ctx = { config: {}, targetConfig: {}, formatColor, formatHslTriplet, formatHex, contrastRatio, mix, projectName: 'tier', siblings: [] };
+  const recipeRows = (ir) => chakra.emit(ir, ctx).coverage.filter((c) => String(c.slot).startsWith('component.') && c.class !== 'dropped' && c.variable !== '(component tier)');
+  const has = (rows, slot) => rows.some((c) => c.slot === slot);
+  const acmeRows = recipeRows(acme.normalized);
+  if (!has(acmeRows, 'component.button.radius')) errors.push('chakra (acme): the authored component.button.radius did not reach recipes.button');
+  if (has(acmeRows, 'component.control.radius')) errors.push('chakra (acme): component.control.radius is unauthored, yet the exporter wrote it into recipes.input — authoring buttons must not move inputs');
+  const cathodeRows = recipeRows(cathode.normalized);
+  if (cathodeRows.length) errors.push(`chakra (cathode): nothing is authored in the component tier, yet the exporter wrote ${cathodeRows.map((c) => c.slot).join(', ')} into Chakra's recipes`);
+  if (!has(recipeRows(fixture.normalized), 'component.tooltip.max-width')) errors.push('chakra (fixture): the authored component.tooltip.max-width did not reach slotRecipes.tooltip');
+
   if (errors.length) {
     console.error(`✖ check-component-tier failed — ${errors.length} issue(s):\n`);
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log('✔ check-component-tier: a semantic token aliasing a component one raises TST1113 once, on the direct edge; component -> semantic/component stays clean; empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored; a semantic source bound to a derived slot (radius.control → radius.full) feeds the component tier');
+  console.log('✔ check-component-tier: a semantic token aliasing a component one raises TST1113 once, on the direct edge; component -> semantic/component stays clean; empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored; a semantic source bound to a derived slot (radius.control → radius.full) feeds the component tier; the Chakra exporter writes a recipe value only for what the tier authored');
 }
 
 main();

@@ -8,7 +8,7 @@ order: 8
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/shadcn/">Acme</a> · <a href="/demo/cathode/shadcn/">Cathode</a> · <a href="/demo/govuk/shadcn/">GOV.UK</a> · <a href="/demo/carbon/shadcn/">Carbon</a> — one page, four design systems, compiled to shadcn/ui. <a href="/demo/">All 36 demos →</a></p>
+  <p><a href="/demo/acme/shadcn/">Acme</a> · <a href="/demo/cathode/shadcn/">Cathode</a> · <a href="/demo/govuk/shadcn/">GOV.UK</a> · <a href="/demo/carbon/shadcn/">Carbon</a> — one page, four design systems, compiled to shadcn/ui. <a href="/demo/">All 40 demos →</a></p>
 </div>
 
 The first reference exporter. shadcn's theme _is_ a set of semantic CSS variables, so it exercises the semantic catalog almost 1:1 — which made it the right target to build first and the cleanest to learn from.
