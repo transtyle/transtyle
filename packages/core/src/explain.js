@@ -30,7 +30,9 @@ function explainError(code, message, extra) {
  *   target (followed without counting toward the depth limit). Each input is
  *   the same shape, or `{ path, unresolved: true }`, or `{ path, entry, seen:
  *   true }` (already shown higher up), and carries `truncated: true` when the
- *   depth limit cut off its own inputs.
+ *   depth limit cut off its own inputs. A rule that reads another mode
+ *   (`text.inverse`, `swap-neutrals`: `provenance.inputMode`) has its inputs
+ *   looked up in that mode, and each of them carries `mode`.
  * @throws Error with `code` `unknown-mode` (`available`) or `unknown-slot` (`closest`)
  */
 export function explainToken(normalized, slot, { mode } = {}) {
@@ -43,9 +45,9 @@ export function explainToken(normalized, slot, { mode } = {}) {
     });
   }
 
-  const resolvePath = (raw) => {
+  const resolvePath = (raw, m = map) => {
     for (const candidate of [raw, `semantic.${raw}`, `semantic.color.${raw}`]) {
-      if (map.has(candidate)) return candidate;
+      if (m.has(candidate)) return candidate;
     }
     return null;
   };
@@ -61,30 +63,38 @@ export function explainToken(normalized, slot, { mode } = {}) {
     throw explainError('unknown-slot', `Unknown slot: ${slot}`, { slot, closest });
   }
 
-  const seen = new Set([fullPath]);
-  const walk = (path, depth) => {
-    const entry = map.get(path);
+  // Nodes are keyed by mode and path: a cross-mode rule reads the same path
+  // in another mode, which is a different value, not a repeat.
+  const key = (m, p) => `${m}\u0000${p}`;
+  const seen = new Set([key(useMode, fullPath)]);
+  const walk = (path, depth, inMode = useMode) => {
+    const here = normalized.modes[inMode];
+    const entry = here.get(path);
     const prov = entry.provenance;
     const node = { path, entry, inputs: [] };
-    const visit = (rawInput, nextDepth) => {
-      const inputPath = resolvePath(rawInput) ?? rawInput;
-      const inputEntry = map.get(inputPath);
-      if (!inputEntry) { node.inputs.push({ path: rawInput, unresolved: true }); return; }
-      if (seen.has(inputPath)) { node.inputs.push({ path: inputPath, entry: inputEntry, seen: true }); return; }
-      seen.add(inputPath);
-      node.inputs.push(walk(inputPath, nextDepth));
+    if (inMode !== useMode) node.mode = inMode;
+    const visit = (rawInput, nextDepth, inputMode) => {
+      const m = normalized.modes[inputMode] ?? here;
+      const at = m === here ? inMode : inputMode;
+      const tag = at !== useMode ? { mode: at } : {};
+      const inputPath = resolvePath(rawInput, m) ?? rawInput;
+      const inputEntry = m.get(inputPath);
+      if (!inputEntry) { node.inputs.push({ path: rawInput, unresolved: true, ...tag }); return; }
+      if (seen.has(key(at, inputPath))) { node.inputs.push({ path: inputPath, entry: inputEntry, seen: true, ...tag }); return; }
+      seen.add(key(at, inputPath));
+      node.inputs.push(walk(inputPath, nextDepth, at));
     };
     // An alias is followed to its target (its one input), at the same depth:
     // it adds no rule, so `component.button.radius` reaches the authored
     // `radius.md` its `semantic.radius.full` alias is derived from.
     if (prov.kind === 'aliased') {
-      if (prov.target) visit(prov.target, depth);
+      if (prov.target) visit(prov.target, depth, inMode);
       return node;
     }
     if (prov.kind !== 'derived' && prov.kind !== 'defaulted') return node;
     if (!prov.inputs?.length) return node;
     if (depth >= EXPLAIN_MAX_INPUT_DEPTH) { node.truncated = true; return node; }
-    for (const rawInput of prov.inputs) visit(rawInput, depth + 1);
+    for (const rawInput of prov.inputs) visit(rawInput, depth + 1, prov.inputMode ?? inMode);
     return node;
   };
 

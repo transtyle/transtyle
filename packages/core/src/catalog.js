@@ -34,12 +34,17 @@ import { Diagnostics } from './diagnostics.js';
 const RULE_PACK = 'standard@1';
 
 /**
- * The anchors the probe authors: the slots no rule fills. Placeholder values,
- * chosen only to be valid; nothing about them reaches the catalog.
- * `primary.solid` is required; every other one is optional and probed for.
+ * The anchors the probe authors: the slots no rule fills, and the two neutral
+ * anchors the engine only defaults. Placeholder values, chosen only to be
+ * valid; nothing about them reaches the catalog. `primary.solid` is required;
+ * every other one is optional and probed for. The page is authored so the
+ * dark probe reads the same rules as the light one: a modeless `text.base`
+ * on an unauthored page is swapped in dark (`swap-neutrals`, a rule of the
+ * pair, not of either slot), and the probe without the page reads only light.
  */
 const ANCHORS = {
   'semantic.color.primary.solid': { $type: 'color', $value: 'oklch(0.55 0.18 255)' },
+  'semantic.color.elevation.0.surface': { $type: 'color', $value: 'oklch(1 0 0)' },
   'semantic.color.text.base': { $type: 'color', $value: 'oklch(0.2 0.01 255)' },
   'semantic.color.border': { $type: 'color', $value: 'oklch(0.9 0.005 255)' },
   'semantic.radius.md': { $type: 'dimension', $value: '0.5rem' },

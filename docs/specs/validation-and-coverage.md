@@ -1,8 +1,8 @@
 # Validation, diagnostics, and coverage
 
-<!-- measured: codes = 44 -->
+<!-- measured: codes = 45 -->
 
-> **Status (re-verified 2026-10-09):** the diagnostics collector, the 44 shipped
+> **Status (re-verified 2026-10-09):** the diagnostics collector, the 45 shipped
 > `TST` codes, DTCG structural validation, contrast checking, the coverage
 > classes, `report.json`, `check --json`, per-diagnostic source locations,
 > config suppressions (`check.suppress`) and the exporter compatibility check

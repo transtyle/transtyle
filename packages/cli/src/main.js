@@ -629,12 +629,14 @@ function printExplain(entry, inputs, depth) {
   // derived or defaulted
   console.log(`${indent} └─ ${prov.kind} by rule ${prov.rule ?? '(catalog default)'}`);
   for (const input of inputs) {
+    // An input read from another mode (`text.inverse`, `swap-neutrals`) names it.
+    const path = input.mode ? `${input.path} (${input.mode})` : input.path;
     if (input.unresolved) {
-      console.log(`${indent}    inputs: ${input.path} (unresolved)`);
+      console.log(`${indent}    inputs: ${path} (unresolved)`);
     } else if (input.seen) {
-      console.log(`${indent}    inputs: ${input.path} = ${formatEntryValue(input.entry)} (see above)`);
+      console.log(`${indent}    inputs: ${path} = ${formatEntryValue(input.entry)} (see above)`);
     } else {
-      console.log(`${indent}    inputs: ${input.path} = ${formatEntryValue(input.entry)}`);
+      console.log(`${indent}    inputs: ${path} = ${formatEntryValue(input.entry)}`);
       printExplain(input.entry, input.inputs, depth + 2);
     }
   }

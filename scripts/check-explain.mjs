@@ -50,6 +50,15 @@ const otherMode = normalized.modeValues.find((m) => m !== normalized.defaultMode
 assert.ok(otherMode, 'acme has a second mode');
 assert.equal(explainToken(normalized, 'primary.solid', { mode: otherMode }).mode, otherMode);
 
+// a cross-mode rule is followed into the mode it reads: text.inverse is the
+// other color scheme's text.base, not this one's (provenance.inputMode)
+const inverse = explainToken(normalized, 'text.inverse', { mode: otherMode });
+assert.equal(inverse.inputs[0].path, 'semantic.color.text.base');
+assert.equal(inverse.inputs[0].mode, inverse.entry.provenance.inputMode, 'a cross-mode input names its mode');
+assert.ok(inverse.inputs[0].mode.startsWith(normalized.defaultMode), 'text.inverse reads the other color scheme');
+assert.deepEqual(inverse.inputs[0].entry.value, inverse.entry.value, 'the input shown is the value the rule copied');
+assert.equal(explainToken(normalized, 'text.muted').inputs[0].mode, undefined, 'a same-mode input carries no mode');
+
 // ---------- hand-built walk ----------
 const map = new Map([
   ['a', entry(derived(['b', 'c', 'gone']))],
