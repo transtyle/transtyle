@@ -45,6 +45,7 @@
  * Under `npm run site:dev`, website/dev-demos-plugin.mjs serves them straight
  * from demo-dist/ once `npm run demos:build` has run.
  */
+import { Button, Eyebrow } from '@deramond.dev/astro';
 import Base from '../../layouts/Base.astro';
 import { withBase } from '../../url.js';
 import { EXAMPLES, TARGETS, discoverDemos, demoPath, repoRoot } from '../../../../scripts/lib/demos.mjs';
@@ -86,7 +87,7 @@ const [drEx, drTg] = DEFAULTS.right.split('.');
 
 const title = 'Compare demos side by side';
 const description =
-  'Two of the 32 demo builds in one viewport — or a whole row of them — with one mode control and one scroll position driving all of them.';
+  `Two of the ${demos.length} demo builds in one viewport — or a whole row of them — with one mode control and one scroll position driving all of them.`;
 
 const pairPanes = [
   { side: 'left', label: 'Left', ex: dlEx, tg: dlTg },
@@ -97,9 +98,9 @@ const pairPanes = [
   <main id="main">
     <section class="head">
       <div>
-        <p class="eyebrow">Live output · side by side</p>
-        <h1>The same page, <span class="grad">every way at once.</span></h1>
-        <p class="sub">
+        <Eyebrow as="p">Live output · side by side</Eyebrow>
+        <h1>The same page, <em class="d-cy">every way at once.</em></h1>
+        <p class="d-lead">
           Put two demos beside each other, or a whole ecosystem's row of {EXAMPLES.length}. One mode
           control drives all of them and they scroll together, so the only thing left moving between
           panes is what the compiler emitted. <a href={withBase('/demo/')}>All {demos.length} builds →</a>
@@ -108,28 +109,31 @@ const pairPanes = [
     </section>
 
     <section class="tools" aria-label="Comparison controls">
-      <div class="tool">
-        <span class="tool-label" id="view-label">View</span>
-        <div class="seg" role="group" aria-labelledby="view-label" id="view">
-          <button type="button" data-view="pair" aria-pressed="true">Two panes</button>
-          <button type="button" data-view="row" aria-pressed="false">Whole row</button>
+      {/* One choice among two is a radio group, not two toggle buttons: one tab
+          stop, the arrow keys move the choice, and the change event drives the
+          controller. Each group is a fieldset named by its legend. */}
+      <fieldset class="tool seg" id="view">
+        <legend class="tool-label">View</legend>
+        <div class="seg-group">
+          <label class="seg-item"><input type="radio" name="view" value="pair" checked /><span>Two panes</span></label>
+          <label class="seg-item"><input type="radio" name="view" value="row" /><span>Whole row</span></label>
         </div>
-      </div>
+      </fieldset>
 
       <div class="tool" data-only="row" hidden>
         <label class="tool-label" for="row-target">Ecosystem</label>
-        <select id="row-target">
+        <select class="select" id="row-target">
           {TARGETS.map((t) => <option value={t.id} selected={t.id === DEFAULTS.row}>{t.title}</option>)}
         </select>
       </div>
 
-      <div class="tool">
-        <span class="tool-label" id="mode-label">Demo mode</span>
-        <div class="seg" role="group" aria-labelledby="mode-label" id="mode">
-          <button type="button" data-mode="light" aria-pressed="true">Light</button>
-          <button type="button" data-mode="dark" aria-pressed="false">Dark</button>
+      <fieldset class="tool seg" id="mode">
+        <legend class="tool-label">Demo mode</legend>
+        <div class="seg-group">
+          <label class="seg-item"><input type="radio" name="mode" value="light" checked /><span>Light</span></label>
+          <label class="seg-item"><input type="radio" name="mode" value="dark" /><span>Dark</span></label>
         </div>
-      </div>
+      </fieldset>
 
       <label class="tool check" data-only="pair">
         <input type="checkbox" id="lock" checked />
@@ -140,8 +144,8 @@ const pairPanes = [
         <span>Sync scroll<small>the same page in every pane</small></span>
       </label>
       <div class="tool push">
-        <button type="button" class="act" id="swap" data-only="pair" title="Exchange the two sides">⇄ Swap</button>
-        <button type="button" class="act" id="copy" title="Copy a link to this exact comparison">Copy link</button>
+        <Button variant="quiet" size="sm" type="button" id="swap" data-only="pair" title="Exchange the two sides">⇄ Swap</Button>
+        <Button variant="quiet" size="sm" type="button" id="copy" title="Copy a link to this exact comparison">Copy link</Button>
       </div>
     </section>
 
@@ -162,13 +166,13 @@ const pairPanes = [
           <section class="pane" data-pane={pane.side} aria-label={`${pane.label} demo`}>
             <header class="pane-head">
               <span class="side">{pane.label}</span>
-              <label class="vh" for={`${pane.side}-example`}>{pane.label} design system</label>
-              <select id={`${pane.side}-example`} data-role="example">
+              <label class="d-visually-hidden" for={`${pane.side}-example`}>{pane.label} design system</label>
+              <select class="select" id={`${pane.side}-example`} data-role="example">
                 {EXAMPLES.map((e) => <option value={e.id} selected={e.id === pane.ex}>{e.title}</option>)}
               </select>
               <span class="times">×</span>
-              <label class="vh" for={`${pane.side}-target`}>{pane.label} ecosystem</label>
-              <select id={`${pane.side}-target`} data-role="target">
+              <label class="d-visually-hidden" for={`${pane.side}-target`}>{pane.label} ecosystem</label>
+              <select class="select" id={`${pane.side}-target`} data-role="target">
                 {TARGETS.map((t) => (
                   <option value={t.id} selected={t.id === pane.tg} disabled={!isBuilt(pane.ex, t.id)}>
                     {t.title}
@@ -556,11 +560,11 @@ const pairPanes = [
         }
 
         renderReading();
-        document.querySelectorAll('#mode [data-mode]').forEach(function (b) {
-          b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode));
+        document.querySelectorAll('#mode input').forEach(function (input) {
+          input.checked = input.value === state.mode;
         });
-        document.querySelectorAll('#view [data-view]').forEach(function (b) {
-          b.setAttribute('aria-pressed', String(b.dataset.view === state.view));
+        document.querySelectorAll('#view input').forEach(function (input) {
+          input.checked = input.value === state.view;
         });
         writeUrl(replace !== false);
       }
@@ -627,24 +631,22 @@ const pairPanes = [
 
       // ---------- controls ----------
 
-      document.querySelectorAll('#view [data-view]').forEach(function (button) {
-        button.addEventListener('click', function () {
-          if (state.view === button.dataset.view) return;
-          state.view = button.dataset.view;
-          // A shape change resets how far down we are: the panes about to load
-          // have no scroll position yet, and inheriting the last one would put
-          // a fresh row halfway down a page the reader has not seen.
-          shared = 0;
-          render(false);
-        });
+      // The radio groups' native change event: it fires once per new choice,
+      // from a click, a tap or the arrow keys.
+      document.getElementById('view').addEventListener('change', function (event) {
+        if (state.view === event.target.value) return;
+        state.view = event.target.value;
+        // A shape change resets how far down we are: the panes about to load
+        // have no scroll position yet, and inheriting the last one would put
+        // a fresh row halfway down a page the reader has not seen.
+        shared = 0;
+        render(false);
       });
 
-      document.querySelectorAll('#mode [data-mode]').forEach(function (button) {
-        button.addEventListener('click', function () {
-          state.mode = button.dataset.mode;
-          render(false);
-          activePanes().forEach(pushMode);
-        });
+      document.getElementById('mode').addEventListener('change', function (event) {
+        state.mode = event.target.value;
+        render(false);
+        activePanes().forEach(pushMode);
       });
 
       var rowTarget = document.getElementById('row-target');
@@ -746,36 +748,69 @@ const pairPanes = [
     main { max-width: 96rem; margin: 0 auto; padding: 0 clamp(1rem, 3vw, 2rem); }
 
     .head { padding: 2.4rem 0 1.4rem; max-width: 46rem; }
-    .eyebrow { font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0 0 0.5rem; }
-    .head h1 { font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 1.06; margin: 0 0 0.7rem; font-weight: 780; }
-    .grad { color: var(--primary); }
-    .sub { font-size: 1rem; color: var(--text-muted); margin: 0; }
+    .head h1 { font-size: clamp(1.9rem, 5vw, 2.8rem); line-height: 1.06; margin: 0 0 0.7rem; }
+    .head .d-lead { margin: 0; }
 
     /* ---------- toolbar ---------- */
+    /* A square panel (panels are square; controls take the 6 px radius). */
     .tools {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.4rem;
-      padding: 0.7rem 0.9rem; margin-bottom: 0.8rem;
-      border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-soft);
+      display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-6);
+      padding: var(--space-3) var(--space-4); margin-bottom: var(--space-3);
+      border: var(--stroke-hairline) solid var(--color-line); background: var(--color-panel);
     }
-    .tool { display: flex; align-items: center; gap: 0.55rem; }
+    .tool { display: flex; align-items: center; gap: var(--space-2); }
     .tool[hidden] { display: none; }
-    .tool.push { margin-left: auto; gap: 0.4rem; }
-    .tool-label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
-    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
-    .seg button { border: 0; background: none; color: var(--text-muted); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 0.28rem 0.8rem; cursor: pointer; }
-    .seg button + button { border-left: 1px solid var(--border); }
-    .seg button[aria-pressed='true'] { background: var(--primary); color: var(--color-on-primary); }
-    .tools select {
-      font: inherit; font-size: 0.85rem; font-weight: 600; padding: 0.24rem 0.45rem;
-      border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text);
+    .tool.push { margin-left: auto; }
+    /* The package's Button is an inline-flex box, which would win over [hidden]. */
+    .tools :global(.d-btn[hidden]) { display: none; }
+    .tool-label { font: var(--type-eyebrow); letter-spacing: var(--type-eyebrow-letter-spacing); text-transform: uppercase; color: var(--color-muted); }
+
+    /* Segmented control: a radio group whose selected segment is a solid cyan
+       fill with dark ink. The input covers its segment, invisible, so clicks,
+       taps and the keyboard reach it; its focus ring is drawn on the label
+       text. A floated legend sits beside the segments instead of on the
+       fieldset's border. No clipping on the group: the ring draws outside it. */
+    .seg { margin: 0; padding: 0; border: 0; min-inline-size: 0; flex-wrap: wrap; }
+    .seg legend { float: left; padding: 0; margin-right: var(--space-2); }
+    .seg-group { display: inline-flex; border: var(--stroke-hairline) solid var(--color-line); border-radius: var(--radius-md); background: var(--color-bg); }
+    .seg-item { position: relative; display: flex; }
+    .seg-item + .seg-item { border-left: var(--stroke-hairline) solid var(--color-line); }
+    .seg-item input { position: absolute; inset: 0; z-index: 1; margin: 0; opacity: 0; cursor: pointer; }
+    .seg-item span {
+      display: inline-flex; align-items: center; min-block-size: var(--space-8); padding: 0 var(--space-3);
+      font: var(--type-button); letter-spacing: var(--type-button-letter-spacing); text-transform: uppercase; line-height: 1;
+      color: var(--color-muted); white-space: nowrap;
+      transition: background-color var(--motion-duration-dimension) var(--motion-easing-precise), color var(--motion-duration-dimension) var(--motion-easing-precise);
     }
+    .seg-item:first-child span { border-start-start-radius: calc(var(--radius-md) - var(--stroke-hairline)); border-end-start-radius: calc(var(--radius-md) - var(--stroke-hairline)); }
+    .seg-item:last-child span { border-start-end-radius: calc(var(--radius-md) - var(--stroke-hairline)); border-end-end-radius: calc(var(--radius-md) - var(--stroke-hairline)); }
+    .seg-item:hover input:not(:checked) + span { color: var(--color-fg); }
+    .seg-item input:checked + span { background: var(--color-primary); color: var(--color-on-primary); }
+    .seg-item input:focus-visible + span { position: relative; z-index: 2; outline: var(--stroke-ui) solid var(--color-primary); outline-offset: 2px; }
+
+    /* Select: the native element on the field look, as tall as a small Button
+       so the toolbar lines up. The chevron is two hard-stop triangles in the
+       muted colour, drawn on the element itself; the option list is the
+       platform's, dark through the tokens' color-scheme. */
+    .select {
+      appearance: none; -webkit-appearance: none;
+      min-block-size: var(--space-8); max-inline-size: 100%; margin: 0;
+      padding: 0 calc(var(--space-6) + var(--space-1)) 0 calc(var(--space-2) + var(--space-1));
+      font: var(--type-body); font-size: var(--font-size-sm); line-height: 1.2; color: var(--color-fg);
+      background-color: var(--color-bg);
+      background-image: linear-gradient(45deg, transparent 50%, var(--color-muted) 50%), linear-gradient(135deg, var(--color-muted) 50%, transparent 50%);
+      background-position: right 15px center, right 10px center; background-size: 5px 5px; background-repeat: no-repeat;
+      border: var(--stroke-hairline) solid var(--color-line); border-radius: var(--radius-md); cursor: pointer;
+      transition: border-color var(--motion-duration-dimension) var(--motion-easing-precise);
+    }
+    .select:hover { border-color: var(--color-muted); }
+    .select option { background: var(--color-panel); color: var(--color-fg); }
+    .select option:disabled { color: var(--color-muted); }
+
     .check { cursor: pointer; align-items: flex-start; }
     .check input { margin-top: 0.2rem; accent-color: var(--primary); }
     .check span { font-size: 0.85rem; font-weight: 600; line-height: 1.25; }
     .check small { display: block; font-size: 0.7rem; font-weight: 500; color: var(--text-muted); }
-    .act { font: inherit; font-size: 0.83rem; font-weight: 600; padding: 0.32rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
-    .act:hover { border-color: var(--primary); color: var(--primary-strong); }
-    .act[hidden] { display: none; }
 
     .reading { font-size: 0.88rem; color: var(--text-muted); margin: 0 0 0.7rem; min-height: 1.3em; }
 
@@ -828,10 +863,7 @@ const pairPanes = [
     .side { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--text-muted); }
     .row-name { font-size: 0.9rem; font-weight: 700; }
     .row-kicker { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); font-weight: 600; }
-    .pane-head select {
-      font: inherit; font-size: 0.83rem; font-weight: 600; padding: 0.2rem 0.4rem;
-      border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text); max-width: 10rem;
-    }
+    .pane-head .select { max-inline-size: 10rem; }
     .times { color: var(--text-muted); font-size: 0.8rem; }
     .open { margin-left: auto; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
     .open:hover { color: var(--primary-strong); }
@@ -853,8 +885,6 @@ const pairPanes = [
     .read h3 { margin: 0 0 0.35rem; font-size: 0.98rem; font-weight: 650; }
     .read p { margin: 0; font-size: 0.86rem; color: var(--text-muted); }
     .read code { font-size: 0.82em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 5px; }
-
-    .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
     /* Below this width two panes are two slivers; stack them and drop the
        splitter, which has nothing left to divide. The row keeps its columns

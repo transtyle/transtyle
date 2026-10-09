@@ -1,6 +1,6 @@
 ---
 import { codeProps } from '@deramond.dev/astro/code';
-import Button from '@deramond.dev/astro/components/Button.astro';
+import { Badge, Button, DemoPanel, Hero } from '@deramond.dev/astro';
 import Base from '../layouts/Base.astro';
 import { Code } from 'astro:components';
 import { withBase } from '../url.js';
@@ -15,6 +15,15 @@ const shiki = codeProps;
 const root = repoRoot();
 const demoCount = discoverDemos(root).length;
 const themes = await demoThemes(EXAMPLES, root);
+
+// The hero's exact-data strip: the counts are read from the repository, so a
+// new exporter or demo moves them on the commit that adds it.
+const telemetry = [
+  { label: 'Targets', value: String(TARGETS.length) },
+  { label: 'Live demos', value: String(demoCount) },
+  { label: 'Rebuilds', value: 'byte-identical' },
+  { label: 'Runtime', value: 'none' },
+];
 
 // The coverage bar and the contrast claim are read from the compile of
 // examples/acme (shadcn), never typed: a change to Acme moves them, and the
@@ -90,31 +99,33 @@ npx transtyle build`;
 ---
 <Base title="Transtyle — the design system compiler" current="home">
   <main id="main">
-    <section class="hero d-container">
-      <p class="eyebrow">Design System Compiler</p>
-      <h1>One design system.<br /><span class="grad">Every ecosystem.</span></h1>
-      <p class="sub">
-        Describe your design system once, as standard W3C design tokens. Transtyle compiles it into
+    <Hero eyebrow={{ label: 'Design system compiler' }} telemetry={telemetry}>
+      <Fragment slot="title">One design system.<br /><em class="d-cy">Every ecosystem.</em></Fragment>
+      <p class="d-lead">
+        Describe your design system once, as DTCG design tokens. Transtyle compiles it into
         native, idiomatic themes for <strong>eleven ecosystems today</strong> — shadcn/ui, daisyUI,
         Apache&nbsp;ECharts, Bootstrap, Storybook, Radix&nbsp;Themes, PrimeNG, Mantine, Chakra&nbsp;UI, Material&nbsp;UI, and plain CSS variables.
         Deterministic. Explainable. Zero runtime.
       </p>
-      <div class="cta">
+      <Fragment slot="actions">
         <Button variant="gold" href={withBase('/docs/getting-started/')}>Get started</Button>
         <Button variant="quiet" href={withBase('/docs/')}>Read the docs</Button>
-      </div>
-      <p class="hero-status">
-        <span class="pill">Alpha</span> On npm as <code>@transtyle/cli@alpha</code> — published so it
-        can be tried, not because it is finished. Breaking changes ship without a deprecation cycle.
-      </p>
-      <p class="hero-post">
-        Read <a href={withBase('/blog/a-compiler-for-design-systems/')}>A compiler for design systems</a> — the
-        experiment, the architecture, and what four real design systems look like coming out of it.
-      </p>
-
-      <div class="terminal">
-        <div class="term-bar"><span></span><span></span><span></span><em>examples/acme</em></div>
-        <pre data-copy="npx transtyle build shadcn bootstrap echarts"><code><span class="dim">$</span> npx transtyle build shadcn bootstrap echarts
+      </Fragment>
+      <Fragment slot="after">
+        {/* The status line sits between the actions and the terminal on purpose:
+            the hero makes promises, and the reader should learn what they are
+            worth before scrolling into the proof, not after installing. The
+            breaking-changes sentence is the alpha bar's, on every page. */}
+        <p class="hero-note">
+          <Badge kind="warning">Alpha</Badge> On npm as <code>@transtyle/cli@alpha</code> — published so it
+          can be tried, not because it is finished.
+        </p>
+        <p class="hero-note">
+          Read <a href={withBase('/blog/a-compiler-for-design-systems/')}>A compiler for design systems</a> — the
+          experiment, the architecture, and what four real design systems look like coming out of it.
+        </p>
+        <DemoPanel label="examples/acme" flush class="terminal">
+          <pre data-copy="npx transtyle build shadcn bootstrap echarts"><code><span class="dim">$</span> npx transtyle build shadcn bootstrap echarts
 
 shadcn     <span class="cov-n">42% native</span> · <span class="cov-d">53% derived</span> · <span class="cov-a">3% approximated</span> · 3% dropped
   ↳ dist/shadcn/globals.transtyle.css
@@ -123,15 +134,9 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
            ↳ report.json — provenance for every value
 
 <span class="ok">✔ build complete — rebuilds are byte-identical</span></code></pre>
-      </div>
-
-      <p class="strip">
-        <span>Deterministic — byte-identical rebuilds</span>
-        <span>DTCG-native — no lock-in</span>
-        <span>Zero runtime — files out, nothing in</span>
-        <span>Agent-ready — JSON in, JSON out</span>
-      </p>
-    </section>
+        </DemoPanel>
+      </Fragment>
+    </Hero>
 
     <div class="d-container">
     <section class="band" aria-labelledby="h-pipeline">
@@ -172,7 +177,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band alt" aria-labelledby="h-derive">
       <h2 id="h-derive">Author three tokens — or every single one.</h2>
-      <p class="band-sub d-lead">Three is not a marketing number: a brand color, a page background and a text color are the decisions that make a theme yours, and CI compiles exactly that design system against all eight exporters on every commit. The floor is one token: leave the page and its text out and they default to white and near-black, swapped in dark mode.</p>
+      <p class="band-sub d-lead">Three is not a marketing number: a brand color, a page background and a text color are the decisions that make a theme yours, and CI compiles exactly that design system against all {TARGETS.length} exporters on every commit. The floor is one token: leave the page and its text out and they default to white and near-black, swapped in dark mode.</p>
       <p class="band-read">The derivation engine fills every slot you didn't author — hover states, on-colors, tints, dark-mode wiring, a data-viz palette — with deterministic, versioned rules. But every one of those slots is a real, addressable token: <a href={withBase('/docs/language/')}>the catalog</a> exposes the full role grids, elevation ladder, and scales, so you can pin any value — down to a single dark-mode hover state — and derivation yields to you. Authored always wins; every value knows its origin.</p>
       <div class="transform">
         <div class="t-side">
@@ -297,7 +302,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     <section class="band" aria-labelledby="h-plugins">
       <h2 id="h-plugins">Every exporter is a plugin</h2>
       <p class="band-sub d-lead">
-        The core knows nothing about Bootstrap. All eight official exporters use the same public plugin
+        The core knows nothing about Bootstrap. All {TARGETS.length} official exporters use the same public plugin
         API — resolve the catalog, emit native files, report coverage honestly. The
         <a href={withBase('/docs/exporter-css-variables/')}>css-variables exporter</a> is the reference
         implementation to copy from; the <a href={withBase('/docs/internals/')}>internals guide</a> documents the contract.
@@ -319,10 +324,9 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band final" aria-labelledby="h-start">
       <h2 id="h-start">Start compiling</h2>
-      <p class="band-sub d-lead">On npm as an alpha — <code>@transtyle/cli@alpha</code>. Prefer to look before you install? The <a href={withBase('/docs/examples/')}>four examples</a> in the repository compile end to end, two of them real systems nobody here designed (GOV.UK, Carbon).</p>
+      <p class="band-sub d-lead">On npm as <code>@transtyle/cli@alpha</code>. Prefer to look before you install? The <a href={withBase('/docs/examples/')}>four examples</a> in the repository compile end to end, two of them real systems nobody here designed (GOV.UK, Carbon).</p>
       <div class="start"><Code code={startCommands} lang="bash" {...shiki} /></div>
       <div class="cta center">
-        <Button variant="ghost" href={withBase('/docs/getting-started/')}>Getting started guide</Button>
         <Button variant="quiet" href={withBase('/docs/adopt-existing/')}>I already have a design system</Button>
       </div>
     </section>
@@ -330,50 +334,27 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
   </main>
 
   <style>
-    .hero { text-align: center; padding: 4.5rem 0 3rem; }
-    .eyebrow {
-      display: inline-block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--primary); background: var(--primary-soft); padding: 0.3rem 0.9rem; border-radius: 99px;
-      font-family: var(--mono);
-    }
-    h1 { font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.08; margin: 1rem 0; }
-    /* The second line in cyan: flat colour, no sweep. */
-    .grad { color: var(--primary); }
-    .sub { max-width: 46rem; margin: 0 auto 1.6rem; font-size: 1.1rem; color: var(--text-muted); }
-    .sub strong { color: var(--text); }
     .cta { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
-    .hero-post { font-size: 0.9rem; color: var(--text-muted); margin: 1rem auto 0; max-width: 40rem; }
-    /* The status line sits between the CTAs and the terminal on purpose: the
-       hero makes eight promises, and the reader should learn what they are
-       worth before scrolling into the proof, not after installing. */
-    .hero-status { font-size: 0.9rem; color: var(--text-muted); margin: 1.5rem auto 0; max-width: 40rem; }
-    .hero-status .pill {
-      display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--primary); border: 1px solid var(--primary-soft); background: var(--primary-soft);
-      padding: 0.1rem 0.5rem; border-radius: 99px; margin-right: 0.35rem; vertical-align: 0.05em;
-      font-family: var(--mono);
-    }
-    .hero-status code { font-size: 0.85em; }
+    /* The hero's status and blog lines, under its actions. */
+    .hero-note { font: var(--type-small); color: var(--color-muted); max-width: 58ch; margin: 0 0 var(--space-3); }
+    .d-lead strong { color: var(--color-fg); }
     .cta.center { margin-top: var(--space-6); }
 
-    .terminal {
-      max-width: 42rem; margin: 2.6rem auto 0; border-radius: var(--radius-md); overflow: hidden;
-      border: 1px solid var(--border); text-align: left;
-    }
-    .term-bar { display: flex; align-items: center; gap: 6px; padding: 0.6rem 0.9rem; background: var(--bg-soft); border-bottom: 1px solid var(--border-soft); }
-    .term-bar span { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
-    .term-bar em { margin-left: auto; font-size: 0.75rem; color: var(--text-muted); font-style: normal; font-family: var(--mono); }
-    .terminal pre { margin: 0; padding: 1.1rem 1.3rem; background: var(--terminal-bg); color: var(--terminal-text); font-size: 0.83rem; line-height: 1.7; overflow-x: auto; }
+    /* The transcript is DemoPanel's flush body (the figure is the package's
+       element, hence :global): the package's pre keeps its padding, size and
+       line height, and drops the hairline, radius and margin the panel already
+       draws. The class also keeps global.css's .terminal .code-wrap hooks. */
+    :global(.terminal) { max-width: 42rem; margin: var(--space-8) 0 var(--space-6); }
+    :global(.terminal) pre { margin: 0; border: 0; border-radius: 0; }
     .dim { opacity: 0.6; }
     .ok { color: var(--ok); }
     .cov-n { color: var(--cov-native); }
     .cov-d { color: var(--cov-derived); }
     .cov-a { color: var(--cov-approx); }
 
-    .strip { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; justify-content: center; margin-top: 2.4rem; font-size: 0.85rem; color: var(--text-muted); }
-    .strip span::before { content: '✓ '; color: var(--ok); }
-
     .band { padding: var(--space-14) 0; border-top: var(--stroke-hairline) solid var(--color-line); }
+    /* Hero draws the hairline above the first band. */
+    .band:first-child { border-top: 0; }
     .band h2 { margin: 0 0 var(--space-3); }
     .band-sub { margin: 0 0 var(--space-8); }
     /* Long text on the brand: left-aligned, 32em at most, 1.7 line height, in the reading colour. */

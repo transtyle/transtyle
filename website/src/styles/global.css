@@ -81,9 +81,9 @@ h1, h2, h3 { text-wrap: balance; }
   position: relative; border-radius: var(--radius-md); overflow: hidden;
   box-shadow: inset 0 0 0 var(--stroke-hairline) var(--color-line);
 }
-/* The hero terminal already owns a rounded frame one level up (`.terminal`,
-   overflow:hidden, around the title bar and the code); a second ring or radius
-   here would double up where they meet. */
+/* The hero terminal is a square DemoPanel one level up (`.terminal`, its
+   hairline around the label bar and the code); a second ring or radius here
+   would double up where they meet. */
 .terminal .code-wrap { border-radius: 0; overflow: visible; box-shadow: none; }
 
 /* Overflow cue: a block wider than its column otherwise hard-clips with no sign
