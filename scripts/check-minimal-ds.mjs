@@ -140,6 +140,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { compile } from '@transtyle/core';
+import { LEAK, LEAK_INSIDE } from '@transtyle/plugin-kit';
 import { compileString } from 'sass';
 
 const EXPORTERS = {
@@ -310,16 +311,11 @@ const writeConfig = (modes, autoDark = false) =>
   );
 
 const errors = [];
-// `undefined` etc. as a whole word on the value side of a declaration. Matching
-// the value side only keeps legitimate prose (a comment mentioning "undefined")
-// out of it — the emitted files carry a lot of explanatory comments.
-const LEAK = /(:|=>?)\s*(undefined|null|NaN)\b/;
-// …and the two that hide *inside* a value, where the rule above cannot see
-// them: `oklch(NaN NaN NaN)` is a color function fed a string instead of a
-// parsed color, `[object Object]` an object stringified whole. An authored
-// shadow shipped the first for months behind a check that only looked right
-// after the colon (#26). Neither ever appears in legitimate output or prose.
-const LEAK_INSIDE = /\bNaN\b|\[object Object\]/;
+// `undefined`/`null`/`NaN` on the value side of a declaration, and the two
+// that hide inside a value (`oklch(NaN NaN NaN)`, `[object Object]`): the
+// plugin kit's `no-leaked-values` patterns, one copy for both. An authored
+// shadow shipped the `NaN` for months behind a check that only looked right
+// after the colon (#26).
 const leaks = (line) => LEAK.test(line) || LEAK_INSIDE.test(line);
 
 let files = 0;

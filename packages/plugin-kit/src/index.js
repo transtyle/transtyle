@@ -2,46 +2,139 @@
  * @transtyle/plugin-kit — the executable specification of the exporter interface.
  *
  * plugins.md is prose and drifts; this suite is the contract that doesn't.
- * `conformance(plugin)` runs a plugin against a canonical fixture design system
+ * `conformance(plugin)` runs a plugin against a set of fixture design systems
  * and asserts it honors the real interface: a single `emit(normalizedIR, ctx) →
  * { files, coverage, diagnostics? }` hook that is deterministic, pure (never mutates the IR),
- * and honest (every coverage class is one of the five). Passing it is what
- * "official" means and what community exporters advertise.
+ * and honest (every coverage class is one of the five, no coverage claim for a
+ * slot that has no value, no mode dimension ignored in silence, no JavaScript
+ * value leaked into a file). Passing it is what "official" means and what
+ * community exporters advertise.
  *
  * The interface it checks is the one all shipped exporters actually implement
  * (ADR-0011 reconciliation) — not the richer resolve/doc/declarative-mapping
  * design that plugins.md once aspired to and no exporter used.
+ *
+ * Why several fixtures (#96): one full, light/dark design system hides every
+ * bug that only a sparse or differently-shaped one shows. A one-token system
+ * crashed Bootstrap (#23), object-form dimensions leaked `[object Object]`
+ * into four targets (#24), an authored shadow wrote `NaN` (#26): all under a
+ * green kit, because its only fixture had none of those shapes.
  */
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { compile, checkExporterDiagnostics, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
-const FIXTURE = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixture');
+const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures');
 const COVERAGE_CLASSES = new Set(['native', 'derived', 'approximated', 'dropped', 'unsupported']);
 
-// A derivation-only loader — the fixture config declares no targets, so compile
+/**
+ * The fixture design systems, in the order `conformance()` runs them. Each is a
+ * plain DTCG project under `fixtures/<name>/` (a `transtyle.config.json` and
+ * `tokens/`), compiled by the real loader, so a plugin author can open it.
+ * `spec` is the rule the fixture exists to enforce.
+ */
+export const FIXTURES = Object.freeze([
+  {
+    name: 'canonical',
+    exercises: 'a brand color, light and dark, elevation, text, border, fonts; radius, a duration and an easing in DTCG structured form',
+    spec: 'plugins.md#the-exporter-interface',
+  },
+  {
+    name: 'one-token',
+    exercises: 'only `semantic.color.primary.solid`, the one token the engine cannot invent; everything else is derived or absent',
+    spec: 'validation-and-coverage.md#coverage-report (a missing slot is a row, not a crash)',
+  },
+  {
+    name: 'three-token',
+    exercises: 'brand, page background and text, with dark values; no radius, spacing or fonts',
+    spec: 'validation-and-coverage.md#coverage-report (absence is not coverage)',
+  },
+  {
+    name: 'two-dimension',
+    exercises: '`color-scheme` × `density`, with `space.4` authored differently under `density: compact`',
+    spec: 'ir.md#modes, validation-and-coverage.md#coverage-report (`dropped` for a mode the target cannot express)',
+    // Values authored only under `density: compact`, as written and in px: one
+    // of them in a file, or a `(mode:density)` dropped row, accounts for it.
+    marks: { density: ['0.8125rem', '13px'] },
+  },
+  {
+    name: 'single-mode',
+    exercises: '`color-scheme` with `light` only: no `dark` map exists',
+    spec: 'ir.md#modes',
+  },
+  {
+    name: 'component-tier',
+    exercises: 'authored `component.control.radius`, `component.button.radius` (an alias to a derived slot), `component.button.padding-x`, `component.tooltip.max-width`',
+    spec: 'ir.md#the-three-tier-token-model',
+  },
+  {
+    name: 'custom-role',
+    exercises: 'a custom `promo` role joining the grid through `$extensions.transtyle.role` (archetype `brand`)',
+    spec: 'ir.md#color-the-role-grid',
+  },
+  {
+    name: 'composites',
+    exercises: 'authored shadow (per-mode, stacked with `inset`, aliased), border, transition and typography composites',
+    spec: 'ir.md#values-and-canonicalization',
+  },
+  {
+    name: 'object-form',
+    exercises: 'dimension, duration, cubicBezier, fontWeight and typography members in DTCG structured form, under two dimensions',
+    spec: 'ir.md#values-and-canonicalization (structured forms compile byte-identical to the string form)',
+    // Same design system authored with CSS strings: the plugin must not be
+    // able to tell them apart.
+    twin: 'object-form-twin',
+  },
+]);
+const FIXTURE_NAMES = FIXTURES.map((f) => f.name);
+
+/**
+ * JavaScript values that leaked into a file. `undefined`/`null`/`NaN` as a
+ * whole word on the value side of a declaration (after `:`, `=` or `=>`), so a
+ * comment mentioning "undefined" is not one; and the two that hide inside a
+ * value, where that rule cannot see them: `oklch(NaN NaN NaN)` (a color
+ * function fed a string) and `[object Object]` (an object stringified whole).
+ * Neither ever appears in legitimate output or prose. `check:minimal-ds` uses
+ * the same two patterns.
+ */
+export const LEAK = /(:|=>?)\s*(undefined|null|NaN)\b/;
+export const LEAK_INSIDE = /\bNaN\b|\[object Object\]/;
+const leaks = (line) => LEAK.test(line) || LEAK_INSIDE.test(line);
+
+// A derivation-only loader — fixture configs declare no targets, so compile
 // resolves the IR without ever calling this, but the signature must be present.
 const noopLoader = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
 
-let _irPromise;
-/** Resolve the bundled fixture to a normalized IR (cached across calls). */
-export async function fixtureIR() {
-  if (!_irPromise) {
-    _irPromise = compile({ cwd: FIXTURE, targets: [], emit: false, loadExporter: noopLoader })
-      .then((r) => r.normalized);
+const cache = new Map();
+/** Compile a fixture (or a fixture's twin) once: `{ ir, config }`. */
+function loadFixture(name) {
+  const known = FIXTURE_NAMES.includes(name) || FIXTURES.some((f) => f.twin === name);
+  if (!known) return Promise.reject(new Error(`Unknown plugin-kit fixture "${name}" (available: ${FIXTURE_NAMES.join(', ')})`));
+  if (!cache.has(name)) {
+    cache.set(name, compile({ cwd: join(FIXTURES_DIR, name), targets: [], emit: false, loadExporter: noopLoader }).then((r) => {
+      if (r.diagnostics.errors.length) {
+        throw new Error(`plugin-kit fixture "${name}" does not compile: ${r.diagnostics.errors.map((d) => `${d.code} ${d.message}`).join('; ')}`);
+      }
+      return { ir: r.normalized, config: r.config };
+    }));
   }
-  return _irPromise;
+  return cache.get(name);
+}
+
+/** Resolve a bundled fixture to a normalized IR (cached across calls). Defaults to `canonical`. */
+export async function fixtureIR(name = 'canonical') {
+  return (await loadFixture(name)).ir;
 }
 
 /** Build a TargetContext equivalent to the one core passes exporters at emit time. */
-function makeCtx() {
+function makeCtx(config) {
   return {
-    config: { name: 'conformance-fixture', targets: {} },
+    config,
     targetConfig: { output: 'dist', options: {} },
-    units: makeUnits({}),
+    units: makeUnits(config),
     formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
-    projectName: 'conformance-fixture',
+    projectName: config.name ?? 'design-system',
     siblings: [],
   };
 }
@@ -56,14 +149,31 @@ function snapshotIR(ir) {
   return JSON.stringify(out);
 }
 
+/** Which fixtures a `fixtures` option selects. */
+function selectFixtures(fixtures = 'all') {
+  if (fixtures === 'all') return FIXTURES;
+  const names = typeof fixtures === 'string' ? [fixtures] : fixtures;
+  if (!Array.isArray(names)) throw new TypeError('conformance(): `fixtures` is "all", a fixture name, or an array of names');
+  const unknown = names.filter((n) => !FIXTURE_NAMES.includes(n));
+  if (unknown.length) throw new Error(`Unknown plugin-kit fixture(s): ${unknown.join(', ')} (available: ${FIXTURE_NAMES.join(', ')})`);
+  return FIXTURES.filter((f) => names.includes(f.name));
+}
+
+const list = (items, max = 3) => items.slice(0, max).join('; ') + (items.length > max ? `; … ${items.length - max} more` : '');
+
 /**
  * @param {object} plugin  the exporter's default export ({ name, emit, optionsSchema? })
- * @param {{ manifest?: object, ir?: object }} [opts]  manifest = the package.json `transtyle` key
- * @returns {Promise<{ pass: boolean, checks: Array<{ name, pass, spec, detail? }> }>}
+ * @param {{ manifest?: object, fixtures?: 'all' | string | string[], ir?: object }} [opts]
+ *   manifest = the package.json `transtyle` key; fixtures = which bundled
+ *   fixtures to run (default every one; `'canonical'` is the opt-out to the
+ *   original single fixture); ir = your own normalized IR, run instead of the
+ *   fixtures (reported as fixture `custom`)
+ * @returns {Promise<{ pass: boolean, checks: Array<{ name, pass, spec, fixture?, detail? }> }>}
  */
 export async function conformance(plugin, opts = {}) {
   const checks = [];
-  const add = (name, pass, spec, detail) => checks.push({ name, pass: !!pass, spec, ...(pass ? {} : { detail }) });
+  const add = (name, pass, spec, detail, fixture) =>
+    checks.push({ name, pass: !!pass, spec, ...(fixture ? { fixture } : {}), ...(pass ? {} : { detail }) });
   const done = () => ({ pass: checks.every((c) => c.pass), checks });
 
   add('interface-shape',
@@ -71,51 +181,6 @@ export async function conformance(plugin, opts = {}) {
     'plugins.md#the-exporter-interface',
     'default export must be { name: string, emit: function }');
   if (!plugin || typeof plugin.emit !== 'function') return done();
-
-  const ir = opts.ir ?? await fixtureIR();
-  const ctx = makeCtx();
-  const before = snapshotIR(ir);
-
-  let out1, threw;
-  try { out1 = plugin.emit(ir, ctx); } catch (e) { threw = e; }
-  add('emit-runs', !threw, 'plugins.md#the-exporter-interface', threw && `emit() threw: ${threw.message}`);
-  if (threw) return done();
-
-  add('emit-returns-files',
-    Array.isArray(out1.files) && out1.files.every((f) => f && typeof f.path === 'string' && typeof f.contents === 'string' && typeof f.kind === 'string'),
-    'plugins.md#the-exporter-interface',
-    'emit must return files: { path, contents, kind }[]');
-
-  add('emit-returns-coverage',
-    Array.isArray(out1.coverage) && out1.coverage.every((c) => c && typeof c.variable === 'string' && typeof c.slot === 'string' && typeof c.class === 'string'),
-    'validation-and-coverage.md',
-    'emit must return coverage: { variable, slot, class }[]');
-
-  add('coverage-classes-valid',
-    Array.isArray(out1.coverage) && out1.coverage.every((c) => COVERAGE_CLASSES.has(c.class)),
-    'docs/specs/validation-and-coverage.md',
-    `every coverage.class must be one of ${[...COVERAGE_CLASSES].join(', ')}`);
-
-  // Optional: `diagnostics` ({ severity: info|warning, code, message, hint? }[])
-  // for what a target's own conventions do to a value. Core rejects a malformed
-  // list as TST3001, so the harness fails it here first.
-  if (out1.diagnostics !== undefined) {
-    let bad;
-    try { checkExporterDiagnostics(out1.diagnostics); } catch (e) { bad = e.message; }
-    add('emit-diagnostics-valid', !bad, 'plugins.md#the-exporter-interface', bad);
-  }
-
-  const out2 = plugin.emit(ir, ctx);
-  add('deterministic',
-    JSON.stringify(out1.files) === JSON.stringify(out2.files)
-      && JSON.stringify(out1.diagnostics) === JSON.stringify(out2.diagnostics),
-    'plugins.md ("emit must be deterministic")',
-    'two emit() runs on the same IR produced different files or diagnostics');
-
-  add('ir-immutable',
-    snapshotIR(ir) === before,
-    'plugins.md ("exporters receive an immutable IR snapshot")',
-    'emit() mutated the IR it was given');
 
   if (opts.manifest) {
     const m = opts.manifest;
@@ -132,5 +197,110 @@ export async function conformance(plugin, opts = {}) {
       'optionsSchema must be a JSON-Schema object ({ type: "object", ... })');
   }
 
+  if (opts.ir) {
+    runFixture(plugin, { ir: opts.ir, config: { name: 'conformance-fixture', targets: {} } }, { name: 'custom' }, null, add);
+    return done();
+  }
+  for (const fixture of selectFixtures(opts.fixtures)) {
+    const twin = fixture.twin ? await loadFixture(fixture.twin) : null;
+    runFixture(plugin, await loadFixture(fixture.name), fixture, twin, add);
+  }
   return done();
+}
+
+/** Every per-IR check, against one fixture. */
+function runFixture(plugin, { ir, config }, fixture, twin, addCheck) {
+  const add = (name, pass, spec, detail) => addCheck(name, pass, spec, detail, fixture.name);
+  const ctx = makeCtx(config);
+  const before = snapshotIR(ir);
+
+  let out1, threw;
+  try { out1 = plugin.emit(ir, ctx); } catch (e) { threw = e; }
+  add('emit-runs', !threw, 'plugins.md#the-exporter-interface', threw && `emit() threw: ${threw.message}`);
+  if (threw) return;
+
+  const filesOk = Array.isArray(out1?.files) && out1.files.every((f) => f && typeof f.path === 'string' && typeof f.contents === 'string' && typeof f.kind === 'string');
+  add('emit-returns-files', filesOk,
+    'plugins.md#the-exporter-interface',
+    'emit must return files: { path, contents, kind }[]');
+
+  const coverageOk = Array.isArray(out1?.coverage) && out1.coverage.every((c) => c && typeof c.variable === 'string' && typeof c.slot === 'string' && typeof c.class === 'string');
+  add('emit-returns-coverage', coverageOk,
+    'validation-and-coverage.md',
+    'emit must return coverage: { variable, slot, class }[]');
+
+  add('coverage-classes-valid',
+    Array.isArray(out1?.coverage) && out1.coverage.every((c) => COVERAGE_CLASSES.has(c?.class)),
+    'docs/specs/validation-and-coverage.md',
+    `every coverage.class must be one of ${[...COVERAGE_CLASSES].join(', ')}`);
+
+  // Optional: `diagnostics` ({ severity: info|warning, code, message, hint? }[])
+  // for what a target's own conventions do to a value. Core rejects a malformed
+  // list as TST3001, so the harness fails it here first.
+  if (out1?.diagnostics !== undefined) {
+    let bad;
+    try { checkExporterDiagnostics(out1.diagnostics); } catch (e) { bad = e.message; }
+    add('emit-diagnostics-valid', !bad, 'plugins.md#the-exporter-interface', bad);
+  }
+
+  let out2;
+  try { out2 = plugin.emit(ir, ctx); } catch (e) { out2 = { files: `threw: ${e.message}` }; }
+  add('deterministic',
+    JSON.stringify(out1?.files) === JSON.stringify(out2?.files)
+      && JSON.stringify(out1?.diagnostics) === JSON.stringify(out2?.diagnostics),
+    'plugins.md ("emit must be deterministic")',
+    'two emit() runs on the same IR produced different files or diagnostics');
+
+  add('ir-immutable',
+    snapshotIR(ir) === before,
+    'plugins.md ("exporters receive an immutable IR snapshot")',
+    'emit() mutated the IR it was given');
+
+  if (!filesOk || !coverageOk) return;
+  const { files, coverage } = out1;
+
+  const empty = files.filter((f) => !f.contents.trim()).map((f) => f.path);
+  add('files-non-empty', !empty.length,
+    'plugins.md#the-exporter-interface',
+    `emitted empty file(s): ${list(empty)}`);
+
+  const leaked = files.flatMap((f) =>
+    f.contents.split('\n').flatMap((line, i) => (leaks(line) ? [`${f.path}:${i + 1} ${line.trim()}`] : [])));
+  add('no-leaked-values', !leaked.length,
+    'plugins.md ("no JavaScript value in output")',
+    `a JavaScript value (undefined, null, NaN, [object Object]) leaked into output: ${list(leaked)}`);
+
+  // Only rows whose `slot` is one complete IR path are checkable: many carry a
+  // summary label instead (`semantic.{font.sans, type.size.md}`, a target's own
+  // namespace). Those are skipped rather than guessed at.
+  const map = ir.modes[ir.defaultMode];
+  const unresolved = coverage
+    .filter((c) => ['native', 'derived'].includes(c.class) && /^(semantic|component|option)\.[\w.-]+$/.test(c.slot) && map?.get(c.slot)?.value === undefined)
+    .map((c) => `${c.variable} <- ${c.slot} (${c.class})`);
+  add('coverage-honest', !unresolved.length,
+    'validation-and-coverage.md#coverage-report ("absence is not coverage")',
+    `coverage rows claim a slot that does not resolve: ${list(unresolved)}`);
+
+  if (fixture.marks) {
+    const silent = Object.entries(fixture.marks)
+      .filter(([dim]) => ir.dimensionNames?.includes(dim))
+      .filter(([dim, marks]) =>
+        !coverage.some((c) => c.class === 'dropped' && c.variable === `(mode:${dim})`)
+        && !files.some((f) => marks.some((m) => f.contents.includes(m))))
+      .map(([dim, marks]) => `${dim} (neither its value ${marks.join(' / ')} in a file nor a \`(mode:${dim})\` dropped row)`);
+    add('mode-dimensions-accounted', !silent.length,
+      'validation-and-coverage.md#coverage-report (`dropped` for a mode the target cannot express)',
+      `mode dimension ignored in silence: ${list(silent)}`);
+  }
+
+  if (twin) {
+    let twinFiles;
+    try { twinFiles = plugin.emit(twin.ir, makeCtx(twin.config)).files; } catch (e) { twinFiles = []; }
+    const differ = files
+      .filter((f) => twinFiles?.find?.((g) => g.path === f.path)?.contents !== f.contents)
+      .map((f) => f.path);
+    add('structured-values-as-strings', !differ.length,
+      'ir.md#values-and-canonicalization',
+      `output differs from the same design system authored with CSS strings: ${list(differ)}`);
+  }
 }

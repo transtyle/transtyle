@@ -23,7 +23,7 @@
   },
   "files": [
     "src",
-    "fixture",
+    "fixtures",
     "CHANGELOG.md"
   ],
   "publishConfig": {

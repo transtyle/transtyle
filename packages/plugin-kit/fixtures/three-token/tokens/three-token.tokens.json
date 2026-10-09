@@ -1,0 +1,23 @@
+{
+  "semantic": {
+    "color": {
+      "primary": { "solid": { "$type": "color", "$value": "#3b5bdb" } },
+      "elevation": {
+        "0": {
+          "surface": {
+            "$type": "color",
+            "$value": "#ffffff",
+            "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "#101114" } } }
+          }
+        }
+      },
+      "text": {
+        "base": {
+          "$type": "color",
+          "$value": "#212529",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "#f8f9fa" } } }
+        }
+      }
+    }
+  }
+}
