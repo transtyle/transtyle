@@ -335,6 +335,72 @@ try {
   }
 }
 
+// ---------- #62: option-token hygiene (TST1114 unused, TST1115 same value) ----------
+// Two option tokens nobody references and two used ones that are the same gray
+// (one written as hex, one as a near-equal OKLCH). Info by default: exit 0 and
+// failOn: warning does not trip. `hygiene` promotes them to warnings, and
+// `off` silences them. The clean scaffold is the control: it stays silent.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-hygiene-'));
+  const tp = join(dir, 'tokens/brand.tokens.json');
+  const cp = join(dir, 'transtyle.config.json');
+  const hygiene = () => {
+    const r = run(['check', '--cwd', dir, '--json']);
+    let j = null;
+    try { j = JSON.parse(r.stdout); } catch { /* reported below */ }
+    return { r, j, byCode: (c) => (j?.diagnostics ?? []).filter((d) => d.code === c) };
+  };
+  try {
+    run(['init', 'hygiene-ds', '--cwd', dir]);
+    let h = hygiene();
+    expect('hygiene control: the clean scaffold reports neither code', h.j && h.byCode('TST1114').length === 0 && h.byCode('TST1115').length === 0, h.r.out);
+
+    const tokens = JSON.parse(readFileSync(tp, 'utf8'));
+    Object.assign(tokens.option.color, {
+      'gray-a': { $value: '#333333' },
+      'gray-b': { $value: 'oklch(0.3210925090680371 0 0)' },
+      orphan1: { $value: 'oklch(0.7 0.1 30)' },
+      orphan2: { $value: 'oklch(0.6 0.1 140)' },
+    });
+    tokens.semantic.color.text.base.$value = '{option.color.gray-a}';
+    tokens.semantic.color.text.muted.$value = '{option.color.gray-b}';
+    writeFileSync(tp, JSON.stringify(tokens, null, 2));
+
+    h = hygiene();
+    const [unused] = h.byCode('TST1114');
+    const [dup] = h.byCode('TST1115');
+    expect('hygiene: exit 0 by default (info)', h.r.code === 0, `exit ${h.r.code}: ${h.r.out}`);
+    expect('hygiene: TST1114 once, severity info, count in the message', h.byCode('TST1114').length === 1 && unused.severity === 'info' && unused.message.startsWith('2 option tokens are never referenced'), JSON.stringify(unused));
+    expect('hygiene: TST1114 --json lists both paths', JSON.stringify(unused?.paths) === JSON.stringify(['option.color.orphan1', 'option.color.orphan2']), JSON.stringify(unused));
+    expect('hygiene: TST1115 once, severity info, names the first path and the count', h.byCode('TST1115').length === 1 && dup.severity === 'info' && dup.message.startsWith('option.color.gray-a and 1 other option token resolve'), JSON.stringify(dup));
+    expect('hygiene: TST1115 --json lists the group (hex and near-equal oklch)', JSON.stringify(dup?.paths) === JSON.stringify(['option.color.gray-a', 'option.color.gray-b']), JSON.stringify(dup));
+
+    const cfg = JSON.parse(readFileSync(cp, 'utf8'));
+    cfg.check = { ...(cfg.check ?? {}), failOn: 'warning' };
+    writeFileSync(cp, JSON.stringify(cfg, null, 2));
+    h = hygiene();
+    expect('hygiene: failOn warning alone still exits 0 (info)', h.r.code === 0, `exit ${h.r.code}: ${h.r.out}`);
+
+    cfg.check.hygiene = { unusedOption: 'warning', duplicateOption: 'warning' };
+    writeFileSync(cp, JSON.stringify(cfg, null, 2));
+    h = hygiene();
+    expect('hygiene: promoted to warning, both severities follow', h.byCode('TST1114')[0]?.severity === 'warning' && h.byCode('TST1115')[0]?.severity === 'warning', h.r.out);
+    expect('hygiene: failOn warning + hygiene warning exits 1', h.r.code === 1, `exit ${h.r.code}`);
+
+    cfg.check.hygiene = { unusedOption: 'off', duplicateOption: 'off' };
+    writeFileSync(cp, JSON.stringify(cfg, null, 2));
+    h = hygiene();
+    expect('hygiene: off silences both', h.byCode('TST1114').length === 0 && h.byCode('TST1115').length === 0 && h.r.code === 0, h.r.out);
+
+    cfg.check.hygiene = { unusedOption: 'loud' };
+    writeFileSync(cp, JSON.stringify(cfg, null, 2));
+    h = hygiene();
+    expect('hygiene: an unknown level is a config error (TST1010)', h.byCode('TST1010').length === 1, h.r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- #28: an exporter that throws names its target ----------
 {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-crash-'));

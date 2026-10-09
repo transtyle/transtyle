@@ -137,6 +137,28 @@
               ]
             }
           }
+        },
+        "hygiene": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "unusedOption": {
+              "type": "string",
+              "enum": [
+                "info",
+                "warning",
+                "off"
+              ]
+            },
+            "duplicateOption": {
+              "type": "string",
+              "enum": [
+                "info",
+                "warning",
+                "off"
+              ]
+            }
+          }
         }
       }
     }

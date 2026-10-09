@@ -48,6 +48,7 @@ Every key below is accepted by the shipped schema — this block validates clean
   "check": {
     "failOn": "error", // error | warning | approximation
     "contrast": { "standard": "wcag21-aa" }, // future: apca
+    "hygiene": { "unusedOption": "info", "duplicateOption": "info" }, // each: info | warning | off
   },
 }
 ```

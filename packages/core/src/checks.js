@@ -163,6 +163,7 @@ export function pairRatio(map, fg, bg) {
 }
 
 export function runChecks(normalized, config, diagnostics) {
+  checkHygiene(normalized, config, diagnostics);
   const min = contrastThreshold(config);
   const standard = config?.check?.contrast?.standard ?? 'wcag21-aa';
   for (const mode of normalized.modeValues) {
@@ -205,4 +206,103 @@ export function runChecks(normalized, config, diagnostics) {
     }
   }
   checkDistinguishability(normalized, diagnostics);
+}
+
+/** Epsilon for "the same colour written two ways": far below a visible difference. */
+const EPS = { l: 1e-4, c: 1e-4, h: 0.05, alpha: 1e-4 };
+/** Below this chroma the hue is meaningless (a gray has no hue). */
+const ACHROMATIC = 1e-4;
+
+/** Equality key for a value, or null if it can't be compared. Colors are bucketed, see sameColor. */
+const isColor = (v) => v && typeof v === 'object' && typeof v.l === 'number' && typeof v.c === 'number';
+
+function sameColor(a, b) {
+  if (Math.abs(a.l - b.l) > EPS.l || Math.abs(a.c - b.c) > EPS.c) return false;
+  if (Math.abs((a.alpha ?? 1) - (b.alpha ?? 1)) > EPS.alpha) return false;
+  if (a.c < ACHROMATIC && b.c < ACHROMATIC) return true;
+  const d = Math.abs(a.h - b.h) % 360;
+  return Math.min(d, 360 - d) <= EPS.h;
+}
+
+function sameOptionValue(a, b) {
+  if (isColor(a) || isColor(b)) return isColor(a) && isColor(b) && sameColor(a, b);
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+const HYGIENE_LEVELS = ['info', 'warning', 'off'];
+
+/**
+ * TST1114 / TST1115 (issue #62): option-layer hygiene, reported once per build.
+ * Runs after every alias has a value, so the alias graph is complete. The
+ * message carries the count and the first few paths; the full lists ride on
+ * the diagnostic item (`paths`, `groups`) into `check --json` and report.json.
+ */
+function checkHygiene(normalized, config, diagnostics) {
+  const level = (key) => {
+    const v = config?.check?.hygiene?.[key] ?? 'info';
+    return HYGIENE_LEVELS.includes(v) ? v : 'info';
+  };
+  const unusedLevel = level('unusedOption');
+  const dupLevel = level('duplicateOption');
+  if (unusedLevel === 'off' && dupLevel === 'off') return;
+  const base = normalized.modes[normalized.defaultMode];
+  if (!base) return;
+  const options = [...base.entries()].filter(([p]) => p.startsWith('option.'));
+  if (!options.length) return;
+  const emit = (severity, code, message, ctx) =>
+    severity === 'warning' ? diagnostics.warn(code, message, ctx) : diagnostics.info(code, message, ctx);
+  const sample = (paths) => {
+    const shown = paths.slice(0, 3).join(', ');
+    return paths.length > 3 ? `${shown}, …` : shown;
+  };
+
+  if (unusedLevel !== 'off') {
+    const used = new Set();
+    const seen = new Set();
+    for (const map of Object.values(normalized.modes)) {
+      if (!map || seen.has(map)) continue; // modes.light/dark alias the combo maps
+      seen.add(map);
+      for (const entry of map.values()) {
+        const prov = entry.provenance;
+        if (prov?.kind === 'aliased' && prov.target) used.add(prov.target);
+        for (const t of Object.values(prov?.members ?? {})) used.add(t);
+      }
+    }
+    const unused = options.map(([p]) => p).filter((p) => !used.has(p));
+    if (unused.length) {
+      emit(
+        unusedLevel,
+        'TST1114',
+        `${unused.length} option token${unused.length > 1 ? 's are' : ' is'} never referenced: ${sample(unused)}`,
+        { hint: 'Alias them from a semantic or component token, or delete them. Nothing reads an option token directly.', paths: unused },
+      );
+    }
+  }
+
+  if (dupLevel !== 'off') {
+    const groups = [];
+    for (const [path, entry] of options) {
+      if (entry.value === undefined) continue;
+      const g = groups.find((x) => x.type === entry.type && sameOptionValue(x.value, entry.value));
+      if (g) g.paths.push(path);
+      else groups.push({ type: entry.type, value: entry.value, paths: [path] });
+    }
+    for (const g of groups.filter((x) => x.paths.length > 1)) {
+      const [first, ...rest] = g.paths;
+      emit(
+        dupLevel,
+        'TST1115',
+        `${first} and ${rest.length} other option token${rest.length > 1 ? 's' : ''} resolve to the same value ${displayValue(g.value)}: ${sample(rest)}`,
+        { hint: 'Keep one option token and alias the others to it, or give each a different value.', value: displayValue(g.value), paths: g.paths },
+      );
+    }
+  }
+}
+
+function displayValue(v) {
+  if (isColor(v)) {
+    const f = (n) => +n.toFixed(4);
+    return `oklch(${f(v.l)} ${f(v.c)} ${f(v.h ?? 0)}${v.alpha !== undefined && v.alpha !== 1 ? ` / ${f(v.alpha)}` : ''})`;
+  }
+  return typeof v === 'string' ? v : JSON.stringify(v);
 }

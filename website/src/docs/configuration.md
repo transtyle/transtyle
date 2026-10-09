@@ -41,7 +41,8 @@ Full annotated example:
   },
   "check": {
     "failOn": "error",
-    "contrast": { "standard": "wcag21-aa" }
+    "contrast": { "standard": "wcag21-aa" },
+    "hygiene": { "unusedOption": "info", "duplicateOption": "info" }
   }
 }
 ```
@@ -162,3 +163,4 @@ Each key is a **target instance**. The optional `exporter` field selects the plu
 
 - `failOn` — `error` (default) | `warning` | `approximation`: the diagnostic level that makes the build exit non-zero. CI teams typically tighten this over time.
 - `contrast.standard` — `wcag21-aa` (4.5:1, the default) or `wcag21-aaa` (7:1); APCA is specced. Contrast checks run on text/background pairs and every derived on-color; failures are warnings (`TST2101`), never silent. The same threshold drives [`transtyle diff`](/docs/cli/)'s contrast-regression flag, so `check` and `diff` always agree on what "passing" means.
+- `hygiene.unusedOption`, `hygiene.duplicateOption` — `info` (default) | `warning` | `off`: the severity of `TST1114` (option tokens no alias resolves to) and `TST1115` (option tokens of the same type with the same value). Both are reported once per build, with the count and the first paths in the message and the full lists in `check --json`. Set `warning` (with `failOn: warning`) to make CI refuse dead or duplicated palette entries.
