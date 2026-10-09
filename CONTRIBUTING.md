@@ -70,6 +70,8 @@ stop and ask rather than guessing at the missing intent.
 | `enhancement`    | Improvement to something that already exists                                       | —              |
 | `upstream-drift` | An exporter's mapping has fallen out of sync with a new upstream framework release | —              |
 
+The issue templates in [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) (`bug`, `feature`, `enhancement`) mirror this table and the sections above; the [pull request template](.github/PULL_REQUEST_TEMPLATE.md) carries the checklist of this file.
+
 ## Working locally
 
 Changes to a published package need a changeset (`npm run changeset`) in the same PR — see [RELEASING.md](RELEASING.md), which also covers how alpha and stable releases are cut and why the difference matters.
