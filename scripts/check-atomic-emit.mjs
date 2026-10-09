@@ -7,7 +7,8 @@
  * point, that every output directory is byte-for-byte what it was before the
  * build and that no staging directory is left behind:
  *
- *   1. an exporter throws on the second target (after the first one emitted);
+ *   1. an exporter throws on the second target (after the first one emitted;
+ *      core records TST3001 and still runs the third);
  *   2. a later target is not configured (error-level diagnostic after the first
  *      target already produced files);
  *   3. the SWAP fails midway (a later target's output path is a regular file),
@@ -85,9 +86,9 @@ try {
 
   // 1. exporter throws on the second target
   configure({ alpha: { output: 'out/alpha' }, boom: { output: 'out/boom' }, beta: { output: 'out/beta' } });
-  let threw = false;
-  try { await build(); } catch (e) { threw = /exploded/.test(e.message); }
-  expect('exporter throws on 2nd target: build rejects', threw);
+  r = await build();
+  expect('exporter throws on 2nd target: TST3001 raised, 3rd target still ran', r.diagnostics.errors.some((e) => e.code === 'TST3001') && r.results.length === 3 && r.results[2].emitted.length > 0);
+  expect('exporter throws on 2nd target: results list no written files', r.results.every((x) => x.files.length === 0));
   expect('exporter throws on 2nd target: outputs untouched', snapshot().replace(/out\/boom\/\n?/g, '') === before.replace(/out\/boom\/\n?/g, '') && !existsSync(join(dir, 'out/boom')));
   expect('exporter throws on 2nd target: no staging directories left', leftovers().length === 0, leftovers().join(', '));
 
@@ -105,7 +106,7 @@ try {
   writeFileSync(join(dir, 'out/blocker'), 'i am a file\n');
   const beforeSwap = snapshot();
   configure({ alpha: { output: 'out/alpha' }, fresh: { exporter: 'beta', output: 'out/fresh/deep' }, gamma: { output: 'out/blocker' } });
-  threw = false;
+  let threw = false;
   try { await build(); } catch (e) { threw = true; }
   expect('swap fails midway: build rejects', threw);
   expect('swap fails midway: replaced files restored, new ones and new directories removed', snapshot() === beforeSwap, 'snapshot differs');

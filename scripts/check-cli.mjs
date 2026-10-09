@@ -432,12 +432,10 @@ try {
     expect('crash: hint points at TRANSTYLE_DEBUG', r.out.includes('TRANSTYLE_DEBUG=1'), r.out);
     expect('crash: no stack by default', !r.out.includes('at Object.emit') && !r.out.includes('boom.mjs:'), r.out);
     expect('load failure: names the target (TST3002)', r.out.includes('TST3002 Exporter "gone" crashed in load'), r.out);
-    expect('crash: the target before it is built', existsSync(join(dir, 'dist/css-variables/report.json')));
-    expect('crash: the target after it is built too', existsSync(join(dir, 'dist/after/report.json')), r.out);
-    const report = JSON.parse(readFileSync(join(dir, 'dist/boom/report.json'), 'utf8'));
-    expect('crash: report.json lists no files', report.files.length === 0, JSON.stringify(report.files));
-    expect('crash: report.json lists the TST3001 diagnostic', report.diagnostics.some((d) => d.code === 'TST3001' && d.target === 'boom'), JSON.stringify(report.diagnostics));
-    expect('crash: report.json coverage is empty', report.coverage.items.length === 0);
+    // Atomic EMIT (#90): every exporter still runs, so every crash is reported
+    // in one go, but a build with an error writes nothing at all.
+    expect('crash: a build with a crash writes no output (atomic EMIT)', !existsSync(join(dir, 'dist')), r.out);
+    expect('crash: the target after it still ran (its load failure is reported too)', r.out.includes('TST3002'), r.out);
 
     r = runCrash(['build'], { TRANSTYLE_DEBUG: '1' });
     expect('crash: TRANSTYLE_DEBUG=1 prints the stack', /TypeError[\s\S]*boom\.mjs/.test(r.out), r.out);

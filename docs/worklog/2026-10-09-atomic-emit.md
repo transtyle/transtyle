@@ -21,7 +21,13 @@ the same point as before, so the bytes are identical) and hands them to
    propagates; both staging directories are removed either way.
 
 No file is written when an `error`-level diagnostic exists after the last
-target, so `results[].files` is empty in that case.
+target (an exporter crash, `TST3001`, included), so `results[].files` is empty in
+that case. This supersedes the rule from
+[the exporter-crash diagnostic](2026-10-09-exporter-crash-diagnostic.md) that
+the other targets are still built when one crashes: they still all run, so every
+crash is reported at once, but nothing reaches the disk until all succeed.
+Issue #90's acceptance (a throwing second target leaves both outputs as they
+were) is incompatible with building around the crash.
 
 `npm run check:atomic-emit` covers an exporter throwing on the second target, an
 unknown second target, a swap that fails after earlier targets were already
