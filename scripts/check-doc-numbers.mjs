@@ -455,12 +455,15 @@ async function measure(metric) {
     return memo(metric, () => catalog().counts[parts[1]] ?? null);
   }
 
-  // <example>.mantine.<set|follow|default> — Mantine's three-way split over its
-  // surface inventory, read off the exporter's own totals row like PrimeNG's.
-  if (parts[1] === 'mantine' && ['set', 'follow', 'default'].includes(parts[2])) {
-    const result = await targetResult(parts[0], 'mantine');
-    const row = result?.coverage.find((c) => c.variable === 'Mantine surface totals');
-    const m = /(\d+) set · (\d+) follow · (\d+) on Mantine's default/.exec(row?.slot ?? '');
+  // <example>.<mantine|chakra>.<set|follow|default> — the three-way split of a
+  // graph-shaped surface inventory, read off the exporter's own totals row
+  // like PrimeNG's.
+  const GRAPH_LABELS = { mantine: 'Mantine', chakra: 'Chakra' };
+  if (GRAPH_LABELS[parts[1]] && ['set', 'follow', 'default'].includes(parts[2])) {
+    const label = GRAPH_LABELS[parts[1]];
+    const result = await targetResult(parts[0], parts[1]);
+    const row = result?.coverage.find((c) => c.variable === `${label} surface totals`);
+    const m = /(\d+) set · (\d+) follow · (\d+) on (\w+)'s default/.exec(row?.slot ?? '');
     if (!m) return null;
     return Number({ set: m[1], follow: m[2], default: m[3] }[parts[2]]);
   }

@@ -39,6 +39,7 @@
   },
   "files": [
     "src",
+    "surface-inventory.json",
     "CHANGELOG.md"
   ],
   "publishConfig": {
