@@ -455,7 +455,7 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     );
   }
   try {
-    entry.value = parseValue(entry.type, raw);
+    entry.value = parseValue(entry.type, raw, warnAt(diagnostics, tokenPath, tokenPath));
   } catch (e) {
     diagnostics.error('TST1106', `${tokenPath}: ${e.message}`, { path: tokenPath, ...(e.hint ? { hint: e.hint } : {}) });
     return undefined;
@@ -518,7 +518,11 @@ const COMPOSITES = {
  * exporters read, exactly as the top-level token would (#24). Throws with a
  * reason, and a `hint` for the structured forms.
  */
-function parseMember(type, value) {
+/** Report a parser's non-fatal finding as a warning under `at` (a token, or a composite member's path). */
+const warnAt = (diagnostics, at, tokenPath) => ({ code, message, hint }) =>
+  diagnostics.warn(code, `${at}: ${message}`, { path: tokenPath, ...(hint ? { hint } : {}) });
+
+function parseMember(type, value, onWarning) {
   // An alias to a color token arrives already parsed.
   if (type === 'color' && value !== null && typeof value === 'object' && ['l', 'c', 'h'].every((k) => typeof value[k] === 'number')) {
     return { ...value };
@@ -526,7 +530,7 @@ function parseMember(type, value) {
   if (type === 'boolean' && typeof value !== 'boolean') {
     throw new Error(`expected true or false, got ${JSON.stringify(value)}`);
   }
-  return parseValue(type, value);
+  return parseValue(type, value, onWarning);
 }
 
 /**
@@ -595,7 +599,7 @@ function resolveComposite(entry, tokenPath, diagnostics, lookup) {
         members[memberPath.slice(tokenPath.length + 1)] = target;
       }
       try {
-        out[name] = parseMember(spec.members[name], value);
+        out[name] = parseMember(spec.members[name], value, warnAt(diagnostics, memberPath, tokenPath));
       } catch (e) {
         diagnostics.error('TST1106', `${memberPath}${target ? ` (via {${target}})` : ''}: ${e.message}`, { path: tokenPath, ...(e.hint ? { hint: e.hint } : {}) });
         failed = true;

@@ -81,7 +81,7 @@ Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the _
 | `component-tier` | authored `component.control.radius`, `component.button.radius` (an alias to a derived slot), `component.button.padding-x`, `component.tooltip.max-width` |
 | `custom-role`    | a custom role joining the grid through `$extensions.transtyle.role`                                                                                      |
 | `composites`     | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                                                             |
-| `object-form`    | dimension, duration, cubicBezier, fontWeight and typography members in DTCG structured form, compared with the same system authored as CSS strings       |
+| `object-form`    | colors, dimensions, durations, cubicBezier, fontWeight and typography members in DTCG structured form, compared with their CSS-string twin               |
 
 Every fixture runs by default; `fixtures: 'canonical'` (or an array of names) narrows it. The kit asserts the contract above:
 

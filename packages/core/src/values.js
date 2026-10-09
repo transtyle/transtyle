@@ -1,7 +1,9 @@
 /**
  * Per-type value parsing for NORMALIZE (docs/architecture/ir.md#values-and-canonicalization).
  *
- * The DTCG spec gives `dimension` and `duration` an object form
+ * The DTCG spec gives `color` an object form (`{ "colorSpace": "srgb",
+ * "components": [0, 0.43, 0.84] }`, issue #25: parsed to OKLCH in color.js,
+ * like every color string), `dimension` and `duration` an object form
  * (`{ "value": 16, "unit": "px" }`), `cubicBezier` an array form
  * (`[0.2, 0, 0, 1]`), and `fontWeight` a keyword vocabulary (`semi-bold`) that
  * CSS doesn't share. Before this table, every type but `color` was carried
@@ -9,7 +11,8 @@
  * came out as `[object Object]`, `0.2,0,0,1` or `semi-bold` in stylesheets, with
  * no diagnostic (issue #24).
  *
- * The canonical form is the **CSS string** every consumer already reads
+ * Outside `color` (always OKLCH), the canonical form is the **CSS string**
+ * every consumer already reads
  * (`"16px"`, `"cubic-bezier(0.2, 0, 0, 1)"`), not a structured `{ value, unit }`:
  * the radius scale in derive.js, the unit-converting exporters (ECharts,
  * Storybook, Bootstrap's spacer maths) and the plugin-kit fixture all expect the
@@ -24,7 +27,7 @@
  * with `TST1106` and a hint naming the accepted forms.
  */
 
-import { parseColor } from './color.js';
+import { parseColor, DTCG_COLOR_SPACES } from './color.js';
 
 /** A parse failure, raised as TST1106 by the caller with `hint` attached. */
 export class ValueError extends Error {
@@ -145,6 +148,17 @@ function fontWeight(raw) {
   throw new ValueError(`fontWeight value must be a number or a keyword, got ${show(raw)}`, hint);
 }
 
+const COLOR_HINT = `A color is a CSS color string (#hex, rgb(), hsl(), hwb(), lab(), lch(), oklab(), oklch(), color(), or a named color) or a DTCG color object such as { "colorSpace": "srgb", "components": [0.11, 0.44, 0.72], "alpha": 1, "hex": "#1d70b8" }: three components (numbers or "none"), an optional alpha from 0 to 1, an optional six-digit hex, and a colorSpace among ${DTCG_COLOR_SPACES.join(', ')}.`;
+
+/** `color`: a CSS color string or a DTCG color object, both to OKLCH (color.js). */
+function color(raw, onWarning) {
+  try {
+    return parseColor(raw, { onWarning });
+  } catch (e) {
+    throw new ValueError(e.message, COLOR_HINT);
+  }
+}
+
 /** `number`: a JSON number, or a string as authored; never an object or array. */
 function number(raw) {
   if (typeof raw === 'number' || typeof raw === 'string') return raw;
@@ -152,7 +166,7 @@ function number(raw) {
 }
 
 const PARSERS = {
-  color: parseColor,
+  color,
   dimension: measure('dimension', DIMENSION_UNITS, { value: 16, unit: 'px' }),
   duration: measure('duration', DURATION_UNITS, { value: 150, unit: 'ms' }),
   cubicBezier,
@@ -168,9 +182,11 @@ const PARSERS = {
  * resolves them member by member and calls this once per member with the
  * member's own DTCG type, so `shadow.blur` is parsed exactly like a top-level
  * dimension. Throws on a malformed value; a `ValueError` carries a hint for
- * the TST1106 diagnostic.
+ * the TST1106 diagnostic. `onWarning({ code, message, hint })` receives what
+ * parses but deserves a word (a DTCG color whose `hex` disagrees with its
+ * `components`, TST1123); the caller names the token.
  */
-export function parseValue(type, raw) {
+export function parseValue(type, raw, onWarning) {
   const parse = PARSERS[type];
-  return parse ? parse(raw) : raw;
+  return parse ? parse(raw, onWarning) : raw;
 }

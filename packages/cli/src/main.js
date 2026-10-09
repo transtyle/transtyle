@@ -662,7 +662,10 @@ function printExplain(entry, inputs, depth) {
     if (prov.overrides?.length) console.log(`${indent}    overrides ${prov.overrides.join(', ')}  (from ${prov.layer})`);
   };
   if (prov.kind === 'authored') {
-    console.log(`${indent} └─ authored`);
+    // A DTCG color object compiles to OKLCH: show what was written, since the value line no longer does.
+    const raw = entry.rawValue;
+    const asObject = entry.type === 'color' && raw !== null && typeof raw === 'object' && !Array.isArray(raw);
+    console.log(`${indent} └─ authored${asObject ? ` as ${JSON.stringify(raw)}` : ''}`);
     overrides();
     printMembers(entry, indent);
     return;

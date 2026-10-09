@@ -42,7 +42,7 @@ slot, from the `reads` that `compile()` records on every target result and write
 `report.json`; what `transtyle check --matrix` prints), `suggestBindings({ cwd })` (the binding
 proposals behind `transtyle bind --suggest`, from a versioned name table, `SYNONYMS_VERSION`,
 and color measurements), `Diagnostics`,
-and the colour module — `parseColor` (any CSS color syntax a stylesheet holds, to OKLCH), `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
+and the colour module — `parseColor` (any CSS color syntax a stylesheet holds, or a DTCG color object, to OKLCH), `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
 `mix` — which is OKLCH-native and has no dependencies. `makeUnits(config)` builds the `ctx.units` helpers
 (`toPx`, `toRem`, `remBase`) exporters get, from the config's `units.remBase`.
 `checkPluginCompat(manifest)` and `PLUGIN_API_VERSIONS` are the exporter compatibility check

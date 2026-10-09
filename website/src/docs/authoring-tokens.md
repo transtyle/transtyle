@@ -23,7 +23,7 @@ A token is a node with `$value`; groups may declare `$type` for their children:
 }
 ```
 
-Supported `$type`s today: `color` (values: `oklch()`, `#hex` incl. 4/8-digit alpha, `rgb()`/`rgba()`, `hsl()`/`hsla()`, CSS named colors, `transparent`), `dimension`, `duration`, `cubicBezier`, `fontWeight`, `number`, `fontFamily` (array of family names), and the composites `shadow`, `typography`, `border` and `transition`. Other DTCG types are carried through as authored, without type-specific parsing. `dimension`, `duration`, `cubicBezier` and `fontWeight` take either the CSS form a stylesheet would contain or the structured DTCG form:
+Supported `$type`s today: `color` (see [Colors](#colors) below), `dimension`, `duration`, `cubicBezier`, `fontWeight`, `number`, `fontFamily` (array of family names), and the composites `shadow`, `typography`, `border` and `transition`. Other DTCG types are carried through as authored, without type-specific parsing. `dimension`, `duration`, `cubicBezier` and `fontWeight` take either the CSS form a stylesheet would contain or the structured DTCG form:
 
 | `$type`       | CSS form                       | DTCG form                         |
 | ------------- | ------------------------------ | --------------------------------- |
@@ -33,6 +33,26 @@ Supported `$type`s today: `color` (values: `oklch()`, `#hex` incl. 4/8-digit alp
 | `fontWeight`  | `600`                          | `"semi-bold"`                     |
 
 Dimension units are `px` or `rem`, duration units `ms` or `s`; a cubicBezier's x1 and x2 lie between 0 and 1; a DTCG weight keyword compiles to its number. Both forms compile to the same output on every target, and the same members inside `typography`, `shadow`, `border` and `transition` composites accept both too. A structured value that doesn't fit (a missing or unknown unit, a string where a number belongs, an unknown weight keyword) stops the build with `TST1106` and a hint naming the accepted forms.
+
+### Colors
+
+A `color` takes any CSS color a stylesheet holds: `#hex` (3, 4, 6 or 8 digits, alpha included), `rgb()`/`rgba()` and `hsl()`/`hsla()` in the modern or legacy comma form, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()`, `color()` with a predefined space (`srgb`, `srgb-linear`, `display-p3`, `a98-rgb`, `prophoto-rgb`, `rec2020`, `xyz`, `xyz-d50`, `xyz-d65`), the CSS named colors and `transparent`. It also takes the DTCG color object, which is what design tools export:
+
+```json
+{
+  "$type": "color",
+  "$value": { "colorSpace": "srgb", "components": [0, 0.43, 0.84], "alpha": 1, "hex": "#026fd7" }
+}
+```
+
+- `colorSpace` is one of the fourteen DTCG spaces: `srgb`, `srgb-linear`, `hsl`, `hwb`, `lab`, `lch`, `oklab`, `oklch`, `display-p3`, `a98-rgb`, `prophoto-rgb`, `rec2020`, `xyz-d65`, `xyz-d50`. Components use the spec's ranges: 0–1 for the RGB spaces, `hsl`'s saturation and lightness and `hwb`'s whiteness and blackness 0–100, `lab` lightness 0–100, `oklab`/`oklch` lightness 0–1.
+- `components` are three numbers; `"none"` counts as 0, which is what CSS does with a missing component (a gray's hue changes nothing).
+- `alpha` is optional (1 when absent) and must lie between 0 and 1.
+- `hex` is optional. For `srgb`, a `hex` within 0.01 per channel of the components wins, so a tool that exports two-decimal components (`0.43`) still ships the exact color its designer picked (`#026fd7`). A `hex` further off loses to the components, with a `TST1123` warning naming both. In the other spaces `hex` is the fallback the spec calls it, and the components are the value.
+
+Every form becomes the same OKLCH value: `{ "colorSpace": "srgb", "components": [0.11372549019607843, 0.4392156862745098, 0.7215686274509804] }` and `#1d70b8` compile to the same bytes on every target, as do an `oklch` object and its `oklch()` string. A wide-gamut color (`display-p3`, `rec2020`) keeps its chroma: targets that write `oklch()` ship it as authored, those that write hex or HSL ship the nearest sRGB color, and `TST1120` says so. A malformed object (an unknown `colorSpace`, two components, a string component, an alpha of 2, a three-digit `hex`) stops the build with `TST1106`. `transtyle explain` shows the object as you wrote it.
+
+### Composites
 
 A composite's members follow the same rules as top-level tokens: a color member parses like a `color` token, any member may be an alias — including to a slot the engine derives, like `scrim` — and a malformed or missing member is reported under its own path (`TST1106` on `semantic.color.elevation.1.shadow.color`). Members a stylesheet writes positionally are required, as DTCG specifies: all five of a `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), and all three of a `border` (`color`, `width`, `style`) or a `transition` (`duration`, `delay`, `timingFunction`). A `shadow` may also be an array of layers, stacked first-on-top as in CSS, each with an optional `inset: true`:
 
