@@ -37,14 +37,22 @@ export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
  * `skipExporters: true` stops after the shared pipeline stages: no exporter is
  * loaded or run (`explain` only walks provenance, so a broken exporter must not
  * be able to fail it). `debug: true` keeps a crashed exporter's stack on its
- * TST3001/TST3002 diagnostic (the CLI sets it from TRANSTYLE_DEBUG).
+ * TST3001/TST3002 diagnostic (the CLI sets it from `--verbose` or TRANSTYLE_DEBUG).
+ *
+ * `outRoot` (`build --out`): an absolute directory that replaces every target's
+ * configured `output`: target `<name>` goes to `<outRoot>/<name>`. It is applied
+ * where the output is written *and* in `ctx.siblings` / `ctx.targetConfig.output`,
+ * the project-relative paths exporters (Storybook) build their imports from.
+ * `dryRun` (`build --dry-run`) runs EMIT up to the staged file list and stops
+ * before the commit: nothing is written, `results[].files` is empty and
+ * `results[].planned` lists what would have been (same data as a real build).
  *
  * `knownExporters` (AL5) is the caller's list of exporter names it can resolve —
  * the CLI's OFFICIAL_EXPORTERS keys. Core stays exporter-agnostic (it never
  * imports one), but TST1301 can then tell "you typo'd" apart from "that
  * exporter exists, you just haven't configured it", which are opposite fixes.
  */
-export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false }) {
+export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false, outRoot, dryRun = false }) {
   const diagnostics = new Diagnostics();
   const { config } = await loadConfig(cwd);
 
@@ -192,7 +200,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     try {
       exporter = await loadExporter(targetConfig.exporter ?? name);
     } catch (e) {
-      crash('TST3002', name, 'load', e, 'Install the exporter package in this project, or fix its `exporter` field in transtyle.config.json. Set TRANSTYLE_DEBUG=1 for the stack.');
+      crash('TST3002', name, 'load', e, 'Install the exporter package in this project, or fix its `exporter` field in transtyle.config.json. Re-run with --verbose (or TRANSTYLE_DEBUG=1) for the stack.');
       results.push({ target: name, files: [], coverage: [], emitted: [] });
       continue;
     }
@@ -209,15 +217,18 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     if (pipelineErrors() > 0) break; // don't emit with invalid options
 
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
+    const rel = (p) => path.relative(cwd, p).split(path.sep).join('/') || '.';
+    const outputOf = (n, t) => (outRoot ? rel(path.resolve(outRoot, n)) : t.output ?? `dist/${n}`);
     const ctx = {
-      config, targetConfig, units, formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
+      config, units,
+      targetConfig: outRoot ? { ...targetConfig, output: outputOf(name, targetConfig) } : targetConfig, formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
       projectName: config.name ?? 'design-system',
       // Sibling-target manifest (docs/specs/exporters/storybook.md#composition):
       // name, exporter, and output dir of every configured target — never their
       // resolutions. Lets composition-capable exporters reference sibling
       // ARTIFACT PATHS, keeping the no-cross-target-coupling invariant.
       siblings: Object.entries(config.targets ?? {}).map(([n, t]) => ({
-        name: n, exporter: t.exporter ?? n, output: t.output ?? `dist/${n}`,
+        name: n, exporter: t.exporter ?? n, output: outputOf(n, t),
       })),
     };
     // Exporters see only the target's declared slice of the matrix (derivation and
@@ -234,7 +245,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       // not exporter bugs and keep failing loudly.
       crash('TST3001', name, 'emit', e, debug
         ? 'This is a bug in the exporter, not in your design system. The stack is above.'
-        : 'This is a bug in the exporter, not in your design system. Re-run with TRANSTYLE_DEBUG=1 for the stack.');
+        : 'This is a bug in the exporter, not in your design system. Re-run with --verbose (or TRANSTYLE_DEBUG=1) for the stack.');
       files = [];
       coverage = [];
       notes = [];
@@ -254,23 +265,25 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       coverage = coverage.filter((c) => !(c.class === 'dropped' && [...narrowed].some((d) => c.variable === `(mode:${d})`)));
     }
 
-    const outDir = path.resolve(cwd, targetConfig.output ?? `dist/${name}`);
+    const outDir = outRoot ? path.resolve(outRoot, name) : path.resolve(cwd, targetConfig.output ?? `dist/${name}`);
     const written = [];
+    const planned = [];
     if (emit) {
       // Build manifest + machine-readable report (docs/specs/validation-and-coverage.md).
       // Nothing is written here: every target is collected first and the whole
       // build is committed atomically below (src/emit.js).
-      const planned = files.map((f) => ({ path: f.path, contents: f.contents }));
+      const staged = files.map((f) => ({ path: f.path, contents: f.contents }));
       for (const f of files) written.push(path.relative(cwd, path.join(outDir, f.path)));
       const report = buildReport(name, targetConfig, coverage, diagnostics, [...written]);
-      planned.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
+      staged.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
       written.push(path.relative(cwd, path.join(outDir, 'report.json')));
-      plans.push({ outDir, files: planned });
+      staged.forEach((f, i) => planned.push({ path: written[i], bytes: Buffer.byteLength(f.contents, 'utf8') }));
+      plans.push({ outDir, files: staged });
     }
     // `emitted` carries the file *specs* (path + contents) even when emit is
     // off — `transtyle diff` re-emits both sides in-memory to compute per-target
     // impact without writing anything. `files` stays the written paths.
-    results.push({ target: name, files: written, coverage, emitted: files });
+    results.push({ target: name, files: dryRun ? [] : written, planned, outDir, exporter: targetConfig.exporter ?? name, coverage, emitted: files });
   }
 
   // EMIT commit: all exporters have run. Nothing is written if any error-level
@@ -278,8 +291,8 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // rolls every output directory back to its previous state.
   if (plans.length > 0) {
     if (diagnostics.errors.length > 0) {
-      for (const r of results) r.files = [];
-    } else {
+      for (const r of results) { r.files = []; r.planned = []; }
+    } else if (!dryRun) {
       await commitOutputs(plans);
     }
   }
