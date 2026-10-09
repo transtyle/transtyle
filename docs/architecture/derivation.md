@@ -4,7 +4,7 @@
 
 1. **Deterministic.** Same inputs → same outputs, forever, on every machine. No ML, no heuristic that depends on environment. ([ADR-0005](../adr/0005-deterministic-derivation.md))
 2. **Explainable.** Every derived value answers `transtyle explain <token>` with the rule chain and inputs that produced it.
-3. **Governable.** Every rule can be pinned, overridden, or disabled. Authored values always win. `check` can be configured to fail if _specified_ tokens were derived rather than authored (`derivation.require: [color.danger, ...]`) — teams choose how much automation they trust.
+3. **Governable.** Every rule can be pinned, overridden, or disabled. Authored values always win. `check` can be configured to fail if _specified_ tokens were derived, defaulted or left out rather than authored (`derivation.require: [color.danger, ...]`, or a whole [completeness level](#completeness-levels) with `completeness:recommended`) — teams choose how much automation they trust.
 
 ## How it works
 
@@ -59,7 +59,26 @@ Derivation never picks the nearest authored token for a hole (the `secondary` ro
 
 ## Provenance classes and the "defaulted" distinction
 
-`derived` = computed _from the user's tokens_ (secondary from primary). `defaulted` = catalog constant with no user input (z-index ladder). A default may be _chosen_ by the mode it fills, and stays `defaulted`: the default canvas is picked by the mode's polarity, the default `text.base` by contrast with the mode's page, between the same two constants. The user's tokens decide which constant applies, never what it is. The distinction matters: derived values track the brand and change when the brand changes, defaulted values are ours and do not. Both are recorded per value: every IR entry carries `provenance.kind` (`authored` | `aliased` | `derived` | `defaulted`), `explain` prints it, and `report.json` carries it per coverage row. What the CLI does **not** print is a provenance summary line — the percentages it reports are the coverage classes (native/derived/approximated/dropped/unsupported), which answer a different question: how the value survived the trip into a target, not where it came from.
+`derived` = computed _from the user's tokens_ (secondary from primary). `defaulted` = catalog constant with no user input (z-index ladder). A default may be _chosen_ by the mode it fills, and stays `defaulted`: the default canvas is picked by the mode's polarity, the default `text.base` by contrast with the mode's page, between the same two constants. The user's tokens decide which constant applies, never what it is. The distinction matters: derived values track the brand and change when the brand changes, defaulted values are ours and do not. Both are recorded per value: every IR entry carries `provenance.kind` (`authored` | `aliased` | `derived` | `defaulted`), `explain` prints it, and `report.json` carries it per coverage row. What the CLI does **not** print is a provenance summary over every slot — the percentages it reports are the coverage classes (native/derived/approximated/dropped/unsupported), which answer a different question: how the value survived the trip into a target, not where it came from. The one provenance count it prints is the completeness line below, over the handful of slots worth authoring.
+
+## Completeness levels
+
+A design system is complete when it authors what it has opinions about; the engine fills the rest. Three levels say which slots matter most, in the order they pay off ([issue #67](https://github.com/transtyle/transtyle/issues/67)). Each extends the one before:
+
+| Level         | Adds                                                                                                                                                                                            |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minimal`     | `color.primary.solid`, the one input the engine cannot invent                                                                                                                                   |
+| `recommended` | the neutrals (`color.elevation.0.surface`, `elevation.1.surface`, `text.base`, `text.muted`, `border`), their values for each non-default `color-scheme`, `radius.md`, `font.sans`, `font.mono` |
+| `complete`    | `color.secondary.solid`, the four status `.solid`s, `color.ring`, `color.scrim`, and the `space.*`, `type.*` and `component.control.*` families                                                 |
+
+- **Authored** means `authored` or `aliased`: binding a slot to a team's own vocabulary is a decision, and every example adopts that way. The same predicate `check-doc-numbers.mjs` counts as written.
+- **States of an unauthored item:** `missing` (no rule fills it and nobody authored it: `border`, `radius.md`, the fonts), `derived`, `defaulted`, or `carried-over`.
+- **Per-scheme items.** A light value carried into dark keeps `kind: authored`, so provenance alone can't tell. A neutral counts as authored for a non-default `color-scheme` value when that value is authored on the slot itself, or when the slot is bound and resolves to a different value there than in the default scheme: the rule `TST1204` applies (`carriesOver()` in `normalize.js`). Without a `color-scheme` dimension, or with only one value, there are no per-scheme items.
+- **Families** are one item each, satisfied when at least one catalog member is authored: an authored scale step is the decision, the engine fills the rest. Members are read from `catalog()`, so a new slot joins its family on its own. Counting each member would put the `type.*` scale's 36 slots in the `authored n/m` figure and drown the colors.
+- **Data, not vocabulary.** The levels live in `packages/core/src/completeness.js`; their names are not catalog vocabulary, so the several-ecosystems rule doesn't apply, but every slot they name must be a catalog slot (`check:grid`).
+- **Advice, then policy.** `build`/`check` print `authored n/m <level>` (level from `check.completeness`, default `recommended`) and `check --completeness <level>` lists the to-do ([cli.md](../specs/cli.md#check---completeness--what-to-author-next)) without changing the exit code. `derivation.require: ["completeness:<level>"]` expands to the level's items and fails each unauthored one with `TST1202`: one mechanism for "these must be authored", not two.
+
+No example satisfies `complete`: every one leaves `scrim`, `type.*` and `component.control.*` to the engine. That is a statement about the examples, not a defect: `complete` is the level a mature system grows into.
 
 ## User-defined rules (specced — not implemented)
 

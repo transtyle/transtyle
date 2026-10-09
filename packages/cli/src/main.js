@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, formatColor, formatHex } from '@transtyle/core';
+import { compile, catalog, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, formatColor, formatHex } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
@@ -114,6 +114,14 @@ function parseArgs(argv) {
     else if (a === '--write') args.write = true;
     else if (a === '--suggest') args.suggest = true;
     else if (a === '--rules') args.rules = true;
+    else if (a === '--completeness') {
+      const v = argv[++i];
+      if (!COMPLETENESS_LEVELS.includes(v)) {
+        console.error(`Flag --completeness needs a level: ${COMPLETENESS_LEVELS.join(', ')}${v === undefined ? '' : ` (got: ${v})`}`);
+        process.exit(2);
+      }
+      args.completeness = v;
+    }
     else if (a.startsWith('--') && INIT_VALUE_FLAGS.includes(a.slice(2))) {
       const v = argv[++i];
       if (v === undefined || v.startsWith('--')) { console.error(`Flag ${a} needs a value`); process.exit(2); }
@@ -161,6 +169,8 @@ Options:
                                   (also TRANSTYLE_DEBUG=1). The CLI never colors its output; NO_COLOR is honored (init's color chip)
   --json                          check/diff/catalog/explain/bind only: print a machine-readable report to stdout
   --matrix                        check only: print which targets read each catalog slot (with --json: a "matrix" key)
+  --completeness <level>          check only: list what to author next for minimal, recommended or complete
+                                  (default level: check.completeness, else recommended)
 init options (each skips its question; without a terminal, unset ones take the default):
   --brand <color>                 brand color, any CSS color (default: oklch(0.55 0.18 255))
   --schemes <light,dark|light>    color schemes (default: light,dark)
@@ -225,6 +235,7 @@ async function main() {
   only('--dry-run', args.dryRun, ['build']);
   only('--quiet', args.quiet, ['build', 'check']);
   only('--verbose', args.verbose, ['build', 'check']);
+  only('--completeness', args.completeness, ['check']);
   if (args.quiet && args.verbose) { console.error('✖ --quiet and --verbose contradict each other'); process.exit(2); }
   if (args.verbose) VERBOSE = true;
   QUIET = !!args.quiet;
@@ -266,6 +277,18 @@ async function cmdBuildOrCheck(args) {
     for (const d of diagnostics.items) if (d.severity === 'error' || (failOn === 'warning' && d.severity === 'warning')) printDiagnostic(d);
   } else printDiagnostics(diagnostics);
 
+  // Authoring completeness (core's completeness levels): one line for the
+  // whole design system, before the per-target bars, since it doesn't depend
+  // on the target. Never changes the exit code (`derivation.require:
+  // ["completeness:<level>"]` is the policy knob).
+  const level = args.completeness ?? config.check?.completeness ?? DEFAULT_COMPLETENESS_LEVEL;
+  const completeness = result.normalized ? completenessStatus(result.normalized, level) : null;
+  // Progress, so --quiet drops it; the to-do --completeness asks for is data and stays.
+  if (completeness && !QUIET) {
+    const next = completeness.todo.length && !args.completeness ? `  · transtyle check --completeness ${level} lists what to author next` : '';
+    console.error(`\nauthored ${completeness.authored}/${completeness.total} ${level}${next}`);
+  }
+
   for (const r of results) {
     const counts = {};
     for (const c of r.coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
@@ -293,9 +316,11 @@ async function cmdBuildOrCheck(args) {
       suppressed: diagnostics.suppressed,
       targets: results.map((r) => ({ target: r.target, coverage: r.coverage, reads: r.reads })),
       ...(matrix ? { matrix } : {}),
+      ...(completeness ? { completeness: completenessJson(completeness) } : {}),
     }, null, 2));
-  } else if (matrix) {
-    console.log(renderMatrix(matrix));
+  } else {
+    if (matrix) console.log(renderMatrix(matrix));
+    if (completeness && args.completeness) console.log(renderCompleteness(completeness));
   }
 
   if (diagnostics.shouldFail(failOn)) {
@@ -306,6 +331,33 @@ async function cmdBuildOrCheck(args) {
     return;
   }
   if (!QUIET) console.error(args.dryRun ? '\n✔ dry run complete, nothing written' : emit ? '\n✔ build complete' : '\n✔ check passed');
+}
+
+/** `check --json`'s `completeness` key (docs/specs/cli.md): the level, the counts and the to-do, in order. */
+function completenessJson({ level, authored, total, todo }) {
+  return { level, authored, total, todo };
+}
+
+/**
+ * `check --completeness <level>`: the items still to author, numbered in the
+ * order they pay off, each with its state and why it matters. Requested data,
+ * so stdout, like --matrix.
+ */
+function renderCompleteness({ level, authored, total, todo }) {
+  if (!todo.length) return `Completeness ${level}: ${authored}/${total} authored, nothing left to author at this level.`;
+  const lines = [`Completeness ${level}: ${authored}/${total} authored. To author next:`];
+  const width = String(todo.length).length;
+  todo.forEach((item, i) => {
+    const where = item.mode ? ` (${item.mode})` : '';
+    const how = item.state === 'carried-over'
+      ? 'carried over from the default scheme'
+      : item.members !== undefined
+        ? `${item.state}, ${item.authoredMembers}/${item.members} authored`
+        : item.rule ? `${item.state} by ${item.rule}` : item.state;
+    lines.push(`  ${String(i + 1).padStart(width)}. ${item.slot}${where}  ${how}`);
+    lines.push(`  ${' '.repeat(width)}  ${item.reason}`);
+  });
+  return lines.join('\n');
 }
 
 // ---------- bindings ----------
@@ -922,7 +974,8 @@ Next steps:
   2. npx transtyle build
   3. npx transtyle add <target>   (${known.join(', ')})
 Worth authoring next (each derives until you do):
-${authorNext(answers.preset).map((l) => `  - ${l}`).join('\n')}`);
+${authorNext(answers.preset).map((l) => `  - ${l}`).join('\n')}
+  npx transtyle check --completeness ${answers.preset === 'minimal' ? 'recommended' : 'complete'} lists them in order, with what is still missing.`);
 }
 
 // ---------- add ----------

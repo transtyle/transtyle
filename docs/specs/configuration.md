@@ -37,7 +37,7 @@ Every key below is accepted by the shipped schema — this block validates clean
   "derivation": {
     "rules": "standard@1", // pinned rule pack (see architecture/derivation.md)
     "autoDark": false,
-    "require": ["semantic.color.primary"], // must be authored, not derived
+    "require": ["semantic.color.primary"], // must be authored (or aliased), not derived, defaulted or absent; completeness:<level> requires a whole level
   },
 
   "units": {
@@ -56,6 +56,7 @@ Every key below is accepted by the shipped schema — this block validates clean
 
   "check": {
     "failOn": "error", // error | warning | approximation
+    "completeness": "recommended", // minimal | recommended | complete: the level the authored n/m line reports on
     "suppress": [{ "code": "TST1305", "path": "scratch", "reason": "why this is fine" }], // see below
     "contrast": { "standard": "wcag21-aa" }, // future: apca
     "hygiene": { "unusedOption": "info", "duplicateOption": "info" }, // each: info | warning | off
@@ -64,6 +65,8 @@ Every key below is accepted by the shipped schema — this block validates clean
 ```
 
 `units.remBase` is a string with a `px` unit and a positive value (`"16px"`, `"10px"`, `"14.5px"`); anything else (`"abc"`, `"0px"`, `"100%"`, a bare number) is a `TST1010` error. Exporters that convert `rem` to pixels (ECharts, Storybook) read it through `ctx.units`, and their `approximated` coverage note names the base used. Storybook's `options.remBase` (a number) stays as a per-target override. Leaving the key out is the same as `"16px"`: output is byte-identical to a config that never had it.
+
+`derivation.require` lists tokens that must be authored or aliased; one that is derived, defaulted or absent fails with `TST1202`. A color role named at the role (`semantic.color.primary`) checks its `.solid` cell. An entry `completeness:<level>` (`minimal`, `recommended`, `complete`) expands to that [completeness level](../architecture/derivation.md#completeness-levels)'s items, per-scheme ones included, and fails each unauthored one; another `completeness:` name is a `TST1010` error. `check.completeness` only picks the level `build`/`check` summarize and `check --json` reports on (default `recommended`); it never changes the exit code ([cli.md](cli.md#check---completeness--what-to-author-next)).
 
 Two keys an earlier draft of this page showed are **specced, and rejected today** — a config carrying either fails to load with `TST1010: unknown property`:
 

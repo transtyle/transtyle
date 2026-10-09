@@ -19,12 +19,16 @@
  *      whatever the order of the roles; one bound to a slot derived after the
  *      role grids raises TST1205, and a dangling one only TST1105. Each case
  *      compiles a small temporary design system in-process.
+ *  (e) every slot a completeness level names (core's completenessLevels())
+ *      is a catalog slot, and every family it names has catalog members, so a
+ *      renamed or removed slot cannot leave `check --completeness` pointing
+ *      at a token nobody can author.
  */
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compile } from '@transtyle/core';
-import { formatHex, catalog } from '@transtyle/core';
+import { formatHex, catalog, completenessLevels } from '@transtyle/core';
 
 // A derivation-only stand-in for any exporter — permissive optionsSchema so it
 // accepts whatever options the example configs carry (this test exercises the
@@ -179,12 +183,21 @@ async function main() {
     if (got !== '1px') errors.push(`radius.none (${mode}): an authored 1px must win over the ramp, got ${got}`);
   }
 
+  // (e) completeness levels name catalog slots only.
+  const catalogPaths = new Set(CATALOG.slots.map((s) => s.path));
+  const levels = completenessLevels();
+  for (const item of levels.at(-1).items) {
+    if (item.members ? item.members.length === 0 : !catalogPaths.has(item.slot)) {
+      errors.push(`completeness level "${item.level}" names ${item.slot}, which ${item.members ? 'has no member in' : 'is not in'} catalog() — fix ITEMS in packages/core/src/completeness.js`);
+    }
+  }
+
   if (errors.length) {
     console.error(`✖ check-grid failed — ${errors.length} issue(s):\n`);
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log(`✔ check-grid: all ${REQUIRED_SLOTS.length} rule-filled catalog slots present in both modes and nothing filled outside the catalog; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes; ${BOUND.length} roles bound to a derived slot get theirs too, a late-derived binding raises TST1205 and a dangling one TST1105 alone; radius.none derives to 0 and an authored one wins`);
+  console.log(`✔ check-grid: all ${REQUIRED_SLOTS.length} rule-filled catalog slots present in both modes and nothing filled outside the catalog; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes; ${BOUND.length} roles bound to a derived slot get theirs too, a late-derived binding raises TST1205 and a dangling one TST1105 alone; radius.none derives to 0 and an authored one wins; the ${levels.at(-1).items.length} items of the completeness levels name catalog slots`);
 }
 
 main();

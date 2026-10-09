@@ -15,6 +15,8 @@
  * exporter the instance selects, which this static schema can't know.
  */
 
+import { COMPLETENESS_LEVELS } from '../completeness.js';
+
 const tokenLayer = {
   anyOf: [
     { type: 'string' },
@@ -87,7 +89,15 @@ export const configSchema = {
       properties: {
         rules: { type: 'string' },
         autoDark: { type: 'boolean' },
-        require: { type: 'array', items: { type: 'string' } },
+        // A token path, or `completeness:<level>` (completeness.js), which expands to that level's slots.
+        require: {
+          type: 'array',
+          items: {
+            type: 'string',
+            pattern: `^(?!completeness:)|^completeness:(${COMPLETENESS_LEVELS.join('|')})$`,
+            description: `a token path, or one of ${COMPLETENESS_LEVELS.map((l) => `completeness:${l}`).join(', ')}`,
+          },
+        },
       },
     },
     units: {
@@ -107,6 +117,8 @@ export const configSchema = {
       additionalProperties: false,
       properties: {
         failOn: { type: 'string', enum: ['error', 'warning', 'approximation'] },
+        // The level the authoring summary line and `check --json` report on (docs/specs/cli.md). Never changes the exit code.
+        completeness: { type: 'string', enum: [...COMPLETENESS_LEVELS] },
         // Silence a known warning or info with a reason (docs/specs/validation-and-coverage.md#suppressions).
         suppress: {
           type: 'array',

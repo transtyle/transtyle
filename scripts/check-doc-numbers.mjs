@@ -92,6 +92,11 @@ const SURFACES = [
   'README.md',
   'ROADMAP.md',
   'CONTRIBUTING.md',
+  // Each example's README says what that example authors and leaves to the engine.
+  ...readdirSync(join(root, 'examples'))
+    .sort()
+    .map((d) => `examples/${d}/README.md`)
+    .filter((f) => existsSync(join(root, f))),
 ];
 
 /**
@@ -474,6 +479,16 @@ async function measure(metric) {
   // <example>.<target>.decls | .distinct | .sass | .rows
   if (rest.length === 2 && ['decls', 'distinct', 'sass', 'rows', 'undriven', ...CLASSES].includes(rest[1])) {
     return (await emitted(example, rest[0]))?.[rest[1]] ?? null;
+  }
+
+  // <example>.completeness.<level> (items authored) | .completeness.<level>.total
+  // — the `authored n/m <level>` line build and check print, from core's
+  // completenessStatus().
+  if (rest[0] === 'completeness' && (rest.length === 2 || (rest.length === 3 && rest[2] === 'total'))) {
+    const { completenessStatus, COMPLETENESS_LEVELS } = await import('../packages/core/src/index.js');
+    if (!COMPLETENESS_LEVELS.includes(rest[1])) return null;
+    const status = completenessStatus((await compiledExample(example)).normalized, rest[1]);
+    return rest[2] === 'total' ? status.total : status.authored;
   }
 
   // <example>.slots | .authored | .engine | .authored.<tier>

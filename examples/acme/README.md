@@ -37,6 +37,12 @@ Twelve target instances across eleven exporters are configured (note the `export
 npm run dev -w acme-demo-bootstrap   # port 4101   (also: -daisyui 4102, -shadcn 4103, -echarts 4104, -storybook 6101, -css-variables 4105, -radix 4106, -primeng 4107, -mantine 4108, -chakra 4109, -mui 4110)
 ```
 
+## What Acme leaves to derivation, on purpose
+
+<!-- measured: acme.completeness.complete = 15 -->
+
+Acme authors every slot of the `recommended` [completeness level](https://transtyle.github.io/transtyle/docs/derivation/#what-to-author-next-completeness-levels) (brand, neutrals with their dark values, radius, fonts) and its spacing scale, so `npx transtyle check --completeness complete` reports 15 of 24 and lists what it leaves to the engine: `secondary.solid`, the four status colors (`success`, `warning`, `danger`, `info`), `ring`, `scrim`, the `type.*` scale and `component.control.*`. That is the point of the example: one brand color drives a coherent second color, status palette and focus ring, and the type scale and control padding are the catalog's. Author any of them and it wins.
+
 ## Things to try
 
 Change `option.color.blue.600` in `tokens/option.tokens.json` and rebuild — the whole theme (hovers, subtle tints, on-colors, chart palette) follows the brand. Delete a dark-mode value and rebuild to watch fallback behavior. Set a `primary` with poor contrast to see the `TST2101` accessibility warnings. Acme also declares a second mode dimension, `density` (`comfortable|compact`, `space.* × 0.875` in compact) — the T8 worked example for multi-dimension modes.
