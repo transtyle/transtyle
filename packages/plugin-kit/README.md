@@ -60,8 +60,9 @@ loader: open one to see exactly what your plugin received.
 
 ## Checks
 
-Once per plugin: `interface-shape`, `manifest-valid` (with `{ manifest }`),
-`options-schema-shape` (when the plugin has an `optionsSchema`). Then on every fixture:
+Once per plugin: `interface-shape`, `manifest-valid` and `manifest-compatible` (with
+`{ manifest }`: the fields are there, and `irSpec`/`pluginApi` accept this `@transtyle/core`,
+the check the CLI runs at load time), `options-schema-shape` (when the plugin has an `optionsSchema`). Then on every fixture:
 
 | Check                          | Asserts                                                                                                |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------ |

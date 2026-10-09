@@ -21,6 +21,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { conformance, fixtureIR, FIXTURES } from '@transtyle/plugin-kit';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
+import { satisfies } from '../packages/core/src/semver.js';
+import { declaredMatches } from '../packages/core/src/compat.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const failures = [];
@@ -101,7 +103,7 @@ const thirdParty = {
     };
   },
 };
-await checkPlugin('third-party (inline)', thirdParty, { kind: 'exporter', name: 'acme-custom', irSpec: 'v0-draft', pluginApi: '0', capabilities: ['build'] });
+await checkPlugin('third-party (inline)', thirdParty, { kind: 'exporter', name: 'acme-custom', irSpec: 'v0-draft', pluginApi: '^0', capabilities: ['build'] });
 
 // The tier gate has teeth too: a plugin binding a coverage row to `option.*` is caught.
 const optionBinder = { name: 'option-binder', emit: () => ({ files: [], coverage: [{ variable: '--x', slot: 'option.color.blue.500', class: 'native' }] }) };
@@ -115,8 +117,8 @@ if (!optionBindings(optionBinder).length) {
 // Deliberately broken plugins must FAIL, each on the check it breaks — proves
 // the gate has teeth. Each starts from the inline third-party plugin, so the
 // named check is the only thing wrong with it.
-const mustFail = async (label, plugin, check, fixtures) => {
-  const { checks } = await conformance(plugin, fixtures ? { fixtures } : {});
+const mustFail = async (label, plugin, check, fixtures, manifest) => {
+  const { checks } = await conformance(plugin, { ...(fixtures ? { fixtures } : {}), ...(manifest ? { manifest } : {}) });
   if (checks.some((c) => c.name === check && !c.pass)) {
     console.log(`✔ negative test: ${label} fails ${check}`);
   } else {
@@ -163,6 +165,30 @@ await mustFail(
   'coverage-fields-shape',
   'canonical',
 );
+// The range check behind `manifest-compatible` and TST1309 (core's own,
+// zero-dependency semver subset): node-semver's meaning on the forms a
+// manifest holds, and a marker (no version number) compared exactly.
+const RANGES = [
+  ['0.0.0', '0', true], ['0.0.0', '^0', true], ['0.0.0', '0 || 1', true], ['1.4.0', '0 || 1', true], ['0.0.0', '>=0 <2', true],
+  ['0.0.0', '^1', false], ['0.0.0', '^0.1', false], ['0.1.5', '^0.1', true], ['0.2.0', '^0.1', false], ['0.0.4', '^0.0.3', false],
+  ['1.2.9', '~1.2', true], ['1.3.0', '~1.2', false], ['1.9.9', '>1', false], ['2.1.9', '<=2.1', true], ['2.4.0', '1 - 2.3', false], ['5.0.0', '*', true],
+];
+const wrongRanges = RANGES.filter(([v, r, want]) => satisfies(v, r) !== want);
+const markers = [['v0-draft', 'v0-draft', true], ['v1', 'v0-draft', false], ['0', 'v0-draft', false]];
+const wrongMarkers = markers.filter(([declared, provided, want]) => declaredMatches(declared, provided) !== want);
+if (wrongRanges.length || wrongMarkers.length) {
+  for (const [v, r, want] of wrongRanges) console.error(`✖ semver: ${v} in "${r}" should be ${want} (packages/core/src/semver.js)`);
+  for (const [d, p, want] of wrongMarkers) console.error(`✖ compat: marker "${d}" against "${p}" should be ${want} (packages/core/src/compat.js)`);
+  failures.push('semver');
+} else {
+  console.log(`✔ manifest ranges: ${RANGES.length} semver cases and ${markers.length} exact markers match as specified`);
+}
+
+// A manifest declaring an IR spec or plugin API this core doesn't provide
+// (issue #14): the same check core runs at load time (TST1309).
+const thirdPartyManifest = { kind: 'exporter', name: 'acme-custom', irSpec: 'v0-draft', pluginApi: '0', capabilities: ['build'] };
+await mustFail('a manifest built for IR spec "v1"', thirdParty, 'manifest-compatible', 'canonical', { ...thirdPartyManifest, irSpec: 'v1' });
+await mustFail('a manifest requiring plugin API "^1"', thirdParty, 'manifest-compatible', 'canonical', { ...thirdPartyManifest, pluginApi: '^1' });
 
 if (failures.length) {
   console.error(`\n✖ check-plugins: ${failures.length} conformance failure(s)`);

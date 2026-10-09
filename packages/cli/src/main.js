@@ -8,7 +8,7 @@ import path from 'node:path';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
 import { compile, catalog, diffResolved, contrastRegressions, explainToken, explainVariable, slotConsumers, formatColor, formatHex } from '@transtyle/core';
@@ -39,26 +39,56 @@ const OFFICIAL_EXPORTERS = {
  * unloadable whenever the CLI isn't inside the project's own node_modules — a
  * global install, a monorepo checkout, a hoisted binary. Project-first also lets
  * a project deliberately pin its own fork of an official exporter.
+ *
+ * The loader hands core `{ plugin, manifest, package }` so it can check the
+ * exporter's declared `irSpec` and `pluginApi` (issue #14). Exporters map only
+ * `"."` in their `exports`, so `<pkg>/package.json` can't be resolved: the
+ * manifest is found by walking up from the resolved entry file.
  */
 function makeLoadExporter(cwd) {
   const requireFromProject = createRequire(path.join(cwd, 'noop.js'));
   return async function loadExporter(name) {
     const pkg = OFFICIAL_EXPORTERS[name] ?? name;
     const tried = [];
-    try {
-      return (await import(pathToFileURL(requireFromProject.resolve(pkg)).href)).default;
-    } catch (e) {
-      tried.push(`from the project (${cwd}): ${e.code ?? e.message}`);
-    }
-    try {
-      return (await import(pkg)).default;
-    } catch (e) {
-      tried.push(`from the transtyle install: ${e.code ?? e.message}`);
+    for (const [where, resolve] of [
+      [`from the project (${cwd})`, () => requireFromProject.resolve(pkg)],
+      ['from the transtyle install', () => fileURLToPath(import.meta.resolve(pkg))],
+    ]) {
+      let entry;
+      try {
+        entry = resolve();
+        const plugin = (await import(pathToFileURL(entry).href)).default;
+        return withManifest(plugin, entry, pkg);
+      } catch (e) {
+        tried.push(`${where}: ${e.code ?? e.message}`);
+      }
     }
     throw new Error(
       `Cannot load exporter for target "${name}" (package "${pkg}"):\n  - ${tried.join('\n  - ')}\n` +
       `  Third-party exporters must be installed in this project: npm install ${pkg}`);
   };
+}
+
+/**
+ * The package.json above an exporter's entry file, when it is the package that
+ * was asked for: `{ plugin, manifest, package }`. A relative path or a file
+ * outside a package of that name returns the bare plugin (nothing to check).
+ */
+function withManifest(plugin, entry, specifier) {
+  if (specifier.startsWith('.') || path.isAbsolute(specifier)) return plugin;
+  const parts = specifier.split('/');
+  const pkgName = specifier.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
+  for (let dir = path.dirname(entry); ; dir = path.dirname(dir)) {
+    const file = path.join(dir, 'package.json');
+    if (existsSync(file)) {
+      let json;
+      try { json = JSON.parse(readFileSync(file, 'utf8')); } catch { json = null; }
+      if (json?.name === pkgName) {
+        return { plugin, manifest: json.transtyle ?? null, package: { name: json.name, version: json.version } };
+      }
+    }
+    if (path.dirname(dir) === dir) return plugin;
+  }
 }
 
 function parseArgs(argv) {

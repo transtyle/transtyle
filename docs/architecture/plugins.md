@@ -24,14 +24,14 @@ exporter-bootstrap/
   "kind": "exporter",                 // or "importer"
   "name": "bootstrap",
   "irSpec": "v0-draft",               // IR spec it understands
-  "pluginApi": "0",                   // plugin API line
+  "pluginApi": "0",                   // plugin API range (any 0.x)
   "targets": { "bootstrap": [">=5.3 <6"] },   // framework version compat
   "modes": ["color-scheme"],          // mode dimensions it can express
   "capabilities": ["build"]
 }
 ```
 
-`irSpec` and `pluginApi` are plain markers rather than the semver ranges an earlier draft specified, because nothing consumes them as ranges yet — [ADR-0011](../adr/0011-v0-freeze-readiness.md) chose to keep the honest string over a range the loader would ignore. `plugin-kit` checks the fields are present; core does not read them ([versioning.md](versioning.md)).
+Core checks both when it loads the exporter ([versioning.md](versioning.md#load-time-compatibility-check)): `pluginApi` is a semver range that must accept the plugin API version core implements (`0.0.0` before the freeze, so `"0"` or `"^0"`), and `irSpec` must equal the IR spec core produces (`v0-draft`, a marker with no version number until the freeze). A mismatch stops the build with `TST1309`; a package without the manifest loads with a `TST1310` warning. `plugin-kit` checks the fields are present (`manifest-valid`) and accepted by this core (`manifest-compatible`).
 
 ## The exporter interface (v0, as implemented)
 
@@ -87,6 +87,7 @@ Every fixture runs by default; `fixtures: 'canonical'` (or an array of names) na
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | `interface-shape`              | default export is `{ name: string, emit: function }`                                                                  |
 | `manifest-valid`               | the `transtyle` manifest has `kind`, `name`, `irSpec`, `pluginApi`, `capabilities[]`                                  |
+| `manifest-compatible`          | the manifest's `irSpec` and `pluginApi` accept what this `@transtyle/core` provides (the load-time `TST1309` check)   |
 | `options-schema-shape`         | `optionsSchema`, if present, is a JSON-Schema object                                                                  |
 | `emit-runs`                    | `emit` completes against a real resolved IR                                                                           |
 | `emit-returns-files`           | `files` are `{ path, contents, kind }`                                                                                |

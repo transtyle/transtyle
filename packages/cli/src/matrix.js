@@ -122,9 +122,13 @@ export function recordingLoader(loadExporter) {
   const readSets = [];
   async function load(name) {
     const i = readSets.push(new Set()) - 1;
-    const recorded = recordReads(await loadExporter(name));
+    const loaded = await loadExporter(name);
+    // A loader may hand back `{ plugin, manifest, package }` (the CLI's does,
+    // for the compatibility check): record the plugin, keep the rest.
+    const withManifest = loaded && typeof loaded.emit !== 'function' && 'plugin' in loaded;
+    const recorded = recordReads(withManifest ? loaded.plugin : loaded);
     readSets[i] = recorded.reads;
-    return recorded.exporter;
+    return withManifest ? { ...loaded, plugin: recorded.exporter } : recorded.exporter;
   }
   return { loadExporter: load, readSets };
 }
