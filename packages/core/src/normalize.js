@@ -67,6 +67,16 @@ export function normalize(tokenTrees, config, diagnostics) {
   // Base layers merge into the token forest; mode-scoped layers inject values
   // into the same modeValues structure that inline $extensions produce — the
   // two authoring forms are equivalent by construction (ADR-0009).
+  // Where each authored key came from, for diagnostics (source locations).
+  // Base layers merge into one forest and forget their files, so the file and
+  // position of every key is recorded here first; a later layer overwrites an
+  // earlier one, exactly as the merge does ("last wins"). Mode-scoped layers
+  // are not merged, so their diagnostics read their own layer's positions.
+  const sources = new Map();
+  for (const layer of tokenTrees) {
+    if (layer.modeScope) continue;
+    for (const [p, pos] of layer.positions ?? []) sources.set(p, { file: layer.file, ...pos });
+  }
   //
   // Explicit override layers (`"override": true | "extend"`, ADR-0009 addendum):
   // a marked layer redefines earlier layers on purpose, so its redefinitions
@@ -82,7 +92,7 @@ export function normalize(tokenTrees, config, diagnostics) {
     baseLayers.map((t) => t.tree),
     (p, i) => {
       if (baseLayers[i].override) return;
-      diagnostics.warn('TST1103', `Token defined more than once (last wins): ${p}`);
+      diagnostics.warn('TST1103', `Token defined more than once (last wins): ${p}`, { path: p });
     },
     (p, i) => {
       const layer = baseLayers[i];
@@ -95,7 +105,12 @@ export function normalize(tokenTrees, config, diagnostics) {
           diagnostics.warn(
             'TST1116',
             `${layer.file}: override layer defines ${p}, which no earlier layer defines`,
-            { hint: 'Fix the path if it is a typo, or mark the layer `"override": "extend"` when it may add tokens.' },
+            {
+              path: p,
+              file: layer.file,
+              ...(layer.positions?.get(p) ?? {}),
+              hint: 'Fix the path if it is a typo, or mark the layer `"override": "extend"` when it may add tokens.',
+            },
           );
         }
       }
@@ -135,15 +150,22 @@ export function normalize(tokenTrees, config, diagnostics) {
       diagnostics.error('TST1109', `${layer.file}: unknown mode "${scopeDim}: ${scopeMode}" (not declared in config.modes)`);
       continue;
     }
+    // The token's key in THIS layer's file: for TST1108 that is the later
+    // definition, the one that wins.
+    const layerAt = (tokenPath) => ({
+      path: tokenPath,
+      file: layer.file,
+      ...(layer.positions?.get(tokenPath) ?? {}),
+    });
     for (const [tokenPath, tok] of collectTokens(layer.tree)) {
       const base = raw.get(tokenPath);
       if (!base) {
-        diagnostics.warn('TST1107', `${layer.file}: mode value for unknown token "${tokenPath}" (no default-mode value exists) — skipped`);
+        diagnostics.warn('TST1107', `${layer.file}: mode value for unknown token "${tokenPath}" (no default-mode value exists) — skipped`, layerAt(tokenPath));
         continue;
       }
       base.modeValues[scopeDim] ??= {};
       if (base.modeValues[scopeDim][scopeMode] !== undefined && !layer.override) {
-        diagnostics.warn('TST1108', `${tokenPath}: ${scopeDim}=${scopeMode} value overridden by later layer ${layer.file}`);
+        diagnostics.warn('TST1108', `${tokenPath}: ${scopeDim}=${scopeMode} value overridden by later layer ${layer.file}`, layerAt(tokenPath));
       }
       base.modeValues[scopeDim][scopeMode] = tok.value;
     }
@@ -214,6 +236,7 @@ export function normalize(tokenTrees, config, diagnostics) {
     comboDims,
     allCombos: combos.map((c) => c.key),
     roleArchetypes,
+    sources,
   };
 }
 
@@ -297,8 +320,8 @@ export function reportModeCarryOver(normalized, config, diagnostics) {
         'TST1204',
         `${tokenPath} has no authored value for ${DIM}=${scheme} — the ${dim.default}-mode value carries over unchanged, and so does its whole derived grid`,
         autoDark
-          ? { hint: `Author ${tokenPath} for ${DIM}=${scheme} if this role should differ in that mode. \`derivation.autoDark\` is on, so this carry-over is now classified "derived" in coverage — but it does not yet compute a distinct color (that transform is still an open research question; see the roadmap).` }
-          : { hint: `Author ${tokenPath} for ${DIM}=${scheme} if this role should differ in that mode. This is default behavior — nothing is broken.` },
+          ? { path: tokenPath, hint: `Author ${tokenPath} for ${DIM}=${scheme} if this role should differ in that mode. \`derivation.autoDark\` is on, so this carry-over is now classified "derived" in coverage — but it does not yet compute a distinct color (that transform is still an open research question; see the roadmap).` }
+          : { path: tokenPath, hint: `Author ${tokenPath} for ${DIM}=${scheme} if this role should differ in that mode. This is default behavior — nothing is broken.` },
       );
     }
   }
@@ -365,6 +388,7 @@ function reportCycle(diagnostics, chain) {
   if (seen.has(key)) return;
   seen.add(key);
   diagnostics.error('TST1104', `Alias cycle: ${chain.join(' → ')}`, {
+    path: chain[0],
     hint: 'Break the loop: one of these tokens has to hold a literal value.',
   });
 }
@@ -400,6 +424,7 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     if (resolved === CYCLE) return CYCLE; // already reported as TST1104
     if (!resolved) {
       diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`, {
+        path: tokenPath,
         hint: `Nothing resolves to "${target}". Check the tier prefix (option./semantic./component.) and the spelling.`,
       });
       return undefined;
@@ -418,7 +443,7 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
   try {
     entry.value = parseValue(entry.type, raw);
   } catch (e) {
-    diagnostics.error('TST1106', `${tokenPath}: ${e.message}`, e.hint ? { hint: e.hint } : undefined);
+    diagnostics.error('TST1106', `${tokenPath}: ${e.message}`, { path: tokenPath, ...(e.hint ? { hint: e.hint } : {}) });
     return undefined;
   }
   return entry;
@@ -513,6 +538,7 @@ function resolveComposite(entry, tokenPath, diagnostics, lookup) {
       spec.layers
         ? `${tokenPath}: an empty ${entry.type} array — author at least one layer`
         : `${tokenPath}: expected ${shape}, got an array (only shadow composites may be authored as a list of layers)`,
+      { path: tokenPath },
     );
     return undefined;
   }
@@ -524,13 +550,13 @@ function resolveComposite(entry, tokenPath, diagnostics, lookup) {
   const parsed = (layered ? raw : [raw]).map((layer, i) => {
     const at = layered ? `${tokenPath}.${i}` : tokenPath;
     if (layer === null || typeof layer !== 'object' || Array.isArray(layer)) {
-      diagnostics.error('TST1106', `${at}: expected ${shape}, got ${JSON.stringify(layer)}`);
+      diagnostics.error('TST1106', `${at}: expected ${shape}, got ${JSON.stringify(layer)}`, { path: tokenPath });
       failed = true;
       return undefined;
     }
     for (const name of spec.required) {
       if (!(name in layer)) {
-        diagnostics.error('TST1106', `${at}.${name}: missing — a ${entry.type} needs ${spec.required.join(', ')}`);
+        diagnostics.error('TST1106', `${at}.${name}: missing — a ${entry.type} needs ${spec.required.join(', ')}`, { path: tokenPath });
         failed = true;
       }
     }
@@ -545,6 +571,7 @@ function resolveComposite(entry, tokenPath, diagnostics, lookup) {
         if (resolved === CYCLE) { cycle = true; continue; } // already reported as TST1104
         if (!resolved || resolved.value === undefined) {
           diagnostics.error('TST1105', `Dangling alias in ${memberPath}: {${target}}`, {
+            path: tokenPath,
             hint: `Nothing resolves to "${target}" — not authored, and not produced by derivation. Check the tier prefix (option./semantic./component.) and the spelling.`,
           });
           failed = true;
@@ -556,7 +583,7 @@ function resolveComposite(entry, tokenPath, diagnostics, lookup) {
       try {
         out[name] = parseMember(spec.members[name], value);
       } catch (e) {
-        diagnostics.error('TST1106', `${memberPath}${target ? ` (via {${target}})` : ''}: ${e.message}`, e.hint ? { hint: e.hint } : undefined);
+        diagnostics.error('TST1106', `${memberPath}${target ? ` (via {${target}})` : ''}: ${e.message}`, { path: tokenPath, ...(e.hint ? { hint: e.hint } : {}) });
         failed = true;
       }
     }
@@ -651,6 +678,7 @@ function resolvePending(map, tokenPath, stack, diagnostics) {
   if (resolved === CYCLE) return CYCLE; // already reported as TST1104
   if (!resolved || resolved.value === undefined) {
     diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`, {
+      path: tokenPath,
       hint: `Nothing resolves to "${target}" — not authored, and not produced by derivation. Check the tier prefix (option./semantic./component.) and the spelling.`,
     });
     return undefined;

@@ -119,9 +119,19 @@ const ICONS = { error: '✖', warning: '⚠', info: 'ℹ' };
  * ended up saying neither well.
  */
 function printDiagnostic(d) {
-  console.error(`${ICONS[d.severity] ?? '·'} ${d.code} ${d.message}`);
+  // `file:line:col`, the form terminals and editors make clickable, when the
+  // diagnostic is about something authored in a token file (core's locations).
+  const at = d.file === undefined ? '' : ` ${d.file}${d.line === undefined ? '' : `:${d.line}${d.column === undefined ? '' : `:${d.column}`}`}`;
+  console.error(`${ICONS[d.severity] ?? '·'} ${d.code}${at} ${d.message}`);
   if (d.stack) console.error(d.stack.split('\n').map((l) => `    ${l}`).join('\n'));
   if (d.hint) console.error(`  ↳ ${d.hint}`);
+}
+
+/** Every diagnostic, then one line saying how many `check.suppress` silenced (none, no line). */
+function printDiagnostics(diagnostics) {
+  for (const d of diagnostics.items) printDiagnostic(d);
+  const n = diagnostics.suppressed.length;
+  if (n > 0) console.error(`${ICONS.info} ${n} diagnostic${n === 1 ? '' : 's'} suppressed by check.suppress (listed in report.json)`);
 }
 const COMMANDS = ['build', 'check', 'explain', 'bindings', 'diff', 'catalog', 'init', 'add'];
 
@@ -165,7 +175,7 @@ async function cmdBuildOrCheck(args) {
 
   const { diagnostics, results, config } = result;
 
-  for (const d of diagnostics.items) printDiagnostic(d);
+  printDiagnostics(diagnostics);
 
   for (const r of results) {
     const counts = {};
@@ -183,6 +193,7 @@ async function cmdBuildOrCheck(args) {
   if (!emit && args.json) {
     console.log(JSON.stringify({
       diagnostics: diagnostics.items,
+      suppressed: diagnostics.suppressed,
       targets: results.map((r) => ({ target: r.target, coverage: r.coverage })),
       ...(matrix ? { matrix } : {}),
     }, null, 2));
@@ -253,7 +264,7 @@ async function cmdExplain(args) {
     process.exit(2);
   }
   const { normalized, diagnostics } = result;
-  for (const d of diagnostics.items) printDiagnostic(d);
+  printDiagnostics(diagnostics);
 
   let tree;
   try {

@@ -91,6 +91,7 @@ function checkDistinguishability(normalized, diagnostics) {
           ? `${names[0]} and ${names[1]} are ΔE ${cluster.min.toFixed(3)} apart in ${mode} mode (< ${DISTINGUISHABLE_DELTA_E})`
           : `${list(names)} are within ΔE ${DISTINGUISHABLE_DELTA_E} of each other in ${mode} mode (closest pair ${cluster.minPair[0].name} and ${cluster.minPair[1].name}, ΔE ${cluster.min.toFixed(3)})`,
         {
+          path: cluster.items[0].path,
           hint: `Chart series using ${cluster.items.length === 2 ? 'these two entries' : 'any two of these'} can't be told apart. Author one of them as semantic.${cluster.items[cluster.items.length - 1].name}.`,
         },
       );
@@ -116,6 +117,7 @@ function checkDistinguishability(normalized, diagnostics) {
           ? `${list(names)} status roles resolve to the same color in ${mode} mode`
           : `${list(names)} status roles are within ΔE ${DISTINGUISHABLE_DELTA_E} of each other in ${mode} mode (closest pair ${cluster.minPair[0].name} and ${cluster.minPair[1].name}, ΔE ${cluster.min.toFixed(3)})`,
         {
+          path: cluster.items[0].path,
           hint: authored
             ? `${list(names)} ${names.length > 1 ? 'are' : 'is'} authored or bound that way, so the source is where to fix it; Transtyle carries it through as written.`
             : `Author a distinct ${mode} .solid for at least ${names.length - 1} of them.`,
@@ -186,9 +188,10 @@ export function runChecks(normalized, config, diagnostics) {
           `${fg} vs ${bg} is ${ratio.toFixed(1)}:1 in ${mode} mode (< ${min}:1 ${standard})`,
           carried.length
             ? {
+                path: `${S}${fg}`,
                 hint: `${carried.join(' and ')} ${carried.length > 1 ? 'are' : 'is'} unchanged from ${normalized.defaultMode} mode — nothing authors a ${mode} value, so ${carried.length > 1 ? 'they' : 'it'} carried over. Author the ${mode} value.`,
               }
-            : {},
+            : { path: `${S}${fg}` },
         );
       }
     }

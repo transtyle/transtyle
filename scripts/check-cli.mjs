@@ -858,6 +858,134 @@ try {
   }
 }
 
+// ---------- #7: source locations and check.suppress ----------
+// A diagnostic about an authored token names its file, line and column (the
+// key's opening quote); one about a derived value has none. `check.suppress`
+// silences a warning or info with a required reason, lists it under
+// `suppressed`, never touches an error, and says so when an entry is stale.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-7-'));
+  const tp = join(dir, 'tokens/brand.tokens.json');
+  const cp = join(dir, 'transtyle.config.json');
+  const check = (...extra) => run(['check', '--cwd', dir, '--json', ...extra]);
+  const parse = (r) => { try { return JSON.parse(r.stdout); } catch { return { diagnostics: [], suppressed: [], unparseable: r.out }; } };
+  const setConfig = (edit) => { const c = JSON.parse(config); edit(c); writeFileSync(cp, JSON.stringify(c, null, 2)); };
+  let config;
+  try {
+    run(['init', 'loc-ds', '--cwd', dir]);
+    const scaffold = readFileSync(tp, 'utf8');
+    config = readFileSync(cp, 'utf8');
+
+    // Locations: dangling alias, with the printed form.
+    const dangling = scaffold.replace('{option.color.brand.500}', '{option.color.brand.999}');
+    writeFileSync(tp, dangling);
+    let r = check();
+    let d = parse(r).diagnostics.find((x) => x.code === 'TST1105');
+    expect('locations: TST1105 carries path, file, line and column', !!d && d.path === 'semantic.color.primary.solid' && d.file === 'tokens/brand.tokens.json' && Number.isInteger(d.line) && Number.isInteger(d.column), JSON.stringify(d));
+    // `solid` is the only key of that name inside semantic.color.primary
+    const solidLine = dangling.split('\n').findIndex((l, i, ls) => /"solid"/.test(l) && ls.slice(0, i).some((p) => /"primary"/.test(p))) + 1;
+    expect('locations: TST1105 points at the real line of the offending key', !!d && d.line === solidLine && dangling.split('\n')[d.line - 1].slice(d.column - 1).startsWith('"solid"'), JSON.stringify(d));
+    expect('locations: the terminal form is code file:line:col message', r.out.includes(`TST1105 tokens/brand.tokens.json:${d?.line}:${d?.column} Dangling alias`), r.out);
+
+    // A diagnostic about an authored anchor is located (one about a derived slot, e.g. a contrast ratio, has no source line).
+    writeFileSync(tp, scaffold);
+    const derived = parse(check()).diagnostics.filter((x) => x.code === 'TST1204');
+    expect('locations: TST1204 (an authored anchor) is located', derived.length > 0 && derived.every((x) => x.file === 'tokens/brand.tokens.json' && x.line > 0), JSON.stringify(derived));
+
+    // A syntax error names the line the parser stopped at.
+    // init lists its token files one by one, so the extra file is added to the config
+    setConfig((c) => { c.tokens.push('tokens/zz.tokens.json'); });
+    writeFileSync(join(dir, 'tokens/zz.tokens.json'), '{\n  "a": 1,\n  "b" }\n');
+    r = check();
+    d = parse(r).diagnostics.find((x) => x.code === 'TST1002');
+    expect('locations: TST1002 names the file and the line the parser stopped at', !!d && d.file === 'tokens/zz.tokens.json' && d.line === 3, JSON.stringify(d));
+    rmSync(join(dir, 'tokens/zz.tokens.json'));
+    setConfig(() => {});
+
+    // A duplicate across two base layers points at the later definition.
+    writeFileSync(join(dir, 'tokens/zz.tokens.json'), JSON.stringify({ option: { color: { brand: { 500: { $type: 'color', $value: '#123456' } } } } }, null, 2));
+    setConfig((c) => { c.tokens.splice(1, 0, 'tokens/zz.tokens.json'); });
+    d = parse(check()).diagnostics.find((x) => x.code === 'TST1103');
+    expect('locations: TST1103 points at the later definition', !!d && d.path === 'option.color.brand.500' && d.file === 'tokens/zz.tokens.json' && d.line > 0, JSON.stringify(d));
+    rmSync(join(dir, 'tokens/zz.tokens.json'));
+    setConfig(() => {});
+
+    // Suppressions. A TST1305 warning (top-level group outside the tiers) is the subject.
+    const withStray = JSON.parse(scaffold);
+    withStray.stray = { thing: { $type: 'color', $value: '#abcdef' } };
+    writeFileSync(tp, JSON.stringify(withStray, null, 2));
+    let out = parse(check());
+    expect('suppress control: TST1305 warns and `suppressed` is [] when nothing is configured', out.diagnostics.some((x) => x.code === 'TST1305') && Array.isArray(out.suppressed) && out.suppressed.length === 0, JSON.stringify(out.suppressed));
+
+    setConfig((c) => { c.check.failOn = 'warning'; });
+    expect('suppress control: failOn warning fails on it (exit 1)', check().code === 1);
+
+    const reason = 'stray is a scratch group that only holds an experiment';
+    setConfig((c) => { c.check.failOn = 'warning'; c.check.suppress = [{ code: 'TST1305', path: 'stray', reason }]; });
+    r = check();
+    out = parse(r);
+    expect('suppress: the warning leaves diagnostics', !out.diagnostics.some((x) => x.code === 'TST1305'), JSON.stringify(out.diagnostics));
+    expect('suppress: it is listed under suppressed with its reason, location and path', out.suppressed.length === 1 && out.suppressed[0].code === 'TST1305' && out.suppressed[0].reason === reason && out.suppressed[0].path === 'stray' && out.suppressed[0].file === 'tokens/brand.tokens.json' && out.suppressed[0].line > 0, JSON.stringify(out.suppressed));
+    expect('suppress: failOn warning no longer fails (exit 0)', r.code === 0, `exit ${r.code}: ${r.out}`);
+    const human = run(['check', '--cwd', dir]);
+    expect('suppress: one summary line, and no printed TST1305', /1 diagnostic suppressed by check\.suppress/.test(human.out) && !/TST1305/.test(human.out), human.out);
+
+    // The code alone (no path) matches every diagnostic of that code; a wrong path matches nothing.
+    setConfig((c) => { c.check.failOn = 'warning'; c.check.suppress = [{ code: 'TST1305', reason }]; });
+    out = parse(check());
+    expect('suppress: an entry without path matches every diagnostic of its code', out.suppressed.length === 1 && !out.diagnostics.some((x) => x.code === 'TST1305'), JSON.stringify(out));
+    setConfig((c) => { c.check.failOn = 'warning'; c.check.suppress = [{ code: 'TST1305', path: 'other', reason }]; });
+    r = check();
+    out = parse(r);
+    expect('suppress: a path that matches nothing keeps the warning and adds TST1012 (info)', out.diagnostics.some((x) => x.code === 'TST1305') && out.diagnostics.some((x) => x.code === 'TST1012' && x.severity === 'info' && x.message.includes('matched no diagnostic')), JSON.stringify(out.diagnostics));
+
+    // Prefix: `group.*` matches children and not the group itself.
+    const withChildren = JSON.parse(scaffold);
+    withChildren.semantic.shape = { $type: 'color', a: { $value: 'nonsense-1' }, b: { $value: 'nonsense-2' } };
+    writeFileSync(tp, JSON.stringify(withChildren, null, 2));
+
+    // Errors are never suppressible: the error stays, fails, and TST1012 says why.
+    setConfig((c) => { c.check.suppress = [{ code: 'TST1106', path: 'semantic.shape.*', reason }]; });
+    r = check();
+    out = parse(r);
+    expect('suppress: an error is not silenced, still fails (exit 1)', r.code === 1 && out.diagnostics.filter((x) => x.code === 'TST1106').length === 2 && out.suppressed.length === 0, r.out);
+    expect('suppress: matching only an error produces the TST1012 note', out.diagnostics.some((x) => x.code === 'TST1012' && x.message.includes('cannot be suppressed')), JSON.stringify(out.diagnostics));
+    writeFileSync(tp, JSON.stringify(withStray, null, 2));
+
+    // Prefix on a warning: the group `stray` is the path of TST1305 itself, so `stray.*` does not match it.
+    setConfig((c) => { c.check.suppress = [{ code: 'TST1305', path: 'stray.*', reason }]; });
+    out = parse(check());
+    expect('suppress: `group.*` matches below the group, not the group itself', out.diagnostics.some((x) => x.code === 'TST1305') && out.suppressed.length === 0, JSON.stringify(out));
+
+    // reason: missing, empty and blank each fail config load with TST1010 naming the entry; so does an unknown key.
+    for (const [label, entry] of [
+      ['a missing reason', { code: 'TST1305' }],
+      ['an empty reason', { code: 'TST1305', reason: '' }],
+      ['a blank reason', { code: 'TST1305', reason: '   ' }],
+      ['an unknown key', { code: 'TST1305', reason, target: 'css-variables' }],
+    ]) {
+      setConfig((c) => { c.check.suppress = [entry]; });
+      r = check();
+      expect(`suppress: ${label} fails config load with TST1010 naming the entry`, r.code === 1 && /TST1010 .*check\.suppress\[0\]/.test(r.out), r.out);
+    }
+
+    // The report: every report.json has `suppressed`, in order and always present.
+    setConfig((c) => { c.check.suppress = [{ code: 'TST1305', path: 'stray', reason }]; });
+    r = run(['build', '--cwd', dir]);
+    const report = JSON.parse(readFileSync(join(dir, 'dist/css-variables/report.json'), 'utf8'));
+    expect('report.json: carries the suppressed list with its reason', r.code === 0 && report.suppressed.length === 1 && report.suppressed[0].reason === reason && !report.diagnostics.some((x) => x.code === 'TST1305'), r.out);
+    writeFileSync(tp, scaffold);
+    setConfig(() => {});
+    run(['build', '--cwd', dir]);
+    const clean = JSON.parse(readFileSync(join(dir, 'dist/css-variables/report.json'), 'utf8'));
+    expect('report.json: `suppressed` is [] when nothing is suppressed', Array.isArray(clean.suppressed) && clean.suppressed.length === 0);
+    r = run(['check', '--cwd', dir]);
+    expect('suppress: no summary line when nothing was suppressed', !/suppressed by check\.suppress/.test(r.out), r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);

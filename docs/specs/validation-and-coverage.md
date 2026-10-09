@@ -1,11 +1,12 @@
 # Validation, diagnostics, and coverage
 
-<!-- measured: codes = 41 -->
+<!-- measured: codes = 42 -->
 
-> **Status (re-verified 2026-10-09):** the diagnostics collector, the 41 shipped
+> **Status (re-verified 2026-10-09):** the diagnostics collector, the 42 shipped
 > `TST` codes, DTCG structural validation, contrast checking, the coverage
-> classes, `report.json`, and `check --json` are **implemented**. Still specced:
-> per-diagnostic source locations, config suppressions,
+> classes, `report.json`, `check --json`, per-diagnostic source locations and
+> config suppressions (`check.suppress`) are **implemented**. Still specced:
+> tier-violation checks,
 > exporter-declared mode support, the emitted-file drift manifest, and
 > `--frozen`. Each is marked below rather than left for the reader to guess —
 > this page had drifted into describing all of it in the present tense.
@@ -16,9 +17,33 @@ Translation between design ecosystems is lossy. Competitors hide this; we instru
 
 Every pipeline stage emits diagnostics into one collector; a run reports everything at once (no fix-one-rerun loops). Each diagnostic carries a stable code (`TST####`), a severity (`error | warning | info`), a message, and an optional `hint` rendered on its own `↳` line — message says what is wrong, hint says what to change, and they stay separate fields in `report.json` so editors and CI annotations can place them independently. Identical diagnostics de-duplicate on (severity, code, message): derivation runs once per mode combination, and a single authoring mistake used to be reported once per combination.
 
-**Specced, not implemented** ([issue #7](https://github.com/transtyle/transtyle/issues/7)): per-diagnostic source locations (file:line via LOAD source maps — LOAD tracks the file a tree came from, but that never reaches the diagnostic), and config suppressions with a required `reason` string. Today a message names the offending token path, and the way to silence a diagnostic is to fix or author it.
+### Source locations
 
-Severity policy: **errors** = output would be wrong, and nothing is emitted (unresolvable alias `TST1105`, cycle `TST1104`, unparseable token file `TST1002`, schema violation `TST1010`/`TST1011`, a polarity axis that would drop dark mode `TST1112`). **warnings** = output is produced but deserves attention (contrast below the standard `TST2101`, colors that can't be told apart `TST2102`/`TST2103`, a token defined twice across base layers `TST1103` (silent in a layer marked `override`, which warns `TST1116` instead when it defines a token nothing earlier defines), a mode value overridden by a later layer `TST1108`). **info** = notable but fine (a foreign `$extensions` namespace carried through `TST1304`, a role whose dark value is the light one carried over `TST1204`). Which severities fail a build is `check.failOn`, not the severity itself: a warning stops CI when you ask it to.
+A diagnostic about something authored in a token file carries `path` (the dotted token or group path), `file` (relative to the project, as printed), and `line` and `column` (both 1-based; the column is the key's opening quote). LOAD scans each token file's text once (`packages/core/src/locate.js`, zero-dependency) and keeps the position of every key; NORMALIZE records which file each key came from while it merges the base layers, last layer winning, so a token defined twice (`TST1103`) points at the later definition. A mode-scoped layer's diagnostics (`TST1107`, `TST1108`) point into that layer's own file. In the terminal the location sits after the code, `✖ TST1105 tokens/brand.tokens.json:17:9 Dangling alias …`. `check --json` and `report.json` carry the four fields as they are.
+
+What each code points at: `TST1002` the file and, when the parser reports a position, the line it stopped at; `TST1103`, `TST1105`, `TST1106`, `TST1107`, `TST1108`, `TST1302`, `TST1304`, `TST1305`, `TST1306`, `TST1307` and `TST1104` (its first token) the offending token or group; `TST1202`, `TST1203`, `TST1204`, `TST1205`, `TST1201`, `TST2101`, `TST2102` and `TST2103` carry a `path` too, and a location only when that path is authored (a role's `.solid`, a bound token). A value that is derived (an `on-solid` contrast ratio, a missing `primary.solid`) is in no file, so it has no `file`/`line`/`column` and prints as it always did. Config-level codes (`TST1010`, `TST1011`, `TST1301`) have no location: the config file is not scanned yet.
+
+### Suppressions
+
+`check.suppress` silences a known warning or info, and says why:
+
+```jsonc
+"check": {
+  "suppress": [
+    { "code": "TST1305", "path": "scratch", "reason": "scratch is a throwaway group for a spike" },
+    { "code": "TST1204", "path": "component.*", "reason": "components follow their semantic token's dark value" },
+  ],
+}
+```
+
+- `code` and `reason` are required; `reason` must not be empty or blank (both fail config load as `TST1010`, with the path to the entry, as does an unknown key). `path` is optional: an exact token path, or a prefix ending in `.*` (`component.button.*`, matching below the group, not the group itself). No other wildcard.
+- A diagnostic matches when the codes are equal and, if the entry has a `path`, the diagnostic's `path` matches. An entry without `path` matches every diagnostic with that code, which is how to silence one that is not about a token.
+- **Silence, never downgrade.** A matching warning or info leaves `diagnostics`, so it is neither printed nor counted by `check.failOn`. It moves to `suppressed` in `report.json` and in `check --json` (always present, `[]` when nothing was suppressed), each with its `reason`, `path` and location, so a suppression stays auditable. The terminal prints one line, `ℹ N diagnostics suppressed by check.suppress (listed in report.json)`.
+- **Errors are never suppressible**: an error means the output would be wrong. An entry that matches only an error leaves it in place.
+- An entry that silenced nothing (stale, mistyped, or matching only an error) raises `TST1012`, an `info`, not a warning: building a single target runs fewer checks, so an entry for another target's diagnostic would otherwise fail a `failOn: "warning"` project.
+- Suppression runs once, after every stage that produces diagnostics and before the targets are emitted, so every target's report agrees.
+
+Severity policy: **errors** = output would be wrong, and nothing is emitted (unresolvable alias `TST1105`, cycle `TST1104`, unparseable token file `TST1002`, schema violation `TST1010`/`TST1011`, a polarity axis that would drop dark mode `TST1112`). **warnings** = output is produced but deserves attention (contrast below the standard `TST2101`, colors that can't be told apart `TST2102`/`TST2103`, a token defined twice across base layers `TST1103` (silent in a layer marked `override`, which warns `TST1116` instead when it defines a token nothing earlier defines), a mode value overridden by a later layer `TST1108`). **info** = notable but fine (a foreign `$extensions` namespace carried through `TST1304`, a role whose dark value is the light one carried over `TST1204`). Which severities fail a build is `check.failOn`, not the severity itself: a warning stops CI when you ask it to. A known one can be silenced with a reason: see [Suppressions](#suppressions).
 
 ## Built-in checks (Phase 1)
 
@@ -64,7 +89,7 @@ Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — ca
 
 `TST1109` already means "a mode-scoped _layer_ targets an undeclared mode" (a token-file mistake), so the target-level mistake has its own code. A dimension narrowed to a single value by a target is a deliberate exclusion, not a loss: it produces no `dropped` coverage row, even for an exporter that never expresses that dimension. Dimensions the subset doesn't name keep all their values (and keep their `dropped` row where the exporter can't express them).
 
-`transtyle check --json` prints the full diagnostics array (plus per-target coverage) to stdout as one JSON object — human logs still go to stderr, so both can run in the same invocation without interleaving (`docs/specs/cli.md` "Behavioral contracts").
+`transtyle check --json` prints the full diagnostics array (plus the `suppressed` list and per-target coverage) to stdout as one JSON object — human logs still go to stderr, so both can run in the same invocation without interleaving (`docs/specs/cli.md` "Behavioral contracts").
 
 ## Exporter diagnostics
 

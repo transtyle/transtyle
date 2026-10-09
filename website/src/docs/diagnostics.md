@@ -32,6 +32,7 @@ Two behaviors worth knowing:
 | `TST1002` | error    | A token file failed to parse                                                                                                                                                                                                                              | Fix the JSON; the message includes the parser error                                                                                                                                                                                          |
 | `TST1010` | error    | `transtyle.config.json` doesn't match its schema — unknown key, wrong type, missing `tokens`, or a bad `check.failOn`/`contrast.standard` value                                                                                                           | Fix the flagged path; a typo'd key is an error, not silently ignored, and near-miss keys get a "did you mean" suggestion                                                                                                                     |
 | `TST1011` | error    | A target's `options` are invalid for its exporter — unknown option, wrong type, or a value outside the allowed set (e.g. an unknown shadcn `era`)                                                                                                         | Check the exporter's page for its options; an exporter that takes none rejects any                                                                                                                                                           |
+| `TST1012` | info     | A `check.suppress` entry silenced nothing: no diagnostic matched it, or it matched only an error, which cannot be suppressed                                                                                                                              | Remove or fix the entry. When you build a single target, an entry for another target's diagnostic reads the same way                                                                                                                         |
 | `TST1103` | warning  | Token defined more than once across base layers (last wins). Not raised for a layer marked `"override"`                                                                                                                                                   | Mark the layer that redefines on purpose `"override": true` in `tokens`, or remove the duplicate                                                                                                                                             |
 | `TST1104` | error    | Alias cycle (full chain printed)                                                                                                                                                                                                                          | Break the cycle                                                                                                                                                                                                                              |
 | `TST1105` | error    | Dangling alias — `{path}` points at nothing (inside a composite, the message names the member's path)                                                                                                                                                     | Fix the path; check tier prefixes (`option.` vs `semantic.`)                                                                                                                                                                                 |
@@ -122,6 +123,24 @@ shadcn derives its smaller rungs with fixed offsets: `--radius-sm: calc(var(--ra
 ### Part of my scale went backwards
 
 The catalog fills every rung you don't author with its default (`space` steps by 0.25rem, `type.size` is a 1.25 modular scale), and authored tokens always win. Tuning one rung is fine. Authoring an 8px `space.1` to `space.4` (0.5, 1, 1.5, 2rem) is not: `space.4` is 2rem while the default `space.5` is 1.25rem, so the shipped scale goes backwards. Authoring a scale under your own names (`space.sm`/`md`/`lg`) replaces nothing, because targets read the catalog's rung names. Both are `TST1121` (warning), once per scale. Units are compared in px (rem at `units.remBase`, 16px by default) or ms; `em` and `calc()` values are skipped.
+
+### Suppressing a diagnostic
+
+A warning or info you have looked at and accept can be silenced in `transtyle.config.json`, with the reason written next to it:
+
+```json
+"check": {
+  "suppress": [
+    { "code": "TST1305", "path": "scratch", "reason": "scratch is a throwaway group for a spike" }
+  ]
+}
+```
+
+`reason` is required (an empty or blank one fails config load as `TST1010`). `path` is optional: an exact token path, or a prefix ending in `.*` (`component.button.*` matches the group's children, not the group). Without `path`, the entry matches every diagnostic with that code, the only way to silence one that isn't about a token. A suppressed diagnostic is silenced, not downgraded: it is no longer printed and no longer counts for `check.failOn`, and it is listed with its reason under `suppressed` in `report.json` and `check --json`, so it stays auditable. Errors can't be suppressed. An entry that matches nothing raises `TST1012` (an `info`).
+
+### Where a diagnostic points
+
+A diagnostic about something you authored names the file, line and column of its key (`✖ TST1105 tokens/brand.tokens.json:17:9 …`), and `report.json` carries `path`, `file`, `line` and `column`. A diagnostic about a value Transtyle derived (a contrast ratio of a computed `on-solid`, a missing `primary.solid`) has no source line, because the value is in no file: it prints without one. Config-file errors name the file but not the line yet.
 
 ### Two builds, byte-identical output
 

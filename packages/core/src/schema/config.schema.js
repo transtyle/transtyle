@@ -107,6 +107,21 @@ export const configSchema = {
       additionalProperties: false,
       properties: {
         failOn: { type: 'string', enum: ['error', 'warning', 'approximation'] },
+        // Silence a known warning or info with a reason (docs/specs/validation-and-coverage.md#suppressions).
+        suppress: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['code', 'reason'],
+            additionalProperties: false,
+            properties: {
+              code: { type: 'string', pattern: '^TST[0-9]{4}$', description: 'a diagnostic code such as TST1305' },
+              // An exact token path, or a prefix ending in `.*`; no other wildcard.
+              path: { type: 'string', pattern: '^[^*]+(\\.\\*)?$', description: 'an exact token path, or a prefix ending in .*' },
+              reason: { type: 'string', minLength: 1, pattern: '\\S' },
+            },
+          },
+        },
         contrast: {
           type: 'object',
           additionalProperties: false,
