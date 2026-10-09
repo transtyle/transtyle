@@ -1723,8 +1723,88 @@ try {
   }
 }
 
+// ---------- BL-15 (#92): the contrast standard, WCAG 2.1 or APCA ----------
+// Cathode is the dark-native example: AA-clean under WCAG, and the case APCA
+// exists for. Each run copies it, changes only the config, and reads
+// `check --json` (one target, so the run stays quick).
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-apca-'));
+  try {
+    cpSync(join(root, 'examples/cathode'), dir, { recursive: true, filter: (src) => !/[/\\](dist|demo|node_modules)([/\\]|$)/.test(src.slice(root.length)) });
+    const cp = join(dir, 'transtyle.config.json');
+    const original = readFileSync(cp, 'utf8');
+    const setConfig = (edit) => { const c = JSON.parse(original); edit(c); writeFileSync(cp, JSON.stringify(c, null, 2)); };
+    const check = () => {
+      const r = run(['check', 'css-variables', '--cwd', dir, '--json']);
+      let j = null;
+      try { j = JSON.parse(r.stdout); } catch {}
+      return { ...r, j, warnings: (j?.diagnostics ?? []).filter((d) => d.code === 'TST2101').map((d) => d.message) };
+    };
+    const has = (w, text) => w.some((m) => m.includes(text));
+
+    let r = check();
+    expect('contrast: Cathode stays clean under wcag21-aa', r.code === 0 && r.warnings.length === 0, r.warnings.join('\n'));
+    expect('check --json: names the standard it measured against', r.j?.contrast?.standard === 'wcag21-aa' && r.j.contrast.algorithm === 'WCAG 2.1 contrast ratio', JSON.stringify(r.j?.contrast));
+
+    setConfig((c) => { c.check.contrast.standard = 'apca'; });
+    r = check();
+    expect('apca: check --json names APCA with its base algorithm version', r.j?.contrast?.standard === 'apca' && /^APCA 0\.0\.98G-4g \(apca-w3 0\.1\.\d+\)$/.test(r.j.contrast.algorithm), JSON.stringify(r.j?.contrast));
+    expect('apca: Cathode\'s dark muted text is Lc -43 and -42.7, as apca-w3 measures the emitted hex (#50a252 on #040904 / #081209)',
+      has(r.warnings, 'text.muted vs elevation.0.surface is Lc -43 in dark mode (< Lc 60 apca)') && has(r.warnings, 'text.muted vs elevation.1.surface is Lc -42.7 in dark mode (< Lc 60 apca)'), r.warnings.join('\n'));
+    expect('apca: on-colors are picked under APCA too, so none of them warns', r.warnings.length === 2, r.warnings.join('\n'));
+    r = run(['explain', 'success.on-solid', '--cwd', dir]);
+    expect('apca: success.on-solid flips to white on #319751, picked by contrast-pick(apca)', r.code === 0 && r.out.includes('semantic.color.success.on-solid = oklch(1 0 0)') && r.out.includes('contrast-pick(apca)'), r.out);
+
+    // The pair the two standards disagree on: near-black on success.solid is
+    // 5.3:1 (passes WCAG AA) and Lc 39.6 (fails APCA's Lc 60).
+    setConfig((c) => { c.check.contrast.standard = 'apca'; c.derivation.contrast = 'wcag21'; });
+    r = check();
+    expect('apca + WCAG picks: the WCAG-picked success.on-solid fails APCA (Lc 39.6)', has(r.warnings, 'success.on-solid vs success.solid is Lc 39.6 in dark mode (< Lc 60 apca)'), r.warnings.join('\n'));
+
+    setConfig((c) => { c.check.contrast.standard = 'wcag21-aaa'; });
+    r = check();
+    expect('wcag21-aaa: applies to on-colors too (it used to be 4.5:1 for them whatever the standard)', has(r.warnings, 'success.on-solid vs success.solid is 5.3:1 in dark mode (< 7:1 wcag21-aaa)'), r.warnings.join('\n'));
+
+    // An authored on-color is measured like a derived one (it never was).
+    writeFileSync(join(dir, 'tokens/on-solid.tokens.json'), JSON.stringify({ semantic: { color: { primary: { 'on-solid': { $type: 'color', $value: '#3f8f40' } } } } }));
+    for (const standard of ['wcag21-aa', 'apca']) {
+      setConfig((c) => { c.tokens.push('tokens/on-solid.tokens.json'); c.check.contrast.standard = standard; });
+      r = check();
+      expect(`${standard}: an authored on-solid that fails is warned`, r.warnings.some((m) => m.startsWith('primary.on-solid vs primary.solid')), r.warnings.join('\n') || r.out);
+    }
+
+    setConfig((c) => { c.derivation.contrast = 'apca-ish'; });
+    r = check();
+    expect('derivation.contrast: an unknown value is a config error (TST1010)', r.code === 1 && /TST1010 .*derivation\.contrast/.test(r.out), r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+
+  // apca-w3 is an optional peer: without it, an apca config is an error, not a
+  // silent WCAG check. (In this repo it is installed, so the loader is swapped.)
+  const { compile, contrastRegressions } = await import('../packages/core/src/index.js');
+  const missing = async () => { throw new Error('Cannot find package \'apca-w3\''); };
+  const tmp = mkdtempSync(join(tmpdir(), 'transtyle-check-apca-missing-'));
+  try {
+    cpSync(join(root, 'examples/cathode/tokens'), join(tmp, 'tokens'), { recursive: true });
+    const c = JSON.parse(readFileSync(join(root, 'examples/cathode/transtyle.config.json'), 'utf8'));
+    c.check.contrast.standard = 'apca';
+    writeFileSync(join(tmp, 'transtyle.config.json'), JSON.stringify(c));
+    const res = await compile({ cwd: tmp, targets: [], emit: false, skipExporters: true, apcaLoader: missing });
+    const e = res.diagnostics.items.find((d) => d.code === 'TST1013');
+    expect('apca without apca-w3: TST1013 error naming the package and the fix', e?.severity === 'error' && e.message.includes('check.contrast.standard') && e.hint.includes('npm install --save-dev apca-w3'), JSON.stringify(res.diagnostics.items));
+    const ok = await compile({ cwd: tmp, targets: [], emit: false, skipExporters: true });
+    let threw = false;
+    try { contrastRegressions(ok.normalized, ok.normalized, ok.config); } catch { threw = true; }
+    expect('contrastRegressions: refuses an apca config without the compile\'s contrast', threw);
+    expect('contrastRegressions: measures in Lc with the compile\'s contrast', Array.isArray(contrastRegressions(ok.normalized, ok.normalized, ok.config, ok.contrast)) && ok.contrast.unit === 'Lc');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--completeness/bind --suggest/--out/--dry-run/--quiet/--verbose golden path and error cases all pass');
+console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--completeness/bind --suggest/--out/--dry-run/--quiet/--verbose golden path, WCAG and APCA contrast standards, and error cases all pass');

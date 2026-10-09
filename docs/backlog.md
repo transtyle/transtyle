@@ -64,7 +64,7 @@ current model docs before assigning it anything rather than guessing.
 | [BL-12](#bl-12) | Demo switcher keeps your place                            | Site      | Med   | S      | done                 | Sonnet        |
 | [BL-13](#bl-13) | `derivation.overrides` — specced, unimplemented           | Compiler  | Med   | M      | idea                 | Opus          |
 | [BL-14](#bl-14) | Option-scale generator (one colour → a ramp)              | Compiler  | Med   | M      | idea                 | Opus          |
-| [BL-15](#bl-15) | APCA as an alternate contrast standard                    | Compiler  | Med   | M      | idea                 | Opus          |
+| [BL-15](#bl-15) | APCA as an alternate contrast standard                    | Compiler  | Med   | M      | done                 | Opus          |
 | [BL-16](#bl-16) | Per-demo Open Graph cards                                 | Reach     | Low   | S      | idea                 | Sonnet        |
 | [BL-17](#bl-17) | Real screenshots as gallery thumbnails                    | Site      | Low   | M      | idea                 | Opus          |
 | [BL-18](#bl-18) | Palette perceptual-distance warning                       | Compiler  | Low   | S      | done                 | Sonnet        |
@@ -343,7 +343,7 @@ authored. Radix and daisyUI both want real ramps.
 
 ### BL-15
 
-**APCA as an alternate contrast standard** · Compiler · Med · M · idea · Opus
+**APCA as an alternate contrast standard** · Compiler · Med · M · done · Opus
 
 **What.** `check.contrast.standard` currently accepts WCAG 2.1 AA. Add APCA as a selectable
 alternative.
@@ -351,6 +351,11 @@ alternative.
 **Why.** WCAG 2.1's contrast maths is known to misjudge light-on-dark, which is precisely the case a
 dark-native system like Cathode lives in. Being able to say which standard a build was checked
 against is the kind of claim this project is otherwise careful about.
+
+**Done.** `check.contrast.standard: "apca"` checks with APCA 0.0.98G-4g (Lc 75 body text, Lc 60 the
+rest), through the `apca-w3` package as an optional peer dependency ([ADR-0013](adr/0013-apca-optional-peer.md));
+`derivation.contrast` picks on-colors with it; on-colors moved into the shared pair list, so
+`wcag21-aaa` and authored on-colors are checked too. See the [worklog](worklog/2026-10-09-bl-15-apca.md).
 
 ### BL-16
 

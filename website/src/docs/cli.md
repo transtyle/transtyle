@@ -53,7 +53,7 @@ The CLI never colors its output, so `NO_COLOR` changes nothing there; it is hono
 
 ### `transtyle check [instance...]`
 
-The pipeline minus EMIT — same code path, guaranteed to agree with real builds. Runs schema validation, alias/cycle detection, mode validation, WCAG contrast checks, and coverage computation, writing nothing.
+The pipeline minus EMIT — same code path, guaranteed to agree with real builds. Runs schema validation, alias/cycle detection, mode validation, contrast checks (WCAG 2.1, or APCA when [configured](/docs/configuration/#wcag-21-or-apca)), and coverage computation, writing nothing.
 
 ### `--completeness <level>`
 
@@ -74,11 +74,12 @@ npx transtyle check --completeness complete --cwd examples/acme
 
 ### `--json`
 
-`check`, `diff` and `catalog`. For `check`, prints the full diagnostics array, the `suppressed` list, per-target coverage and the completeness to-do to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
+`check`, `diff` and `catalog`. For `check`, prints the contrast standard the checks used, the full diagnostics array, the `suppressed` list, per-target coverage and the completeness to-do to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
 
 ```bash
 npx transtyle check --json
-# { "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "...",
+# { "contrast": { "standard": "wcag21-aa", "algorithm": "WCAG 2.1 contrast ratio" },
+#   "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "...",
 #                         "path": "scratch", "file": "tokens/brand.tokens.json", "line": 74, "column": 3 }, ... ],
 #   "suppressed": [ ... ],
 #   "targets": [ { "target": "shadcn", "coverage": [ ... ], "reads": [ ... ] }, ... ],
@@ -219,7 +220,7 @@ npx transtyle diff main         # what does this branch do to the compiled theme
 #   shadcn: 34 lines changed
 ```
 
-It also flags **contrast regressions** — pairs that passed your configured WCAG standard before the change and fail after it:
+It also flags **contrast regressions** — pairs that passed your configured contrast standard before the change and fail after it (in `Lc` under APCA):
 
 ```
 ⚠ Contrast regressions:
@@ -228,7 +229,7 @@ It also flags **contrast regressions** — pairs that passed your configured WCA
 
 That's the difference between `check` ("contrast is bad") and `diff` ("_this change_ made it bad") — the second is what a green CI baseline can otherwise lose silently.
 
-Exits `0` when the compiled themes are identical, `1` when there are changes (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling, including a `contrastRegressions` array. Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
+Exits `0` when the compiled themes are identical, `1` when there are changes (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling, including a `contrastRegressions` array (each row with its `threshold`, `unit` and `standard`). Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
 
 ### `transtyle catalog [--json]`
 

@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex } from '@transtyle/core';
+import { compile, catalog, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
@@ -312,6 +312,9 @@ async function cmdBuildOrCheck(args) {
   const matrix = args.matrix && result.normalized ? consumption(result) : null;
   if (!emit && args.json) {
     console.log(JSON.stringify({
+      // The standard every TST2101 above was measured against (null when the
+      // config failed to load, so nothing was measured).
+      contrast: result.contrast ? { standard: result.contrast.standard, algorithm: result.contrast.algorithm } : null,
       diagnostics: diagnostics.items,
       suppressed: diagnostics.suppressed,
       targets: results.map((r) => ({ target: r.target, coverage: r.coverage, reads: r.reads })),
@@ -620,10 +623,12 @@ function printMeta(entry, indent) {
   if (entry.deprecated) console.log(`${indent}  deprecated${typeof entry.deprecated === 'string' ? `: ${oneLine(entry.deprecated)}` : ''}`);
 }
 
-// Round a contrast ratio down to one decimal so a pair just under a threshold
-// never prints as the threshold itself (4.47 must not read "4.5:1").
-function floor1(n) {
-  return Math.floor(n * 10) / 10;
+// Round a contrast value toward zero to one decimal so a pair just under a
+// threshold never prints as the threshold itself (4.47 must not read "4.5:1",
+// Lc -59.96 must not read "Lc -60"). A ratio, or APCA's signed Lc.
+function contrastText(row, n) {
+  const v = Math.trunc(n * 10) / 10 || 0;
+  return row.unit === 'Lc' ? `Lc ${v}` : `${v}:1`;
 }
 
 function formatEntryValue(entry) {
@@ -761,7 +766,9 @@ async function cmdDiff(args) {
       rmSync(tmp, { recursive: true, force: true });
       process.exit(0);
     }
-    before = await compile({ cwd: beforeCwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd) });
+    // The checkout has no node_modules: resolve apca-w3 (when the config at
+    // that ref selects APCA) from the project, like the exporters.
+    before = await compile({ cwd: beforeCwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd), apcaLoader: () => loadApca(args.cwd) });
   } catch (e) {
     rmSync(tmp, { recursive: true, force: true });
     console.error(`✖ Could not resolve the project at ${ref}: ${e.message}`);
@@ -771,7 +778,7 @@ async function cmdDiff(args) {
 
   const diff = diffResolved(before.normalized, after.normalized);
   const impact = diffTargets(before.results, after.results);
-  const a11y = contrastRegressions(before.normalized, after.normalized, after.config);
+  const a11y = contrastRegressions(before.normalized, after.normalized, after.config, after.contrast);
 
   if (args.json) {
     console.log(JSON.stringify(serializeDiff(ref, diff, impact, a11y), null, 2));
@@ -828,6 +835,7 @@ function serializeDiff(ref, diff, impact, a11y = []) {
     contrastRegressions: a11y.map((r) => ({
       mode: r.mode, pair: `${r.fg} on ${r.bg}`, status: r.status,
       before: Number(r.before.toFixed(2)), after: Number(r.after.toFixed(2)), threshold: r.threshold,
+      unit: r.unit, standard: r.standard,
     })),
     semantic: diff.modes.map((m) => ({
       mode: m.mode,
@@ -876,7 +884,7 @@ function printDiff(ref, diff, impact, a11y = []) {
     console.error(`\n⚠ Contrast ${regressed.length ? 'regressions' : 'changes'}:`);
     for (const r of a11y) {
       const verb = r.status === 'regressed' ? 'now FAILS' : 'still fails';
-      console.error(`  ${r.status === 'regressed' ? '✖' : '⚠'} ${r.fg} on ${r.bg} (${r.mode}): ${floor1(r.before)}:1 → ${floor1(r.after)}:1 — ${verb} ${r.threshold}:1`);
+      console.error(`  ${r.status === 'regressed' ? '✖' : '⚠'} ${r.fg} on ${r.bg} (${r.mode}): ${contrastText(r, r.before)} → ${contrastText(r, r.after)} — ${verb} ${r.unit === 'Lc' ? `Lc ${r.threshold}` : `${r.threshold}:1`}`);
     }
     if (regressed.length) {
       console.error(`\n  ${regressed.length} pair${regressed.length === 1 ? '' : 's'} passed before this change and fail${regressed.length === 1 ? 's' : ''} after it.`);

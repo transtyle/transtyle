@@ -29,7 +29,7 @@ This matters because the source and the meaning are different things:
   1 pair passed before this change and fails after it.
 ```
 
-Two severities: `regressed` (passed the configured standard before, fails now) and `worsened` (already failing, and the ratio dropped further). Pairs that improve, or that fail identically on both sides, are not reported — so an unrelated change (a brand colour that touches no text/surface pair) reports nothing. It reuses `runChecks`' pair list and threshold via shared exports, so `diff` and `check` can never disagree about what "passing" means, and it honors `check.contrast.standard` (`wcag21-aa` → 4.5, `wcag21-aaa` → 7).
+Two severities: `regressed` (passed the configured standard before, fails now) and `worsened` (already failing, and the contrast dropped further: by more than 0.05 of a ratio, or 1 Lc under APCA). Pairs that improve, or that fail identically on both sides, are not reported — so an unrelated change (a brand colour that touches no text/surface pair) reports nothing. It reuses `runChecks`' pair list and contrast standard via shared exports, so `diff` and `check` can never disagree about what "passing" means, and it honors `check.contrast.standard` (`wcag21-aa` → 4.5, `wcag21-aaa` → 7, `apca` → Lc 75 for body text and Lc 60 for the rest, printed as `Lc -52.1 → Lc -43`). Both sides are measured with the current side's standard. In `--json` each row carries its `threshold`, `unit` (`ratio` or `Lc`) and `standard`.
 
 **3. Per-target impact** — for each configured target, the diff re-emits both sides in memory and diffs the emitted artifacts, reporting how many output lines changed and a sample of the changed variables:
 
@@ -91,6 +91,6 @@ If the project didn't exist at the ref, diff says so and exits 0 (nothing to dif
 
 Implemented: the resolved-graph semantic diff, contrast-regression flagging, per-target output impact, git-ref resolution, `--json`, and the exit-code contract, all exercised by `scripts/check-cli.mjs`.
 
-Deliberately not yet done: a rich token-level line diff inside each target (the current impact is a count plus a sample), and contrast checking beyond the four `text.{base,muted}` × `elevation.{0,1}.surface` pairs `runChecks` defines — extending that list benefits `check` and `diff` together, by construction. Neither changes this command's contract. Tracked as [issue #11](https://github.com/transtyle/transtyle/issues/11).
+Deliberately not yet done: a rich token-level line diff inside each target (the current impact is a count plus a sample), and contrast checking beyond the pairs `runChecks` defines (`text.{base,muted}` × `elevation.{0,1}.surface`, and every role's `on-solid`/`on-tint` since BL-15) — extending that list benefits `check` and `diff` together, by construction. Neither changes this command's contract. Tracked as [issue #11](https://github.com/transtyle/transtyle/issues/11).
 
 **A note on the exit code:** a contrast regression does not get its own exit code. Any regression implies a semantic change, which already exits `1`; CI that needs to fail _specifically_ on accessibility reads `contrastRegressions` from `--json`. Keeping one meaning for exit `1` is worth more than a second signal.

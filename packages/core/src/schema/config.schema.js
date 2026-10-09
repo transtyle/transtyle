@@ -89,6 +89,9 @@ export const configSchema = {
       properties: {
         rules: { type: 'string' },
         autoDark: { type: 'boolean' },
+        // The contrast method on-colors are picked with; defaults to `apca`
+        // when check.contrast.standard is `apca`, else `wcag21`.
+        contrast: { type: 'string', enum: ['wcag21', 'apca'] },
         // A token path, or `completeness:<level>` (completeness.js), which expands to that level's slots.
         require: {
           type: 'array',
@@ -137,7 +140,10 @@ export const configSchema = {
         contrast: {
           type: 'object',
           additionalProperties: false,
-          properties: { standard: { type: 'string', enum: ['wcag21-aa', 'wcag21-aaa'] } },
+          properties: {
+            // `apca` needs the optional peer package apca-w3 in the project (TST1013 without it).
+            standard: { type: 'string', enum: ['wcag21-aa', 'wcag21-aaa', 'apca'] },
+          },
         },
         hygiene: {
           type: 'object',

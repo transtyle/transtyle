@@ -11,7 +11,8 @@
  */
 
 import { COLOR_ROLES, PROVENANCE, comboKey, COMPONENT_CATALOG } from '@transtyle/ir';
-import { mix, contrastRatio, contrastPick, clampChromaToGamut } from './color.js';
+import { mix, clampChromaToGamut } from './color.js';
+import { wcagContrast } from './contrast.js';
 import { resolveIfReady } from './normalize.js';
 
 const S = 'semantic.color.';
@@ -19,7 +20,17 @@ const WHITE = { l: 1, c: 0, h: 0, alpha: 1 };
 const NEARBLACK = { l: 0.145, c: 0, h: 0, alpha: 1 };
 const DARK_CANVAS = { l: 0.145, c: 0, h: 0, alpha: 1 };
 
-export function derive(normalized, config, diagnostics) {
+/**
+ * `contrast` is the method on-colors are picked with (contrast.js, `derive` of
+ * loadContrast): WCAG 2.1 aiming at 4.5:1 by default, APCA aiming at its
+ * content level when `derivation.contrast` (or a check standard of `apca`)
+ * selects it. Whether a pick passes is judged by runChecks, not here.
+ */
+export function derive(normalized, config, diagnostics, contrast = wcagContrast()) {
+  // Rule names carry the method when it isn't the default, so `explain`
+  // shows which contrast a value was picked for.
+  const rule = (name) =>
+    contrast.standard !== 'apca' ? name : name.endsWith(')') ? `${name.slice(0, -1)}, apca)` : `${name}(apca)`;
   // Inputs DERIVE had to skip because they were still a pending alias when read
   // ({ mode, path, role? }). Reported by reportUnderived() once every alias has
   // had its chance to resolve.
@@ -33,7 +44,7 @@ export function derive(normalized, config, diagnostics) {
   for (const combo of normalized.allCombos ?? normalized.modeValues) {
     const map = normalized.modes[combo];
     const isDark = (normalized.comboDims?.[combo]?.[normalized.modeDimension] ?? combo) === 'dark';
-    const ctx = { map, isDark, mode: combo, diagnostics };
+    const ctx = { map, isDark, mode: combo, diagnostics, contrast };
     const mode = combo; // kept for diagnostic messages below — the full combo key, more informative than just the primary dimension's value
     const dl = isDark ? 1 : -1;
 
@@ -98,8 +109,8 @@ export function derive(normalized, config, diagnostics) {
       ? rc(
           ctx,
           `${S}text.base`,
-          () => ({ ...contrastPick(elev[0], [NEARBLACK, WHITE]).color }),
-          'default-text',
+          () => ({ ...contrastPick(contrast, elev[0], [NEARBLACK, WHITE]).color }),
+          rule('default-text'),
           ['elevation.0.surface'],
           PROVENANCE.DEFAULTED,
         )
@@ -219,37 +230,23 @@ export function derive(normalized, config, diagnostics) {
         'elevation.1.surface',
       ]);
 
-      // on-solid: contrast-pick white/near-black (AA hard rule)
-      const onSolidPick = contrastPick(solid, [WHITE, NEARBLACK]);
-      rc(ctx, rp + 'on-solid', () => ({ ...onSolidPick.color }), 'contrast-pick', [
+      // on-solid: contrast-pick white/near-black. Whether the result (or an
+      // authored on-solid) passes is checked on resolved values in runChecks.
+      const onSolidPick = contrastPick(contrast, solid, [WHITE, NEARBLACK]);
+      rc(ctx, rp + 'on-solid', () => ({ ...onSolidPick.color }), rule('contrast-pick'), [
         `${role}.solid`,
       ]);
-      if (onSolidPick.ratio < 4.5) {
-        diagnostics.warn(
-          'TST2101',
-          `${role}.on-solid is ${Math.floor(onSolidPick.ratio * 10) / 10}:1 against ${role}.solid in ${mode} mode (< 4.5:1 AA)`,
-          { path: `${S}${role}.on-solid` },
-        );
-      }
 
-      // on-tint: on-brand walk (F19) — start at solid-active, step away from tint until AA clears
+      // on-tint: on-brand walk (F19) — start at solid-active, step away from tint until the target clears
       const tint = get(map, rp + 'tint');
       const fallbacks = [textBase, WHITE, NEARBLACK].filter(Boolean);
-      const onTint = onBrandWalk(tint, solidActive, fallbacks);
-      rc(ctx, rp + 'on-tint', () => ({ ...onTint }), 'contrast-pick(subtle)', [`${role}.tint`]);
-      const onTintRatio = contrastRatio(tint, get(map, rp + 'on-tint'));
-      if (onTintRatio < 4.5) {
-        diagnostics.warn(
-          'TST2101',
-          `${role}.on-tint is ${Math.floor(onTintRatio * 10) / 10}:1 against ${role}.tint in ${mode} mode (< 4.5:1 AA)`,
-          { path: `${S}${role}.on-tint` },
-        );
-      }
+      const onTint = onBrandWalk(contrast, tint, solidActive, fallbacks);
+      rc(ctx, rp + 'on-tint', () => ({ ...onTint }), rule('contrast-pick(subtle)'), [`${role}.tint`]);
 
       // text: on-brand walk of solid against the page background (elevation.0.surface)
       const s0 = surface(0);
-      const roleText = onBrandWalk(s0, solidActive, fallbacks);
-      rc(ctx, rp + 'text', () => ({ ...roleText }), 'contrast-pick(text)', [
+      const roleText = onBrandWalk(contrast, s0, solidActive, fallbacks);
+      rc(ctx, rp + 'text', () => ({ ...roleText }), rule('contrast-pick(text)'), [
         `${role}.solid`,
         'elevation.0.surface',
       ]);
@@ -645,7 +642,7 @@ function swapNeutrals(normalized, combo, ctx) {
   if (!baseText || JSON.stringify(baseText) !== JSON.stringify(text.value)) return;
   // The default text must make a page of this scheme's polarity: the same
   // pick `default-text` makes, white on a dark page, near-black on a light one.
-  if (contrastPick(baseText, [NEARBLACK, WHITE]).color !== (ctx.isDark ? WHITE : NEARBLACK)) return;
+  if (contrastPick(ctx.contrast, baseText, [NEARBLACK, WHITE]).color !== (ctx.isDark ? WHITE : NEARBLACK)) return;
   // The default mode's page: unauthored there too (a token is in every combo
   // or in none), so it is the default canvas of that mode's polarity.
   const basePage = defaultIsDark ? DARK_CANVAS : WHITE;
@@ -667,13 +664,14 @@ function swapNeutrals(normalized, combo, ctx) {
     value: { ...basePage },
     provenance: provenance(['elevation.0.surface', 'text.base']),
   });
-  const ratio = Math.floor(contrastRatio(baseText, ctx.isDark ? DARK_CANVAS : WHITE) * 10) / 10;
+  // Measured with the derivation's contrast method (contrast.js), printed in its unit.
+  const measured = ctx.contrast.format(ctx.contrast.measure(baseText, ctx.isDark ? DARK_CANVAS : WHITE));
   ctx.diagnostics.info(
     'TST1206',
     `text.base has no value for ${dim}=${here} and elevation.0.surface is not authored — the ${here} page and text are the ${scheme} pair swapped (rule swap-neutrals)`,
     {
       path: textPath,
-      hint: `Without the swap, the ${scheme} text would sit on the default ${here} page at ${ratio}:1. Author elevation.0.surface and text.base for ${dim}=${here} to choose them yourself.`,
+      hint: `Without the swap, the ${scheme} text would sit on the default ${here} page at ${measured}. Author elevation.0.surface and text.base for ${dim}=${here} to choose them yourself.`,
     },
   );
 }
@@ -788,18 +786,30 @@ function raise(c, isDark) {
 
 /**
  * on-brand walk (F19): start at `active`, step lightness away from `bg` in
- * 0.01 increments until the pair clears AA 4.5:1; fall back to the
- * max-contrast pick among `fallbacks` if the lightness clamp is reached first.
+ * 0.01 increments until the pair clears the method's content level (WCAG AA
+ * 4.5:1, or APCA Lc 60); fall back to the max-contrast pick among `fallbacks`
+ * if the lightness clamp is reached first.
  */
-function onBrandWalk(bg, active, fallbacks) {
+function onBrandWalk(contrast, bg, active, fallbacks) {
   const dir = bg.l >= 0.5 ? -1 : 1;
+  const target = contrast.threshold('content');
   for (let i = 0; ; i++) {
     const l = r3(active.l + dir * i * 0.01);
     if (l < 0 || l > 1) break;
     const cand = { ...active, l };
-    if (contrastRatio(bg, cand) >= 4.5) return cand;
+    if (contrast.score(contrast.measure(cand, bg)) >= target) return cand;
   }
-  return contrastPick(bg, fallbacks).color;
+  return contrastPick(contrast, bg, fallbacks).color;
+}
+
+/** The candidate (as text) with the most contrast on `bg`; the first wins a tie. */
+function contrastPick(contrast, bg, candidates) {
+  let best = null;
+  for (const cand of candidates) {
+    const score = contrast.score(contrast.measure(cand, bg));
+    if (!best || score > best.score) best = { color: cand, score };
+  }
+  return best;
 }
 
 // ---------- catalog-default tables ----------
