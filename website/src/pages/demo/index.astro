@@ -33,7 +33,7 @@ const workspaceOf = (example, target) =>
 // The one number the page leads with, counted rather than typed.
 const count = demos.length;
 
-const title = 'Demo gallery — 32 live builds of one design system compiler';
+const title = `Demo gallery — ${count} live builds of one design system compiler`;
 const description = `${count} running applications: ${EXAMPLES.length} design systems compiled to ${TARGETS.length} ecosystems, every page identical except the theme.`;
 
 /** Inline custom properties for a preview card, from that example's compiled output. */
@@ -161,7 +161,7 @@ const paint = (t) =>
       <h2 id="matrix">All {count}, side by side</h2>
       <p class="band-sub">
         Read across a row to see one ecosystem wearing four different design systems. Read down a
-        column to see one design system compiled into eight. Each swatch is that build's real
+        column to see one design system compiled into {TARGETS.length}. Each swatch is that build's real
         primary, surface and text colour.
       </p>
 
@@ -251,7 +251,7 @@ const paint = (t) =>
           <p>
             Every demo carries a switcher: jump to the same page in another design system, or to
             another ecosystem in the same one. That comparison is the point of the exhibit — one
-            token source, eight idiomatic outputs.
+            token source, {TARGETS.length} idiomatic outputs.
           </p>
         </div>
         <div class="read">

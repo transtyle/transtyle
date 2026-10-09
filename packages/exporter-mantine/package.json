@@ -1,0 +1,55 @@
+{
+  "name": "@transtyle/exporter-mantine",
+  "version": "0.1.0-alpha.3",
+  "description": "Transtyle exporter for Mantine 9: a createTheme object with one virtual colour per role, and a cssVariablesResolver carrying the per-scheme colours.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "mantine",
+    "mantine-theme",
+    "react",
+    "css-variables"
+  ],
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.3"
+  },
+  "transtyle": {
+    "kind": "exporter",
+    "name": "mantine",
+    "irSpec": "v0-draft",
+    "pluginApi": "0",
+    "targets": {
+      "mantine": [
+        "*"
+      ]
+    },
+    "modes": [
+      "color-scheme"
+    ],
+    "capabilities": [
+      "build"
+    ]
+  },
+  "files": [
+    "src",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git",
+    "directory": "packages/exporter-mantine"
+  },
+  "homepage": "https://transtyle.github.io/transtyle/docs/exporter-mantine/",
+  "bugs": "https://github.com/transtyle/transtyle/issues",
+  "license": "MIT"
+}

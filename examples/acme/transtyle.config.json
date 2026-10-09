@@ -73,6 +73,9 @@
     },
     "primeng": {
       "output": "dist/primeng"
+    },
+    "mantine": {
+      "output": "dist/mantine"
     }
   },
   "check": {

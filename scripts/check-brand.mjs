@@ -30,7 +30,7 @@
  *     favicon draw exactly the geometry below, so a redraw here cannot leave
  *     the site on the old one.
  *  6. Demos — every example demo project carries the favicon. There are
- *     thirty-two of them across three toolchains, which is exactly the kind of
+ *     thirty-six of them across three toolchains, which is exactly the kind of
  *     set where a new one gets added and quietly skipped.
  *
  * Run: node scripts/check-brand.mjs (also: npm run check:brand; part of

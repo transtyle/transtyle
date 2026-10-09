@@ -327,8 +327,6 @@ something _natively_ is the honest one in the room.
 
 ## Four design systems, thirty-two running demos
 
-<!-- measured: demos = 32 -->
-
 The claim so far is a claim about what things _look like_, and prose is a bad medium for it. So all
 **32** demo projects in the repository are deployed and running in a browser: four design systems,
 eight targets each, rebuilt from the token files on every deploy.
@@ -921,7 +919,6 @@ at `0.1.0-alpha`, and the documentation you are reading is deployed rather than 
 laptop. That is not a launch. It is the point at which the project becomes possible to _try_, which
 is a different and much smaller claim.
 
-<!-- measured: exporters = 8 -->
 <!-- measured: examples = 4 -->
 
 **Real today:** the full pipeline; the derivation engine (role grids, elevation ladder, scales,

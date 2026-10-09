@@ -31,7 +31,7 @@ Steps 1–2 have been done. Steps 3–4 are needed before the workflow can publi
 
 ### 1. npm organization ✅
 
-The `transtyle` org on npm owns the `@transtyle/*` scope. All 12 publishable packages are scoped to it.
+The `transtyle` org on npm owns the `@transtyle/*` scope. All 13 publishable packages are scoped to it.
 
 ### 2. Repository ✅
 
@@ -62,12 +62,19 @@ git tag -a "v$v" -m "v$v" && git push origin "v$v"
 
 That first publish will not carry a provenance attestation, because provenance requires the OIDC path. Every later release will. This is a known and accepted one-time gap; it is not worth publishing throwaway `0.0.0` placeholder packages to avoid.
 
+**A package added after the first release goes through the same step once.** `@transtyle/exporter-mantine` is the first. The Release workflow publishes every directory under `packages/*` through trusted publishing, one after the other, so a package npm has never seen would fail there and stop the loop, leaving the packages after it unpublished. Before the first release that contains a new package, create it on npm from a laptop at the version it already carries on `main` (the current alpha, which it shares with the others through the `fixed` group), then give it its trusted publisher (step 4). The next release then publishes all of them from CI as usual:
+
+```bash
+git checkout main && git pull
+npm publish --tag alpha -w packages/exporter-mantine    # once, locally; creates the package on npm
+```
+
 > [!NOTE]
 > Requires npm ≥ 11.5.1 locally if you want the same CLI as CI (`npm install -g npm@latest`). If the org enforces 2FA for publishing, npm will prompt for a one-time password. Never pass an OTP or a token on a command line you then paste into an issue.
 
-### 4. Configure trusted publishing for all 12 packages
+### 4. Configure trusted publishing for all 13 packages
 
-Once the packages exist on npm, for **each** of `@transtyle/{cli,core,ir,plugin-kit,exporter-bootstrap,exporter-css-variables,exporter-daisyui,exporter-echarts,exporter-primeng,exporter-radix,exporter-shadcn,exporter-storybook}`:
+Once the packages exist on npm, for **each** of `@transtyle/{cli,core,ir,plugin-kit,exporter-bootstrap,exporter-css-variables,exporter-daisyui,exporter-echarts,exporter-mantine,exporter-primeng,exporter-radix,exporter-shadcn,exporter-storybook}`:
 
 npmjs.com → the package → **Settings** → **Trusted publisher** → GitHub Actions, then:
 
@@ -100,8 +107,8 @@ It asks which packages changed and whether the bump is patch/minor/major, then w
 
 Two things about this repo specifically:
 
-- **All 12 packages move together.** `.changeset/config.json` puts `@transtyle/*` in one `fixed` group, so they always share a version number. Selecting one package in the prompt still bumps all of them. This is deliberate: the CLI depends on all eight exporters, and a matrix of independently-versioned compiler parts is not a debugging experience anyone wants.
-- **Private workspaces are not versioned** (`privatePackages: { version: false }`), so the website and the 32 demo projects never get version numbers of their own.
+- **All 13 packages move together.** `.changeset/config.json` puts `@transtyle/*` in one `fixed` group, so they always share a version number. Selecting one package in the prompt still bumps all of them. This is deliberate: the CLI depends on all nine exporters, and a matrix of independently-versioned compiler parts is not a debugging experience anyone wants.
+- **Private workspaces are not versioned** (`privatePackages: { version: false }`), so the website and the 36 demo projects never get version numbers of their own.
 
 Changes that need no changeset: docs, CI, tests, anything that does not alter a published package.
 
@@ -161,9 +168,9 @@ npx changeset pre enter alpha
    npx changeset version
    ```
 
-   This consumes the `.changeset/*.md` files, bumps all 12 packages, and writes `CHANGELOG.md` in each.
+   This consumes the `.changeset/*.md` files, bumps all 13 packages, and writes `CHANGELOG.md` in each.
 
-   Expect a large diff. Changesets rewrites internal dependency ranges from `"*"` to the exact new version — in the 12 packages **and** in every private workspace that consumes them, which is 33 more files. That is correct and wanted: `"*"` published as-is would let `@transtyle/cli@0.1.0-alpha.0` install any future `@transtyle/core`, which during an alpha is a guaranteed break.
+   Expect a large diff. Changesets rewrites internal dependency ranges from `"*"` to the exact new version — in the 13 packages **and** in every private workspace that consumes them, which is 37 more files. That is correct and wanted: `"*"` published as-is would let `@transtyle/cli@0.1.0-alpha.0` install any future `@transtyle/core`, which during an alpha is a guaranteed break.
 
 2. **Review and commit.** Read the generated changelogs — they are the release notes.
 
@@ -184,15 +191,15 @@ The workflow runs `npm run check:all` before it publishes anything, so a release
 
 ### What the release workflow leaves behind
 
-Beyond the twelve tarballs: an annotated git tag `v<version>`, and a **GitHub Release** at that tag whose body is rendered by [`scripts/release-notes.mjs`](scripts/release-notes.mjs). Preview it any time without releasing:
+Beyond the thirteen tarballs: an annotated git tag `v<version>`, and a **GitHub Release** at that tag whose body is rendered by [`scripts/release-notes.mjs`](scripts/release-notes.mjs). Preview it any time without releasing:
 
 ```bash
 npm run release:notes
 ```
 
-The twelve changelogs say the same thing twelve times under a lockstep release, each with a different tail of `Updated dependencies` lines. The script takes the **union** of the substantive entries and drops the bookkeeping, so the page states each change once — and a change that touched only one package still appears. Prereleases are marked `--prerelease`, so once a stable release exists GitHub keeps showing that one as "Latest".
+The thirteen changelogs say the same thing thirteen times under a lockstep release, each with a different tail of `Updated dependencies` lines. The script takes the **union** of the substantive entries and drops the bookkeeping, so the page states each change once — and a change that touched only one package still appears. Prereleases are marked `--prerelease`, so once a stable release exists GitHub keeps showing that one as "Latest".
 
-The notes are rendered **before** the publish and in dry runs too, so a rehearsal fails on a broken renderer rather than the real thing doing so after twelve packages are already on npm.
+The notes are rendered **before** the publish and in dry runs too, so a rehearsal fails on a broken renderer rather than the real thing doing so after thirteen packages are already on npm.
 
 ### What consumers see
 
@@ -237,7 +244,7 @@ The workflow will now refuse to publish, by design. To go through with it, run t
 
 ```bash
 CONFIRM_STABLE_RELEASE=arm-the-freeze npm run check:release-tag
-npm publish --tag latest -w packages/ir -w packages/core -w packages/exporter-shadcn -w packages/exporter-echarts -w packages/exporter-daisyui -w packages/exporter-bootstrap -w packages/exporter-storybook -w packages/exporter-css-variables -w packages/exporter-radix -w packages/exporter-primeng -w packages/plugin-kit -w packages/cli
+npm publish --tag latest -w packages/ir -w packages/core -w packages/exporter-shadcn -w packages/exporter-echarts -w packages/exporter-daisyui -w packages/exporter-bootstrap -w packages/exporter-storybook -w packages/exporter-css-variables -w packages/exporter-radix -w packages/exporter-primeng -w packages/exporter-mantine -w packages/plugin-kit -w packages/cli
 ```
 
 The same release should update ADR-0010 and [ADR-0011](docs/adr/0011-v0-freeze-readiness.md) to record that the freeze is now armed, and drop the alpha banners from the README, the website layout and the docs index.

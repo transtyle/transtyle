@@ -29,7 +29,8 @@
     "@transtyle/exporter-storybook": "0.1.0-alpha.3",
     "@transtyle/exporter-css-variables": "0.1.0-alpha.3",
     "@transtyle/exporter-radix": "0.1.0-alpha.3",
-    "@transtyle/exporter-primeng": "0.1.0-alpha.3"
+    "@transtyle/exporter-primeng": "0.1.0-alpha.3",
+    "@transtyle/exporter-mantine": "0.1.0-alpha.3"
   },
   "files": [
     "src",

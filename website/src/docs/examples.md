@@ -18,10 +18,10 @@ Four example design systems live in the repo. Acme and Cathode are invented, cho
 
 ```bash
 cd examples/acme
-npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook, css-variables, radix, primeng
+npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook, css-variables, radix, primeng, mantine
 ```
 
-**Or just look at it:** [Acme on shadcn/ui](/demo/acme/shadcn/) · [on Bootstrap](/demo/acme/bootstrap/) · [on PrimeNG](/demo/acme/primeng/) · [all eight](/demo/).
+**Or just look at it:** [Acme on shadcn/ui](/demo/acme/shadcn/) · [on Bootstrap](/demo/acme/bootstrap/) · [on PrimeNG](/demo/acme/primeng/) · [on Mantine](/demo/acme/mantine/) · [all nine](/demo/).
 
 What to study:
 
@@ -46,10 +46,10 @@ Acme is also the conformance fixture from the Phase 0 design exercise; `examples
 
 ```bash
 cd examples/cathode
-npx transtyle build          # same eight targets as Acme, radically different values
+npx transtyle build          # same nine targets as Acme, radically different values
 ```
 
-**Or just look at it:** [Cathode on shadcn/ui](/demo/cathode/shadcn/) · [on Bootstrap](/demo/cathode/bootstrap/) · [on PrimeNG](/demo/cathode/primeng/) · [all eight](/demo/).
+**Or just look at it:** [Cathode on shadcn/ui](/demo/cathode/shadcn/) · [on Bootstrap](/demo/cathode/bootstrap/) · [on PrimeNG](/demo/cathode/primeng/) · [on Mantine](/demo/cathode/mantine/) · [all nine](/demo/).
 
 What to study:
 
@@ -65,10 +65,10 @@ What to study:
 
 ```bash
 cd examples/govuk
-npx transtyle build          # same eight targets as Acme/Cathode
+npx transtyle build          # same nine targets as Acme/Cathode
 ```
 
-**Or just look at it:** [GOV.UK on shadcn/ui](/demo/govuk/shadcn/) · [on Bootstrap](/demo/govuk/bootstrap/) · [on PrimeNG](/demo/govuk/primeng/) · [all eight](/demo/).
+**Or just look at it:** [GOV.UK on shadcn/ui](/demo/govuk/shadcn/) · [on Bootstrap](/demo/govuk/bootstrap/) · [on PrimeNG](/demo/govuk/primeng/) · [on Mantine](/demo/govuk/mantine/) · [all nine](/demo/).
 
 What to study:
 
@@ -86,10 +86,10 @@ Full reasoning for every binding decision: [`docs/findings/govuk-adoption.md`](h
 
 ```bash
 cd examples/carbon
-npx transtyle build          # same eight targets
+npx transtyle build          # same nine targets
 ```
 
-**Or just look at it:** [Carbon on shadcn/ui](/demo/carbon/shadcn/) · [on Bootstrap](/demo/carbon/bootstrap/) · [on PrimeNG](/demo/carbon/primeng/) · [all eight](/demo/).
+**Or just look at it:** [Carbon on shadcn/ui](/demo/carbon/shadcn/) · [on Bootstrap](/demo/carbon/bootstrap/) · [on PrimeNG](/demo/carbon/primeng/) · [on Mantine](/demo/carbon/mantine/) · [all nine](/demo/).
 
 What to study:
 
@@ -102,9 +102,9 @@ Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/transtyl
 
 ## See the themes on real frameworks
 
-<!-- measured: demos = 32 -->
+<!-- measured: demos = 36 -->
 
-Each example ships eight npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), and Angular [PrimeNG](/docs/exporter-primeng/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 32 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI.
+Each example ships nine npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), Angular [PrimeNG](/docs/exporter-primeng/) and [Mantine](/docs/exporter-mantine/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 36 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI.
 
 **All 32 are deployed — [open the demo gallery](/demo/).** Every one is rebuilt from the examples on each deploy, so what is running there is what today's compiler emits. Each demo carries a switcher in the corner: from Acme's Bootstrap page you are one click from Carbon's, and the markup underneath is byte-identical, so the difference is entirely the design system.
 

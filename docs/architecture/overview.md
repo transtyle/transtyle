@@ -19,7 +19,7 @@ The system is structured as a classic multi-stage compiler ([ADR-0001](../adr/00
                     └──────────────┬───────────────┘
             ┌─────────────── backends (exporters) ─────────────┐
   Bootstrap   shadcn/ui   daisyUI   ECharts   Storybook   Radix   PrimeNG
-                          css-variables (reference implementation)
+                Mantine   css-variables (reference implementation)
             └──────────────────────────────────────────────────┘
 ```
 
@@ -33,7 +33,7 @@ Everything user-facing hangs off this spine: the CLI drives the pipeline, `check
 | `@transtyle/core`       | Pipeline: loader, normalizer, derivation, resolver host, emitter, diagnostics, provenance. | ir         |
 | `@transtyle/cli`        | Command surface, config discovery, plugin loading, output/UX.                              | core       |
 | `@transtyle/plugin-kit` | Conformance suite for plugin authors — the executable plugin spec.                         | core       |
-| `@transtyle/exporter-*` | One package per official exporter. Eight today.                                            | ir         |
+| `@transtyle/exporter-*` | One package per official exporter. Nine today.                                             | ir         |
 | `@transtyle/importer-*` | _Planned._ One package per official importer; none exists yet.                             | ir         |
 
 Design rules embedded in this layout:
