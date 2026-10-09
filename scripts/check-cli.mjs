@@ -1862,7 +1862,7 @@ try {
     const surface = res.j?.adoption?.unbound;
     expect('adoption: semantic.color.surface is unbound with a "did you mean elevation.0.surface" hint',
       surface?.length === 1 && surface[0].path === 'semantic.color.surface' && surface[0].hints[0]?.match === 'name' && surface[0].hints[0].slot === 'semantic.color.elevation.0.surface', JSON.stringify(surface));
-    expect('adoption: the name hint is printed', res.r.out.includes('↳ did you mean to author elevation.0.surface (or 5 other slots ending in .surface)?'), res.r.out);
+    expect('adoption: the name hint is printed', res.r.out.includes('↳ did you mean to author elevation.0.surface (or 6 other slots ending in .surface)?'), res.r.out);
 
     // Bound through another custom token: slot → my.a → my.b binds both.
     write({ elevation: { 0: { surface: { $value: '{semantic.color.my.a}' } } }, my: { a: { $value: '{semantic.color.my.b}' }, b: { $value: '#ffffff' } } });
