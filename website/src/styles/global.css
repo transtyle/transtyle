@@ -47,11 +47,21 @@ html { scroll-behavior: smooth; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 /* Body type, links and the focus ring are the layout's (brand base). */
-/* The layout stacks the page as a flex column, where a <main> centred with
-   auto margins would shrink to its content — and a code block wider than a
-   phone would take the page with it. Full width, then its own max-width.
-   (.post-layout is the blog post's main row.) */
-body > :is(main, .post-layout) { width: 100%; min-width: 0; }
+/* The page is stacked as a flex column here, not by the package: Base.astro
+   wraps @deramond.dev/astro's BaseLayout (a bare <body>) to fit the alpha bar
+   between the skip link and the header, and only the package's SiteLayout and
+   DocsLayout stack the body themselves. The column fills the viewport and the
+   page's main row takes the spare height, so the footer sits at the bottom of
+   a short page (/blog/, /compare/, /demo/) instead of mid-screen. 100dvh is
+   the phone's visible height with the browser bar open; 100vh stays for
+   browsers without it. The docs pages are the package's DocsLayout, which
+   does the same on its own.
+   In a flex column a <main> centred with auto margins would shrink to its
+   content — and a code block wider than a phone would take the page with it.
+   Full width, then its own max-width. (.post-layout is the blog post's main
+   row.) */
+body { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+body > :is(main, .post-layout) { flex: 1 0 auto; width: 100%; min-width: 0; }
 .skip-link {
   position: absolute; left: 0.5rem; top: -3rem; z-index: 100;
   background: var(--surface); color: var(--text); border: 1px solid var(--border);
