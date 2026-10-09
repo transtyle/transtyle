@@ -4,8 +4,8 @@
  *
  * Why this exists: the AL5 diagnostics sweep started by using the tool wrongly,
  * and the worst failure turned out to be a case where the user does nothing
- * wrong at all. A design system that authors only a brand color, a surface, and
- * a text color is legal — nothing requires a radius scale or a border color —
+ * wrong at all. A design system that authors only a brand color, a page
+ * background (`elevation.0.surface`) and a text color is legal — nothing requires a radius scale or a border color —
  * and `transtyle build bootstrap` answered it with a bare
  * `TypeError: Cannot read properties of undefined (reading 'value')`: no code,
  * no slot name, no hint, no output. Two more exporters silently wrote the
@@ -142,11 +142,14 @@ const MINIMAL_TOKENS = {
   semantic: {
     color: {
       primary: { solid: { $type: 'color', $value: '#3b5bdb' } },
-      surface: { $type: 'color', $value: '#ffffff' },
+      elevation: { 0: { surface: { $type: 'color', $value: '#ffffff' } } },
       text: { base: { $type: 'color', $value: '#212529' } },
     },
   },
 };
+
+/** The page background: the catalog's canvas slot, the one every derivation reads. */
+const CANVAS = 'semantic.color.elevation.0.surface';
 
 /** The floor below the floor: the one token whose absence is an error. */
 const ONE_TOKEN = {
@@ -193,22 +196,32 @@ const MODE_SHAPES = {
 const EXTRA_SCHEME_TOKENS = {
   dark: {
     semantic: { color: {
-      surface: { $type: 'color', $value: '#101114' },
+      elevation: { 0: { surface: { $type: 'color', $value: '#101114' } } },
       text: { base: { $type: 'color', $value: '#f8f9fa' } },
     } },
   },
   dim: {
     semantic: { color: {
-      surface: { $type: 'color', $value: '#2b2417' },
+      elevation: { 0: { surface: { $type: 'color', $value: '#2b2417' } } },
       text: { base: { $type: 'color', $value: '#f5ecd9' } },
     } },
   },
 };
 
-/** Each fixture is a token set plus the mode-scoped layers it can author. */
+/**
+ * Each fixture is a token set, the mode-scoped layers it can author, and the
+ * catalog slots it claims to anchor. Invariant 0 holds the fixture to that
+ * claim: the three-token one used to author `semantic.color.surface`, a custom
+ * token no derivation or exporter reads, so its page background was the
+ * engine's `defaulted` canvas and the check guarded brand + text only.
+ */
 const FIXTURES = {
-  'three-token': { tokens: MINIMAL_TOKENS, extraScheme: EXTRA_SCHEME_TOKENS },
-  'one-token': { tokens: ONE_TOKEN, extraScheme: {} },
+  'three-token': {
+    tokens: MINIMAL_TOKENS,
+    extraScheme: EXTRA_SCHEME_TOKENS,
+    anchors: ['semantic.color.primary.solid', CANVAS, 'semantic.color.text.base'],
+  },
+  'one-token': { tokens: ONE_TOKEN, extraScheme: {}, anchors: ['semantic.color.primary.solid'] },
 };
 
 const root = mkdtempSync(join(tmpdir(), 'transtyle-minimal-'));
@@ -318,12 +331,28 @@ for (const [fixture, shape, modes] of sweep) {
         }
       }
 
+      // 0. The fixture is what it says it is: every anchor it claims reached the
+      //    default map as `authored`, and so did the canvas and text of every
+      //    mode-scoped layer it wrote. A token authored under a name that is
+      //    not a catalog slot is legal (custom vocabulary) and compiles
+      //    silently, so only this assertion can tell an anchor from a no-op.
+      const map = result.normalized.modes[result.normalized.defaultMode];
+      for (const slot of FIXTURES[fixture].anchors) {
+        const kind = map.get(slot)?.provenance?.kind;
+        if (kind !== 'authored') errors.push(`${at}: the fixture authors ${slot}, but the default mode holds it as "${kind}" — it anchors nothing`);
+      }
+      for (const value of extraValues) {
+        for (const slot of [CANVAS, 'semantic.color.text.base']) {
+          const kind = result.normalized.modes[value]?.get(slot)?.provenance?.kind;
+          if (kind !== 'authored') errors.push(`${at}: the "${value}" layer authors ${slot}, but modes.${value} holds it as "${kind}"`);
+        }
+      }
+
       // 4. Coverage honesty. Only rows whose `slot` is a single, complete IR path
       //    are checkable — many rows legitimately carry a summary label instead
       //    (`semantic.{font.sans, type.size.md}`, `semantic.color.primary.1–8`, or a
       //    target's own namespace such as PrimeNG's `{primary.color}` runtime
       //    reference). Those are skipped rather than guessed at.
-      const map = result.normalized.modes[result.normalized.defaultMode];
       for (const c of emitted.coverage ?? []) {
         if (!['native', 'derived'].includes(c.class)) continue;
         const slot = String(c.slot ?? '');
@@ -356,9 +385,9 @@ for (const [fixture, shape, modes] of sweep) {
       //    Checked at the IR boundary (not by grepping output) so it is robust to
       //    each exporter's color rendering.
       if (extraValues.length) {
-        const seen = new Map([['light', map.get('semantic.color.surface')?.value]]);
+        const seen = new Map([['light', map.get(CANVAS)?.value]]);
         for (const value of extraValues) {
-          const surface = result.normalized.modes[value]?.get('semantic.color.surface')?.value;
+          const surface = result.normalized.modes[value]?.get(CANVAS)?.value;
           if (surface === undefined) {
             errors.push(`${at}: authored "${value}" surface did not reach modes.${value}`);
             continue;
@@ -468,7 +497,7 @@ writeFileSync(
             },
             alert: { $type: 'color', $value: '#ca3535' },
           },
-          surface: { $type: 'color', $value: '#ffffff' },
+          elevation: { 0: { surface: { $type: 'color', $value: '#ffffff' } } },
           text: { base: { $type: 'color', $value: '#212529' } },
           // The binding layer: catalog meaning ← house name.
           primary: { solid: { $value: '{semantic.color.house.brand}' } },
@@ -537,6 +566,7 @@ writeFileSync(
         color: {
           ...MINIMAL_TOKENS.semantic.color,
           elevation: {
+            ...MINIMAL_TOKENS.semantic.color.elevation,
             1: {
               shadow: {
                 $type: 'shadow',
@@ -643,6 +673,7 @@ writeFileSync(
       color: {
         ...MINIMAL_TOKENS.semantic.color,
         elevation: {
+          ...MINIMAL_TOKENS.semantic.color.elevation,
           1: { shadow: { $type: 'shadow', $value: { color: 'not-a-color', offsetX: '0px', offsetY: '2px', blur: '8px' } } },
           2: { shadow: { $type: 'shadow', $value: [layer('{semantic.color.nope}', '1px', '2px')] } },
           3: { shadow: { $type: 'shadow', $value: '0 1px 2px #000' } },
@@ -821,4 +852,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; the 1-token Bootstrap Sass path builds against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token Bootstrap Sass path builds against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106`);
