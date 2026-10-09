@@ -13,9 +13,9 @@ order: 9
 
 The second reference exporter, and proof that Transtyle is not a CSS generator: the output is a **JSON theme object** for `echarts.registerTheme()`, colors are hex (canvas rendering), and the star of the show is a derivation problem no UI-framework target has — the **categorical data palette**.
 
-<!-- measured: acme.echarts.rows = 18 -->
+<!-- measured: acme.echarts.rows = 17 -->
 
-It is also the smallest surface any target exposes — 18 classified theme keys on [Acme](/docs/examples/) — which is why the palette is the whole story here.
+It is also the smallest surface any target exposes — 17 classified theme keys on [Acme](/docs/examples/) — which is why the palette is the whole story here.
 
 ## The palette problem
 

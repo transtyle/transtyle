@@ -23,6 +23,7 @@ already made once.
 | `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a semantic alias into it is `TST1113` |
 | `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                           |
 | `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG/Mantine slot is accounted for, with a note on every gap           |
+| `check-gamut-rows.mjs`        | An out-of-gamut primary is `approximated` per variable in all five hex/HSL writers                    |
 | `check-minimal-ds.mjs`        | Eight exporters survive 1- and 3-token design systems in six mode shapes, composites and mode subsets |
 | `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                       |
 | `check-demos.mjs`             | The published demo grid: described, documented with its port, linked from its exporter page, deployed |

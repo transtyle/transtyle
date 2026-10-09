@@ -32,6 +32,7 @@ import { droppedDimensions } from '@transtyle/ir';
 import { componentVariables, componentCssBlocks, buttonVariantBlocks } from './components.js';
 
 const S = 'semantic.color.';
+const GAMUT_NOTE = 'sRGB gamut clamp during oklch → hex';
 
 /** Bootstrap's theme-color order; light/dark are exporter pseudo-roles (F12). */
 const ROLES = ['primary', 'secondary', 'success', 'info', 'warning', 'danger'];
@@ -132,8 +133,20 @@ function resolve(light, dark, ctx) {
   const provKind = (map, p) => map?.get(S + p)?.provenance.kind;
   const cls = (p, mappedCls = 'native') =>
     mappedCls !== 'native' ? mappedCls : provKind(light, p) === 'derived' ? 'derived' : 'native';
-  const cov = (variable, slot, klass, note, meaning) =>
+  // A colour slot that formatHex had to clamp into sRGB (in either mode) is
+  // approximated, whatever its provenance: the hex written is not the colour.
+  const clampsHex = (slot) =>
+    [light, dark].some((m) => {
+      const v = m?.get(slot)?.value;
+      return v && typeof v === 'object' && 'l' in v && ctx.formatHex(v).clamped;
+    });
+  const cov = (variable, slot, klass, note, meaning) => {
+    if (clampsHex(slot)) {
+      klass = 'approximated';
+      note = note ? `${note}; ${GAMUT_NOTE}` : GAMUT_NOTE;
+    }
     coverage.push({ variable, slot, class: klass, ...(note && { note }), ...(meaning && { meaning }) });
+  };
 
   const perMode = (map) => {
     if (!map) return null;

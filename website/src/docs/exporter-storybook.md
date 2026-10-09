@@ -58,6 +58,8 @@ export * from '../dist/storybook/preview.transtyle';
 
 Most of a design system is inexpressible in chrome theming — that's fine and honestly reported; it flows through the preview path.
 
+A colour outside sRGB is written clamped to hex, and its ThemeVars row is `approximated` with the note `sRGB gamut clamp during oklch → hex`.
+
 ### Identity: `options.brand`
 
 `brandTitle` defaults to the config's `name`, and the sidebar's logo and link have no token to come from at all — they are identity, not design decisions. `options.brand` is where they go:
