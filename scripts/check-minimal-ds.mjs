@@ -19,17 +19,32 @@
  * **The one-token floor** (#23). The docs make `semantic.color.primary.solid`
  * the only token whose absence is an error (`TST1201`), so a design system
  * that authors nothing else is legal too — and Bootstrap threw on it. With no
- * `text.base`, the engine leaves the whole content side empty (`text.*`,
+ * `text.base`, the engine then left the whole content side empty (`text.*`,
  * `neutral.text-strong`; `border` is never derived), and the exporter mixed `undefined` for its
  * `$dark` pseudo-role, then fed it to `rgbTriplet()`, then wrote it as the last
  * entry of a Sass map where the drop pattern couldn't see it. The three-token
- * fixture authors `text.base`, so it could never get there. Both FIXTURES run
- * through every invariant below; the one-token one has no extra scheme layers,
- * because a mode-scoped value for a token the base doesn't define is skipped
- * (`TST1107`) and there is nothing to author per mode anyway. Its Bootstrap
- * Sass output is also compiled against the installed Bootstrap, the one place
- * a text check can't reach: a theme map entry with no value keeps Bootstrap's
- * own variable, and only Sass can say that still builds.
+ * fixture authors `text.base`, so it could never get there.
+ *
+ * **The default text** (#116). DERIVE now fills an unauthored `text.base` the
+ * way it fills the canvas: a contrast pick between the two default canvases
+ * against the mode's own `elevation.0.surface` (`default-text`, `defaulted`).
+ * Invariant 8 holds the one-token fixture to it in every combo of every shape:
+ * the text side is there, near-black on white or white on near-black, and no
+ * contrast pair fails. That takes the one-token system off the drop path, so a
+ * third fixture keeps it under test: `late-text` binds `text.base` to a role
+ * cell (`{semantic.color.neutral.solid}`), legal but read too late (`TST1205`),
+ * which leaves `neutral.text-strong` and the content ladder empty in every
+ * mode while `text.base` itself resolves. The default must never replace that
+ * pending alias, and the fixture must really reach Bootstrap's `$dark` drop
+ * path, or it proves nothing.
+ *
+ * All FIXTURES run through every invariant below; the one-token and late-text
+ * ones have no extra scheme layers, because a mode-scoped value for a token
+ * the base doesn't define is skipped (`TST1107`) and there is nothing to author
+ * per mode anyway. Their Bootstrap Sass output is also compiled against the
+ * installed Bootstrap, the one place a text check can't reach: a theme map
+ * entry with no value keeps Bootstrap's own variable, and only Sass can say
+ * that still builds.
  *
  * Asserts, for every registered exporter, across every mode SHAPE below:
  *   1. it compiles without throwing;
@@ -157,6 +172,25 @@ const ONE_TOKEN = {
 };
 
 /**
+ * The brand plus a text color bound to a role cell. The alias resolves, but
+ * after DERIVE read `text.base` (TST1205), so nothing on the content side is
+ * derived: the one shape left that reaches an exporter without
+ * `neutral.text-strong`.
+ */
+const LATE_TEXT = {
+  semantic: {
+    color: {
+      ...ONE_TOKEN.semantic.color,
+      text: { base: { $type: 'color', $value: '{semantic.color.neutral.solid}' } },
+    },
+  },
+};
+
+/** The two default canvases, which are also the two default text colors (derive.js). */
+const WHITE_L = 1;
+const NEARBLACK_L = 0.145;
+
+/**
  * Legal mode layouts a real config comes in. Each fixture compiles under every
  * one of these `modes` blocks. `light-dark` is the original harness;
  * the rest are the shapes it never tried.
@@ -222,6 +256,7 @@ const FIXTURES = {
     anchors: ['semantic.color.primary.solid', CANVAS, 'semantic.color.text.base'],
   },
   'one-token': { tokens: ONE_TOKEN, extraScheme: {}, anchors: ['semantic.color.primary.solid'] },
+  'late-text': { tokens: LATE_TEXT, extraScheme: {}, anchors: ['semantic.color.primary.solid'] },
 };
 
 const root = mkdtempSync(join(tmpdir(), 'transtyle-minimal-'));
@@ -348,6 +383,44 @@ for (const [fixture, shape, modes] of sweep) {
         }
       }
 
+      // 8. The default text (#116). In the one-token system every combo's
+      //    `text.base` is the `default-text` pick against that combo's own
+      //    canvas, the opposite default (near-black on white, white on
+      //    near-black), and the content side derives from it as it does from
+      //    an authored one. In the late-text system the alias wins, pending or
+      //    not, and the content side stays empty, or the fixture degenerated.
+      const combos = result.normalized.allCombos ?? result.normalized.modeValues;
+      if (fixture === 'one-token') {
+        for (const combo of combos) {
+          const m = result.normalized.modes[combo];
+          const text = m.get('semantic.color.text.base');
+          const { kind, rule, inputs } = text?.provenance ?? {};
+          if (kind !== 'defaulted' || rule !== 'default-text@standard@1' || inputs?.join() !== 'elevation.0.surface') {
+            errors.push(`${at} [${combo}]: text.base is not defaulted by default-text from elevation.0.surface (${JSON.stringify(text?.provenance)})`);
+            continue;
+          }
+          const pair = [m.get(CANVAS)?.value?.l, text.value.l];
+          if (!(pair[0] === WHITE_L && pair[1] === NEARBLACK_L) && !(pair[0] === NEARBLACK_L && pair[1] === WHITE_L)) {
+            errors.push(`${at} [${combo}]: default page/text lightness is ${pair.join(' / ')}, expected white/near-black or near-black/white`);
+          }
+          for (const slot of ['text.muted', 'text.subtle', 'text.disabled', 'text.strong', 'neutral.text-strong', 'primary.text-strong']) {
+            if (m.get(`semantic.color.${slot}`)?.value === undefined) errors.push(`${at} [${combo}]: ${slot} is not derived from the default text.base`);
+          }
+        }
+        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101');
+        if (failing.length) errors.push(`${at}: the default page/text pair fails a contrast check — ${failing.map((d) => d.message).join('; ')}`);
+      }
+      if (fixture === 'late-text') {
+        for (const combo of combos) {
+          const m = result.normalized.modes[combo];
+          const kind = m.get('semantic.color.text.base')?.provenance?.kind;
+          if (kind !== 'aliased') errors.push(`${at} [${combo}]: text.base bound to a role cell is held as "${kind}" — the default replaced an authored alias`);
+          if (m.get('semantic.color.neutral.text-strong')?.value !== undefined) {
+            errors.push(`${at} [${combo}]: neutral.text-strong is derived, so the late-text fixture no longer reaches the absent-slot path it exists for`);
+          }
+        }
+      }
+
       // 4. Coverage honesty. Only rows whose `slot` is a single, complete IR path
       //    are checkable — many rows legitimately carry a summary label instead
       //    (`semantic.{font.sans, type.size.md}`, `semantic.color.primary.1–8`, or a
@@ -426,37 +499,46 @@ for (const [fixture, shape, modes] of sweep) {
   }
 }
 
-// The one-token Bootstrap Sass output against real Bootstrap, in the order
-// usage.md gives. A theme map entry this design system has no value for keeps
-// Bootstrap's own variable (`"dark": $dark-text-emphasis`); leaving the key out
-// instead would drop `--bs-dark-text-emphasis` and its siblings from the
-// compiled CSS while `.alert-dark` and `.bg-dark-subtle` still read them, and a
-// text check can't tell that from a valid file.
-extraScheme = useFixture('one-token');
-writeConfig(MODE_SHAPES['light-dark']);
-try {
-  const bs = await compile({
-    cwd: dir,
-    targets: ['bootstrap'],
-    emit: false,
-    loadExporter: async () => (await import(EXPORTERS.bootstrap)).default,
-  });
-  const scssDir = join(dir, 'scss');
-  mkdirSync(scssDir, { recursive: true });
-  for (const f of bs.results.find((r) => r.target === 'bootstrap')?.emitted ?? []) {
-    if (f.path.endsWith('.scss')) writeFileSync(join(scssDir, f.path), f.contents);
+// The one-token and late-text Bootstrap Sass output against real Bootstrap, in
+// the order usage.md gives. A theme map entry this design system has no value
+// for keeps Bootstrap's own variable (`"dark": $dark-text-emphasis`); leaving
+// the key out instead would drop `--bs-dark-text-emphasis` and its siblings
+// from the compiled CSS while `.alert-dark` and `.bg-dark-subtle` still read
+// them, and a text check can't tell that from a valid file. Only late-text
+// still reaches that fallback (one-token gets a `dark` from the default text),
+// so it must report the entry dropped, or the case went quiet.
+for (const fixture of ['one-token', 'late-text']) {
+  extraScheme = useFixture(fixture);
+  writeConfig(MODE_SHAPES['light-dark']);
+  try {
+    const bs = await compile({
+      cwd: dir,
+      targets: ['bootstrap'],
+      emit: false,
+      loadExporter: async () => (await import(EXPORTERS.bootstrap)).default,
+    });
+    const out = bs.results.find((r) => r.target === 'bootstrap');
+    const dropsDark = (out?.coverage ?? []).some((c) => c.class === 'dropped' && c.variable === '$theme-colors-text.dark');
+    if (dropsDark !== (fixture === 'late-text')) {
+      errors.push(`bootstrap (${fixture}, Sass): $theme-colors-text.dark is ${dropsDark ? '' : 'not '}reported dropped — expected only when neutral.text-strong is absent (late-text)`);
+    }
+    const scssDir = join(dir, 'scss');
+    mkdirSync(scssDir, { recursive: true });
+    for (const f of out?.emitted ?? []) {
+      if (f.path.endsWith('.scss')) writeFileSync(join(scssDir, f.path), f.contents);
+    }
+    const css = compileString(
+      ['variables.transtyle', 'bootstrap/scss/functions', 'bootstrap/scss/variables', 'bootstrap/scss/variables-dark', 'maps.transtyle', 'bootstrap/scss/bootstrap']
+        .map((m) => `@import "${m}";`)
+        .join('\n'),
+      { loadPaths: [scssDir, join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules')], logger: { warn: () => {} } },
+    ).css;
+    for (const want of ['--bs-dark-text-emphasis:', '--bs-dark-bg-subtle:', '--bs-dark-border-subtle:']) {
+      if (!css.includes(want)) errors.push(`bootstrap (${fixture}, Sass): the compiled CSS has no ${want} — a theme map lost its "dark" entry`);
+    }
+  } catch (e) {
+    errors.push(`bootstrap (${fixture}, Sass): the Sass path does not compile against Bootstrap — ${e.message.split('\n')[0]}`);
   }
-  const css = compileString(
-    ['variables.transtyle', 'bootstrap/scss/functions', 'bootstrap/scss/variables', 'bootstrap/scss/variables-dark', 'maps.transtyle', 'bootstrap/scss/bootstrap']
-      .map((m) => `@import "${m}";`)
-      .join('\n'),
-    { loadPaths: [scssDir, join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules')], logger: { warn: () => {} } },
-  ).css;
-  for (const want of ['--bs-dark-text-emphasis:', '--bs-dark-bg-subtle:', '--bs-dark-border-subtle:']) {
-    if (!css.includes(want)) errors.push(`bootstrap (one-token, Sass): the compiled CSS has no ${want} — a theme map lost its "dark" entry`);
-  }
-} catch (e) {
-  errors.push(`bootstrap (one-token, Sass): the Sass path does not compile against Bootstrap — ${e.message.split('\n')[0]}`);
 }
 
 // Negative-space case: the polarity axis MUST be the first dimension, or dark
@@ -857,4 +939,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token Bootstrap Sass path builds against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106`);
