@@ -25,7 +25,7 @@ npx transtyle build shadcn
 # ✔ build complete
 ```
 
-Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, diagnostics, file list). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
+Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
 
 ### `--out <dir>`, `--dry-run`
 
@@ -60,12 +60,12 @@ npx transtyle check --json
 # { "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "...",
 #                         "path": "scratch", "file": "tokens/brand.tokens.json", "line": 74, "column": 3 }, ... ],
 #   "suppressed": [ ... ],
-#   "targets": [ { "target": "shadcn", "coverage": [ ... ] }, ... ] }
+#   "targets": [ { "target": "shadcn", "coverage": [ ... ], "reads": [ ... ] }, ... ] }
 ```
 
 ### `--matrix`
 
-`check` only. Prints, for every catalog slot, which targets read it: the answer to "if I author this slot, which libraries change?". The compiler records each slot an exporter reads while it emits, so the table holds for any exporter, third-party ones included, and needs nothing from them. Each reader is classed from its coverage rows: `native`, `derived` or `approximated` when a row names the slot, `input` when the exporter reads it to compute a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface). Slots are grouped by catalog section; the table goes to **stdout**.
+`check` only. Prints, for every catalog slot, which targets read it: the answer to "if I author this slot, which libraries change?". The compiler records each slot an exporter reads while it emits (each target's `reads`, also in its `report.json`), so the table holds for any exporter, third-party ones included, and needs nothing from them. Each reader is classed from its coverage rows: `native`, `derived` or `approximated` when a row names the slot, `input` when the exporter reads it to compute a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface). Slots are grouped by catalog section; the table goes to **stdout**.
 
 ```bash
 npx transtyle check --matrix
@@ -76,7 +76,7 @@ npx transtyle check --matrix
 #   3.surface    6/12  shadcn (derived), shadcn-v3 (derived), echarts (derived), css-variables (native), primeng (input), mui (approximated)
 ```
 
-With `--json`, the table is not printed and the JSON report gains a `matrix` key: `{ "targets": [...], "slots": { "<slot>": { "<target>": { "class": "native", "variables": ["--card"] } } } }`, one entry per catalog slot (an empty object when nothing reads it), sorted. The [slot matrix](/docs/slot-matrix/) page is the same table for Acme and every official exporter, regenerated on every change.
+With `--json`, the table is not printed and the JSON report gains a `matrix` key: `{ "targets": [...], "slots": { "<slot>": { "<target>": { "class": "native", "variables": ["--card"] } } } }`, one entry per catalog slot (an empty object when nothing reads it), sorted. From your own code, `consumption(result)` from `@transtyle/core` builds the same object from a `compile()` result. The [slot matrix](/docs/slot-matrix/) page is the same table for Acme and every official exporter, regenerated on every change.
 
 ### `--cwd <dir>`
 

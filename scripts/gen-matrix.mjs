@@ -5,9 +5,9 @@
  *
  * A hand-kept table of "who consumes what" would be wrong by the next exporter
  * PR, and nothing would notice. So the page is compiled: Acme is built
- * in-process with one instance of each official exporter, every exporter's
- * reads are recorded while it emits (packages/cli/src/matrix.js, the code
- * behind `transtyle check --matrix`), and each cell is classed from the
+ * in-process with one instance of each official exporter, core records every
+ * exporter's reads while it emits and `consumption()` from @transtyle/core
+ * (the code behind `transtyle check --matrix`) classes each cell from the
  * coverage rows that name the slot. The rows are the catalog slots all four
  * examples share, so an example's own extra roles don't leak into a
  * reference page about the catalog.
@@ -24,13 +24,14 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as prettier from 'prettier';
 import { EXAMPLES, TARGETS } from './lib/demos.mjs';
-import { compileExample, localExporter } from './lib/compile-examples.mjs';
+import { compileExample } from './lib/compile-examples.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outFile = join(repo, 'website/src/docs/slot-matrix.md');
 const check = process.argv.includes('--check');
 
-const { recordingLoader, consumption, sections } = await import('../packages/cli/src/matrix.js');
+const { consumption } = await import('../packages/core/src/index.js');
+const { sections } = await import('../packages/cli/src/matrix.js');
 
 const SOURCE = 'acme';
 const targetIds = TARGETS.map((t) => t.id);
@@ -46,8 +47,7 @@ async function compiled(example, options) {
 }
 
 async function matrixOf(example, targets) {
-  const { loadExporter, readSets } = recordingLoader(localExporter);
-  return consumption(await compiled(example, { targets, loadExporter }), readSets);
+  return consumption(await compiled(example, { targets }));
 }
 
 /** The catalog slots an example resolves (no exporter needed for that). */

@@ -8,11 +8,11 @@
  * exporter loaded from its workspace source rather than from node_modules, and
  * a compile with errors refused instead of quietly yielding empty coverage.
  *
- * Pass `loadExporter` to wrap the local loader (a recording loader, say) and
- * `targets` to narrow the run; any other option goes to core's `compile()`.
+ * Pass `loadExporter` to replace the local loader and `targets` to narrow the
+ * run; any other option goes to core's `compile()`.
  *
  * Shared by: scripts/gen-catalog-signals.mjs (issue #94) and
- * scripts/gen-matrix.mjs (issue #95, through its recording loader).
+ * scripts/gen-matrix.mjs (issue #95, from the reads core records).
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

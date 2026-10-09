@@ -11,8 +11,8 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, diffResolved, contrastRegressions, explainToken, explainVariable, slotConsumers, formatColor, formatHex } from '@transtyle/core';
-import { recordingLoader, consumption, renderMatrix } from './matrix.js';
+import { compile, catalog, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, slotConsumers, formatColor, formatHex } from '@transtyle/core';
+import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
 
@@ -242,11 +242,9 @@ async function main() {
 async function cmdBuildOrCheck(args) {
   const emit = args.command === 'build';
   if (emit && args.matrix) { console.error('✖ --matrix is a `transtyle check` option'); process.exit(2); }
-  // --matrix records the slots each exporter reads during emit (src/matrix.js).
-  const recording = args.matrix ? recordingLoader(makeLoadExporter(args.cwd)) : null;
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: args.targets, emit, outRoot: args.out, dryRun: args.dryRun, loadExporter: recording?.loadExporter ?? makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: VERBOSE });
+    result = await compile({ cwd: args.cwd, targets: args.targets, emit, outRoot: args.out, dryRun: args.dryRun, loadExporter: makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: VERBOSE });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     if (VERBOSE && e.stack) console.error(e.stack.split('\n').slice(1).join('\n'));
@@ -281,12 +279,13 @@ async function cmdBuildOrCheck(args) {
 
   // Human logs → stderr (above); requested data → stdout (docs/specs/cli.md
   // "Behavioral contracts"). `check --json` is the only current consumer.
-  const matrix = recording && result.normalized ? consumption(result, recording.readSets) : null;
+  // --matrix: who reads each slot, from the reads core recorded during emit.
+  const matrix = args.matrix && result.normalized ? consumption(result) : null;
   if (!emit && args.json) {
     console.log(JSON.stringify({
       diagnostics: diagnostics.items,
       suppressed: diagnostics.suppressed,
-      targets: results.map((r) => ({ target: r.target, coverage: r.coverage })),
+      targets: results.map((r) => ({ target: r.target, coverage: r.coverage, reads: r.reads })),
       ...(matrix ? { matrix } : {}),
     }, null, 2));
   } else if (matrix) {
@@ -350,9 +349,9 @@ const EXPLAIN_USAGE = 'Usage: transtyle explain <slot> [--target <t>] [--mode <n
  * target side of it (issue #98): which of the target's variables consume the
  * slot, or, with `--variable` (or a bare name that is not a slot), from a
  * variable to the slots it reads (explainVariable). The target is compiled
- * without writing (`emit: false`); its reads are recorded the way
- * `check --matrix` records them, so a slot the target reads but no coverage
- * row names still says so.
+ * without writing (`emit: false`); core records its reads (`reads` on the
+ * target result, what `check --matrix` is built from), so a slot the target
+ * reads but no coverage row names still says so.
  */
 async function cmdExplain(args) {
   const [arg, extra] = args.targets;
@@ -363,7 +362,6 @@ async function cmdExplain(args) {
   if ((args.target !== undefined && !args.target) || args.variable === '') usage();
   if (!arg && args.variable === undefined) usage();
 
-  const recording = args.target ? recordingLoader(makeLoadExporter(args.cwd)) : null;
   let result;
   try {
     result = await compile({
@@ -371,7 +369,7 @@ async function cmdExplain(args) {
       targets: args.target ? [args.target] : [],
       emit: false,
       skipExporters: !args.target,
-      loadExporter: recording?.loadExporter ?? makeLoadExporter(args.cwd),
+      loadExporter: makeLoadExporter(args.cwd),
       knownExporters: Object.keys(OFFICIAL_EXPORTERS),
       debug: VERBOSE,
     });
@@ -416,7 +414,7 @@ async function cmdExplain(args) {
   // `primary.solid` (the catalog) never collide: the catalog wins.
   if (args.variable === undefined) {
     const tree = explainSlot(arg);
-    if (!(tree instanceof Error)) return printSlotExplain(tree, args, result, recording);
+    if (!(tree instanceof Error)) return printSlotExplain(tree, args, result);
     const asVariable = args.target ? lookupVariable(arg) : null;
     if (!asVariable || asVariable instanceof Error) {
       console.error(`✖ ${tree.message}\n\nClosest matches:\n${tree.closest.map((k) => `  ${k}`).join('\n')}`);
@@ -435,12 +433,12 @@ async function cmdExplain(args) {
 }
 
 /** `explain <slot>`, with the consuming variables of `--target` when given. */
-function printSlotExplain(tree, args, result, recording) {
+function printSlotExplain(tree, args, result) {
   let target;
   if (args.target) {
-    const i = result.results.findIndex((r) => r.target === args.target);
     const { rows } = slotConsumers(result, args.target, tree.slot);
-    target = { name: args.target, read: !!recording.readSets[i]?.has(tree.slot), consumers: rows };
+    const reads = result.results.find((r) => r.target === args.target)?.reads ?? [];
+    target = { name: args.target, read: reads.includes(tree.slot), consumers: rows };
   }
   if (args.json) {
     console.log(JSON.stringify({ ...tree, ...(target ? { target } : {}) }, null, 2));

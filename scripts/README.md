@@ -74,7 +74,8 @@ Nine scripts here render rather than check:
   of output nobody compiled is the thing the coverage report exists to prevent.
 - `gen-matrix.mjs` renders the docs' slot matrix (`website/src/docs/slot-matrix.md`): which
   targets read each catalog slot, from Acme compiled with every exporter while the compiler records
-  the slots each one reads (`packages/cli/src/matrix.js`, the code behind `transtyle check --matrix`).
+  the slots each one reads (each target's `reads`, turned into the matrix by `consumption()` from
+  `@transtyle/core`, the code behind `transtyle check --matrix`).
   Its `--check` regenerates the page in memory and fails on any difference, so a hand edit or an
   exporter that starts reading a new slot both turn it red until the page is regenerated.
 - `gen-catalog-signals.mjs` renders `docs/findings/catalog-signals.md`: every `unsupported`
