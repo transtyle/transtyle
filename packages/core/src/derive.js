@@ -222,7 +222,7 @@ export function derive(normalized, config, diagnostics) {
       if (onSolidPick.ratio < 4.5) {
         diagnostics.warn(
           'TST2101',
-          `${role}.on-solid is ${onSolidPick.ratio.toFixed(1)}:1 against ${role}.solid in ${mode} mode (< 4.5:1 AA)`,
+          `${role}.on-solid is ${Math.floor(onSolidPick.ratio * 10) / 10}:1 against ${role}.solid in ${mode} mode (< 4.5:1 AA)`,
           { path: `${S}${role}.on-solid` },
         );
       }
@@ -236,7 +236,7 @@ export function derive(normalized, config, diagnostics) {
       if (onTintRatio < 4.5) {
         diagnostics.warn(
           'TST2101',
-          `${role}.on-tint is ${onTintRatio.toFixed(1)}:1 against ${role}.tint in ${mode} mode (< 4.5:1 AA)`,
+          `${role}.on-tint is ${Math.floor(onTintRatio * 10) / 10}:1 against ${role}.tint in ${mode} mode (< 4.5:1 AA)`,
           { path: `${S}${role}.on-tint` },
         );
       }
