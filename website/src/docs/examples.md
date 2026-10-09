@@ -18,10 +18,10 @@ Four example design systems live in the repo. Acme and Cathode are invented, cho
 
 ```bash
 cd examples/acme
-npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook, css-variables, radix, primeng, mantine, chakra
+npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, bootstrap, storybook, css-variables, radix, primeng, mantine, chakra, mui
 ```
 
-**Or just look at it:** [Acme on shadcn/ui](/demo/acme/shadcn/) · [on Bootstrap](/demo/acme/bootstrap/) · [on PrimeNG](/demo/acme/primeng/) · [on Mantine](/demo/acme/mantine/) · [on Chakra UI](/demo/acme/chakra/) · [all ten](/demo/).
+**Or just look at it:** [Acme on shadcn/ui](/demo/acme/shadcn/) · [on Bootstrap](/demo/acme/bootstrap/) · [on PrimeNG](/demo/acme/primeng/) · [on Mantine](/demo/acme/mantine/) · [on Chakra UI](/demo/acme/chakra/) · [on Material UI](/demo/acme/mui/) · [all eleven](/demo/).
 
 What to study:
 
@@ -46,10 +46,10 @@ Acme is also the conformance fixture from the Phase 0 design exercise; `examples
 
 ```bash
 cd examples/cathode
-npx transtyle build          # same ten targets as Acme, radically different values
+npx transtyle build          # same eleven targets as Acme, radically different values
 ```
 
-**Or just look at it:** [Cathode on shadcn/ui](/demo/cathode/shadcn/) · [on Bootstrap](/demo/cathode/bootstrap/) · [on PrimeNG](/demo/cathode/primeng/) · [on Mantine](/demo/cathode/mantine/) · [on Chakra UI](/demo/cathode/chakra/) · [all ten](/demo/).
+**Or just look at it:** [Cathode on shadcn/ui](/demo/cathode/shadcn/) · [on Bootstrap](/demo/cathode/bootstrap/) · [on PrimeNG](/demo/cathode/primeng/) · [on Mantine](/demo/cathode/mantine/) · [on Chakra UI](/demo/cathode/chakra/) · [on Material UI](/demo/cathode/mui/) · [all eleven](/demo/).
 
 What to study:
 
@@ -65,10 +65,10 @@ What to study:
 
 ```bash
 cd examples/govuk
-npx transtyle build          # same ten targets as Acme/Cathode
+npx transtyle build          # same eleven targets as Acme/Cathode
 ```
 
-**Or just look at it:** [GOV.UK on shadcn/ui](/demo/govuk/shadcn/) · [on Bootstrap](/demo/govuk/bootstrap/) · [on PrimeNG](/demo/govuk/primeng/) · [on Mantine](/demo/govuk/mantine/) · [on Chakra UI](/demo/govuk/chakra/) · [all ten](/demo/).
+**Or just look at it:** [GOV.UK on shadcn/ui](/demo/govuk/shadcn/) · [on Bootstrap](/demo/govuk/bootstrap/) · [on PrimeNG](/demo/govuk/primeng/) · [on Mantine](/demo/govuk/mantine/) · [on Chakra UI](/demo/govuk/chakra/) · [on Material UI](/demo/govuk/mui/) · [all eleven](/demo/).
 
 What to study:
 
@@ -86,10 +86,10 @@ Full reasoning for every binding decision: [`docs/findings/govuk-adoption.md`](h
 
 ```bash
 cd examples/carbon
-npx transtyle build          # same ten targets
+npx transtyle build          # same eleven targets
 ```
 
-**Or just look at it:** [Carbon on shadcn/ui](/demo/carbon/shadcn/) · [on Bootstrap](/demo/carbon/bootstrap/) · [on PrimeNG](/demo/carbon/primeng/) · [on Mantine](/demo/carbon/mantine/) · [on Chakra UI](/demo/carbon/chakra/) · [all ten](/demo/).
+**Or just look at it:** [Carbon on shadcn/ui](/demo/carbon/shadcn/) · [on Bootstrap](/demo/carbon/bootstrap/) · [on PrimeNG](/demo/carbon/primeng/) · [on Mantine](/demo/carbon/mantine/) · [on Chakra UI](/demo/carbon/chakra/) · [on Material UI](/demo/carbon/mui/) · [all eleven](/demo/).
 
 What to study:
 
@@ -102,13 +102,13 @@ Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/transtyl
 
 ## See the themes on real frameworks
 
-<!-- measured: demos = 40 -->
+<!-- measured: demos = 44 -->
 
-Each example ships ten npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), Angular [PrimeNG](/docs/exporter-primeng/), [Mantine](/docs/exporter-mantine/) and [Chakra UI](/docs/exporter-chakra/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 40 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI.
+Each example ships eleven npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), Angular [PrimeNG](/docs/exporter-primeng/), [Mantine](/docs/exporter-mantine/), [Chakra UI](/docs/exporter-chakra/) and [Material UI](/docs/exporter-mui/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 44 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI.
 
-**All 40 are deployed — [open the demo gallery](/demo/).** Every one is rebuilt from the examples on each deploy, so what is running there is what today's compiler emits. Each demo carries a switcher in the corner: from Acme's Bootstrap page you are one click from Carbon's, and the markup underneath is byte-identical, so the difference is entirely the design system.
+**All 44 are deployed — [open the demo gallery](/demo/).** Every one is rebuilt from the examples on each deploy, so what is running there is what today's compiler emits. Each demo carries a switcher in the corner: from Acme's Bootstrap page you are one click from Carbon's, and the markup underneath is byte-identical, so the difference is entirely the design system.
 
-To run them locally instead, from the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4107, 6101; Cathode: 4201–4207, 6201; GOV.UK: 4301–4307, 6301; Carbon: 4401–4407, 6401).
+To run them locally instead, from the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4110, 6101; Cathode: 4201–4210, 6201; GOV.UK: 4301–4310, 6301; Carbon: 4401–4410, 6401).
 
 ## Using them as templates
 

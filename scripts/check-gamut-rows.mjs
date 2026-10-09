@@ -6,8 +6,9 @@
  *
  * Acme with an authored out-of-gamut primary (`oklch(0.7 0.3 145)`) must give
  * at least one `approximated` row carrying the gamut note in Bootstrap,
- * Storybook, ECharts, Radix and shadcn (tailwind-v3, HSL); and ECharts must
- * name the clamp on the variable itself, never on an aggregate `(gamut)` row.
+ * Storybook, ECharts, Radix, Material UI and shadcn (tailwind-v3, HSL); and ECharts
+ * and Material UI must name the clamp on the variable itself, never on an
+ * aggregate `(gamut)` row.
  *
  * Run: node scripts/check-gamut-rows.mjs (also: npm run check:gamut-rows).
  */
@@ -35,18 +36,20 @@ try {
   const names = Object.keys(config.targets);
   const rows = (name) => result.results[names.indexOf(name)].coverage ?? [];
   const failures = [];
-  for (const name of ['bootstrap', 'storybook', 'echarts', 'radix', 'shadcn-v3']) {
+  for (const name of ['bootstrap', 'storybook', 'echarts', 'radix', 'mui', 'shadcn-v3']) {
     const gamut = rows(name).filter((c) => c.class === 'approximated' && /gamut/i.test(c.note ?? ''));
     if (gamut.length === 0) failures.push(`${name}: no approximated row carries the gamut note`);
   }
-  if (rows('echarts').some((c) => c.variable === '(gamut)')) {
-    failures.push('echarts: the clamp is reported on an aggregate (gamut) row, not per variable');
+  for (const name of ['echarts', 'mui']) {
+    if (rows(name).some((c) => c.variable === '(gamut)')) {
+      failures.push(`${name}: the clamp is reported on an aggregate (gamut) row, not per variable`);
+    }
   }
   if (failures.length) {
     console.error('✖ gamut rows:\n' + failures.map((f) => `  - ${f}`).join('\n'));
     process.exit(1);
   }
-  console.log('✔ gamut rows: an out-of-gamut primary is approximated, per variable, in all five hex/HSL writers');
+  console.log('✔ gamut rows: an out-of-gamut primary is approximated, per variable, in all six hex/HSL writers');
 } finally {
   rmSync(dir, { recursive: true, force: true });
 }

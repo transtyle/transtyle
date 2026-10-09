@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compile, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 import chakra from '@transtyle/exporter-chakra';
+import mui from '@transtyle/exporter-mui';
 
 // Permissive optionsSchema: this test exercises the engine, not option
 // validation (that's scripts/check-schemas.mjs). See check-grid.mjs.
@@ -192,12 +193,23 @@ async function main() {
   if (cathodeRows.length) errors.push(`chakra (cathode): nothing is authored in the component tier, yet the exporter wrote ${cathodeRows.map((c) => c.slot).join(', ')} into Chakra's recipes`);
   if (!has(recipeRows(fixture.normalized), 'component.tooltip.max-width')) errors.push('chakra (fixture): the authored component.tooltip.max-width did not reach slotRecipes.tooltip');
 
+  // (i) Material UI follows the same rule: its components already take
+  // shape.borderRadius and their own per-variant paddings, so a style override
+  // is written only for what the tier authored.
+  const muiRows = (ir) => mui.emit(ir, ctx).coverage.filter((c) => String(c.slot).startsWith('component.') && c.class !== 'dropped' && c.variable !== '(component tier)');
+  const muiAcme = muiRows(acme.normalized);
+  if (!has(muiAcme, 'component.button.radius')) errors.push('mui (acme): the authored component.button.radius did not reach MuiButton.styleOverrides');
+  if (has(muiAcme, 'component.control.radius')) errors.push('mui (acme): component.control.radius is unauthored, yet the exporter wrote it into MuiOutlinedInput — authoring buttons must not move inputs');
+  const muiCathode = muiRows(cathode.normalized);
+  if (muiCathode.length) errors.push(`mui (cathode): nothing is authored in the component tier, yet the exporter wrote ${muiCathode.map((c) => c.slot).join(', ')} into MUI's style overrides`);
+  if (!has(muiRows(fixture.normalized), 'component.tooltip.max-width')) errors.push('mui (fixture): the authored component.tooltip.max-width did not reach MuiTooltip.styleOverrides');
+
   if (errors.length) {
     console.error(`✖ check-component-tier failed — ${errors.length} issue(s):\n`);
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log('✔ check-component-tier: a semantic token aliasing a component one raises TST1113 once, on the direct edge; component -> semantic/component stays clean; empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored; a semantic source bound to a derived slot (radius.control → radius.full) feeds the component tier; the Chakra exporter writes a recipe value only for what the tier authored');
+  console.log('✔ check-component-tier: a semantic token aliasing a component one raises TST1113 once, on the direct edge; component -> semantic/component stays clean; empty component.* tier compiles from semantic defaults; authored wins; button layers on control (authoring one does not move the other); an alias into a DERIVE-materialized slot resolves while a truly dangling one still raises TST1105; a no-defaultFrom slot (tooltip.max-width) exists only when authored; a semantic source bound to a derived slot (radius.control → radius.full) feeds the component tier; the Chakra and Material UI exporters write a recipe or style override only for what the tier authored');
 }
 
 main();

@@ -31,7 +31,8 @@
     "@transtyle/exporter-radix": "0.1.0-alpha.3",
     "@transtyle/exporter-primeng": "0.1.0-alpha.3",
     "@transtyle/exporter-mantine": "0.1.0-alpha.3",
-    "@transtyle/exporter-chakra": "0.1.0-alpha.3"
+    "@transtyle/exporter-chakra": "0.1.0-alpha.3",
+    "@transtyle/exporter-mui": "0.1.0-alpha.3"
   },
   "files": [
     "src",

@@ -273,11 +273,14 @@ for (const [code, severities] of sourceSeverity) {
 // long after three more shipped, which is why it is checked here too).
 const registry = cliSrc.match(/OFFICIAL_EXPORTERS\s*=\s*\{([\s\S]*?)\}/)?.[1] ?? '';
 const exporters = [...registry.matchAll(/^\s*['"]?([\w-]+)['"]?:/gm)].map((m) => m[1]);
-const squash = (s) => s.toLowerCase().replace(/[\s/-]/g, '');
+const squash = (s) => s.toLowerCase().replace(/&nbsp;/g, '').replace(/[\s/-]/g, '');
+// A registry id that is not the product's own name: `mui` ships as Material UI,
+// which is how the overview surfaces spell it.
+const DISPLAY = { mui: ['mui', 'material ui'] };
 for (const surface of ['website/src/docs/index.md', 'website/src/pages/index.astro', 'docs/architecture/overview.md']) {
   const text = squash(read(surface));
   for (const name of exporters) {
-    if (!text.includes(squash(name))) fail(`overview: ${surface} does not name shipped exporter "${name}"`);
+    if (!(DISPLAY[name] ?? [name]).some((n) => text.includes(squash(n)))) fail(`overview: ${surface} does not name shipped exporter "${name}"`);
   }
 }
 

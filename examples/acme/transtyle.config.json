@@ -79,6 +79,9 @@
     },
     "chakra": {
       "output": "dist/chakra"
+    },
+    "mui": {
+      "output": "dist/mui"
     }
   },
   "check": {

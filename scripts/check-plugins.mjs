@@ -25,7 +25,7 @@ import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@t
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const failures = [];
 
-const OFFICIAL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css-variables', 'radix', 'primeng', 'mantine', 'chakra'];
+const OFFICIAL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css-variables', 'radix', 'primeng', 'mantine', 'chakra', 'mui'];
 
 // Exporters bind to the semantic tier (ir.md): `option.*` is private vocabulary
 // users restructure freely, so no coverage row may name an option slot.

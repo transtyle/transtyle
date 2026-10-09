@@ -1,0 +1,56 @@
+{
+  "name": "@transtyle/exporter-mui",
+  "version": "0.1.0-alpha.3",
+  "description": "Transtyle exporter for Material UI v9: a createTheme options object in CSS-variables mode, every role a palette key per colour scheme.",
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "dtcg",
+    "theming",
+    "mui",
+    "material-ui",
+    "createtheme",
+    "css-variables",
+    "react"
+  ],
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.3"
+  },
+  "transtyle": {
+    "kind": "exporter",
+    "name": "mui",
+    "irSpec": "v0-draft",
+    "pluginApi": "0",
+    "targets": {
+      "mui": [
+        "*"
+      ]
+    },
+    "modes": [
+      "color-scheme"
+    ],
+    "capabilities": [
+      "build"
+    ]
+  },
+  "files": [
+    "src",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transtyle/transtyle.git",
+    "directory": "packages/exporter-mui"
+  },
+  "homepage": "https://transtyle.github.io/transtyle/docs/exporter-mui/",
+  "bugs": "https://github.com/transtyle/transtyle/issues",
+  "license": "MIT"
+}

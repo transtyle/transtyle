@@ -71,9 +71,9 @@ npx transtyle check --json
 npx transtyle check --matrix
 #
 # semantic.color.elevation
-#   0.surface   11/11  shadcn (native), shadcn-v3 (native), echarts (native), daisyui (native), …
-#   1.shadow     3/11  css-variables (native), mantine (native), chakra (approximated)
-#   3.surface    5/11  shadcn (derived), shadcn-v3 (derived), echarts (derived), css-variables (native), primeng (input)
+#   0.surface   12/12  shadcn (native), shadcn-v3 (native), echarts (native), daisyui (native), …
+#   1.shadow     4/12  css-variables (native), mantine (native), chakra (approximated), mui (approximated)
+#   3.surface    6/12  shadcn (derived), shadcn-v3 (derived), echarts (derived), css-variables (native), primeng (input), mui (approximated)
 ```
 
 With `--json`, the table is not printed and the JSON report gains a `matrix` key: `{ "targets": [...], "slots": { "<slot>": { "<target>": { "class": "native", "variables": ["--card"] } } } }`, one entry per catalog slot (an empty object when nothing reads it), sorted. The [slot matrix](/docs/slot-matrix/) page is the same table for Acme and every official exporter, regenerated on every change.
@@ -242,7 +242,7 @@ Scaffolds `transtyle.config.json` and your token files from five answers. In a t
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | `--brand <color>`  | Your brand color, in any CSS color syntax (`#e8590c`, `oklch(…)`, `rgb(…)`, a name)                                                                                                                   | `oklch(0.55 0.18 255)` |
 | `--schemes <set>`  | `light,dark` or `light`                                                                                                                                                                               | `light,dark`           |
-| `--targets <list>` | Which of the ten targets to configure, comma-separated (`shadcn,bootstrap`)                                                                                                                           | `css-variables`        |
+| `--targets <list>` | Which of the eleven targets to configure, comma-separated (`shadcn,bootstrap`)                                                                                                                        | `css-variables`        |
 | `--preset <name>`  | `recommended`: brand color, page and card backgrounds, text, muted text, border, radius and fonts, with dark values; `minimal`: the brand color only                                                  | `recommended`          |
 | `--layout <name>`  | `single`: one token file plus a dark overlay; `layered`: your own names, a dark overlay, and a bindings file ([the layered layout](/docs/authoring-tokens/#the-layered-layout-recommended-for-teams)) | `single`               |
 | `--yes`, `-y`      | Ask nothing and take the defaults                                                                                                                                                                     |                        |
