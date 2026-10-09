@@ -16,12 +16,12 @@ PrimeNG reports one row per component family, so for PrimeNG the unit is the slo
 | Apache ECharts | 1 row         | 1              | 0       |
 | Bootstrap      | 56 rows       | 56             | 0       |
 | Radix Themes   | 1 row         | 1              | 0       |
-| PrimeNG        | 1105 slots    | 57             | 1048    |
+| PrimeNG        | 1071 slots    | 57             | 1014    |
 | Mantine        | 28 rows       | 26             | 2       |
-| Chakra UI      | 118 rows      | 116            | 2       |
+| Chakra UI      | 117 rows      | 116            | 1       |
 | Material UI    | 1 row         | 1              | 0       |
 
-Every row and slot below is reported by all the examples, except Chakra UI `semanticTokens.colors.fg.inverted` (govuk only), Chakra UI `tokens.fonts.mono` (govuk only), Mantine `theme.fontFamilyMonospace` (govuk only), Mantine `variables.--mantine-font-family-monospace` (govuk only), PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
+Every row and slot below is reported by all the examples, except Chakra UI `tokens.fonts.mono` (govuk only), Mantine `theme.fontFamilyMonospace` (govuk only), Mantine `variables.--mantine-font-family-monospace` (govuk only), PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
 
 shadcn/ui, Storybook, CSS variables report no `unsupported` row: only exporters that inventory their target's whole surface can say what they leave undriven.
 
@@ -183,18 +183,18 @@ Series-type styling (candlestick colours, gauge bands): chart configuration, not
 
 ## Undriven Aura paths
 
-414 PrimeNG slots keep Aura's default because Aura points them at a semantic path this exporter does not drive. These are exporter work before they are catalog evidence: driving the path cascades to every slot that references it, and some of these paths are reachable with vocabulary the catalog already ships (see the [coverage spec](../specs/validation-and-coverage.md), "Coverage percentages are not comparable across targets").
+380 PrimeNG slots keep Aura's default because Aura points them at a semantic path this exporter does not drive. These are exporter work before they are catalog evidence: driving the path cascades to every slot that references it, and some of these paths are reachable with vocabulary the catalog already ships (see the [coverage spec](../specs/validation-and-coverage.md), "Coverage percentages are not comparable across targets").
 
 | Aura path                                                                                                                                    | Slots | Families |
 | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- | -------- |
 | Aura's primitive palette (`{amber.*}`, `{blue.*}`, `{green.*}`, `{orange.*}`, `{purple.*}`, `{red.*}`, `{sky.*}`, `{slate.*}`, `{yellow.*}`) | 193   | 9        |
-| `form.field.*`                                                                                                                               | 125   | 19       |
-| `navigation.item.*`                                                                                                                          | 30    | 9        |
-| `list.option.*`                                                                                                                              | 21    | 6        |
-| `navigation.submenu.*`                                                                                                                       | 19    | 6        |
+| `form.field.*`                                                                                                                               | 113   | 16       |
+| `navigation.item.*`                                                                                                                          | 26    | 9        |
+| `list.option.*`                                                                                                                              | 19    | 6        |
 | `border.radius.*`                                                                                                                            | 11    | 11       |
 | `datatable.border.*`                                                                                                                         | 7     | 1        |
 | `treetable.border.*`                                                                                                                         | 5     | 1        |
+| `navigation.submenu.*`                                                                                                                       | 3     | 3        |
 | A CSS expression, not a token path                                                                                                           | 3     | 3        |
 
 ## Without a meaning
@@ -212,7 +212,6 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 
 ### Chakra UI
 
-- `semanticTokens.colors.fg.inverted` (govuk only): set whenever the design system defines semantic.color.text.inverse; this one does not, so Chakra's value stays
 - `tokens.fonts.mono` (govuk only): set whenever the design system defines semantic.font.mono; this one does not, so Chakra's value stays
 
 ## Target limits (`dropped`)
@@ -226,8 +225,10 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 | `semantic.border-width.*`                                                                                                                                  | Chakra UI, Material UI                                                                                           |
 | `semantic.z.*`                                                                                                                                             | Mantine                                                                                                          |
 | `semantic.type.tracking.*`                                                                                                                                 | Chakra UI                                                                                                        |
+| `semantic.color.inverse.{surface,text}`                                                                                                                    | PrimeNG, Mantine, Material UI                                                                                    |
 | `semantic.breakpoint.2xl`                                                                                                                                  | Mantine, Material UI                                                                                             |
 | `semantic.breakpoint.xs`                                                                                                                                   | Chakra UI, Material UI                                                                                           |
+| `semantic.color.border.{subtle,strong,field}`                                                                                                              | Mantine, Material UI                                                                                             |
 | `semantic.color.link.{base,hover,visited}`                                                                                                                 | Chakra UI, Material UI                                                                                           |
 | `semantic.palette.categorical.*`                                                                                                                           | Chakra UI, Material UI                                                                                           |
 | `component.control.{padding-x,padding-y}, component.button.padding-y`                                                                                      | Mantine                                                                                                          |

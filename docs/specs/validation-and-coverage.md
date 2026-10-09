@@ -1,8 +1,8 @@
 # Validation, diagnostics, and coverage
 
-<!-- measured: codes = 57 -->
+<!-- measured: codes = 59 -->
 
-> **Status (re-verified 2026-10-09):** the diagnostics collector, the 57 shipped
+> **Status (re-verified 2026-10-09):** the diagnostics collector, the 59 shipped
 > `TST` codes, DTCG structural validation, contrast checking, the coverage
 > classes, `report.json`, `check --json`, per-diagnostic source locations,
 > config suppressions (`check.suppress`), the exporter compatibility check
@@ -81,9 +81,9 @@ Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — ca
 | `TST1306` | warning  | A token's `$value` has an unrecognized `$type`                                                                                                                                                                                        | Use one of the DTCG types the IR understands, or accept that this token is carried opaque (no parsing, no derivation eligibility)                |
 | `TST1113` | error    | A `semantic.*` token aliases a `component.*` token — the alias points the wrong way up the tiers (direct edge only; a chain reports the token that points into the component tier)                                                    | Alias the component token's own source instead, or move the token under `component.`                                                             |
 | `TST1307` | error    | A token file looks like Style Dictionary v3 (`value`/`type` without `$`), so it has no DTCG tokens                                                                                                                                    | Convert it to DTCG (`$value`/`$type`/`$description`, references without `.value`); `transtyle migrate --from style-dictionary` does this for you |
-| `TST1311` | error    | A token has both a `$value` and child tokens (DTCG 2025.10 §6.1: a token can't also be a group); the loader stops at `$value`, so the children were silently dropped before this code existed                                         | Move the `$value` into a child (often `base`), or move the children elsewhere                                                                    |
-| `TST1122` | error    | A token sits at a catalog path renamed in place before the first stable release (`RENAMED_SLOTS` in `@transtyle/ir`; today `semantic.color.border` → `semantic.color.border.base`, proposal 0005). Raised at NORMALIZE, after merging | Move the token to the new path and update every reference to the old one                                                                         |
+| `TST1125` | error    | A token sits at a catalog path renamed in place before the first stable release (`RENAMED_SLOTS` in `@transtyle/ir`; today `semantic.color.border` → `semantic.color.border.base`, proposal 0005). Raised at NORMALIZE, after merging | Move the token to the new path and update every reference to the old one                                                                         |
 | `TST1311` | warning  | A token's or group's `$description` isn't a string, or its `$deprecated` isn't `true`, `false` or a string                                                                                                                            | Fix the value; the field is ignored and the token still compiles (see [Token metadata](#token-metadata-description-and-deprecated))              |
+| `TST1312` | error    | A token has both a `$value` and child tokens (DTCG 2025.10 §6.1: a token can't also be a group); the loader stops at `$value`, so the children were silently dropped before this code existed                                         | Move the `$value` into a child (often `base`), or move the children elsewhere                                                                    |
 
 ## Token metadata: `$description` and `$deprecated`
 

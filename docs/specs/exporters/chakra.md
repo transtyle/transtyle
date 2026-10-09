@@ -139,15 +139,15 @@ Like Bootstrap, PrimeNG and Mantine, Chakra carries a checked-in surface invento
 <!-- measured: acme.chakra.default = 773 -->
 <!-- measured: cathode.chakra.default = 774 -->
 <!-- measured: carbon.chakra.default = 774 -->
-<!-- measured: govuk.chakra.set = 122 -->
-<!-- measured: govuk.chakra.follow = 1524 -->
-<!-- measured: govuk.chakra.default = 780 -->
+<!-- measured: govuk.chakra.set = 123 -->
+<!-- measured: govuk.chakra.follow = 1525 -->
+<!-- measured: govuk.chakra.default = 778 -->
 
 | Example                 | Set | Follow | Chakra's default |
 | ----------------------- | --- | ------ | ---------------- |
 | Acme                    | 127 | 1526   | 773              |
 | Cathode, Carbon         | 124 | 1528   | 774              |
-| GOV.UK (no dark scheme) | 122 | 1524   | 780              |
+| GOV.UK (no dark scheme) | 123 | 1525   | 778              |
 
 Acme sets three more entries than Cathode and Carbon because it authors its button layer and its tooltip measure (the component tier, above). On Acme, 140 of the defaults are token-tier entries, each on its own row: Chakra's hue palettes and ramps (kept by design), the rungs its scales have beyond the catalog's (half and large spacing steps, the thin to black weights, `faster` and `slowest`, `docked`, `skipNav` and `max`, shadows `xs` and `2xl`), its measure scale (`sizes.xs` … `8xl`), constants (`transparent`, fractions, viewport sizes, cursors, aspect ratios), the text styles' literal line heights, blurs and animations. The other 633 are recipe leaves that read one of those; most read a `sizes` step, the icon and control sizes Chakra writes as literal steps rather than through `spacing`, or a half spacing step. GOV.UK adds its missing `font.mono` and `text.inverse`; having no dark scheme changes nothing here, because a semantic token with one value is still set.
 

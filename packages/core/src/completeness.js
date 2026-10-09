@@ -49,7 +49,7 @@ const NEUTRALS = [
   ['semantic.color.elevation.1.surface', 'cards and panels'],
   ['semantic.color.text.base', 'body text'],
   ['semantic.color.text.muted', 'secondary text'],
-  ['semantic.color.border', 'the default border: no rule fills it, so the targets that read it go without'],
+  ['semantic.color.border.base', 'the default border: derived from the body text when unauthored, and the rest of the border ladder follows it'],
 ];
 
 const STATUS = [['success', 'success'], ['warning', 'warning'], ['danger', 'error and destructive'], ['info', 'informational']];

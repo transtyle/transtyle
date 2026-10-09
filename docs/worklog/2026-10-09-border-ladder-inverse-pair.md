@@ -20,8 +20,8 @@ this entry records what changed in the repository and what was measured.
   `inverse.surface` joined `CONTRAST_PAIRS`, so `check` and `diff` both see it.
   `TST1205`'s message now lists the border ladder and `inverse.surface` among
   what a `text.base` bound too late leaves underived.
-- **Migration.** The rename is in place (ADR-0010). `TST1122` (NORMALIZE, error)
-  catches a token left at `semantic.color.border`; `TST1311` (LOAD, error)
+- **Migration.** The rename is in place (ADR-0010). `TST1125` (NORMALIZE, error)
+  catches a token left at `semantic.color.border`; `TST1312` (LOAD, error)
   catches a token that also has children, which the loader used to drop without a
   word — the exact shape of a half-done migration, checked on a copy of Acme
   during the refinement of #31. Both codes are on the diagnostics page and in the

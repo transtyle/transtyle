@@ -256,7 +256,7 @@ export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new 
       // leaf turned into a group by half (`border: { $value, subtle: {…} }`).
       if (childKeys.length > 0) {
         diagnostics.error(
-          'TST1311',
+          'TST1312',
           `${path_.join('.')}: has a $value and child tokens (${childKeys.slice(0, 3).join(', ')}${childKeys.length > 3 ? ', …' : ''}); a token cannot also be a group, so the children are ignored`,
           {
             ...where(path_),

@@ -51,8 +51,8 @@ Two citations in the issue were wrong and are not evidence: Carbon's `border-int
 ### Names (Julien, 2026-10-07)
 
 - **`field`, not `interactive`**: `interactive` is a false friend of Carbon's blue focus border. `field` is the catalog's own family word (`radius.field`), and PrimeNG's (`formField`) and daisyUI's (`--radius-field`).
-- **Rename in place**: `semantic.color.border` becomes `semantic.color.border.base`, with no alias. DTCG 2025.10 §6.1 forbids a token that is also a group, so keeping the old leaf next to the new children would need alias machinery in NORMALIZE, which ADR-0010 rules out before the first stable release. A token left at the old path is an error, `TST1122`, naming the new one.
-- **The loader now reports the half-done migration.** Writing `border: { "$value": …, "subtle": {…} }` used to compile without a word and drop the children: the loader stops at `$value`. It is now `TST1311`, an error, for any token, as the DTCG specification requires.
+- **Rename in place**: `semantic.color.border` becomes `semantic.color.border.base`, with no alias. DTCG 2025.10 §6.1 forbids a token that is also a group, so keeping the old leaf next to the new children would need alias machinery in NORMALIZE, which ADR-0010 rules out before the first stable release. A token left at the old path is an error, `TST1125`, naming the new one.
+- **The loader now reports the half-done migration.** Writing `border: { "$value": …, "subtle": {…} }` used to compile without a word and drop the children: the loader stops at `$value`. It is now `TST1312`, an error, for any token, as the DTCG specification requires.
 
 ### Bindings
 

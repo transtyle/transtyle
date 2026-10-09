@@ -70,14 +70,14 @@ Derivation never picks the nearest authored token for a hole (the `secondary` ro
 
 A design system is complete when it authors what it has opinions about; the engine fills the rest. Three levels say which slots matter most, in the order they pay off ([issue #67](https://github.com/transtyle/transtyle/issues/67)). Each extends the one before:
 
-| Level         | Adds                                                                                                                                                                                            |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `minimal`     | `color.primary.solid`, the one input the engine cannot invent                                                                                                                                   |
-| `recommended` | the neutrals (`color.elevation.0.surface`, `elevation.1.surface`, `text.base`, `text.muted`, `border`), their values for each non-default `color-scheme`, `radius.md`, `font.sans`, `font.mono` |
-| `complete`    | `color.secondary.solid`, the four status `.solid`s, `color.ring`, `color.scrim`, and the `space.*`, `type.*` and `component.control.*` families                                                 |
+| Level         | Adds                                                                                                                                                                                                 |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minimal`     | `color.primary.solid`, the one input the engine cannot invent                                                                                                                                        |
+| `recommended` | the neutrals (`color.elevation.0.surface`, `elevation.1.surface`, `text.base`, `text.muted`, `border.base`), their values for each non-default `color-scheme`, `radius.md`, `font.sans`, `font.mono` |
+| `complete`    | `color.secondary.solid`, the four status `.solid`s, `color.ring`, `color.scrim`, and the `space.*`, `type.*` and `component.control.*` families                                                      |
 
 - **Authored** means `authored` or `aliased`: binding a slot to a team's own vocabulary is a decision, and every example adopts that way. The same predicate `check-doc-numbers.mjs` counts as written.
-- **States of an unauthored item:** `missing` (no rule fills it and nobody authored it: `border`, `radius.md`, the fonts), `derived`, `defaulted`, or `carried-over`.
+- **States of an unauthored item:** `missing` (no rule fills it and nobody authored it: `radius.md`, the fonts), `derived`, `defaulted`, or `carried-over`.
 - **Per-scheme items.** A light value carried into dark keeps `kind: authored`, so provenance alone can't tell. A neutral counts as authored for a non-default `color-scheme` value when that value is authored on the slot itself, or when the slot is bound and resolves to a different value there than in the default scheme: the rule `TST1204` applies (`carriesOver()` in `normalize.js`). Without a `color-scheme` dimension, or with only one value, there are no per-scheme items.
 - **Families** are one item each, satisfied when at least one catalog member is authored: an authored scale step is the decision, the engine fills the rest. Members are read from `catalog()`, so a new slot joins its family on its own. Counting each member would put the `type.*` scale's 36 slots in the `authored n/m` figure and drown the colors.
 - **Data, not vocabulary.** The levels live in `packages/core/src/completeness.js`; their names are not catalog vocabulary, so the several-ecosystems rule doesn't apply, but every slot they name must be a catalog slot (`check:grid`).
