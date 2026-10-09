@@ -123,6 +123,7 @@ const KNOWN_ROUTES = new Set([
   '/llms.txt',
   '/llms-full.txt',
   '/demo/',
+  '/report/',
   ...discoverDemos(root).map((d) => demoPath(d.example, d.target)),
 ]);
 const publicFiles = readdirSync(join(root, 'website/public'), { recursive: true }).map((f) => '/' + String(f).replaceAll('\\', '/'));

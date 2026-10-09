@@ -140,7 +140,7 @@ Four properties hold it up:
 
 - **DTCG superset, not a proprietary format.** Sources are valid [W3C design tokens](https://design-tokens.github.io/community-group/format/) plus namespaced extensions, so Style Dictionary, Tokens Studio and Figma interoperate for free ([ADR-0002](docs/adr/0002-dtcg-superset-ir.md)).
 - **Deterministic, explainable derivation.** You author the handful of decisions you actually made; every other slot is filled by inspectable rules. `transtyle explain <slot>` prints the chain that produced a value ([derivation](docs/architecture/derivation.md)).
-- **Honest about lossiness.** Each build reports what mapped natively, what was derived, what was approximated, and what the target cannot express ([coverage](docs/specs/validation-and-coverage.md)). `transtyle check --matrix` turns it around and lists, for each catalog slot, which targets read it ([slot matrix](https://transtyle.github.io/transtyle/docs/slot-matrix/)).
+- **Honest about lossiness.** Each build reports what mapped natively, what was derived, what was approximated, and what the target cannot express ([coverage](docs/specs/validation-and-coverage.md)), in a `report.json` the [report viewer](https://transtyle.github.io/transtyle/report/) reads as a page. `transtyle check --matrix` turns it around and lists, for each catalog slot, which targets read it ([slot matrix](https://transtyle.github.io/transtyle/docs/slot-matrix/)).
 - **Regeneration is byte-deterministic.** Same tokens, same files — so the output belongs in a build step, not in review.
 
 ## Examples

@@ -104,6 +104,8 @@ Read bottom-up: Acme authored a blue and a surface; a named, versioned rule (`mi
 
 The middle one is honesty at work: shadcn wants a dedicated input-border color, Acme only has the one border — the mapping works but bends the meaning, so it's graded `approximated`, not passed off as native. The last one: Acme declares a `density` mode, shadcn has no such axis — dropped, with the reason.
 
+To read the whole file as a page, open it in the [report viewer](/report/): the coverage bar with the same percentages as the terminal, the build's diagnostics with their `file:line`, what `check.suppress` silenced, and every row, filterable by class. It runs in your browser and uploads nothing.
+
 ## 7. Override a proposal
 
 Any derived value is yours to take over. Author the slot — for example, decide `accent.tint` yourself in `tokens/semantic.tokens.json` — rebuild, and the report's entry flips from <span class="prov derived">derived</span> to <span class="prov authored">authored</span>. Derivation never argues with you.

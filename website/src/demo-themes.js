@@ -17,8 +17,7 @@
  * catalog 1:1, with no framework's naming in between — the exporter that
  * exists to be read.
  */
-import { join } from 'node:path';
-import { compile } from '@transtyle/core';
+import { compileExample } from './compiled.js';
 
 /** The slots a preview card needs, mapped to the custom properties that carry them. */
 const SLOTS = {
@@ -94,11 +93,8 @@ export async function demoThemes(examples, repoRoot) {
   if (cache.has(key)) return cache.get(key);
   const themes = {};
   for (const example of examples) {
-    const result = await compile({
-      cwd: join(repoRoot, 'examples', example.id),
-      emit: false,
-      loadExporter: async (name) => (await import(`@transtyle/exporter-${name}`)).default,
-    });
+    // Shared with the report viewer's samples (src/compiled.js).
+    const result = await compileExample(example.id, repoRoot);
     const css = result.results
       .find((r) => r.target === 'css-variables')
       ?.emitted.find((f) => f.path.endsWith('.css'))?.contents;

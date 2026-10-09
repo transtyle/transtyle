@@ -10,13 +10,14 @@ import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
 import { expandBindings } from './bindings.js';
 import { normalize, resolveDeferredAliases, reportModeCarryOver, reportTierViolations } from './normalize.js';
-import { reportDeprecatedReach, withMetadata, withDeprecatedSection } from './metadata.js';
+import { reportDeprecatedReach, withDeprecatedSection } from './metadata.js';
 import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
 import { loadContrast, checkStandard, APCA_PACKAGE } from './contrast.js';
 import { checkFalseFriends } from './adoption.js';
 import { Diagnostics } from './diagnostics.js';
 import { fillLocations } from './locations.js';
+import { buildReport } from './report.js';
 import { nearestName } from './nearest.js';
 import { makeUnits } from './units.js';
 import { validateTargetModes, targetView, narrowedDimensions, withModesNote } from './target-modes.js';
@@ -35,6 +36,7 @@ export { explainToken, explainVariable, slotConsumers, coverageSlots } from './e
 export { deprecationsReached } from './metadata.js';
 export { catalog, isCatalogSlot } from './catalog.js';
 export { adoption } from './adoption.js';
+export { buildReport, REPORT_SCHEMA_ID } from './report.js';
 export { loadConfig, expandTokenFiles } from './load.js';
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
 export { consumption } from './reads.js';
@@ -361,7 +363,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       // added after the loop too, once every exporter has had its say.
       const staged = files.map((f) => ({ path: f.path, contents: f.contents }));
       for (const f of files) written.push(path.relative(cwd, path.join(outDir, f.path)));
-      plans.push({ outDir, files: staged, name, targetConfig, coverage, viewDefault, reads, written, planned });
+      plans.push({ outDir, files: staged, name, targetConfig, coverage, view, reads, written, planned });
     }
     // `emitted` carries the file *specs* (path + contents) even when emit is
     // off — `transtyle diff` re-emits both sides in-memory to compute per-target
@@ -383,8 +385,11 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // warning from a later target's exporter was missing from every earlier
   // target's report.json (issue #186).
   for (const plan of plans) {
-    const { name, targetConfig, coverage, viewDefault, reads, written, planned } = plan;
-    const report = buildReport(name, targetConfig, withMetadata(coverage, viewDefault), reads, diagnostics, [...written]);
+    const { name, targetConfig, coverage, view, reads, written, planned } = plan;
+    const report = buildReport({
+      target: name, options: targetConfig.options, coverage, reads, normalized: view,
+      diagnostics: diagnostics.items, suppressed: diagnostics.suppressed, files: [...written],
+    });
     plan.files.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
     written.push(path.relative(cwd, path.join(plan.outDir, 'report.json')));
     plan.files.forEach((f, i) => planned.push({ path: written[i], bytes: Buffer.byteLength(f.contents, 'utf8') }));
@@ -456,20 +461,4 @@ export function checkExporterDiagnostics(list) {
     if (typeof d.message !== 'string' || !d.message) throw new Error(`${at}: message must be a non-empty string`);
     if (d.hint !== undefined && typeof d.hint !== 'string') throw new Error(`${at}: hint must be a string when present`);
   });
-}
-
-function buildReport(target, targetConfig, coverage, reads, diagnostics, files) {
-  const counts = {};
-  for (const item of coverage) counts[item.class] = (counts[item.class] ?? 0) + 1;
-  return {
-    $schema: 'https://transtyle.dev/schemas/report/v0.json',
-    target,
-    options: targetConfig.options ?? {},
-    generatedBy: 'transtyle 0.1.0 (walking skeleton)',
-    coverage: { counts, items: coverage },
-    reads,
-    diagnostics: diagnostics.items,
-    suppressed: diagnostics.suppressed,
-    files,
-  };
 }

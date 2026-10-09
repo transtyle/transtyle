@@ -1,0 +1,631 @@
+---
+/**
+ * The report viewer: a `report.json` read as a page (issue #3, audit E4).
+ *
+ * Every build writes one report per target, and until now the only ways to
+ * read one were the raw JSON and the terminal's one-line summary. This page
+ * takes a report from a file (picked or dropped), a paste, one of the samples
+ * the site builds, or a `?src=<https URL>` link, checks it against the report
+ * schema, and draws it: the coverage bar with the CLI's own percentages, the
+ * build's diagnostics with their `file:line:column`, what `check.suppress`
+ * silenced and why, and every row with its slot, the slots it reads and the
+ * variables it follows.
+ *
+ * **Static, and nothing leaves the browser.** A file or a paste is read in the
+ * page; a `?src=` link is fetched by the visitor's browser, credentials
+ * omitted, from the host it names, and that host is printed above the report.
+ *
+ * **Without JavaScript** the page still shows a report: Acme's Bootstrap one,
+ * rendered here at build time from a compile of examples/acme. Its markup is
+ * the one src/report-dom.js draws in the browser (same elements and classes),
+ * so one stylesheet serves both. Edit them together.
+ *
+ * Provenance chains are not in a report (one `provenance` word per row at
+ * most), so a row gives the `transtyle explain --variable … --target …`
+ * command that prints its chain, rather than a chain the page would invent.
+ */
+import Base from '../../layouts/Base.astro';
+import { withBase } from '../../url.js';
+import { repoRoot } from '../../../../scripts/lib/demos.mjs';
+import { reportSamples } from '../../report-samples.js';
+import {
+  CLASSES,
+  coverageSummary,
+  groupDiagnostics,
+  locationOf,
+  optionsText,
+  viewRows,
+} from '../../report-view.js';
+
+const samples = await reportSamples(repoRoot());
+const DEFAULT_SAMPLE = 'acme.bootstrap';
+const first = samples.find((s) => s.id === DEFAULT_SAMPLE);
+if (!first) throw new Error(`report viewer: no ${DEFAULT_SAMPLE} sample to render`);
+
+const report = first.report;
+const cov = coverageSummary(report);
+const rows = viewRows(report);
+const groups = groupDiagnostics(report.diagnostics);
+const options = optionsText(report);
+const sampleHref = (id) => withBase(`/report/samples/${id}.json`);
+
+const docs = {
+  diagnostics: withBase('/docs/diagnostics/#diagnostic-code-reference'),
+  coverage: withBase('/docs/concepts/#5-provenance-and-coverage'),
+};
+
+// What the browser script needs, as data: the samples it can fetch and the
+// links the drawn report carries. Every URL already has the base applied.
+const config = {
+  defaultSample: DEFAULT_SAMPLE,
+  sampleBase: withBase('/report/samples/'),
+  samples: samples.map((s) => ({ id: s.id, example: s.example, exampleTitle: s.exampleTitle, target: s.target })),
+  docs,
+};
+
+const byExample = [];
+for (const s of samples) {
+  let group = byExample.find((g) => g.example === s.example);
+  if (!group) byExample.push((group = { example: s.example, title: s.exampleTitle, items: [] }));
+  group.items.push(s);
+}
+
+const radios = [{ id: '', label: 'All', count: cov.total }, ...cov.classes.map((c) => ({ id: c.id, label: c.id, count: c.count }))];
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+const title = 'Report viewer';
+const description =
+  'Read a Transtyle report.json as a page: coverage per target, diagnostics with their file:line, the suppressed list and every row. In your browser, nothing uploaded.';
+---
+<Base title={`${title} · Transtyle`} description={description} current="report">
+  <main id="main" class="rv">
+    <section class="rv-head">
+      <p class="rv-eyebrow">report.json · read in your browser</p>
+      <h1>Read a build report</h1>
+      <p class="d-lead">
+        Every <code>transtyle build</code> writes a <code>report.json</code> next to each target’s files: how
+        each variable was mapped, the build’s diagnostics, and what was suppressed. Open one to read it as a page.
+      </p>
+    </section>
+
+    <section class="rv-in" id="report-inputs" aria-labelledby="h-open" hidden>
+      <h2 id="h-open" class="d-visually-hidden">Open a report</h2>
+      <div class="rv-in-grid">
+        <div class="rv-drop" id="report-drop">
+          <input type="file" id="report-file" class="d-visually-hidden" accept=".json,application/json" />
+          <label for="report-file" class="rv-btn">Open a report.json</label>
+          <span class="rv-drop-hint">or drop the file here</span>
+        </div>
+        <div class="rv-field">
+          <label for="report-sample">Or a sample</label>
+          <select id="report-sample">
+            <option value="" disabled>Choose a sample</option>
+            {byExample.map((g) => (
+              <optgroup label={g.title}>
+                {g.items.map((s) => <option value={s.id} selected={s.id === DEFAULT_SAMPLE}>{`${g.title} × ${s.target}`}</option>)}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+      </div>
+      <details class="rv-paste">
+        <summary>Paste the JSON instead</summary>
+        <label for="report-paste" class="d-visually-hidden">report.json contents</label>
+        <textarea id="report-paste" rows="8" spellcheck="false" autocomplete="off" placeholder='{ "$schema": "https://transtyle.dev/schemas/report/v0.json", … }'></textarea>
+        <button type="button" class="rv-btn" id="report-paste-go">Read it</button>
+      </details>
+      <p class="rv-privacy">
+        Nothing is uploaded: a file or a paste is read by this page, in your browser. A link with
+        <code>?src=https://…</code> makes your browser fetch that file from the host it names.
+      </p>
+    </section>
+    <noscript>
+      <p class="rv-noscript">
+        Opening your own report needs JavaScript. Below is Acme’s Bootstrap report, rendered when this site was built.
+      </p>
+    </noscript>
+
+    <div class="rv-errors" id="report-errors" role="alert"></div>
+    <p class="rv-source" id="report-source" aria-live="polite">
+      Sample: {first.exampleTitle} × {first.target}, compiled from <code>examples/{first.example}</code> when this site
+      was built. <a href={sampleHref(first.id)}>Raw JSON</a>
+    </p>
+
+    <article class="rv-report" id="report" aria-labelledby="report-title">
+      <header class="r-head">
+        <h2 id="report-title" tabindex="-1"><span class="r-kicker">Target</span> <code>{report.target}</code></h2>
+        <dl class="r-meta">
+          <div><dt>Generated by</dt><dd><code>{report.generatedBy}</code></dd></div>
+          <div><dt>Options</dt><dd>{options === null ? 'none' : <code>{options}</code>}</dd></div>
+          <div>
+            <dt>Files</dt>
+            <dd>
+              {report.files.length === 0 ? 'none' : (
+                <details class="r-files">
+                  <summary>{plural(report.files.length, 'file')}</summary>
+                  <ul>{report.files.map((f) => <li><code>{f}</code></li>)}</ul>
+                </details>
+              )}
+            </dd>
+          </div>
+          {Array.isArray(report.reads) && (
+            <div>
+              <dt>Catalog slots read</dt>
+              <dd>
+                {report.reads.length === 0 ? 'none' : (
+                  <details class="r-files">
+                    <summary>{plural(report.reads.length, 'slot')}</summary>
+                    <ul>{report.reads.map((s) => <li><code>{s}</code></li>)}</ul>
+                  </details>
+                )}
+              </dd>
+            </div>
+          )}
+        </dl>
+      </header>
+
+      <section class="r-sec" aria-labelledby="h-coverage">
+        <h3 id="h-coverage">Coverage</h3>
+        <div class="covmatrix r-bar" data-example={first.example}>
+          <div class="cm-row">
+            <span class="cm-name">{report.target}</span>
+            <span class="cm-bar" aria-hidden="true">
+              {cov.classes.filter((c) => c.count > 0).map((c) => <span class={`cm-seg ${c.seg}`} style={`width:${c.width}%`}></span>)}
+            </span>
+          </div>
+        </div>
+        <ul class="r-counts">
+          {cov.classes.map((c) => (
+            <li>
+              <i class={c.seg} aria-hidden="true"></i><span class="r-cls">{c.id}</span><b>{c.count}</b><span class="r-pct">{c.pct === null ? '—' : `${c.pct}%`}</span><span class="r-blurb">{c.blurb}</span>
+            </li>
+          ))}
+        </ul>
+        <p class="r-cli"><span>As the terminal prints it</span><code>{cov.cliLine}</code></p>
+        <p class="r-note">
+          {plural(cov.total, 'row')}. A percentage measures this target’s own surface; it doesn’t rank targets against each other (<a href={docs.coverage}>why</a>).
+        </p>
+      </section>
+
+      <section class="r-sec" aria-labelledby="h-diagnostics">
+        <h3 id="h-diagnostics">Diagnostics <span class="r-n">{report.diagnostics.length}</span></h3>
+        <p class="r-note">The whole build’s diagnostics, not only this target’s: one an exporter raised starts with its target’s name.</p>
+        {groups.length === 0 ? <p class="r-empty">None.</p> : groups.map((g) => (
+          <>
+            <h4>{`${g.label} · ${g.items.length}`}</h4>
+            <ul class="r-diags">
+              {g.items.map((d) => (
+                <li class={`r-diag sev-${d.severity}`}>
+                  <p class="d-line"><span class="sev">{d.severity}</span> <a class="d-code" href={docs.diagnostics}>{d.code}</a>{locationOf(d) && <> <code class="d-loc">{locationOf(d)}</code></>}</p>
+                  <p class="d-msg">{d.message}</p>
+                  {typeof d.hint === 'string' && <p class="d-hint">{`↳ ${d.hint}`}</p>}
+                </li>
+              ))}
+            </ul>
+          </>
+        ))}
+      </section>
+
+      <section class="r-sec" aria-labelledby="h-suppressed">
+        <h3 id="h-suppressed">Suppressed <span class="r-n">{report.suppressed.length}</span></h3>
+        <p class="r-note">Warnings and infos silenced by check.suppress in the config, each with the reason its entry gives.</p>
+        {report.suppressed.length === 0 ? <p class="r-empty">None.</p> : (
+          <ul class="r-diags">
+            {report.suppressed.map((d) => (
+              <li class={`r-diag sev-${d.severity}`}>
+                <p class="d-line"><span class="sev">{d.severity}</span> <a class="d-code" href={docs.diagnostics}>{d.code}</a>{locationOf(d) && <> <code class="d-loc">{locationOf(d)}</code></>}</p>
+                <p class="d-msg">{d.message}</p>
+                {typeof d.hint === 'string' && <p class="d-hint">{`↳ ${d.hint}`}</p>}
+                <p class="d-reason"><span>Reason:</span> {d.reason}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section class="r-sec" aria-labelledby="h-rows">
+        <h3 id="h-rows">Rows</h3>
+        <p class="r-note">One row per target variable. Open a variable for the command that traces it back to what was authored.</p>
+        <div class="r-filters" data-role="filters" hidden>
+          <fieldset class="r-seg">
+            <legend>Class</legend>
+            {radios.map((r) => (
+              <label><input type="radio" name="r-class" value={r.id} checked={r.id === ''} /><span>{r.label} <small>{r.count}</small></span></label>
+            ))}
+          </fieldset>
+          <div class="r-search">
+            <label for="r-search">Search</label>
+            <input type="search" id="r-search" placeholder="variable, slot or note" autocomplete="off" spellcheck="false" />
+          </div>
+          <p class="r-status" data-role="status" aria-live="polite"></p>
+        </div>
+        {rows.length === 0 ? <p class="r-empty">This report has no rows.</p> : (
+          <div class="r-table-wrap">
+            <table class="r-table">
+              <caption class="vh">{`Coverage rows of ${report.target}`}</caption>
+              <thead><tr><th scope="col">Variable</th><th scope="col">Class</th><th scope="col">Provenance</th><th scope="col">Slot</th><th scope="col">Note</th></tr></thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr id={r.id} data-class={r.cls}>
+                    <th scope="row" data-label="Variable">
+                      {r.explain ? (
+                        <details class="trace"><summary><code>{r.variable}</code></summary><p>Trace it from the project:</p><code class="cmd">{r.explain}</code></details>
+                      ) : <code>{r.variable}</code>}
+                    </th>
+                    <td data-label="Class"><span class={`prov ${r.seg}`}>{r.cls}</span></td>
+                    <td data-label="Provenance">{r.provenance ? <span class={`prov ${r.provenance}`}>{r.provenance}</span> : <span class="r-none">not given</span>}</td>
+                    <td data-label="Slot"><code>{r.slot}</code>{r.reads && <span class="r-sub">reads {r.reads.map((s, i) => <>{i > 0 && ', '}<code>{s}</code></>)}</span>}{r.via.length > 0 && <span class="r-sub">follows {r.via.map((v, i) => <>{i > 0 && ', '}{v.href ? <a href={v.href}><code>{v.variable}</code></a> : <code>{v.variable}</code>}</>)}</span>}</td>
+                    <td data-label="Note">{r.deprecated && <span class="r-dep"><span class="d-badge d-badge--warning">deprecated</span>{r.deprecated.reason && ` ${r.deprecated.reason}`}{r.deprecated.by && r.deprecated.by !== r.slot && <> (via <code>{r.deprecated.by}</code>)</>}</span>}{r.note}{r.description && <span class="r-sub r-desc">{r.description}</span>}{r.meaning && <span class="r-sub">meaning <code>{r.meaning}</code></span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </article>
+  </main>
+
+  <script type="application/json" id="report-config" set:html={JSON.stringify(config).replaceAll('<', '\\u003c')}></script>
+
+  <script>
+    /**
+     * The viewer's controller: the inputs, the `?sample=` / `?src=` URL, and
+     * which report is on the page. Reading and checking a report is
+     * src/report-view.js; drawing one is src/report-dom.js.
+     */
+    import { readReport, formatBytes, MAX_BYTES } from '../../report-view.js';
+    import { renderReport, wireReport } from '../../report-dom.js';
+
+    const config = JSON.parse(document.getElementById('report-config').textContent);
+    const article = document.getElementById('report');
+    const errors = document.getElementById('report-errors');
+    const source = document.getElementById('report-source');
+    const inputs = document.getElementById('report-inputs');
+    const fileInput = document.getElementById('report-file');
+    const drop = document.getElementById('report-drop');
+    const select = document.getElementById('report-sample');
+    const paste = document.getElementById('report-paste');
+
+    inputs.hidden = false;
+    wireReport(article);
+
+    const el = (tag, cls, ...children) => {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      e.append(...children);
+      return e;
+    };
+    const codeEl = (text) => el('code', '', text);
+
+    // Each load gets a number; a slow fetch that finishes after a newer load
+    // started is dropped instead of drawn over it.
+    let current = 0;
+
+    function setSource(parts) {
+      source.hidden = false;
+      source.replaceChildren(...parts);
+    }
+
+    function showError(title, lines, from, code = false) {
+      article.hidden = true;
+      source.hidden = true;
+      const box = [el('p', 'e-title', el('strong', '', 'Can’t read this report. '), title)];
+      if (lines.length) box.push(el('ul', code ? 'e-lines code' : 'e-lines', ...lines.map((l) => el('li', '', l))));
+      if (from) box.push(el('p', 'e-from', ...from));
+      errors.replaceChildren(...box);
+    }
+
+    /** Check and draw `text`; `from` describes where it came from (text and nodes). */
+    function show(text, from, { focus = false } = {}) {
+      const read = readReport(text);
+      if (read.error) {
+        showError(read.error.title, read.error.lines, from, read.error.code);
+        return;
+      }
+      errors.replaceChildren();
+      renderReport(article, read.report, { docs: config.docs });
+      article.hidden = false;
+      wireReport(article);
+      setSource(from);
+      if (focus) document.getElementById('report-title').focus();
+    }
+
+    function setQuery(query) {
+      history.replaceState(null, '', location.pathname + query + location.hash);
+    }
+
+    function describeSample(s) {
+      const raw = el('a', '', 'Raw JSON');
+      raw.href = config.sampleBase + s.id + '.json';
+      return [`Sample: ${s.exampleTitle} × ${s.target}, compiled from `, codeEl(`examples/${s.example}`), ' when this site was built. ', raw];
+    }
+
+    async function loadSample(id) {
+      const sample = config.samples.find((s) => s.id === id);
+      if (!sample) {
+        showError(`No sample is named “${id}”.`, [`Samples: ${config.samples.map((s) => s.id).join(', ')}.`]);
+        return;
+      }
+      const n = ++current;
+      select.value = id;
+      setSource([`Loading the ${sample.exampleTitle} × ${sample.target} sample…`]);
+      try {
+        const res = await fetch(config.sampleBase + id + '.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        if (n === current) show(text, describeSample(sample));
+      } catch (e) {
+        if (n === current) showError(`The ${id} sample didn’t load (${e.message}).`, ['Reload the page to try again.']);
+      }
+    }
+
+    async function loadSrc(raw) {
+      const n = ++current;
+      select.value = '';
+      let url;
+      try {
+        url = new URL(raw);
+      } catch {
+        showError('The src link is not a URL.', [raw]);
+        return;
+      }
+      const from = ['Fetched by your browser from ', el('strong', '', url.host), ': ', codeEl(url.href)];
+      if (url.protocol !== 'https:') {
+        showError('Only https:// links are fetched.', [url.href]);
+        return;
+      }
+      setSource([`Fetching the report from ${url.host}…`]);
+      let res;
+      try {
+        res = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+      } catch {
+        if (n !== current) return;
+        showError(`Your browser couldn’t fetch the report from ${url.host}.`, [
+          'The host is unreachable, or it doesn’t let other sites read the file (CORS). GitHub Actions artifacts don’t.',
+          'Download the file and open it here instead.',
+        ], from);
+        return;
+      }
+      if (n !== current) return;
+      if (!res.ok) {
+        showError(`${url.host} answered ${res.status}${res.statusText ? ` ${res.statusText}` : ''}.`, [url.href]);
+        return;
+      }
+      const length = Number(res.headers.get('content-length'));
+      if (length > MAX_BYTES) {
+        showError(`This file is ${formatBytes(length)}; the viewer reads reports up to ${formatBytes(MAX_BYTES)}.`, [], from);
+        return;
+      }
+      const text = await res.text();
+      if (n === current) show(text, from);
+    }
+
+    async function loadFile(file) {
+      const n = ++current;
+      select.value = '';
+      setQuery('');
+      const from = ['Your file: ', codeEl(file.name), ` (${formatBytes(file.size)}), read in this browser.`];
+      if (file.size > MAX_BYTES) {
+        showError(`This file is ${formatBytes(file.size)}; the viewer reads reports up to ${formatBytes(MAX_BYTES)}.`, [], from);
+        return;
+      }
+      const text = await file.text();
+      if (n === current) show(text, from, { focus: true });
+    }
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) loadFile(fileInput.files[0]);
+      fileInput.value = '';
+    });
+
+    drop.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      drop.classList.add('over');
+    });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('over');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) loadFile(file);
+    });
+
+    select.addEventListener('change', () => {
+      if (!select.value) return;
+      setQuery(`?sample=${select.value}`);
+      loadSample(select.value);
+    });
+
+    document.getElementById('report-paste-go').addEventListener('click', () => {
+      ++current;
+      select.value = '';
+      setQuery('');
+      show(paste.value, ['Pasted JSON, read in this browser.'], { focus: true });
+    });
+
+    const query = new URLSearchParams(location.search);
+    if (query.get('src')) loadSrc(query.get('src'));
+    else if (query.get('sample') && query.get('sample') !== config.defaultSample) loadSample(query.get('sample'));
+  </script>
+
+  <style is:global>
+    /* Global, not scoped: src/report-dom.js draws the same markup in the
+       browser, and Astro's scoping attributes are only on what it rendered. */
+    .rv { max-width: var(--layout-content); margin: 0 auto; padding: 0 var(--layout-gutter) var(--space-14); }
+    .rv-head { padding: var(--space-12) 0 var(--space-6); }
+    .rv-eyebrow { font: var(--type-eyebrow); letter-spacing: var(--type-eyebrow-letter-spacing); text-transform: uppercase; color: var(--color-primary); margin: 0 0 var(--space-3); }
+    .rv-head h1 { margin: 0 0 var(--space-4); }
+    .rv-head .d-lead { margin: 0; }
+
+    /* ---- inputs ---- */
+    .rv-in { border: var(--stroke-hairline) solid var(--color-line); background: var(--color-panel); padding: var(--space-5); margin: 0 0 var(--space-4); }
+    .rv-in[hidden] { display: none; }
+    .rv-in-grid { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-8); align-items: flex-end; }
+    .rv-drop {
+      flex: 1 1 22rem; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3);
+      padding: var(--space-4); border: var(--stroke-ui) dashed var(--color-line);
+      transition: border-color var(--motion-duration-dimension) var(--motion-easing-precise);
+    }
+    .rv-drop.over { border-color: var(--color-primary); background: var(--color-tint); }
+    .rv-drop:focus-within .rv-btn { outline: var(--stroke-ui) solid var(--color-primary); outline-offset: 2px; }
+    .rv-drop-hint { color: var(--color-muted); font-size: var(--font-size-md); }
+    /* Nothing to drag a file from on a phone. */
+    @media (pointer: coarse) { .rv-drop-hint { display: none; } }
+    .rv-btn {
+      display: inline-flex; align-items: center; min-height: var(--size-control); padding: 0 var(--space-4);
+      font: var(--type-button); letter-spacing: var(--type-button-letter-spacing); text-transform: uppercase; font-size: 0.75rem;
+      border: var(--stroke-ui) solid var(--color-primary); border-radius: var(--radius-md);
+      background: var(--color-tint); color: var(--color-primary); cursor: pointer; white-space: nowrap;
+      transition: background-color var(--motion-duration-dimension) var(--motion-easing-precise), color var(--motion-duration-dimension) var(--motion-easing-precise);
+    }
+    .rv-btn:hover { background: var(--color-primary); color: var(--color-on-primary); }
+    .rv-field { display: flex; flex-direction: column; gap: var(--space-2); flex: 0 1 18rem; min-width: 0; }
+    .rv-field label, .r-search label, .r-seg legend {
+      font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); color: var(--color-muted);
+    }
+    .rv select, .rv input[type='search'], .rv textarea {
+      font: inherit; font-size: var(--font-size-md); color: var(--color-fg); background: var(--color-bg);
+      border: var(--stroke-hairline) solid var(--color-line); border-radius: var(--radius-md);
+      min-height: var(--size-control); padding: var(--space-2) var(--space-3); max-width: 100%;
+    }
+    .rv textarea { display: block; width: 100%; font-family: var(--font-family-mono); font-size: var(--font-size-sm); margin: var(--space-3) 0; resize: vertical; }
+    .rv-paste { margin-top: var(--space-4); }
+    .rv-paste summary { cursor: pointer; color: var(--color-primary); font-size: var(--font-size-md); }
+    .rv-privacy { margin: var(--space-4) 0 0; font-size: var(--font-size-sm); color: var(--color-muted); }
+    .rv-noscript { border-left: var(--stroke-ui) solid var(--color-warning); padding-left: var(--space-4); color: var(--color-fg-reading); }
+
+    .rv-errors:not(:empty) {
+      border: var(--stroke-hairline) solid var(--color-danger); border-left-width: 3px;
+      background: var(--color-panel); padding: var(--space-4) var(--space-5); margin: 0 0 var(--space-4);
+    }
+    .rv-errors .e-title { margin: 0; font-weight: var(--font-weight-semibold); color: var(--color-fg); }
+    .rv-errors .e-title strong { color: var(--color-danger); }
+    .rv-errors .e-lines { margin: var(--space-3) 0 0; padding-left: var(--space-5); font-size: var(--font-size-md); color: var(--color-fg-reading); overflow-wrap: anywhere; }
+    .rv-errors .e-lines.code { font-family: var(--font-family-mono); font-size: var(--font-size-sm); }
+    .rv-errors .e-from { margin: var(--space-3) 0 0; font-size: var(--font-size-sm); color: var(--color-muted); overflow-wrap: anywhere; }
+
+    .rv-source { font-size: var(--font-size-sm); color: var(--color-muted); margin: 0 0 var(--space-4); overflow-wrap: anywhere; }
+    .rv-source[hidden], .rv-report[hidden] { display: none; }
+
+    /* ---- the report ---- */
+    .rv-report { border-top: var(--stroke-hairline) solid var(--color-line); }
+    .rv-report code { text-transform: none; letter-spacing: normal; }
+    .r-head { padding: var(--space-6) 0 var(--space-2); }
+    .r-head h2 { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-3); margin: 0 0 var(--space-4); }
+    .r-head h2 code { font-size: 0.8em; font-weight: var(--font-weight-medium); background: none; border: 0; padding: 0; color: var(--color-primary); }
+    .r-kicker { font: var(--type-eyebrow); letter-spacing: var(--type-eyebrow-letter-spacing); color: var(--color-muted); }
+    .r-meta { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-8); margin: 0; font-size: var(--font-size-md); }
+    .r-meta dt { font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); color: var(--color-muted); margin: 0 0 var(--space-1); }
+    .r-meta dd { margin: 0; min-width: 0; }
+    .r-files summary { cursor: pointer; color: var(--color-primary); }
+    .r-files ul { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-1); }
+
+    .r-sec { padding: var(--space-8) 0 0; }
+    .r-sec h3 { margin: 0 0 var(--space-2); display: flex; align-items: baseline; gap: var(--space-3); }
+    .r-sec h4 { margin: var(--space-5) 0 var(--space-2); color: var(--color-fg-reading); }
+    .r-n { font: var(--type-mono); color: var(--color-muted); }
+    .r-note { margin: 0 0 var(--space-4); font-size: var(--font-size-sm); color: var(--color-muted); max-width: 46rem; }
+    .r-empty { color: var(--color-fg-reading); margin: 0; }
+
+    .r-bar.covmatrix { margin: var(--space-4) 0; }
+    .r-bar .cm-row { grid-template-columns: minmax(0, 8.5rem) 1fr; }
+    .r-bar .cm-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .r-counts { list-style: none; margin: 0 0 var(--space-4); padding: 0; display: grid; gap: var(--space-1); max-width: 46rem; }
+    .r-counts li { display: grid; grid-template-columns: 10px 7.5rem 3.5rem 3rem 1fr; gap: var(--space-3); align-items: baseline; font-size: var(--font-size-md); }
+    .r-counts i { width: 10px; height: 10px; border-radius: var(--radius-sm); }
+    .r-counts i.native { background: var(--cov-native); }
+    .r-counts i.derived { background: var(--cov-derived); }
+    .r-counts i.approx { background: var(--cov-approx); }
+    .r-counts i.other { background: color-mix(in oklch, var(--color-muted) 45%, transparent); }
+    .r-cls { font-family: var(--font-family-mono); }
+    .r-counts b, .r-pct { font-family: var(--font-family-mono); font-weight: var(--font-weight-medium); text-align: right; font-variant-numeric: tabular-nums; }
+    .r-pct { color: var(--color-muted); }
+    .r-blurb { color: var(--color-muted); font-size: var(--font-size-sm); }
+    .r-cli { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); font-size: var(--font-size-sm); }
+    .r-cli span { font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); color: var(--color-muted); }
+    .r-cli code { white-space: pre-wrap; }
+
+    .r-diags { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+    .r-diag { border: var(--stroke-hairline) solid var(--color-line); border-left: 3px solid var(--color-line); padding: var(--space-3) var(--space-4); background: var(--color-panel); }
+    .r-diag.sev-error { border-left-color: var(--color-danger); }
+    .r-diag.sev-warning { border-left-color: var(--color-warning); }
+    .r-diag.sev-info { border-left-color: var(--color-primary); }
+    .r-diag p { margin: 0; }
+    .d-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-2) !important; }
+    .r-diag .sev { font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); text-transform: uppercase; }
+    .sev-error .sev { color: var(--color-danger); }
+    .sev-warning .sev { color: var(--color-warning); }
+    .sev-info .sev { color: var(--color-primary); }
+    .d-code { font-family: var(--font-family-mono); font-weight: var(--font-weight-medium); }
+    .d-msg { color: var(--color-fg); overflow-wrap: anywhere; }
+    .d-hint { color: var(--color-fg-reading); font-size: var(--font-size-md); margin-top: var(--space-1) !important; padding-left: var(--space-4); }
+    .d-reason { margin-top: var(--space-2) !important; font-size: var(--font-size-md); color: var(--color-fg-reading); }
+    .d-reason span { font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); color: var(--color-muted); }
+
+    /* ---- rows ---- */
+    .r-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3) var(--space-6); margin: 0 0 var(--space-4); }
+    .r-filters[hidden] { display: none; }
+    .r-seg { border: 0; margin: 0; padding: 0; min-width: 0; }
+    .r-seg legend { padding: 0; margin-bottom: var(--space-2); }
+    .r-seg { display: flex; flex-wrap: wrap; }
+    .r-seg label { position: relative; }
+    .r-seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+    .r-seg span {
+      display: inline-flex; align-items: baseline; gap: var(--space-2); min-height: var(--size-control); align-items: center;
+      padding: 0 var(--space-3); font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+      border: var(--stroke-hairline) solid var(--color-line); margin: 0 -1px -1px 0; color: var(--color-fg-reading); background: var(--color-bg);
+    }
+    .r-seg small { color: var(--color-muted); font-size: var(--font-size-xs); }
+    .r-seg input:checked + span { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); position: relative; z-index: 1; }
+    .r-seg input:checked + span small { color: var(--color-on-primary); }
+    .r-seg input:focus-visible + span { outline: var(--stroke-ui) solid var(--color-primary); outline-offset: 2px; position: relative; z-index: 2; }
+    .r-search { display: flex; flex-direction: column; gap: var(--space-2); flex: 1 1 14rem; max-width: 22rem; }
+    .r-status { margin: 0; font-size: var(--font-size-sm); color: var(--color-muted); flex-basis: 100%; }
+
+    .r-table-wrap { border: var(--stroke-hairline) solid var(--color-line); }
+    .r-table { margin: 0; font-size: var(--font-size-sm); table-layout: fixed; }
+    .r-table thead th:nth-child(1) { width: 26%; }
+    .r-table thead th:nth-child(2) { width: 8.5rem; }
+    .r-table thead th:nth-child(3) { width: 8rem; }
+    .r-table thead th:nth-child(4) { width: 28%; }
+    .r-table thead th { position: sticky; top: 0; background: var(--color-bg); z-index: 1; }
+    .r-table tbody th { text-align: left; font: inherit; text-transform: none; letter-spacing: normal; color: var(--color-fg); padding: var(--space-3); border-bottom: var(--stroke-hairline) solid var(--color-line); vertical-align: top; }
+    .r-table tr[hidden] { display: none; }
+    .r-table tr { scroll-margin-top: var(--space-12); }
+    .r-table tr:target > * { background: var(--color-tint); }
+    .r-table td { overflow-wrap: anywhere; }
+    .r-table tbody th { overflow-wrap: anywhere; }
+    .r-table code { font-size: 0.92em; }
+    .trace summary { cursor: pointer; }
+    .trace summary::marker { color: var(--color-muted); }
+    .trace p { margin: var(--space-2) 0 var(--space-1); font-size: var(--font-size-xs); color: var(--color-muted); }
+    .trace .cmd { display: block; user-select: all; white-space: pre-wrap; padding: var(--space-2); }
+    .r-sub { display: block; margin-top: var(--space-1); color: var(--color-muted); font-size: var(--font-size-xs); }
+    .r-none { color: var(--color-muted); font-size: var(--font-size-xs); }
+    .r-dep { display: block; margin-bottom: var(--space-1); color: var(--color-fg-reading); }
+    .r-desc { color: var(--color-fg-reading); font-size: var(--font-size-sm); }
+    /* The site's chips are the coverage trio; the rest of the classes and
+       provenance words are grey, and every chip carries its word. */
+    .prov.other, .prov.aliased, .prov.defaulted { background: color-mix(in oklch, var(--color-muted) 18%, transparent); color: var(--color-fg-reading); }
+
+    .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+    /* A phone: each row becomes a card, every cell labelled. */
+    @media (max-width: 760px) {
+      .r-counts li { grid-template-columns: 10px 7rem 3rem 2.5rem; }
+      .r-blurb { display: none; }
+      .r-table-wrap { border: 0; }
+      .r-table, .r-table tbody, .r-table tr, .r-table th, .r-table td { display: block; width: 100%; }
+      .r-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      .r-table tr { border: var(--stroke-hairline) solid var(--color-line); margin: 0 0 var(--space-3); background: var(--color-panel); }
+      /* Class and provenance side by side; the rest full width. */
+      .r-table tbody tr:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr; }
+      .r-table tbody th, .r-table td[data-label='Slot'], .r-table td[data-label='Note'] { grid-column: 1 / -1; }
+      .r-table tbody th, .r-table td { border: 0; padding: var(--space-2) var(--space-3); }
+      .r-table tbody th { min-width: 0; border-bottom: var(--stroke-hairline) solid var(--color-line); }
+      .r-table td::before { content: attr(data-label); display: block; font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); color: var(--color-muted); margin-bottom: var(--space-1); }
+      .r-table td:empty { display: none; }
+    }
+  </style>
+</Base>

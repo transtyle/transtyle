@@ -30,6 +30,7 @@ export function GET({ site }) {
     ...orderedSlugs.map((slug) => ({ loc: docPath(slug), priority: slug === 'index' ? '0.9' : '0.8' })),
     { loc: withBase('/demo/'), priority: '0.9' },
     { loc: withBase('/compare/'), priority: '0.7' },
+    { loc: withBase('/report/'), priority: '0.6' },
     { loc: withBase('/blog/'), priority: '0.7' },
     ...posts.map((post) => ({ loc: postPath(post.slug), lastmod: post.date, priority: '0.7' })),
   ];

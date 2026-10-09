@@ -29,7 +29,7 @@ npx transtyle build shadcn
 # ✔ build complete
 ```
 
-The first line is the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`check.completeness`, default `recommended`) and how many of its items you author; it is printed once, whatever the number of targets. Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
+The first line is the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`check.completeness`, default `recommended`) and how many of its items you author; it is printed once, whatever the number of targets. Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list; the [report viewer](/report/) draws one as a page). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
 
 ### `--out <dir>`, `--dry-run`
 
@@ -390,4 +390,4 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle import <source>`                    | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
 | `transtyle preview`                            | Local themed preview site across all targets                                            |
 
-Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `completenessStatus()`, `adoption()`, `suggestBindings()`, `migrateStyleDictionary()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).
+Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `completenessStatus()`, `adoption()`, `suggestBindings()`, `migrateStyleDictionary()`, and `buildReport()` for the `report.json` object), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).

@@ -19,10 +19,24 @@ want to run the compiler from your own code — a build script, a CI check, a pl
 ## Use
 
 ```js
-import { compile } from '@transtyle/core';
+import { compile, buildReport } from '@transtyle/core';
 
-const result = await compile({ cwd: process.cwd(), emit: false });
-console.log(result.report.coverage);
+// Exporters are separate packages: tell core how to load one by name.
+const loadExporter = async (name) => (await import(`@transtyle/exporter-${name}`)).default;
+const result = await compile({ cwd: process.cwd(), emit: false, loadExporter });
+
+// What `transtyle build` would write as the first target's report.json.
+const { target, coverage, reads } = result.results[0];
+const { diagnostics } = result;
+const report = buildReport({
+  target,
+  coverage,
+  reads,
+  normalized: result.normalized,
+  diagnostics: diagnostics.items,
+  suppressed: diagnostics.suppressed,
+});
+console.log(report.coverage.counts);
 ```
 
 ## What it does
@@ -42,7 +56,8 @@ semantic diff), `explainToken` (the provenance walk behind `transtyle explain`, 
 tree), `explainVariable` and `slotConsumers` (from a target variable to the slots it reads, and
 back, over a compile's coverage rows), `coverageSlots` (what one coverage row reads), `consumption` (which targets read each catalog
 slot, from the `reads` that `compile()` records on every target result and writes to its
-`report.json`; what `transtyle check --matrix` prints), `suggestBindings({ cwd })` (the binding
+`report.json`; what `transtyle check --matrix` prints), `buildReport` (the `report.json` object a
+build writes per target, from a compile's result), `suggestBindings({ cwd })` (the binding
 proposals behind `transtyle bind --suggest`, from a versioned name table, `SYNONYMS_VERSION`,
 and color measurements), `Diagnostics`,
 and the colour module — `parseColor` (any CSS color syntax a stylesheet holds, or a DTCG color object, to OKLCH), `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,

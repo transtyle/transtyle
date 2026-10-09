@@ -109,6 +109,7 @@ export default defineConfig({
               { label: 'Documentation', href: `${root}/docs/` },
               { label: 'Demos', href: `${root}/demo/` },
               { label: 'Compare', href: `${root}/compare/` },
+              { label: 'Report viewer', href: `${root}/report/` },
               { label: 'GitHub', href: 'https://github.com/transtyle/transtyle' },
             ],
           },
