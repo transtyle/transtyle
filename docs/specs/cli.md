@@ -53,7 +53,7 @@ An unknown slot exits 2 and lists the 5 closest catalog names (Levenshtein dista
 
 ## Behavioral contracts
 
-- **Exit codes:** 0 success; 1 diagnostics at/above the fail-on threshold; 2 usage/config errors. Stable, documented, CI-safe.
+- **Exit codes:** 0 success; 1 diagnostics at/above the fail-on threshold; 2 usage/config errors. Stable, documented, CI-safe. An exporter that throws is not a usage error: it becomes a `TST3001` error diagnostic naming the target, the other targets still build, and the run exits 1 (`TST3002` for an exporter that cannot be loaded). `TRANSTYLE_DEBUG=1` prints the stack under the message. `explain` loads and runs no exporter, so a broken one cannot fail it.
 - **Output streams:** human logs → stderr; requested data (`--json`, `explain`) → stdout. Pipeable by construction.
 - **Non-interactive by default** when not a TTY; anything interactive has a flag equivalent.
 - **No telemetry.** If ever proposed, opt-in only, and it gets its own ADR and public schema.
