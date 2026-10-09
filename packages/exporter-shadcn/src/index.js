@@ -112,7 +112,7 @@ export default {
     // EMIT: era profile decides artifacts
     const shared = { vars, radius, fontSans, fontMono, ctx };
     const files = era === 'tailwind-v4' ? emitV4(shared) : emitV3(shared);
-    files.push({ path: 'usage.md', contents: renderUsage(ctx, coverage, era), kind: 'doc' });
+    files.push({ path: 'usage.md', contents: renderUsage(ctx, coverage, era, Boolean(normalized.modes.dark)), kind: 'doc' });
     return { files, coverage };
   },
 };
@@ -242,7 +242,7 @@ function emitV3({ vars, radius, fontSans, fontMono, ctx }) {
 
 // ---------- usage ----------
 
-function renderUsage(ctx, coverage, era) {
+function renderUsage(ctx, coverage, era, hasDark = true) {
   const counts = {};
   for (const c of coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
   const summary = Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(' · ');
@@ -258,7 +258,7 @@ function renderUsage(ctx, coverage, era) {
    \`\`\`
 
    (Or replace the \`:root\`/\`.dark\`/\`@theme inline\` blocks that \`npx shadcn init\` created.)
-3. Dark mode: add the \`dark\` class on \`<html>\` (class strategy), as in standard shadcn setups.`
+${hasDark ? '3. Dark mode: add the \`dark\` class on \`<html>\` (class strategy), as in standard shadcn setups.' : '3. Light only: this theme was generated without a dark mode, so the \`.dark\` block is empty.'}`
     : `## Tailwind v3 project (shadcn "old" era, hsl(var(--x)) convention)
 
 1. Copy \`globals.transtyle.css\` into your app and import it in your global CSS
@@ -269,7 +269,7 @@ function renderUsage(ctx, coverage, era) {
    const transtyle = require("./tailwind.theme.transtyle.cjs");
    module.exports = { darkMode: ["class"], theme: { extend: transtyle } };
    \`\`\`
-3. Dark mode: class strategy (\`darkMode: ["class"]\`), toggle \`dark\` on \`<html>\`.`;
+${hasDark ? '3. Dark mode: class strategy (\`darkMode: ["class"]\`), toggle \`dark\` on \`<html>\`.' : '3. Light only: this theme was generated without a dark mode, so the \`.dark\` block is empty.'}`;
 
   return `# Using this shadcn theme
 

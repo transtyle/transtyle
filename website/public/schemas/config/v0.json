@@ -137,6 +137,16 @@
           },
           "options": {
             "type": "object"
+          },
+          "modes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
           }
         }
       }

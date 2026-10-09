@@ -180,6 +180,24 @@ Each key is a **target instance**. The optional `exporter` field selects the plu
 
 `transtyle build` builds all instances; `transtyle build shadcn-v3` selects by instance name.
 
+### Per-target mode subsets
+
+Modes are declared once for the project, but not every target needs all of them: a marketing site on Bootstrap may be light-only while the app on shadcn ships light and dark. Set `modes` on a target to keep only some values; a dimension you don't name keeps all of its values.
+
+```json
+"targets": {
+  "bootstrap": { "output": "dist/bootstrap", "modes": { "color-scheme": ["light"] } },
+  "shadcn": { "output": "dist/shadcn" }
+}
+```
+
+That Bootstrap build emits no `data-bs-theme="dark"` block, its `usage.md` lists the modes it contains, and the other targets are unchanged. Things to know:
+
+- **Keep the default value.** A subset that leaves out the dimension's `default`, or names a dimension or value you didn't declare in `modes`, stops the build with `TST1308` before anything is written, for every target.
+- **A narrowed dimension is not a loss.** It gets no `dropped` row in `report.json`; a dimension you didn't narrow that the exporter can't express still does.
+- **Project-level checks still run on everything.** A dark-mode contrast warning still fires even if every target leaves dark out, because modes are declared for the project, not per target.
+- **PrimeNG always carries a `dark` scheme** in its preset; without a dark mode it repeats the light values there.
+
 ## `check`
 
 - `failOn` — `error` (default) | `warning` | `approximation`: the diagnostic level that makes the build exit non-zero. CI teams typically tighten this over time.

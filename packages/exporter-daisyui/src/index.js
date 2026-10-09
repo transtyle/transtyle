@@ -128,14 +128,14 @@ export default {
     return {
       files: [
         { path: 'daisyui.transtyle.css', contents: css, kind: 'stylesheet' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage), kind: 'doc' },
+        { path: 'usage.md', contents: renderUsage(ctx, coverage, Boolean(dark)), kind: 'doc' },
       ],
       coverage,
     };
   },
 };
 
-function renderUsage(ctx, coverage) {
+function renderUsage(ctx, coverage, hasDark = true) {
   const counts = {};
   for (const c of coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
   const summary = Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(' · ');
@@ -150,12 +150,14 @@ In your global CSS, after Tailwind and the daisyUI plugin:
 \`\`\`css
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: ${ctx.projectName}-light --default, ${ctx.projectName}-dark --prefersdark;
+  themes: ${ctx.projectName}-light --default${hasDark ? `, ${ctx.projectName}-dark --prefersdark` : ''};
 }
 @import "./daisyui.transtyle.css";
 \`\`\`
 
-The light theme is the default; the dark theme activates via \`prefers-color-scheme\` (or set \`data-theme="${ctx.projectName}-dark"\` manually — standard daisyUI behavior).
+${hasDark
+    ? `The light theme is the default; the dark theme activates via \`prefers-color-scheme\` (or set \`data-theme="${ctx.projectName}-dark"\` manually — standard daisyUI behavior).`
+    : 'The light theme is the only one: this theme was generated without a dark mode.'}
 
 ## Notes
 

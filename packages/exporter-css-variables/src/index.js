@@ -140,7 +140,7 @@ export default {
     return {
       files: [
         { path: 'variables.transtyle.css', contents: css, kind: 'stylesheet' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage.length, darkSelector, dimNames.filter((d) => d !== normalized.modeDimension)), kind: 'doc' },
+        { path: 'usage.md', contents: renderUsage(ctx, coverage.length, darkSelector, dimNames.filter((d) => d !== normalized.modeDimension), colorLines.dark.length > 0), kind: 'doc' },
       ],
       coverage,
     };
@@ -207,7 +207,7 @@ const cssLine = (name, value, entry) =>
 
 // ---------- usage ----------
 
-function renderUsage(ctx, count, darkSelector, extraDims) {
+function renderUsage(ctx, count, darkSelector, extraDims, hasDark = true) {
   return `# Using these CSS variables
 
 The complete resolved semantic catalog of **${ctx.projectName}** (${count} custom properties), framework-free. This is transtyle's simplest target — and the reference projection of the IR: every other exporter's output is some mapping of what you see here.
@@ -227,7 +227,7 @@ The complete resolved semantic catalog of **${ctx.projectName}** (${count} custo
 .my-button:hover { background: var(--color-primary-solid-hover); }
 \`\`\`
 
-## Dark mode
+${hasDark ? `## Dark mode
 
 \`:root\` carries the light values; the dark values live under \`${darkSelector}\`:
 
@@ -236,7 +236,10 @@ document.documentElement.setAttribute('data-color-scheme', 'dark');
 \`\`\`
 
 (Configure the selector via \`options.darkSelector\`, and prefix all variables via \`options.prefix\`.)
-${extraDims?.length ? `
+` : `## Dark mode
+
+None: this file was generated without a dark mode, so \`:root\` carries the only values (prefix all variables via \`options.prefix\`).
+`}${extraDims?.length ? `
 ## Other mode dimensions (${extraDims.join(', ')})
 
 This design system also declares ${extraDims.length === 1 ? 'a' : ''} mode dimension${extraDims.length === 1 ? '' : 's'} beyond \`color-scheme\`. Each non-default value that actually changes something gets its own selector block, containing only the variables that differ from the default — set the attribute to activate it:

@@ -51,6 +51,10 @@ const target = {
     output: { type: 'string' },
     exporter: { type: 'string' },
     options: { type: 'object' }, // validated per-exporter at load time; see note above
+    // Per-target subset of the project's mode matrix: { <dimension>: [<value>, ...] }.
+    // Dimension/value names are checked against the project's `modes` in compile()
+    // (TST1308), which this static schema can't see.
+    modes: { type: 'object', additionalProperties: { type: 'array', minItems: 1, items: { type: 'string' } } },
   },
 };
 

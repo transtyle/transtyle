@@ -14,6 +14,7 @@ import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
 import { nearestName } from './nearest.js';
 import { makeUnits } from './units.js';
+import { validateTargetModes, targetView, narrowedDimensions, withModesNote } from './target-modes.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 
 export { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
@@ -130,6 +131,13 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   };
   const plans = [];
 
+  // Per-target mode subsets (`targets.<t>.modes`, TST1308) are checked for every
+  // requested target before anything is written, so one bad subset emits nothing.
+  for (const name of targetNames) {
+    const subset = config.targets?.[name]?.modes;
+    if (subset) validateTargetModes(name, subset, normalized.dimensions, diagnostics);
+  }
+
   for (const name of targetNames) {
     const targetConfig = config.targets?.[name];
     if (!targetConfig) {
@@ -190,9 +198,14 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
         name: n, exporter: t.exporter ?? n, output: t.output ?? `dist/${n}`,
       })),
     };
+    // Exporters see only the target's declared slice of the matrix (derivation and
+    // checks above already ran once on the full one); a deliberate exclusion is
+    // not a loss, so it gets no `dropped` coverage row.
+    const view = targetConfig.modes ? targetView(normalized, targetConfig.modes) : normalized;
+    const narrowed = targetConfig.modes ? narrowedDimensions(normalized, view) : new Set();
     let files, coverage;
     try {
-      ({ files, coverage } = exporter.emit(normalized, ctx));
+      ({ files, coverage } = exporter.emit(view, ctx));
     } catch (e) {
       // Only the exporter's own code is wrapped: file-system errors below are
       // not exporter bugs and keep failing loudly.
@@ -201,6 +214,10 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
         : 'This is a bug in the exporter, not in your design system. Re-run with TRANSTYLE_DEBUG=1 for the stack.');
       files = [];
       coverage = [];
+    }
+    if (targetConfig.modes) {
+      files = files.map((f) => (f.path === 'usage.md' ? { ...f, contents: withModesNote(f.contents, name, view) } : f));
+      coverage = coverage.filter((c) => !(c.class === 'dropped' && [...narrowed].some((d) => c.variable === `(mode:${d})`)));
     }
 
     const outDir = path.resolve(cwd, targetConfig.output ?? `dist/${name}`);
