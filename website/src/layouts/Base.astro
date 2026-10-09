@@ -124,14 +124,14 @@ const currentLabel = { docs: 'Docs', demo: 'Demos', compare: 'Demos', blog: 'Blo
   <style>
     /* The alpha notice: the warning state, with its word. */
     .alpha-bar {
-      padding: var(--space-2) clamp(1rem, 4vw, 2.5rem);
+      padding: var(--space-2) var(--layout-gutter);
       background: var(--color-panel);
-      border-bottom: 1px solid var(--color-line);
-      font-size: 0.82rem; line-height: 1.45; color: var(--color-fg); text-align: center;
+      border-bottom: var(--stroke-hairline) solid var(--color-line);
+      font-size: var(--font-size-sm); line-height: var(--font-line-height-body); color: var(--color-fg); text-align: center;
     }
     .alpha-bar strong { color: var(--color-warning); }
-    .alpha-bar a { color: inherit; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
-    .gh { font: var(--type-mono-sm, 500 0.8rem var(--font-family-mono)); color: var(--color-muted); }
+    .alpha-bar a { text-decoration: underline; text-decoration-thickness: var(--stroke-hairline); text-underline-offset: 3px; white-space: nowrap; }
+    .gh { font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); color: var(--color-muted); }
     .gh:hover { color: var(--color-fg); }
   </style>
 </BaseLayout>
