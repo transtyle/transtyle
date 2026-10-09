@@ -325,6 +325,7 @@ export function derive(normalized, config, diagnostics) {
       if (dim) {
         const [, n, unit] = dim;
         const scale = (f) => `${trimNum(parseFloat(n) * f)}${unit}`;
+        rd(ctx, 'semantic.radius.none', () => `0${unit}`, 'radius-scale(0)', ['radius.md']);
         rd(ctx, 'semantic.radius.sm', () => scale(0.5), 'radius-scale(0.5)', ['radius.md']);
         rd(ctx, 'semantic.radius.lg', () => scale(1.5), 'radius-scale(1.5)', ['radius.md']);
         rd(ctx, 'semantic.radius.xl', () => scale(2), 'radius-scale(2)', ['radius.md']);

@@ -43,11 +43,11 @@ Composite values expand: a typography role (`type.role.body.md`) becomes four lo
 
 ## Coverage
 
-<!-- measured: acme.css-variables.decls = 466 -->
-<!-- measured: acme.css-variables.distinct = 304 -->
+<!-- measured: acme.css-variables.decls = 467 -->
+<!-- measured: acme.css-variables.distinct = 305 -->
 <!-- measured: acme.authored = 40 -->
 
-Every variable is `native` — there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 466 declarations across the mode blocks — 304 distinct variables — from 40 authored tokens.
+Every variable is `native` — there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 467 declarations across the mode blocks — 305 distinct variables — from 40 authored tokens.
 
 ## Extra mode dimensions
 

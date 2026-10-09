@@ -7,11 +7,11 @@ order: 6
 # Derivation engine
 
 <!-- measured: acme.authored = 40 -->
-<!-- measured: acme.slots = 271 -->
-<!-- measured: acme.engine = 231 -->
+<!-- measured: acme.slots = 272 -->
+<!-- measured: acme.engine = 232 -->
 <!-- measured: acme.shadcn.decls = 103 -->
 
-Derivation fills every semantic slot you didn't author. Concretely, on the [Acme example](/docs/examples/): **40 authored DTCG tokens produce 271 resolved slots per mode**, which the shadcn exporter alone turns into 103 CSS custom properties. The other 231 slots are the engine's work.
+Derivation fills every semantic slot you didn't author. Concretely, on the [Acme example](/docs/examples/): **40 authored DTCG tokens produce 272 resolved slots per mode**, which the shadcn exporter alone turns into 103 CSS custom properties. The other 232 slots are the engine's work.
 
 It's built on three promises, because a tool that silently invents brand values deserves rejection:
 
