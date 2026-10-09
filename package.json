@@ -42,6 +42,7 @@
     "gen:catalog-signals": "node scripts/gen-catalog-signals.mjs",
     "check:catalog-signals": "node scripts/gen-catalog-signals.mjs --check",
     "gen:schemas": "node scripts/gen-schemas.mjs",
+    "gen:reference-mapping": "node scripts/gen-reference-mapping.mjs",
     "check:schemas": "node scripts/check-schemas.mjs",
     "check:grid": "node scripts/check-grid.mjs",
     "check:rem-base": "node scripts/check-rem-base.mjs",

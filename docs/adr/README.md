@@ -20,3 +20,4 @@ Format: [MADR](https://adr.github.io/madr/)-lite — Status / Context / Decision
 | [0014](0014-tokens-studio-input.md)          | Tokens Studio exports load in place, in core, as a layer form                                               | accepted |
 | [0015](0015-mode-combinations.md)            | Combo layers; contrast, motion and brand as attribute, media or per-file blocks                             | accepted |
 | [0016](0016-config-inheritance.md)           | A config can extend a base; the nearer file wins, token paths follow their file, outputs follow the product | accepted |
+| [0017](0017-declarative-exporters.md)        | A mapping table may be an exporter, run by core's declarative runtime                                       | accepted |

@@ -39,7 +39,7 @@ Composite values expand: a typography role (`type.role.body.md`) becomes four lo
 
 ## Mode handling
 
-`:root` carries the light map, `[data-color-scheme="dark"]` the dark map — mode _names_, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) still emits this way. Only color slots vary by mode; scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
+`:root` carries the light map, `[data-color-scheme="dark"]` the dark map — mode _names_, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) still emits this way. Only values that carry a colour vary by mode (role colours, the categorical palette, shadows, borders); scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
 
 ## Descriptions and deprecations
 
@@ -54,11 +54,11 @@ Only the first line of a description is written, and a `*/` in it is broken up s
 
 ## Coverage
 
-<!-- measured: acme.css-variables.decls = 467 -->
+<!-- measured: acme.css-variables.decls = 475 -->
 <!-- measured: acme.css-variables.distinct = 305 -->
 <!-- measured: acme.authored = 40 -->
 
-Every variable is `native` — there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 467 declarations across the mode blocks — 305 distinct variables — from 40 authored tokens.
+Every variable is `native` — there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 475 declarations across the mode blocks — 305 distinct variables — from 40 authored tokens.
 
 ## Extra mode dimensions
 

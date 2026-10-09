@@ -95,6 +95,16 @@ export const reportSchema = {
     // without `extends` (docs/specs/configuration.md#inheritance-extends).
     config: { type: 'array', minItems: 1, items: { type: 'string' } },
     options: { type: 'object' },
+    // ADR-0006: present only when the target asked for a framework version.
+    version: {
+      type: 'object',
+      required: ['requested', 'profile'],
+      additionalProperties: false,
+      properties: {
+        requested: { type: 'string', description: 'the version targets.<t>.version asked for' },
+        profile: { type: 'string', description: 'the exporter manifest range that covers it, which decided the output' },
+      },
+    },
     generatedBy: { type: 'string' },
     coverage: {
       type: 'object',

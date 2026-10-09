@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transtyle.dev/schemas/mapping/v0.json",
+  "title": "Transtyle declarative mapping (*.mapping.json)",
+  "description": "A JSON mapping table that is a Transtyle exporter without code. See https://transtyle.dev/docs/write-an-exporter/#start-declarative-a-mapping-table.",
+  "type": "object",
+  "required": [
+    "name",
+    "files"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "the exporter name, lowercase with dashes"
+    },
+    "description": {
+      "type": "string"
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "template",
+          "rows"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$",
+            "description": "a relative path inside the target output, no \"..\" segment"
+          },
+          "template": {
+            "type": "string",
+            "enum": [
+              "css-custom-properties",
+              "scss-variables",
+              "less-variables",
+              "json"
+            ]
+          },
+          "header": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "lines written first, verbatim; {projectName} is the one placeholder"
+          },
+          "selector": {
+            "type": "string",
+            "minLength": 1,
+            "description": "css-custom-properties: the base block selector (default :root)"
+          },
+          "mode": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "one value per mode dimension, e.g. { \"color-scheme\": \"dark\" }"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "mode",
+                "selector"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": "one value per mode dimension, e.g. { \"color-scheme\": \"dark\" }"
+                },
+                "selector": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "comments": {
+            "type": "string",
+            "enum": [
+              "provenance"
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "variable",
+                "slot"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "variable": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "the name written to the file, sigil included: --x, $x, @x, or a JSON key"
+                },
+                "slot": {
+                  "type": "string",
+                  "pattern": "^(semantic|component)\\.[A-Za-z0-9_.-]+$",
+                  "description": "a semantic.* or component.* slot path"
+                },
+                "part": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "a member of a composite value: fontSize, fontWeight, lineHeight, fontFamily, color, width…"
+                },
+                "format": {
+                  "type": "string",
+                  "enum": [
+                    "oklch",
+                    "hex",
+                    "hsl-triplet"
+                  ]
+                },
+                "class": {
+                  "type": "string",
+                  "enum": [
+                    "native",
+                    "derived",
+                    "approximated"
+                  ]
+                },
+                "note": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

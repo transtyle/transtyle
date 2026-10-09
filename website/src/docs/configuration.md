@@ -267,6 +267,27 @@ Each key is a **target instance**. The optional `exporter` field selects the plu
 
 `transtyle build` builds all instances; `transtyle build shadcn-v3` selects by instance name.
 
+`exporter` can also be a path to a **mapping file** next to your config, `"exporter": "./ourlib.mapping.json"`: a JSON table of variable names and catalog slots that is an exporter without code. See [Start declarative](/docs/write-an-exporter/#start-declarative-a-mapping-table) for the format.
+
+### Target versions
+
+Tell Transtyle which version of the framework your project uses with `version` (always `major.minor.patch`):
+
+```json
+"targets": {
+  "bootstrap": { "output": "dist/bootstrap", "version": "5.3.8" },
+  "shadcn": { "output": "dist/shadcn", "version": "3.4.17" }
+}
+```
+
+Each exporter supports version _ranges_ of its framework, one mapping profile per range, and the compiler picks the range covering your version: Bootstrap has one profile, `>=5.3 <6`; shadcn follows your **Tailwind** version, `>=3 <4` (the `tailwind-v3` era) or `>=4 <5` (`tailwind-v4`). Things to know:
+
+- **A version no range covers stops the build** with `TST1313`, which lists the ranges the exporter supports, and nothing is written for that target: `"version": "4.6.2"` on Bootstrap fails rather than producing variables Bootstrap 4 doesn't have.
+- **It's recorded.** That target's `report.json` gets `"version": { "requested": "5.3.8", "profile": ">=5.3 <6" }`.
+- **Leave it out and nothing changes.** Without `version` each exporter uses its newest profile, exactly as before.
+- **shadcn's `era` still works** as an explicit choice; if `era` and `version` disagree, `era` wins and the build warns (`TST2105`).
+- A partial version (`"5.3"`) is a config error (`TST1010`).
+
 ### Per-target mode subsets
 
 Modes are declared once for the project, but not every target needs all of them: a marketing site on Bootstrap may be light-only while the app on shadcn ships light and dark. Set `modes` on a target to keep only some values; a dimension you don't name keeps all of its values.

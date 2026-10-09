@@ -30,6 +30,24 @@
     "options": {
       "type": "object"
     },
+    "version": {
+      "type": "object",
+      "required": [
+        "requested",
+        "profile"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "requested": {
+          "type": "string",
+          "description": "the version targets.<t>.version asked for"
+        },
+        "profile": {
+          "type": "string",
+          "description": "the exporter manifest range that covers it, which decided the output"
+        }
+      }
+    },
     "generatedBy": {
       "type": "string"
     },

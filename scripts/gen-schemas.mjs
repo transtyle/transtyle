@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Publish the config + report + token-file + emitted-file manifest schemas as real draft-2020-12 JSON Schema files
+ * Publish the config + report + token-file + emitted-file manifest + mapping schemas as real draft-2020-12 JSON Schema files
  * (audit A7 — the `$schema` URLs Transtyle emits were fictional). The schema
  * *objects* are the source of truth in `@transtyle/core` (used at runtime by
  * validate.js); this script wraps each with draft/$id/title metadata and writes
@@ -19,6 +19,7 @@ import { configSchema, configSchemaMeta } from '../packages/core/src/schema/conf
 import { reportSchema, reportSchemaMeta } from '../packages/core/src/schema/report.schema.js';
 import { tokenSchema, tokenSchemaMeta } from '../packages/core/src/schema/token.schema.js';
 import { manifestSchema, manifestSchemaMeta } from '../packages/core/src/schema/manifest.schema.js';
+import { mappingSchema, mappingSchemaMeta } from '../packages/core/src/schema/mapping.schema.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DRAFT = 'https://json-schema.org/draft/2020-12/schema';
@@ -33,6 +34,7 @@ const OUTPUTS = [
   { rel: 'website/public/schemas/report/v0.json', doc: publishable(reportSchema, reportSchemaMeta) },
   { rel: 'website/public/schemas/tokens/v0.json', doc: publishable(tokenSchema(), tokenSchemaMeta) },
   { rel: 'website/public/schemas/manifest/v0.json', doc: publishable(manifestSchema, manifestSchemaMeta) },
+  { rel: 'website/public/schemas/mapping/v0.json', doc: publishable(mappingSchema, mappingSchemaMeta) },
 ];
 
 export function render(doc) {

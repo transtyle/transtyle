@@ -2,8 +2,12 @@
  * @transtyle/exporter-shadcn — emits a shadcn/ui theme from the resolved IR.
  * Spec: docs/specs/exporters/shadcn.md. Two era profiles (ADR-0006 mapping
  * profiles): "tailwind-v4" (OKLCH + @theme inline) and "tailwind-v3"
- * (HSL channel triplets + tailwind.config snippet). Selected via target
- * options.era in transtyle.config.json — never via CLI flags.
+ * (HSL channel triplets + tailwind.config snippet). shadcn has no version of
+ * its own: both profiles follow Tailwind CSS, so the manifest's ranges are
+ * Tailwind versions (`>=3 <4`, `>=4 <5`) and `targets.shadcn.version` is the
+ * project's Tailwind version, from which core selects the profile
+ * (ctx.targetProfile). `options.era` stays as an explicit override. Both are
+ * set in transtyle.config.json — never via CLI flags.
  */
 
 import { droppedDimensions, entryNotes, blockComment, fontNames, fontStack, modeBlocks, formatModeBlocks, modeBlocksUsage } from '@transtyle/ir';
@@ -53,6 +57,8 @@ const MAPPING = [
 ];
 
 const ERAS = ['tailwind-v4', 'tailwind-v3'];
+/** The manifest's Tailwind ranges (package.json `transtyle.targets.shadcn`) → era profile. */
+const PROFILE_ERAS = { '>=3 <4': 'tailwind-v3', '>=4 <5': 'tailwind-v4' };
 
 export default {
   name: 'shadcn',
@@ -65,10 +71,22 @@ export default {
   },
 
   emit(normalized, ctx) {
-    const era = ctx.targetConfig.options?.era ?? 'tailwind-v4';
+    const explicit = ctx.targetConfig.options?.era;
+    const fromVersion = PROFILE_ERAS[ctx.targetProfile];
+    const era = explicit ?? fromVersion ?? 'tailwind-v4';
     if (!ERAS.includes(era)) {
       throw new Error(`exporter-shadcn: unknown era "${era}" (supported: ${ERAS.join(', ')})`);
     }
+    // A requested Tailwind version and an explicit era that disagree: the
+    // explicit option wins (it is the override), and the build says so.
+    const eraConflict = explicit && ctx.targetVersion && fromVersion && fromVersion !== explicit
+      ? {
+          severity: 'warning',
+          code: 'TST2105',
+          message: `options.era "${explicit}" overrides version ${ctx.targetVersion}, whose profile ("${ctx.targetProfile}") is ${fromVersion}; the output follows ${explicit}`,
+          hint: 'Remove options.era to follow the Tailwind version, or set "version" to the Tailwind release the project really uses.',
+        }
+      : null;
     // Mode polarity: shadcn's structure is fixed (:root = light, .dark = dark).
     // Bind mode NAMES, never the DS's default flag — a dark-native design
     // system still compiles to shadcn's light-first layout (ir.md#modes).
@@ -136,7 +154,7 @@ export default {
       kind: 'doc',
     });
     const collapsed = radius && collapsedRungs(radius.value, era, ctx.units);
-    const diagnostics = collapsed ? [collapsed] : [];
+    const diagnostics = [eraConflict, collapsed].filter(Boolean);
     return { files, coverage, diagnostics };
   },
 };
