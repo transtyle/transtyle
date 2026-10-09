@@ -8,7 +8,7 @@
  * Colors are hex (canvas rendering); OKLCH → hex may gamut-clamp (→ approximated).
  */
 
-import { droppedDimensions } from '@transtyle/ir';
+import { droppedDimensions, fontNames } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
@@ -118,7 +118,7 @@ function buildTheme(map, mode, ctx) {
 
   // fontFamily: ECharts wants a single CSS-style string
   const fontEntry = map.get('semantic.font.sans');
-  const fontFamily = fontEntry ? fontEntry.value.join(', ') : undefined;
+  const fontFamily = fontEntry ? fontNames(fontEntry.value).join(', ') : undefined;
   if (fontFamily) cov('textStyle.fontFamily', 'semantic.font.sans', 'native');
 
   // radius: rem → px numeric (unit conversion = approximated)

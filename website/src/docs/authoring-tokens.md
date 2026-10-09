@@ -23,16 +23,17 @@ A token is a node with `$value`; groups may declare `$type` for their children:
 }
 ```
 
-Supported `$type`s today: `color` (see [Colors](#colors) below), `dimension`, `duration`, `cubicBezier`, `fontWeight`, `number`, `fontFamily` (array of family names), and the composites `shadow`, `typography`, `border` and `transition`. Other DTCG types are carried through as authored, without type-specific parsing. `dimension`, `duration`, `cubicBezier` and `fontWeight` take either the CSS form a stylesheet would contain or the structured DTCG form:
+Supported `$type`s today: `color` (see [Colors](#colors) below), `dimension`, `duration`, `cubicBezier`, `fontWeight`, `number`, `fontFamily` (an array of family names, or one string), and the composites `shadow`, `typography`, `border` and `transition`. Other DTCG types are carried through as authored, without type-specific parsing. `dimension`, `duration`, `cubicBezier` and `fontWeight` take either the CSS form a stylesheet would contain or the structured DTCG form:
 
-| `$type`       | CSS form                       | DTCG form                         |
-| ------------- | ------------------------------ | --------------------------------- |
-| `dimension`   | `"0.5rem"`                     | `{ "value": 0.5, "unit": "rem" }` |
-| `duration`    | `"150ms"`                      | `{ "value": 150, "unit": "ms" }`  |
-| `cubicBezier` | `"cubic-bezier(0.2, 0, 0, 1)"` | `[0.2, 0, 0, 1]`                  |
-| `fontWeight`  | `600`                          | `"semi-bold"`                     |
+| `$type`       | CSS form                         | DTCG form                              |
+| ------------- | -------------------------------- | -------------------------------------- |
+| `dimension`   | `"0.5rem"`                       | `{ "value": 0.5, "unit": "rem" }`      |
+| `duration`    | `"150ms"`                        | `{ "value": 150, "unit": "ms" }`       |
+| `cubicBezier` | `"cubic-bezier(0.2, 0, 0, 1)"`   | `[0.2, 0, 0, 1]`                       |
+| `fontWeight`  | `600`                            | `"semi-bold"`                          |
+| `fontFamily`  | `"Inter, system-ui, sans-serif"` | `["Inter", "system-ui", "sans-serif"]` |
 
-Dimension units are `px` or `rem`, duration units `ms` or `s`; a cubicBezier's x1 and x2 lie between 0 and 1; a DTCG weight keyword compiles to its number. Both forms compile to the same output on every target, and the same members inside `typography`, `shadow`, `border` and `transition` composites accept both too. A structured value that doesn't fit (a missing or unknown unit, a string where a number belongs, an unknown weight keyword) stops the build with `TST1106` and a hint naming the accepted forms.
+Dimension units are `px` or `rem`, duration units `ms` or `s`; a cubicBezier's x1 and x2 lie between 0 and 1; a DTCG weight keyword compiles to its number; a `fontFamily` string is read as a CSS font list, split on its commas, with quotes around a name (`"'Helvetica Neue', Arial"`) optional, and a `var(…)` kept whole. Both forms compile to the same output on every target, and the same members inside `typography`, `shadow`, `border` and `transition` composites accept both too. A structured value that doesn't fit (a missing or unknown unit, a string where a number belongs, an unknown weight keyword, an empty font name) stops the build with `TST1106` and a hint naming the accepted forms.
 
 ### Colors
 

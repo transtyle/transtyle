@@ -201,13 +201,6 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
 
   const units = makeUnits(config);
 
-  // Source locations first (so the suppressed list carries them too), then
-  // `check.suppress`: every diagnostic that can
-  // exist before the target loop exists now (exporters never emit diagnostics
-  // of this kind), so one pass serves every target's report.
-  fillLocations(diagnostics.items, normalized.sources);
-  diagnostics.applySuppressions(config.check?.suppress);
-
   const targetNames = skipExporters ? [] : targets?.length ? targets : Object.keys(config.targets ?? {});
   const results = [];
   // Exporter crashes (TST3001/TST3002) and incompatible exporters (TST1309) are
@@ -339,7 +332,8 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     // a target's own conventions do to a value, which only the exporter knows.
     // The message is prefixed with the instance name, so two instances of one
     // exporter report separately and `report.json` (which lists every
-    // diagnostic of the run) says which target each line is about.
+    // diagnostic of the run, built after this loop) says which target each
+    // line is about.
     for (const d of notes) {
       const context = { target: name, ...(d.hint !== undefined ? { hint: d.hint } : {}) };
       if (d.severity === 'warning') diagnostics.warn(d.code, `${name}: ${d.message}`, context);
@@ -358,22 +352,38 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     const written = [];
     const planned = [];
     if (emit) {
-      // Build manifest + machine-readable report (docs/specs/validation-and-coverage.md).
       // Nothing is written here: every target is collected first and the whole
-      // build is committed atomically below (src/emit.js).
+      // build is committed atomically below (src/emit.js). Its report.json is
+      // added after the loop too, once every exporter has had its say.
       const staged = files.map((f) => ({ path: f.path, contents: f.contents }));
       for (const f of files) written.push(path.relative(cwd, path.join(outDir, f.path)));
-      const report = buildReport(name, targetConfig, withMetadata(coverage, viewDefault), reads, diagnostics, [...written]);
-      staged.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
-      written.push(path.relative(cwd, path.join(outDir, 'report.json')));
-      staged.forEach((f, i) => planned.push({ path: written[i], bytes: Buffer.byteLength(f.contents, 'utf8') }));
-      plans.push({ outDir, files: staged });
+      plans.push({ outDir, files: staged, name, targetConfig, coverage, viewDefault, reads, written, planned });
     }
     // `emitted` carries the file *specs* (path + contents) even when emit is
     // off — `transtyle diff` re-emits both sides in-memory to compute per-target
     // impact without writing anything. `files` stays the written paths.
     // `reads` is what `consumption()` (src/reads.js) builds the slot matrix from.
     results.push({ target: name, files: dryRun ? [] : written, planned, outDir, exporter: targetConfig.exporter ?? name, coverage, emitted: files, reads });
+  }
+
+  // Source locations first (so the suppressed list carries them too), then
+  // `check.suppress`, once, now that every stage that produces diagnostics has
+  // run, exporters included: an exporter's own diagnostic (shadcn's TST2104)
+  // can be suppressed like any other, and every target's report agrees.
+  fillLocations(diagnostics.items, normalized.sources);
+  diagnostics.applySuppressions(config.check?.suppress);
+
+  // Build manifest + machine-readable report per target
+  // (docs/specs/validation-and-coverage.md). Built here rather than in the
+  // loop, which serialised each report with the diagnostics raised so far: a
+  // warning from a later target's exporter was missing from every earlier
+  // target's report.json (issue #186).
+  for (const plan of plans) {
+    const { name, targetConfig, coverage, viewDefault, reads, written, planned } = plan;
+    const report = buildReport(name, targetConfig, withMetadata(coverage, viewDefault), reads, diagnostics, [...written]);
+    plan.files.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
+    written.push(path.relative(cwd, path.join(plan.outDir, 'report.json')));
+    plan.files.forEach((f, i) => planned.push({ path: written[i], bytes: Buffer.byteLength(f.contents, 'utf8') }));
   }
 
   // EMIT commit: all exporters have run. Nothing is written if any error-level

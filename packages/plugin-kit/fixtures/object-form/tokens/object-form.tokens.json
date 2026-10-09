@@ -32,6 +32,7 @@
     "border": { "$type": "dimension", "radius-alias": { "$value": "{semantic.radius.md}" } },
     "duration": { "fast": { "$type": "duration", "$value": { "value": 120, "unit": "ms" } } },
     "easing": { "standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0, 1] } },
+    "font": { "sans": { "$type": "fontFamily", "$value": ["Inter", "system-ui", "sans-serif"] } },
     "type": {
       "weight": { "semibold": { "$type": "fontWeight", "$value": "semi-bold" } },
       "role": {

@@ -181,7 +181,7 @@ function renderEntry(entry, ctx) {
       ['-size', value.fontSize],
       ['-weight', value.fontWeight === undefined ? undefined : String(value.fontWeight)],
       ['-leading', value.lineHeight === undefined ? undefined : String(value.lineHeight)],
-      ['-family', Array.isArray(value.fontFamily) ? fontList(value.fontFamily) : value.fontFamily],
+      ['-family', value.fontFamily === undefined ? undefined : fontList(value.fontFamily)],
     ].filter(([, v]) => v !== undefined);
   }
   if (type === 'shadow') {
@@ -200,14 +200,25 @@ function renderEntry(entry, ctx) {
   if (type === 'transition') {
     return [['', `${value.duration} ${cubicBezier(value.timingFunction)} ${value.delay}`]];
   }
-  if (Array.isArray(value)) return [['', fontList(value)]];
+  if (type === 'fontFamily' || Array.isArray(value)) return [['', fontList(value)]];
   return [['', String(value)]];
 }
 
+/**
+ * A fontFamily as a CSS list, quoting the names that need it. NORMALIZE always
+ * hands over the array of names (issue #183); a string, from an IR built by
+ * hand, is taken as the CSS list it already is. Same quoting rule as
+ * `fontStack()` in @transtyle/ir, inlined so this exporter keeps importing
+ * nothing.
+ */
+const fontName = (f) => {
+  if (/^(["']).*\1$/s.test(f) || f.includes('(')) return f; // already quoted, or var(…)
+  return /[^a-z-]/.test(f) ? `"${f.replace(/["\\]/g, '\\$&')}"` : f;
+};
+const fontList = (value) => (Array.isArray(value) ? value.map(fontName).join(', ') : String(value));
+
 /** DTCG writes a cubicBezier as four numbers; the catalog's own easings are already CSS. */
 const cubicBezier = (value) => (Array.isArray(value) ? `cubic-bezier(${value.join(', ')})` : String(value));
-
-const fontList = (value) => value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ');
 
 const cssLine = (name, value, entry) =>
   `  ${name}: ${value}; /* ${entry.provenance.kind !== 'authored' ? entry.provenance.kind + ' · ' : ''}${entry.type} */`;

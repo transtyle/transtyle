@@ -15,7 +15,13 @@
  *      after earlier targets were already renamed into place: replaced files
  *      come back, new files and new directories are removed;
  *   4. a clean build still writes everything, replaces changed files, and leaves
- *      files it did not produce untouched.
+ *      files it did not produce untouched;
+ *   5. every report.json of one build lists the same diagnostics and
+ *      suppressions, whatever the target order, including a warning an
+ *      exporter raises for a later target, which `check.suppress` can silence
+ *      (issue #186: each report was serialised inside the target loop, so an
+ *      earlier target's report missed it); `--dry-run`'s planned byte counts
+ *      are those of the reports a real build writes.
  *
  * Run: node scripts/check-atomic-emit.mjs (also: npm run check:atomic-emit; in check:all).
  */
@@ -58,16 +64,22 @@ const exporters = {
   beta: { emit: () => ({ files: [{ path: 'c.txt', contents: `beta ${version}\n` }], coverage: [] }) },
   gamma: { emit: () => ({ files: [{ path: 'd.txt', contents: `gamma ${version}\n` }], coverage: [] }) },
   boom: { emit: () => { throw new Error('exporter exploded'); } },
+  quiet: { emit: () => ({ files: [{ path: 'q.txt', contents: 'quiet\n' }], coverage: [] }) },
+  loud: { emit: () => ({ files: [{ path: 'l.txt', contents: 'loud\n' }], coverage: [], diagnostics: [{ severity: 'warning', code: 'TST9999', message: 'a later target has something to say' }] }) },
 };
 const loadExporter = async (name) => exporters[name];
 
-function configure(targets) {
+function configure(targets, check) {
   const cfgPath = join(dir, 'transtyle.config.json');
   const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
   cfg.targets = targets;
+  if (check) cfg.check = check;
+  else delete cfg.check;
   writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
 }
-const build = (targets) => compile({ cwd: dir, targets, loadExporter, knownExporters: Object.keys(exporters) });
+const build = (targets, options = {}) => compile({ cwd: dir, targets, loadExporter, knownExporters: Object.keys(exporters), ...options });
+const reportOf = (target) => JSON.parse(readFileSync(join(dir, `out/${target}/report.json`), 'utf8'));
+const codes = (list) => list.map((d) => d.code).join(',');
 
 try {
   execFileSync('node', [cli, 'init', 'atomic-check', '--cwd', dir], { stdio: 'pipe' });
@@ -121,6 +133,38 @@ try {
   expect('rebuild: file this build did not produce is untouched', readFileSync(join(dir, 'out/alpha/orphan.txt'), 'utf8') === 'keep me\n');
   expect('rebuild: results list the written files', r.results[0].files.includes('out/alpha/a.txt') && r.results[0].files.includes('out/alpha/report.json'));
   expect('rebuild: no staging directories left', leftovers().length === 0);
+
+  // 5. every report.json of one build agrees, a later exporter's warning included
+  configure({ quiet: { output: 'out/quiet' }, loud: { output: 'out/loud' } });
+  const reports = {};
+  for (const order of [['quiet', 'loud'], ['loud', 'quiet']]) {
+    r = await build(order);
+    const [first, second] = order.map(reportOf);
+    reports[order.join('>')] = first;
+    expect(`reports agree (${order.join(' then ')}): no errors`, r.diagnostics.errors.length === 0, codes(r.diagnostics.errors));
+    expect(
+      `reports agree (${order.join(' then ')}): both list the later exporter's TST9999 and the same diagnostics`,
+      first.diagnostics.some((d) => d.code === 'TST9999' && d.target === 'loud') && JSON.stringify(first.diagnostics) === JSON.stringify(second.diagnostics) && JSON.stringify(first.suppressed) === JSON.stringify(second.suppressed),
+      `${order[0]}: ${codes(first.diagnostics)} / ${order[1]}: ${codes(second.diagnostics)}`,
+    );
+  }
+  expect('reports agree: target order does not change the list', JSON.stringify(reports['quiet>loud'].diagnostics) === JSON.stringify(reports['loud>quiet'].diagnostics));
+
+  configure({ quiet: { output: 'out/quiet' }, loud: { output: 'out/loud' } }, { suppress: [{ code: 'TST9999', reason: 'known, checked by hand' }] });
+  r = await build(['quiet', 'loud']);
+  const [quiet, loud] = ['quiet', 'loud'].map(reportOf);
+  expect(
+    'an exporter diagnostic can be suppressed: gone from diagnostics, listed in suppressed in every report, no TST1012',
+    !r.diagnostics.items.some((d) => d.code === 'TST9999' || d.code === 'TST1012') &&
+      [quiet, loud].every((x) => !x.diagnostics.some((d) => d.code === 'TST9999') && x.suppressed.some((d) => d.code === 'TST9999' && d.reason === 'known, checked by hand')),
+    `diagnostics: ${codes(r.diagnostics.items)}; quiet suppressed: ${codes(quiet.suppressed)}`,
+  );
+
+  const sizes = Object.fromEntries(['quiet', 'loud'].map((t) => [`out/${t}/report.json`, statSync(join(dir, `out/${t}/report.json`)).size]));
+  const before5 = snapshot();
+  r = await build(['quiet', 'loud'], { dryRun: true });
+  const planned = r.results.flatMap((x) => x.planned).filter((f) => f.path.endsWith('report.json'));
+  expect('dry run: plans both report.json files with the bytes a real build writes, and writes nothing', planned.length === 2 && planned.every((f) => sizes[f.path] === f.bytes) && snapshot() === before5, JSON.stringify(planned));
 } finally {
   rmSync(dir, { recursive: true, force: true });
 }

@@ -25,8 +25,13 @@
  * different change. What fails is a value no CSS string can come out of — a
  * malformed object, a bare number where a unit is required, an unknown keyword —
  * with `TST1106` and a hint naming the accepted forms.
+ *
+ * `fontFamily` goes the other way: its canonical form is the DTCG **array** of
+ * names, because that is what every exporter already reads (it quotes each name
+ * for its target), and a string is split into it.
  */
 
+import { fontNames } from '@transtyle/ir';
 import { parseColor, DTCG_COLOR_SPACES } from './color.js';
 
 /** A parse failure, raised as TST1106 by the caller with `hint` attached. */
@@ -159,6 +164,27 @@ function color(raw, onWarning) {
   }
 }
 
+/**
+ * `fontFamily`: an array of names, or one string, which may be a whole CSS list
+ * (`"Inter, system-ui, sans-serif"`). Canonical form: the array, split by
+ * `fontNames()` (@transtyle/ir), so the two forms compile byte-identical and
+ * an exporter never meets a string where it maps over an array (issue #183).
+ */
+function fontFamily(raw) {
+  const hint = 'A fontFamily is an array of font names, most preferred first, e.g. ["Inter", "system-ui", "sans-serif"]; a CSS list in one string such as "Inter, system-ui, sans-serif" is accepted too.';
+  if (Array.isArray(raw) && !raw.every((n) => typeof n === 'string')) {
+    throw new ValueError(`fontFamily array must hold font names (strings), got ${show(raw)}`, hint);
+  }
+  if (typeof raw !== 'string' && !Array.isArray(raw)) {
+    throw new ValueError(`fontFamily value must be a font name or an array of names, got ${show(raw)}`, hint);
+  }
+  const names = fontNames(raw);
+  if (names.length === 0 || names.some((n) => n.trim() === '')) {
+    throw new ValueError(`fontFamily ${show(raw)} has an empty font name`, hint);
+  }
+  return names;
+}
+
 /** `number`: a JSON number, or a string as authored; never an object or array. */
 function number(raw) {
   if (typeof raw === 'number' || typeof raw === 'string') return raw;
@@ -171,12 +197,13 @@ const PARSERS = {
   duration: measure('duration', DURATION_UNITS, { value: 150, unit: 'ms' }),
   cubicBezier,
   fontWeight,
+  fontFamily,
   number,
 };
 
 /**
  * Parse an authored (non-alias) `$value` into its canonical IR value. Types
- * without a parser (`fontFamily`, `strokeStyle`, `boolean`, `gradient`, an
+ * without a parser (`strokeStyle`, `boolean`, `gradient`, an
  * unknown or absent `$type`) are carried as authored. Composites (`shadow`,
  * `typography`, `border`, `transition`) never arrive whole: normalize.js
  * resolves them member by member and calls this once per member with the
