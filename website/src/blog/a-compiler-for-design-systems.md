@@ -658,8 +658,6 @@ all eight targets:
 
 <p class="covmatrix-legend"><span><i class="native"></i>native — lossless</span><span><i class="derived"></i>derived — computed by a rule</span><span><i class="approx"></i>approximated — meaning bent, reason recorded</span><span><i class="other"></i>dropped / unsupported — this target can't say it</span></p>
 
-<!-- measured: govuk.bootstrap.rows = 712 -->
-
 Read the shape, not a single number — and never compare one target's bar to another's. Each measures
 a different surface with a different ceiling. `css-variables` is 100% native because it is the
 conformance dump: it has a slot for everything by construction. `radix` is 58% approximated because

@@ -66,6 +66,10 @@ Most targets only know about `color-scheme`. This one expresses **every** dimens
 
 A combination gets a block of its own, `[data-color-scheme="dark"][data-contrast="more"]`, whenever the separate blocks would resolve it wrong: a dimension that changes colors ([`contrast`, `brand`](/docs/configuration/#contrast-motion-and-brand)) needs its dark values restated, or its light block would win on a dark page. Density changes no color, so Acme gets none. The `contrast: more` and `motion: reduced` blocks are also written inside `@media (prefers-contrast: more)` and `@media (prefers-reduced-motion: reduce)`, so the user's system setting applies until the page sets the attribute, and any value you set wins over it (`data-contrast="standard"` included). Set `options.mediaQueries: false` to keep only the attributes. Put every attribute on the element that carries `data-color-scheme`, usually `<html>`.
 
+## Your own tokens (custom vocabulary)
+
+The same rule covers the `semantic.*` tokens you add outside the [catalog](/docs/concepts/#3-the-semantic-catalog): [Cathode](/docs/examples/#cathode--the-hostile-example)'s `semantic.color.crt.ink` is written as `--color-crt-ink`, `native`. Set `options.customTokens` to `"omit"` to leave them out of the file; each one is then reported `dropped` in `report.json`, like on a target that has no place for them.
+
 ## Custom roles (role archetypes)
 
 Nothing target-specific to add: a custom role that declares `$extensions.transtyle.role` gets its full grid derived under `semantic.color.<name>.*` just like a built-in role, and this exporter already walks every `semantic.*` slot it finds — the archetyped role's cells show up automatically. See Cathode's `crt-amber` role in its `dist/css-variables/` output.

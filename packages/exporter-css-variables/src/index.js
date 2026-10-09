@@ -44,20 +44,29 @@ export default {
       darkSelector: { type: 'string' },
       dimensionSelectors: { type: 'object', additionalProperties: { type: 'string' } },
       mediaQueries: { type: 'boolean' },
+      // Custom semantic tokens (issue #51): emitted like every other slot by
+      // default; `omit` leaves them out, and core reports each one `dropped`.
+      customTokens: { type: 'string', enum: ['emit', 'omit'] },
     },
   },
+
+  // An open vocabulary: any `semantic.*` token, catalog slot or not, has a
+  // place in the output. Core reads this flag for the note on a custom token
+  // the output leaves out (docs/architecture/plugins.md).
+  openVocabulary: true,
 
   emit(normalized, ctx) {
     const prefix = ctx.targetConfig.options?.prefix ? `${ctx.targetConfig.options.prefix}-` : '';
     const darkSelector = ctx.targetConfig.options?.darkSelector ?? '[data-color-scheme="dark"]';
     const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
     const dark = normalized.modes.dark;
+    const omitted = new Set(ctx.targetConfig.options?.customTokens === 'omit' ? ctx.customTokens ?? [] : []);
 
     const coverage = [];
     const colorLines = { light: [], dark: [] };
     const invariantLines = [];
 
-    const slots = [...light.keys()].filter((k) => k.startsWith('semantic.')).sort((a, b) => varName(a, prefix).localeCompare(varName(b, prefix)));
+    const slots = [...light.keys()].filter((k) => k.startsWith('semantic.') && !omitted.has(k)).sort((a, b) => varName(a, prefix).localeCompare(varName(b, prefix)));
 
     for (const slot of slots) {
       const entry = light.get(slot);
@@ -113,7 +122,7 @@ export default {
     const mediaQueries = ctx.targetConfig.options?.mediaQueries !== false;
     const render = (map, { dark: isDark }) => {
       const out = [];
-      for (const slot of [...map.keys()].filter((k) => k.startsWith('semantic.'))) {
+      for (const slot of [...map.keys()].filter((k) => k.startsWith('semantic.') && !omitted.has(k))) {
         const entry = map.get(slot);
         if (entry?.value === undefined) continue;
         const isColor = slot.startsWith('semantic.color.') || entry.type === 'shadow' || entry.type === 'border';
@@ -165,7 +174,7 @@ export default {
     return {
       files: [
         { path: 'variables.transtyle.css', contents: css, kind: 'stylesheet' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage.length, darkSelector, extraDims, colorLines.dark.length > 0, { mediaDims, comboBlocks }), kind: 'doc' },
+        { path: 'usage.md', contents: renderUsage(ctx, coverage.length, darkSelector, extraDims, colorLines.dark.length > 0, { mediaDims, comboBlocks, hasCustom: (ctx.customTokens ?? []).length > 0 }), kind: 'doc' },
       ],
       coverage,
     };
@@ -259,7 +268,7 @@ function noteLines(entry) {
 
 // ---------- usage ----------
 
-function renderUsage(ctx, count, darkSelector, extraDims, hasDark = true, { mediaDims = [], comboBlocks = false } = {}) {
+function renderUsage(ctx, count, darkSelector, extraDims, hasDark = true, { mediaDims = [], comboBlocks = false, hasCustom = false } = {}) {
   return `# Using these CSS variables
 
 The complete resolved semantic catalog of **${ctx.projectName}** (${count} custom properties), framework-free. This is transtyle's simplest target — and the reference projection of the IR: every other exporter's output is some mapping of what you see here.
@@ -309,7 +318,7 @@ ${mediaDims.map((m) => `\`${m.dim}\``).join(' and ')} also follow${mediaDims.len
 ## Naming
 
 Strip \`semantic.\`, dots become dashes: \`color.primary.solid\` → \`--color-primary-solid\`. The elevation ladder and \`scrim\` drop the \`color.\` segment (\`--elevation-1-surface\`, \`--scrim\`) since they're surfaces, not role colors. Composite typography roles (\`type.role.*\`) expand to \`-size\`/\`-weight\`/\`-leading\`/\`-family\`; elevation shadows collapse to one box-shadow-shaped value (\`--elevation-1-shadow\`).
-
+${hasCustom ? '\nYour own `semantic.*` tokens outside the catalog follow the same rule (`semantic.color.brand.ink` → `--color-brand-ink`). Set `options.customTokens: "omit"` to leave them out.\n' : ''}
 ## Regenerating
 
 Never edit this file — change the design system tokens and run \`transtyle build css-variables\`.

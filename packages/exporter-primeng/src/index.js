@@ -167,6 +167,14 @@ function emitOne(normalized, ctx) {
     slot: 'semantic.color.elevation.1.surface + border + text.base',
     class: 'native',
   });
+  // The content text pair every component reads by reference
+  // (`{text.color}`, `{text.muted.color}`): one row per preset path.
+  for (const [key, slot] of [['color', 'text.base'], ['hoverColor', 'text.base'], ['mutedColor', 'text.muted'], ['hoverMutedColor', 'text.muted']]) {
+    const row = bound(`semantic.colorScheme.*.text.${key}`, `semantic.color.${slot}`);
+    if (row.class === 'native' && light.get(row.slot).provenance.kind === 'derived') row.class = 'derived';
+    if (row.note === undefined) delete row.note;
+    coverage.push(row);
+  }
   coverage.push({
     variable: 'semantic.colorScheme.*.mask.background',
     slot: 'semantic.color.scrim',

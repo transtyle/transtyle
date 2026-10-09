@@ -44,6 +44,10 @@ A combination gets a compound block (`[data-color-scheme="dark"][data-contrast="
 
 No special-casing needed: custom roles declaring `$extensions.transtyle.role` (docs/architecture/ir.md §archetypes) get their full grid derived under `semantic.color.<name>.*` exactly like a built-in role, and this exporter already dumps every `semantic.*` slot it finds — an archetyped role's cells appear automatically, `native`, with no code change. See Cathode's `crt-amber` in `dist/css-variables/`.
 
+## Custom semantic tokens
+
+A design system's own `semantic.*` tokens outside the catalog (its custom vocabulary, [validation-and-coverage.md](../validation-and-coverage.md#custom-vocabulary)) are slots like any other here: the same naming rule writes Cathode's `semantic.color.crt.ink` as `--color-crt-ink`, `native`. The exporter declares `openVocabulary: true` ([plugins.md](../../architecture/plugins.md#open-vocabulary-targets)) and the option `customTokens`: `"emit"` (default) or `"omit"`, which leaves every custom token out of the file (extra-dimension blocks included); core then reports each one `dropped` with the note `omitted by options.customTokens`.
+
 ## Ground-truth testing
 
 None needed beyond the compiler's own determinism guarantee: the output is a direct, lossless projection of the resolved token graph, verified by `scripts/check-grid.mjs` (catalog completeness) and the demo projects (a plain HTML page consuming the file directly, no framework in between).

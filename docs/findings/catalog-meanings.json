@@ -1,5 +1,5 @@
 {
-  "$comment": "The registry of meaning keys exporters put on `unsupported` coverage rows (report.json `meaning`). scripts/gen-catalog-signals.mjs groups rows by these keys into docs/findings/catalog-signals.md and fails on a key that is not listed here. A status changes when a proposal or a worklog settles the question; update `ref` with it. Statuses: open, watch, disagreement, rejected, target-specific, promoted (docs/specs/validation-and-coverage.md, \"Catalog signals\").",
+  "$comment": "The registry of meaning keys exporters put on `unsupported` coverage rows, and core on the `dropped` rows of custom semantic tokens (report.json `meaning`). scripts/gen-catalog-signals.mjs groups rows by these keys into docs/findings/catalog-signals.md and fails on a key that is not listed here. A status changes when a proposal or a worklog settles the question; update `ref` with it. Statuses: open, watch, disagreement, rejected, target-specific, promoted, custom (docs/specs/validation-and-coverage.md, \"Catalog signals\").",
   "meanings": {
     "breakpoint.ladder": {
       "status": "disagreement",
@@ -25,6 +25,11 @@
       "status": "target-specific",
       "summary": "The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`; Chakra's hue palettes, their ramps and its `black` and `white`), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept.",
       "ref": "docs/specs/exporters/mantine.md"
+    },
+    "custom.vocabulary": {
+      "status": "custom",
+      "summary": "A design system's own `semantic.*` tokens, outside the catalog, that no slot a target emits binds to and that the target has no place for. Core adds these rows; they describe the design system's vocabulary, not a target's surface.",
+      "ref": "docs/specs/validation-and-coverage.md"
     },
     "effect.blur": {
       "status": "open",

@@ -384,14 +384,39 @@ function resolve(light, dark, ctx) {
   if (font('sans')) cov('$font-family-sans-serif', 'semantic.font.sans', 'native');
   if (font('mono')) cov('$font-family-monospace', 'semantic.font.mono', 'native');
 
-  const typeProv = light.get('semantic.type.size.md')?.provenance.kind;
-  cov(
-    '$font-size-base…$h1-font-size',
-    'semantic.type.*',
-    typeProv === 'authored' || typeProv === 'aliased' ? 'native' : 'derived',
-    typeProv === 'defaulted'
-      ? 'defaulted modular scale (base 1rem, ratio 1.25) — no authored type tokens'
-      : undefined,
+  // The three scalar roots Bootstrap's own chains read most ($spacer,
+  // $font-size-base, $line-height-base) get a row each with their exact slot,
+  // so `explain --variable` can follow a `via` chain to a slot (#179); the
+  // ladders they sit in keep one row each, narrowed to the rest of the ladder.
+  const scaleClass = (slot) => {
+    const kind = light.get(slot)?.provenance.kind;
+    return kind === 'authored' || kind === 'aliased' ? 'native' : 'derived';
+  };
+  const scaleRow = (variable, slots, label, defaultedNote) => {
+    const present = slots.filter((s) => light.has(s));
+    if (!present.length) return;
+    const kind = light.get(present[0]).provenance.kind;
+    coverage.push({
+      variable,
+      slot: label,
+      ...(present.length > 1 || present[0] !== label ? { slots: present } : {}),
+      class: scaleClass(present[0]),
+      ...(kind === 'defaulted' && { note: defaultedNote }),
+    });
+  };
+  const TYPE_DEFAULTED = 'defaulted modular scale (base 1rem, ratio 1.25) — no authored type tokens';
+  scaleRow('$font-size-base', ['semantic.type.size.md'], 'semantic.type.size.md', TYPE_DEFAULTED);
+  scaleRow(
+    '$line-height-base',
+    ['semantic.type.leading.normal'],
+    'semantic.type.leading.normal',
+    'defaulted line height (1.5) — no authored leading token',
+  );
+  scaleRow(
+    '$h1-font-size…$h6-font-size',
+    ['4xl', '3xl', '2xl', 'xl', 'lg', 'md'].map((k) => `semantic.type.size.${k}`),
+    'semantic.type.size.{4xl…md}',
+    TYPE_DEFAULTED,
   );
   cov(
     '$display-font-sizes',
@@ -401,12 +426,13 @@ function resolve(light, dark, ctx) {
     'type.display-ladder',
   );
 
-  const spaceProv = light.get('semantic.space.4')?.provenance.kind;
-  cov(
-    '$spacer/$spacers',
-    'semantic.space.*',
-    spaceProv === 'authored' || spaceProv === 'aliased' ? 'native' : 'derived',
-    spaceProv === 'defaulted' ? 'defaulted linear scale (base 0.25rem)' : undefined,
+  const SPACE_DEFAULTED = 'defaulted linear scale (base 0.25rem)';
+  scaleRow('$spacer', ['semantic.space.4'], 'semantic.space.4', SPACE_DEFAULTED);
+  scaleRow(
+    '$spacers',
+    SPACE_MAP.map(([, catKey]) => `semantic.space.${catKey}`),
+    'semantic.space.{0,1,2,4,6,12}',
+    SPACE_DEFAULTED,
   );
   cov(
     '$grid-breakpoints/$container-max-widths',
@@ -434,12 +460,17 @@ function resolve(light, dark, ctx) {
   coverage.push(...component.coverage);
   // CSS path (AL1.4): structural component vars + button variant state colors.
   coverage.push(...componentCssBlocks(light, ctx).coverage);
-  cov(
-    '--bs-btn-* variant state colors (CSS path)',
-    `${S}<role>.{solid,solid-hover,solid-active,on-solid}`,
-    'derived',
-    "grid state cells replace Bootstrap's shade/tint derivation for stock-CSS users; .btn-light/.btn-dark keep defaults (pseudo-roles have no grid)",
-  );
+  // The cells buttonVariantBlocks() reads, so the row names what it emits.
+  const btnCells = ROLES.flatMap((role) =>
+    ['solid', 'solid-hover', 'solid-active', 'on-solid'].map((cell) => `${S}${role}.${cell}`),
+  ).filter((slot) => light.has(slot));
+  coverage.push({
+    variable: '--bs-btn-* variant state colors (CSS path)',
+    slot: `${S}<role>.{solid,solid-hover,solid-active,on-solid}`,
+    ...(btnCells.length && { slots: btnCells }),
+    class: 'derived',
+    note: "grid state cells replace Bootstrap's shade/tint derivation for stock-CSS users; .btn-light/.btn-dark keep defaults (pseudo-roles have no grid)",
+  });
 
   const typeScale = {
     base: raw(light, 'type.size.md'),

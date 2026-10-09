@@ -53,6 +53,10 @@ Because daisyUI wants every role authored-or-derived, coverage skews `derived` o
 
 A slot's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describing-and-deprecating-tokens) are written as comment lines above its variable in the light theme block.
 
+## Your own tokens (custom vocabulary)
+
+The theme block takes any custom property, so the `semantic.*` tokens you add outside the [catalog](/docs/concepts/#3-the-semantic-catalog) are written into each theme too, named like the [css-variables](/docs/exporter-css-variables/) target names them: GOV.UK's `semantic.color.govuk.link` becomes `--color-govuk-link`, `native`, with each theme's own value. A composite (a shadow, a typography) has no single-value form there and is reported `dropped`. Set `options.customTokens` to `"omit"` to leave them all out; each is then `dropped` in `report.json`.
+
 ## Custom roles (role archetypes)
 
 daisyUI's color set is **open** — any `--color-<name>` custom property is a real Tailwind utility color — so a custom role declaring `$extensions.transtyle.role` (docs/architecture/ir.md's [role archetypes](/docs/language/#color-roles-the-role-grid)) gets `--color-<name>` + `--color-<name>-content` emitted alongside the built-ins, `native`. Cathode's `crt-amber` role (archetype `status`) demonstrates this: it's authored once, with no other bindings, purely to show the open-role-set path — contrast Bootstrap/shadcn, whose closed sets can't take it at all.

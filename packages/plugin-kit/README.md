@@ -46,23 +46,26 @@ trust it.
 Each is a plain DTCG project under [`fixtures/`](https://github.com/transtyle/transtyle/tree/main/packages/plugin-kit/fixtures), compiled by the real
 loader: open one to see exactly what your plugin received.
 
-| Fixture          | What it exercises                                                                                                                          | Spec it enforces                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `canonical`      | a brand color, light and dark, elevation, text, border, fonts; radius, a duration and an easing in DTCG structured form                    | [plugins.md, the exporter interface][iface]                                                    |
-| `one-token`      | only `semantic.color.primary.solid`; everything else is derived or absent                                                                  | [validation-and-coverage.md, coverage report][cov]: a missing slot is a row, not a crash       |
-| `three-token`    | brand, page background and text, with dark values; no radius, spacing or fonts                                                             | [validation-and-coverage.md, coverage report][cov]: absence is not coverage                    |
-| `two-dimension`  | `color-scheme` × `density`, with `space.4` authored differently under `density: compact`                                                   | [ir.md, modes][modes] and [coverage report][cov]: a mode the target can't express is `dropped` |
-| `single-mode`    | `color-scheme` with `light` only: there is no `dark` map                                                                                   | [ir.md, modes][modes]                                                                          |
-| `component-tier` | authored `component.control.radius`, `button.radius` (an alias to a derived slot), `button.padding-x`, `tooltip.max-width`                 | [ir.md, the three-tier token model][tiers]                                                     |
-| `custom-role`    | a custom `promo` role joining the grid through `$extensions.transtyle.role`                                                                | [ir.md, the role grid][grid]                                                                   |
-| `composites`     | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                                               | [ir.md, values and canonicalization][values]                                                   |
-| `object-form`    | colors and dimension, duration, cubicBezier, fontWeight, typography members and a fontFamily array in DTCG structured form, two dimensions | [ir.md, values and canonicalization][values]: byte-identical to the string form                |
+| Fixture             | What it exercises                                                                                                                          | Spec it enforces                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `canonical`         | a brand color, light and dark, elevation, text, border, fonts; radius, a duration and an easing in DTCG structured form                    | [plugins.md, the exporter interface][iface]                                                          |
+| `one-token`         | only `semantic.color.primary.solid`; everything else is derived or absent                                                                  | [validation-and-coverage.md, coverage report][cov]: a missing slot is a row, not a crash             |
+| `three-token`       | brand, page background and text, with dark values; no radius, spacing or fonts                                                             | [validation-and-coverage.md, coverage report][cov]: absence is not coverage                          |
+| `two-dimension`     | `color-scheme` × `density`, with `space.4` authored differently under `density: compact`                                                   | [ir.md, modes][modes] and [coverage report][cov]: a mode the target can't express is `dropped`       |
+| `single-mode`       | `color-scheme` with `light` only: there is no `dark` map                                                                                   | [ir.md, modes][modes]                                                                                |
+| `component-tier`    | authored `component.control.radius`, `button.radius` (an alias to a derived slot), `button.padding-x`, `tooltip.max-width`                 | [ir.md, the three-tier token model][tiers]                                                           |
+| `custom-role`       | a custom `promo` role joining the grid through `$extensions.transtyle.role`                                                                | [ir.md, the role grid][grid]                                                                         |
+| `custom-vocabulary` | custom `semantic.*` tokens outside the catalog: a bound color, an unbound color, a dimension, a shadow                                     | [validation-and-coverage.md, custom vocabulary][custom]: an open-vocabulary plugin carries every one |
+| `composites`        | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                                               | [ir.md, values and canonicalization][values]                                                         |
+| `object-form`       | colors and dimension, duration, cubicBezier, fontWeight, typography members and a fontFamily array in DTCG structured form, two dimensions | [ir.md, values and canonicalization][values]: byte-identical to the string form                      |
 
 ## Checks
 
 Once per plugin: `interface-shape`, `manifest-valid` and `manifest-compatible` (with
 `{ manifest }`: the fields are there, and `irSpec`/`pluginApi` accept this `@transtyle/core`,
-the check the CLI runs at load time), `options-schema-shape` (when the plugin has an `optionsSchema`). Then on every fixture:
+the check the CLI runs at load time), `options-schema-shape` (when the plugin has an `optionsSchema`),
+`open-vocabulary-shape` (when it sets `openVocabulary`: a boolean, and `true` comes with a
+`customTokens: "emit" | "omit"` option). Then on every fixture:
 
 | Check                          | Asserts                                                                                                |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -78,6 +81,8 @@ the check the CLI runs at load time), `options-schema-shape` (when the plugin ha
 | `coverage-honest`              | no `native` or `derived` row names a slot that does not resolve                                        |
 | `mode-dimensions-accounted`    | `two-dimension` only: the compact `density` value is in a file, or a `(mode:density)` row is `dropped` |
 | `structured-values-as-strings` | `object-form` only: the files are byte-identical to the same design system authored with CSS strings   |
+| `custom-vocabulary-carried`    | open-vocabulary plugins, on `custom-vocabulary`: a row names every custom token                        |
+| `custom-vocabulary-omit`       | the same, with `customTokens: "omit"`: no row that emits names a custom token                          |
 
 [iface]: https://github.com/transtyle/transtyle/blob/main/docs/architecture/plugins.md#the-exporter-interface
 [cov]: https://github.com/transtyle/transtyle/blob/main/docs/specs/validation-and-coverage.md#coverage-report
@@ -85,6 +90,7 @@ the check the CLI runs at load time), `options-schema-shape` (when the plugin ha
 [tiers]: https://github.com/transtyle/transtyle/blob/main/docs/architecture/ir.md#the-three-tier-token-model
 [grid]: https://github.com/transtyle/transtyle/blob/main/docs/architecture/ir.md#color-the-role-grid
 [values]: https://github.com/transtyle/transtyle/blob/main/docs/architecture/ir.md#values-and-canonicalization
+[custom]: https://github.com/transtyle/transtyle/blob/main/docs/specs/validation-and-coverage.md#custom-vocabulary
 
 ## Documentation
 

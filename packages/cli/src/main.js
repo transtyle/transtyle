@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca, loadConfigChain, DEFAULT_CONFIG_FILE } from '@transtyle/core';
+import { compile, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca, loadConfigChain, DEFAULT_CONFIG_FILE, isCustomRow, customVocabularySentence } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
@@ -343,13 +343,18 @@ async function cmdBuildOrCheck(args) {
   if (adopted && !QUIET) printAdoption(adopted);
 
   for (const r of results) {
+    // The rows core adds for custom semantic tokens (issue #51) describe the
+    // design system, not the target's surface: they get their own line and
+    // stay out of the percentages, so a target's bar doesn't move with them.
+    const rows = r.coverage.filter((c) => !isCustomRow(c));
     const counts = {};
-    for (const c of r.coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
-    const total = r.coverage.length || 1;
+    for (const c of rows) counts[c.class] = (counts[c.class] ?? 0) + 1;
+    const total = rows.length || 1;
     const pct = (k) => (counts[k] ? `${Math.round((counts[k] / total) * 100)}% ${k}` : null);
     const bar = ['native', 'derived', 'approximated', 'dropped', 'unsupported'].map(pct).filter(Boolean).join(' · ');
     if (QUIET) continue;
-    console.error(`\n${r.target}  ${bar}${VERBOSE ? `  (${r.coverage.length} rows${Object.entries(counts).map(([k, n]) => `, ${n} ${k}`).join('')})` : ''}`);
+    console.error(`\n${r.target}  ${bar}${VERBOSE ? `  (${rows.length} rows${Object.entries(counts).map(([k, n]) => `, ${n} ${k}`).join('')})` : ''}`);
+    if (r.customVocabulary) console.error(`  custom vocabulary: ${customVocabularySentence(r.customVocabulary)}`);
     if (VERBOSE && r.exporter) console.error(`  exporter ${r.exporter}, options ${JSON.stringify(config.targets?.[r.target]?.options ?? {})}, output ${r.outDir}`);
     if (emit) {
       const verb = args.dryRun ? 'would write ' : '';
@@ -374,7 +379,7 @@ async function cmdBuildOrCheck(args) {
       contrast: result.contrast ? { standard: result.contrast.standard, algorithm: result.contrast.algorithm } : null,
       diagnostics: diagnostics.items,
       suppressed: diagnostics.suppressed,
-      targets: results.map((r) => ({ target: r.target, coverage: r.coverage, reads: r.reads })),
+      targets: results.map((r) => ({ target: r.target, coverage: r.coverage, reads: r.reads, ...(r.customVocabulary && { customVocabulary: r.customVocabulary }) })),
       ...(adopted ? { adoption: adopted } : {}),
       ...(matrix ? { matrix } : {}),
       ...(completeness ? { completeness: completenessJson(completeness) } : {}),

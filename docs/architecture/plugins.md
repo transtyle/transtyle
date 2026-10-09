@@ -42,6 +42,7 @@ interface Exporter {
   name: string;
   emit(ir: ResolvedIR, ctx: TargetContext): { files: FileSpec[]; coverage: CoverageItem[]; diagnostics?: ExporterDiagnostic[] };
   optionsSchema?: JSONSchema;   // validated by core against `targets.<t>.options` (audit A8)
+  openVocabulary?: boolean;     // the target has a place for any `semantic.*` token (below)
   doc?(...): DocPlan;           // reserved, capability-gated; no exporter implements it yet
 }
 
@@ -59,7 +60,11 @@ Constraints, enforced executably by the conformance kit rather than by conventio
 
 **Reads are observed, not declared** (issue #160). The mode maps `emit` receives are recording copies of the IR's (same keys, same entries, mode aliases still one object): core notes each catalog slot the exporter looks up (`get`, `has`) or opens while iterating, and reports the sorted list as the target's `reads` in `report.json`. Listing keys to filter them is not a read. It is what `check --matrix` answers "who reads this slot?" from, for third-party exporters as much as official ones, with nothing to add to the interface.
 
-`ctx` carries the project config, this instance's `targetConfig` (with `options`), the color helpers (`formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`, `mix`), `projectName`, `siblings`, and `units` (`remBase`, `toPx(dimension)`, `toRem(dimension)`: unit conversion at the config's `units.remBase`, returning `undefined` for anything that is not a `px` or `rem` dimension).
+`ctx` carries the project config, this instance's `targetConfig` (with `options`), the color helpers (`formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`, `mix`), `projectName`, `siblings`, `units` (`remBase`, `toPx(dimension)`, `toRem(dimension)`: unit conversion at the config's `units.remBase`, returning `undefined` for anything that is not a `px` or `rem` dimension), and `customTokens`: the design system's custom semantic tokens, the `semantic.*` paths it authored or aliased outside the catalog, in path order.
+
+### Open-vocabulary targets
+
+Most targets have a closed set of variables: a design system's custom semantic tokens have no place there, and core accounts for them after `emit` without the exporter doing anything ([validation-and-coverage.md](../specs/validation-and-coverage.md#custom-vocabulary)). A target with an **open** set (any custom property is valid output: css-variables, daisyUI's theme blocks) declares `openVocabulary: true` and writes every token of `ctx.customTokens`, with a `native` row naming it, or a row saying why it can't (daisyUI's theme block holds no composite). It also declares the `customTokens` option, `"emit"` (the default) or `"omit"`; with `"omit"` it writes none of them, and core reports each one `dropped`. The kit checks all three (`open-vocabulary-shape`, `custom-vocabulary-carried`, `custom-vocabulary-omit`). The flag only changes what core says about a token the output leaves out, so a closed-set exporter simply leaves it unset.
 
 **Version profiles — specced.** The design is that an exporter supports version _ranges_ of its framework as mapping profiles, with conditional logic via `ctx.targetVersion`, and core selects the profile so the exporter never parses version strings ([ADR-0006](../adr/0006-version-ranges.md)). Today `ctx` carries no `targetVersion`: era selection is an explicit exporter option (shadcn's `tailwind-v3`/`v4`), and each exporter states the framework version it was built against.
 
@@ -69,19 +74,20 @@ Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the _
 
 ## The plugin-kit and conformance
 
-`@transtyle/plugin-kit` (shipped, P1) exports `conformance(plugin, { manifest?, fixtures? })`. It runs the plugin against nine fixture design systems bundled with the kit (`fixtures/<name>/`, plain DTCG projects compiled by the real loader), so a plugin is tested on the shapes real projects come in, not one complete system:
+`@transtyle/plugin-kit` (shipped, P1) exports `conformance(plugin, { manifest?, fixtures? })`. It runs the plugin against ten fixture design systems bundled with the kit (`fixtures/<name>/`, plain DTCG projects compiled by the real loader), so a plugin is tested on the shapes real projects come in, not one complete system:
 
-| Fixture          | Exercises                                                                                                                                                      |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `canonical`      | a brand color, both `color-scheme` modes, elevation, text, border, fonts; radius, a duration and an easing in DTCG structured form                             |
-| `one-token`      | only `semantic.color.primary.solid`, the one token the engine cannot invent                                                                                    |
-| `three-token`    | brand, page background and text, with dark values; no radius, spacing or fonts                                                                                 |
-| `two-dimension`  | `color-scheme` × `density`, with `space.4` authored differently under `density: compact`                                                                       |
-| `single-mode`    | `color-scheme` with `light` only                                                                                                                               |
-| `component-tier` | authored `component.control.radius`, `component.button.radius` (an alias to a derived slot), `component.button.padding-x`, `component.tooltip.max-width`       |
-| `custom-role`    | a custom role joining the grid through `$extensions.transtyle.role`                                                                                            |
-| `composites`     | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                                                                   |
-| `object-form`    | colors, dimensions, durations, cubicBezier, fontWeight, typography members and a fontFamily array in DTCG structured form, compared with their CSS-string twin |
+| Fixture             | Exercises                                                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canonical`         | a brand color, both `color-scheme` modes, elevation, text, border, fonts; radius, a duration and an easing in DTCG structured form                             |
+| `one-token`         | only `semantic.color.primary.solid`, the one token the engine cannot invent                                                                                    |
+| `three-token`       | brand, page background and text, with dark values; no radius, spacing or fonts                                                                                 |
+| `two-dimension`     | `color-scheme` × `density`, with `space.4` authored differently under `density: compact`                                                                       |
+| `single-mode`       | `color-scheme` with `light` only                                                                                                                               |
+| `component-tier`    | authored `component.control.radius`, `component.button.radius` (an alias to a derived slot), `component.button.padding-x`, `component.tooltip.max-width`       |
+| `custom-role`       | a custom role joining the grid through `$extensions.transtyle.role`                                                                                            |
+| `custom-vocabulary` | custom `semantic.*` tokens outside the catalog: a color bound to `primary.solid`, an unbound color, a dimension and a shadow                                   |
+| `composites`        | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                                                                   |
+| `object-form`       | colors, dimensions, durations, cubicBezier, fontWeight, typography members and a fontFamily array in DTCG structured form, compared with their CSS-string twin |
 
 Every fixture runs by default; `fixtures: 'canonical'` (or an array of names) narrows it. The kit asserts the contract above:
 
@@ -103,12 +109,15 @@ Every fixture runs by default; `fixtures: 'canonical'` (or an array of names) na
 | `coverage-honest`              | no `native`/`derived` row names a slot that does not resolve (absence is not coverage)                                |
 | `mode-dimensions-accounted`    | on `two-dimension`: the compact `density` value reaches a file, or a `(mode:density)` row says `dropped`              |
 | `structured-values-as-strings` | on `object-form`: the files are byte-identical to the string-form twin's ([ir.md](ir.md#values-and-canonicalization)) |
+| `open-vocabulary-shape`        | `openVocabulary`, if present, is a boolean, and `true` comes with a `customTokens: "emit" \| "omit"` option           |
+| `custom-vocabulary-carried`    | on `custom-vocabulary`, for an open-vocabulary plugin: a row names every custom token                                 |
+| `custom-vocabulary-omit`       | the same, with `customTokens: "omit"`: no row that emits names a custom token                                         |
 
-The first three run once per plugin, the rest once per fixture, and each result names its fixture. Each check cites the spec line it enforces, so a failure points at the rule rather than at the kit. **The conformance suite is the real plugin spec** — prose drifts, executable fixtures don't. `npm run check:plugins` runs it over all nine official exporters in CI, with a deliberately broken plugin per check proving that check fails; passing is what "official" means, and community plugins can advertise it. Whether an authored token with no binding on a target may stay silent is still open ([#51](https://github.com/transtyle/transtyle/issues/51)), so `component-tier` and `custom-role` assert the checks above and nothing about which tokens reach the output.
+The first three run once per plugin, the rest once per fixture, and each result names its fixture. Each check cites the spec line it enforces, so a failure points at the rule rather than at the kit. **The conformance suite is the real plugin spec** — prose drifts, executable fixtures don't. `npm run check:plugins` runs it over all eleven official exporters in CI, with a deliberately broken plugin per check proving that check fails; passing is what "official" means, and community plugins can advertise it. Whether an authored token with no binding on a target may stay silent was settled by [#51](https://github.com/transtyle/transtyle/issues/51): it may not, and core, not the exporter, gives each custom semantic token its row. So a closed-set plugin needs nothing on `custom-vocabulary`, and only an open-vocabulary one is held to carrying them.
 
 Its value is not theoretical: on its first run the kit caught `exporter-primeng` emitting `field` where the contract requires `variable` — a divergence that had also been silently producing `report.json` files violating the published report schema.
 
-The built-in `css-variables` exporter is the living reference implementation — 241 lines, no target framework to satisfy, every slot `native`. Copy it before reading anything else.
+The built-in `css-variables` exporter is the living reference implementation — 271 lines, no target framework to satisfy, every slot `native`. Copy it before reading anything else.
 
 ```js
 import { conformance } from '@transtyle/plugin-kit';

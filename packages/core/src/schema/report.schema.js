@@ -29,7 +29,8 @@ const coverageItem = {
     // row is missing ("icon.size"), so rows from different exporters can be
     // grouped by meaning instead of by note text. Read by
     // scripts/gen-catalog-signals.mjs; every key must be registered in
-    // docs/findings/catalog-meanings.json.
+    // docs/findings/catalog-meanings.json. Core puts `custom.vocabulary` on
+    // the `dropped` rows it adds for custom semantic tokens (issue #51).
     meaning: {
       type: 'string',
       pattern: '^[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*)*$',
@@ -102,6 +103,19 @@ export const reportSchema = {
       properties: {
         counts: { type: 'object', additionalProperties: { type: 'integer' } },
         items: { type: 'array', items: coverageItem },
+        // Issue #51: what became of the design system's custom semantic
+        // tokens on this target, each counted once. Absent when it has none.
+        customVocabulary: {
+          type: 'object',
+          required: ['total', 'emitted', 'reached', 'dropped'],
+          additionalProperties: false,
+          properties: {
+            total: { type: 'integer', description: 'custom semantic tokens: authored or aliased `semantic.*` paths outside the catalog' },
+            emitted: { type: 'integer', description: 'written under their own name (an open-vocabulary target)' },
+            reached: { type: 'integer', description: 'not written themselves, but read through a catalog slot the target emits' },
+            dropped: { type: 'integer', description: 'no path to the target; each has a `dropped` row' },
+          },
+        },
       },
     },
     // Issue #160: the catalog slots (`semantic.*`, `component.*`) the exporter
