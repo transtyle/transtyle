@@ -151,7 +151,7 @@ export default {
     });
     coverage.push({
       variable: 'semantic.overlay.*',
-      slot: 'semantic.color.elevation.N.{surface,shadow} + radius.*',
+      slot: 'semantic.color.elevation.N.{surface,shadow} + radius.* + space.{6,3} (modal, popover padding)',
       class: 'native',
     });
     coverage.push({

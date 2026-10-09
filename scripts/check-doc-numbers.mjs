@@ -27,6 +27,9 @@
  *      `data-example` attribute. A matrix without that attribute is an error:
  *      an unlabeled diagram is a number nobody can re-derive.
  *
+ *      Dated blog posts are exempt from 1 and 2 (see isFrozenPost): they keep
+ *      the numbers they were published with.
+ *
  *   3. measured markers — the counts prose states in a thousand different
  *      shapes ("40 authored tokens", "657 component-scoped variables"). A page
  *      declares them next to the claim:
@@ -90,6 +93,16 @@ const SURFACES = [
   'ROADMAP.md',
   'CONTRIBUTING.md',
 ];
+
+/**
+ * A dated blog post is a snapshot: it shows the coverage the project had on the
+ * day it was published, and is never edited to follow later builds. Its coverage
+ * transcripts and `.covmatrix` diagrams are therefore not re-derived (sections 1
+ * and 2); measured markers (section 3) still are, since they sit in prose the
+ * author chose to keep live.
+ */
+const isFrozenPost = (surface) =>
+  surface.startsWith('website/src/blog/') && /^date:\s*\S/m.test(/^---\n([\s\S]*?)\n---/.exec(read(surface))?.[1] ?? '');
 
 /**
  * Every example is compiled in-process, `emit: false`, and every number below
@@ -206,6 +219,7 @@ function scanTranscripts(body) {
 }
 
 for (const surface of SURFACES) {
+  if (isFrozenPost(surface)) continue;
   for (const { example, target, bar } of scanTranscripts(read(surface))) {
     if (!targetsOfDefault.has(target) && !configuredTargets(example).includes(target)) continue;
     const actual = await coveragePercentages(example, target);
@@ -235,6 +249,7 @@ const MATRIX = /<div class="covmatrix"([^>]*)>([\s\S]*?)<\/div>\s*$/gm;
 const ROW = /<span class="cm-name">([\w-]+)<\/span>([\s\S]*?)<\/div>/g;
 
 for (const surface of SURFACES) {
+  if (isFrozenPost(surface)) continue;
   const body = read(surface);
   for (const block of body.matchAll(/<div class="covmatrix"([^>]*)>([\s\S]*?)<\/div>\s*\n\s*<\/div>/g)) {
     const [, attrs, inner] = block;
