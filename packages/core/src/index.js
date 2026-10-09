@@ -4,7 +4,7 @@
  */
 
 import path from 'node:path';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { commitOutputs } from './emit.js';
 import { loadConfig, loadTokenTrees } from './load.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
@@ -120,6 +120,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     });
     crashes++;
   };
+  const plans = [];
 
   for (const name of targetNames) {
     const targetConfig = config.targets?.[name];
@@ -197,20 +198,31 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     const outDir = path.resolve(cwd, targetConfig.output ?? `dist/${name}`);
     const written = [];
     if (emit) {
-      await mkdir(outDir, { recursive: true });
-      for (const f of files) {
-        await writeFile(path.join(outDir, f.path), f.contents, 'utf8');
-        written.push(path.relative(cwd, path.join(outDir, f.path)));
-      }
-      // Build manifest + machine-readable report (docs/specs/validation-and-coverage.md)
-      const report = buildReport(name, targetConfig, coverage, diagnostics, written);
-      await writeFile(path.join(outDir, 'report.json'), JSON.stringify(report, null, 2) + '\n', 'utf8');
+      // Build manifest + machine-readable report (docs/specs/validation-and-coverage.md).
+      // Nothing is written here: every target is collected first and the whole
+      // build is committed atomically below (src/emit.js).
+      const planned = files.map((f) => ({ path: f.path, contents: f.contents }));
+      for (const f of files) written.push(path.relative(cwd, path.join(outDir, f.path)));
+      const report = buildReport(name, targetConfig, coverage, diagnostics, [...written]);
+      planned.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
       written.push(path.relative(cwd, path.join(outDir, 'report.json')));
+      plans.push({ outDir, files: planned });
     }
     // `emitted` carries the file *specs* (path + contents) even when emit is
     // off — `transtyle diff` re-emits both sides in-memory to compute per-target
     // impact without writing anything. `files` stays the written paths.
     results.push({ target: name, files: written, coverage, emitted: files });
+  }
+
+  // EMIT commit: all exporters have run. Nothing is written if any error-level
+  // diagnostic was raised (including by a later target), and a write failure
+  // rolls every output directory back to its previous state.
+  if (plans.length > 0) {
+    if (diagnostics.errors.length > 0) {
+      for (const r of results) r.files = [];
+    } else {
+      await commitOutputs(plans);
+    }
   }
 
   return { config, diagnostics, results, normalized };

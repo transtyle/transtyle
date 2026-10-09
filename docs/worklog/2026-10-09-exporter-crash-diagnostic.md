@@ -10,9 +10,10 @@ no target, no stack and exit 2, and it stopped every later target.
   taken for an exporter bug) and records `TST3001`: `Exporter "<instance>"
 crashed in <stage>: <message>`. A load failure is `TST3002`, same treatment.
 - The loop's "never emit with errors present" guards now count pipeline errors
-  only. A crash is recorded per target and the next target still builds.
-- The crashed target is still in `results` with empty coverage and no files, and
-  `build` writes its `report.json` with the diagnostic.
+  only. A crash is recorded per target and the next target still runs.
+- The crashed target is still in `results` with empty coverage and no files.
+  (Superseded by [atomic EMIT](2026-10-09-atomic-emit.md): a build with any
+  error writes nothing, so no `report.json` is written for it either.)
 - The crash exits 1, not 2: it is a build failure that `check.failOn` governs
   like any other error (the exit-code answer given on the issue).
 - `compile({ skipExporters: true })` stops after the shared stages; `explain`
