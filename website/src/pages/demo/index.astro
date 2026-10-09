@@ -15,7 +15,7 @@
  * part of the Astro build, which is why `npm run site:build` alone leaves these
  * links pointing at nothing locally — `npm run demos:all` builds the full thing.
  */
-import { Button } from '@deramond.dev/astro';
+import Button from '@deramond.dev/astro/components/Button.astro';
 import Base from '../../layouts/Base.astro';
 import { withBase } from '../../url.js';
 import { EXAMPLES, TARGETS, discoverDemos, demoPath, repoRoot } from '../../../../scripts/lib/demos.mjs';
