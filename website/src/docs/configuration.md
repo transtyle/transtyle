@@ -46,6 +46,32 @@ Full annotated example:
 }
 ```
 
+## Token files in your editor
+
+Token files have a published [JSON Schema](/schemas/tokens/v0.json) too, generated from the compiler's own catalog. With it, typing inside `semantic.color.primary.` offers the sixteen grid cells, a `$value` can be completed with an alias such as `{semantic.radius.full}`, and a misspelled slot like `primary.solidd` is underlined. Scaffolded token files (`transtyle init`) carry the `$schema` line already. For an existing file, add it at the top:
+
+```json
+{
+  "$schema": "https://transtyle.dev/schemas/tokens/v0.json",
+  "semantic": { "color": { "primary": { "solid": { "$value": "oklch(0.55 0.18 255)" } } } }
+}
+```
+
+As with the config schema, the `transtyle.dev` URL is the identifier and an editor that fetches it will find nothing yet. Until the domain exists, associate the schema with your token files in VS Code's `.vscode/settings.json`:
+
+```json
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["**/*.tokens.json"],
+      "url": "https://transtyle.github.io/transtyle/schemas/tokens/v0.json"
+    }
+  ]
+}
+```
+
+Two limits are by design. Your own tokens must stay valid, so `semantic`, `semantic.color`, `semantic.font` and `component` accept any group: a misspelled _role_ (`semantic.color.primry`) looks like a custom role and is not flagged, while everything inside a built-in role or ladder is checked. And alias completion offers the catalog as a list of strings; editors complete a string value from that list, but not in the middle of a string, and `option.*` aliases and literal values are never flagged.
+
 ## `name`
 
 Used in generated file headers and usage docs. Pick something stable; it's your design system's identity in every artifact.

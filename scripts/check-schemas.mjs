@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ground-truth check for the published JSON schemas (audit A7/A8, R3). Four assertions:
+ * Ground-truth check for the published JSON schemas (audit A7/A8, R3). Assertions:
  *
  *  1. Drift: the committed website/public/schemas/*.json match a fresh render of
  *     the source-of-truth objects — the published editor schema can't fall out of
@@ -14,6 +14,10 @@
  *     published report schema matches what core actually writes.
  *  5. Every config example the docs mark `<!-- validates: config -->` parses and
  *     validates — a reference manifest a reader copies must actually load.
+ *
+ *  6. Every example's token files validate against the token-file schema (custom
+ *     groups such as Cathode's `crt.*` included), known-bad token files are
+ *     rejected, and every built-in catalog slot is offered as an alias completion.
  *
  * Assertion 4 builds the examples itself. It used to read whatever was already
  * in `examples/<name>/dist/`, which is gitignored: on a fresh clone there was
@@ -32,6 +36,7 @@ import { fileURLToPath } from 'node:url';
 import { validate } from '../packages/core/src/schema/validate.js';
 import { configSchema } from '../packages/core/src/schema/config.schema.js';
 import { reportSchema } from '../packages/core/src/schema/report.schema.js';
+import { tokenSchema, catalogSlots } from '../packages/core/src/schema/token.schema.js';
 import { OUTPUTS, render } from './gen-schemas.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -119,6 +124,44 @@ for (const surface of docSurfaces) {
 }
 if (examplesChecked === 0) fail('no <!-- validates: config --> example found — the reference manifest must be checked, not assumed');
 
+// 6. Token-file schema. Example token files (every *.tokens.json, overlays and
+// density files included) must validate; the editor mistakes the schema exists
+// for must not.
+const tokSchema = tokenSchema();
+const tokenFiles = examples.flatMap((ex) =>
+  readdirSync(join(root, `examples/${ex}/tokens`), { recursive: true })
+    .filter((f) => f.endsWith('.tokens.json'))
+    .map((f) => `examples/${ex}/tokens/${f}`),
+);
+for (const rel of tokenFiles) {
+  const errs = validate(JSON.parse(read(rel)), tokSchema);
+  if (errs.length) fail(`${rel} unexpectedly invalid against the token schema: ${errs.slice(0, 3).map((e) => `${e.path} ${e.message}`).join('; ')}${errs.length > 3 ? ` (+${errs.length - 3} more)` : ''}`);
+}
+const color = (v) => ({ $type: 'color', $value: v });
+const tokenMustReject = [
+  { why: 'a value on a role group (a different slot from .solid)', doc: { semantic: { color: { primary: color('#0d6efd') } } } },
+  { why: 'a misspelled grid cell', doc: { semantic: { color: { primary: { solidd: color('#0d6efd') } } } } },
+  { why: 'a misspelled slot in a fixed ladder', doc: { semantic: { radius: { mdd: { $type: 'dimension', $value: '4px' } } } } },
+  { why: 'a role archetype outside the three', doc: { semantic: { color: { crt: { $extensions: { 'transtyle.role': { archetype: 'loud' } } } } } } },
+  { why: 'a $type outside the DTCG set', doc: { semantic: { color: { primary: { solid: { $type: 'colour', $value: '#fff' } } } } } },
+];
+for (const { why, doc } of tokenMustReject) {
+  if (validate(doc, tokSchema).length === 0) fail(`token schema FAILED to reject: ${why}`);
+}
+const tokenMustAccept = [
+  { why: 'a custom semantic group', doc: { semantic: { color: { brand: { ink: color('#111') } }, shadowy: { x: { $value: 1 } } } } },
+  { why: 'an alias to a catalog slot and to an option', doc: { component: { card: { radius: { $value: '{semantic.radius.full}' } } }, semantic: { color: { primary: { solid: { $value: '{option.color.blue.600}' } } } } } },
+  { why: 'a scaffold $schema line', doc: { $schema: 'https://transtyle.dev/schemas/tokens/v0.json', option: {} } },
+];
+for (const { why, doc } of tokenMustAccept) {
+  const errs = validate(doc, tokSchema);
+  if (errs.length) fail(`token schema wrongly rejects ${why}: ${errs.map((e) => `${e.path} ${e.message}`).join('; ')}`);
+}
+const slots = catalogSlots();
+const offered = new Set(tokSchema.$defs.alias.enum);
+for (const slot of slots) if (!offered.has(`{${slot}}`)) fail(`catalog slot ${slot} is not offered as an alias completion`);
+if (offered.size !== slots.length) fail(`alias completions (${offered.size}) differ from the catalog (${slots.length})`);
+
 if (errors.length) {
   console.error(`✖ schema check: ${errors.length} problem(s)\n`);
   for (const e of errors) console.error('  - ' + e);
@@ -126,5 +169,6 @@ if (errors.length) {
 }
 console.log(
   `✔ schema check: published schemas current; ${examples.length} example configs valid; ${examplesChecked} documented config example(s) load; ` +
-    `${mustReject.length} bad-config cases rejected; ${reportsChecked} emitted reports conform`,
+    `${mustReject.length} bad-config cases rejected; ${reportsChecked} emitted reports conform; ` +
+    `${tokenFiles.length} example token files valid against the token schema (${slots.length} catalog slots), ${tokenMustReject.length} bad-token cases rejected`,
 );

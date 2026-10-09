@@ -1,0 +1,2899 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transtyle.dev/schemas/tokens/v0.json",
+  "title": "Transtyle token file (*.tokens.json)",
+  "description": "Schema for a DTCG token file Transtyle reads. Completes the built-in catalog paths (semantic.*, component.*) and the alias strings that point at them; custom tokens stay valid. See https://transtyle.dev/docs/configuration/.",
+  "type": "object",
+  "properties": {
+    "$type": {
+      "type": "string",
+      "enum": [
+        "color",
+        "dimension",
+        "fontFamily",
+        "fontWeight",
+        "duration",
+        "cubicBezier",
+        "number",
+        "typography",
+        "shadow",
+        "border",
+        "gradient",
+        "transition",
+        "strokeStyle"
+      ]
+    },
+    "$description": {
+      "type": "string"
+    },
+    "$deprecated": {
+      "type": [
+        "boolean",
+        "string"
+      ]
+    },
+    "$extensions": {
+      "$ref": "#/$defs/extensions"
+    },
+    "component": {
+      "type": "object",
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "color",
+            "dimension",
+            "fontFamily",
+            "fontWeight",
+            "duration",
+            "cubicBezier",
+            "number",
+            "typography",
+            "shadow",
+            "border",
+            "gradient",
+            "transition",
+            "strokeStyle"
+          ]
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$deprecated": {
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "$extensions": {
+          "$ref": "#/$defs/extensions"
+        },
+        "button": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "padding-x": {
+              "$ref": "#/$defs/node"
+            },
+            "padding-y": {
+              "$ref": "#/$defs/node"
+            },
+            "radius": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
+        "control": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "padding-x": {
+              "$ref": "#/$defs/node"
+            },
+            "padding-y": {
+              "$ref": "#/$defs/node"
+            },
+            "radius": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
+        "tooltip": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "max-width": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "semantic": {
+      "type": "object",
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "color",
+            "dimension",
+            "fontFamily",
+            "fontWeight",
+            "duration",
+            "cubicBezier",
+            "number",
+            "typography",
+            "shadow",
+            "border",
+            "gradient",
+            "transition",
+            "strokeStyle"
+          ]
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$deprecated": {
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "$extensions": {
+          "$ref": "#/$defs/extensions"
+        },
+        "border-width": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "medium": {
+              "$ref": "#/$defs/node"
+            },
+            "thick": {
+              "$ref": "#/$defs/node"
+            },
+            "thin": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
+        "breakpoint": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "2xl": {
+              "$ref": "#/$defs/node"
+            },
+            "lg": {
+              "$ref": "#/$defs/node"
+            },
+            "md": {
+              "$ref": "#/$defs/node"
+            },
+            "sm": {
+              "$ref": "#/$defs/node"
+            },
+            "xl": {
+              "$ref": "#/$defs/node"
+            },
+            "xs": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
+        "color": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "accent": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "on-solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "on-tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-selected": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "border": {
+              "$ref": "#/$defs/node"
+            },
+            "danger": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "on-solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "on-tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-selected": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "elevation": {
+              "type": "object",
+              "properties": {
+                "0": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "surface": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "1": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "shadow": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "surface": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "2": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "shadow": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "surface": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "3": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "shadow": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "surface": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "4": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "shadow": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "surface": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "5": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "surface": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                }
+              },
+              "additionalProperties": false
+            },
+            "info": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "on-solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "on-tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-selected": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "link": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "base": {
+                  "$ref": "#/$defs/node"
+                },
+                "hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "visited": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "neutral": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "on-solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "on-tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-selected": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "primary": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "on-solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "on-tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-selected": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "ring": {
+              "$ref": "#/$defs/node"
+            },
+            "scrim": {
+              "$ref": "#/$defs/node"
+            },
+            "secondary": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "on-solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "on-tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-selected": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "success": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "on-solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "on-tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-selected": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "text": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "base": {
+                  "$ref": "#/$defs/node"
+                },
+                "disabled": {
+                  "$ref": "#/$defs/node"
+                },
+                "inverse": {
+                  "$ref": "#/$defs/node"
+                },
+                "muted": {
+                  "$ref": "#/$defs/node"
+                },
+                "strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "subtle": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "warning": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "on-solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "on-tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline": {
+                  "$ref": "#/$defs/node"
+                },
+                "outline-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "solid-selected": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "text-strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-active": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-hover": {
+                  "$ref": "#/$defs/node"
+                },
+                "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "duration": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "fast": {
+              "$ref": "#/$defs/node"
+            },
+            "instant": {
+              "$ref": "#/$defs/node"
+            },
+            "normal": {
+              "$ref": "#/$defs/node"
+            },
+            "slow": {
+              "$ref": "#/$defs/node"
+            },
+            "slower": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
+        "easing": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "emphasized": {
+              "$ref": "#/$defs/node"
+            },
+            "enter": {
+              "$ref": "#/$defs/node"
+            },
+            "exit": {
+              "$ref": "#/$defs/node"
+            },
+            "spring": {
+              "$ref": "#/$defs/node"
+            },
+            "standard": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
+        "font": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "display": {
+              "$ref": "#/$defs/node"
+            },
+            "mono": {
+              "$ref": "#/$defs/node"
+            },
+            "sans": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "opacity": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "disabled": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
+        "palette": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "categorical": {
+              "type": "object",
+              "properties": {
+                "1": {
+                  "$ref": "#/$defs/node"
+                },
+                "2": {
+                  "$ref": "#/$defs/node"
+                },
+                "3": {
+                  "$ref": "#/$defs/node"
+                },
+                "4": {
+                  "$ref": "#/$defs/node"
+                },
+                "5": {
+                  "$ref": "#/$defs/node"
+                },
+                "6": {
+                  "$ref": "#/$defs/node"
+                },
+                "7": {
+                  "$ref": "#/$defs/node"
+                },
+                "8": {
+                  "$ref": "#/$defs/node"
+                },
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "radius": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "container": {
+              "$ref": "#/$defs/node"
+            },
+            "control": {
+              "$ref": "#/$defs/node"
+            },
+            "field": {
+              "$ref": "#/$defs/node"
+            },
+            "full": {
+              "$ref": "#/$defs/node"
+            },
+            "lg": {
+              "$ref": "#/$defs/node"
+            },
+            "md": {
+              "$ref": "#/$defs/node"
+            },
+            "none": {
+              "$ref": "#/$defs/node"
+            },
+            "sm": {
+              "$ref": "#/$defs/node"
+            },
+            "xl": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
+        "size": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "control": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "lg": {
+                  "$ref": "#/$defs/node"
+                },
+                "md": {
+                  "$ref": "#/$defs/node"
+                },
+                "sm": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "space": {
+          "type": "object",
+          "properties": {
+            "0": {
+              "$ref": "#/$defs/node"
+            },
+            "1": {
+              "$ref": "#/$defs/node"
+            },
+            "2": {
+              "$ref": "#/$defs/node"
+            },
+            "3": {
+              "$ref": "#/$defs/node"
+            },
+            "4": {
+              "$ref": "#/$defs/node"
+            },
+            "5": {
+              "$ref": "#/$defs/node"
+            },
+            "6": {
+              "$ref": "#/$defs/node"
+            },
+            "8": {
+              "$ref": "#/$defs/node"
+            },
+            "10": {
+              "$ref": "#/$defs/node"
+            },
+            "12": {
+              "$ref": "#/$defs/node"
+            },
+            "16": {
+              "$ref": "#/$defs/node"
+            },
+            "20": {
+              "$ref": "#/$defs/node"
+            },
+            "24": {
+              "$ref": "#/$defs/node"
+            },
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            }
+          },
+          "additionalProperties": false
+        },
+        "type": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "leading": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "loose": {
+                  "$ref": "#/$defs/node"
+                },
+                "normal": {
+                  "$ref": "#/$defs/node"
+                },
+                "tight": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "role": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "body": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "lg": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "md": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "sm": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "code": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "lg": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "md": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "sm": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "display": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "lg": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "md": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "sm": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "heading": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "lg": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "md": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "sm": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "label": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "lg": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "md": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "sm": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "title": {
+                  "type": "object",
+                  "properties": {
+                    "$type": {
+                      "type": "string",
+                      "enum": [
+                        "color",
+                        "dimension",
+                        "fontFamily",
+                        "fontWeight",
+                        "duration",
+                        "cubicBezier",
+                        "number",
+                        "typography",
+                        "shadow",
+                        "border",
+                        "gradient",
+                        "transition",
+                        "strokeStyle"
+                      ]
+                    },
+                    "$description": {
+                      "type": "string"
+                    },
+                    "$deprecated": {
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
+                    },
+                    "$extensions": {
+                      "$ref": "#/$defs/extensions"
+                    },
+                    "lg": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "md": {
+                      "$ref": "#/$defs/node"
+                    },
+                    "sm": {
+                      "$ref": "#/$defs/node"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "size": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "2xl": {
+                  "$ref": "#/$defs/node"
+                },
+                "3xl": {
+                  "$ref": "#/$defs/node"
+                },
+                "4xl": {
+                  "$ref": "#/$defs/node"
+                },
+                "lg": {
+                  "$ref": "#/$defs/node"
+                },
+                "md": {
+                  "$ref": "#/$defs/node"
+                },
+                "sm": {
+                  "$ref": "#/$defs/node"
+                },
+                "xl": {
+                  "$ref": "#/$defs/node"
+                },
+                "xs": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "tracking": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "normal": {
+                  "$ref": "#/$defs/node"
+                },
+                "tight": {
+                  "$ref": "#/$defs/node"
+                },
+                "wide": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "weight": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "bold": {
+                  "$ref": "#/$defs/node"
+                },
+                "medium": {
+                  "$ref": "#/$defs/node"
+                },
+                "regular": {
+                  "$ref": "#/$defs/node"
+                },
+                "semibold": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "z": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "banner": {
+              "$ref": "#/$defs/node"
+            },
+            "base": {
+              "$ref": "#/$defs/node"
+            },
+            "dropdown": {
+              "$ref": "#/$defs/node"
+            },
+            "hide": {
+              "$ref": "#/$defs/node"
+            },
+            "modal": {
+              "$ref": "#/$defs/node"
+            },
+            "overlay": {
+              "$ref": "#/$defs/node"
+            },
+            "popover": {
+              "$ref": "#/$defs/node"
+            },
+            "sticky": {
+              "$ref": "#/$defs/node"
+            },
+            "toast": {
+              "$ref": "#/$defs/node"
+            },
+            "tooltip": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "$schema": {
+      "type": "string"
+    },
+    "option": {
+      "$ref": "#/$defs/node"
+    }
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/node"
+  },
+  "$defs": {
+    "alias": {
+      "enum": [
+        "{component.button.padding-x}",
+        "{component.button.padding-y}",
+        "{component.button.radius}",
+        "{component.control.padding-x}",
+        "{component.control.padding-y}",
+        "{component.control.radius}",
+        "{component.tooltip.max-width}",
+        "{semantic.border-width.medium}",
+        "{semantic.border-width.thick}",
+        "{semantic.border-width.thin}",
+        "{semantic.breakpoint.2xl}",
+        "{semantic.breakpoint.lg}",
+        "{semantic.breakpoint.md}",
+        "{semantic.breakpoint.sm}",
+        "{semantic.breakpoint.xl}",
+        "{semantic.breakpoint.xs}",
+        "{semantic.color.accent.on-solid}",
+        "{semantic.color.accent.on-tint}",
+        "{semantic.color.accent.outline}",
+        "{semantic.color.accent.outline-hover}",
+        "{semantic.color.accent.solid}",
+        "{semantic.color.accent.solid-active}",
+        "{semantic.color.accent.solid-hover}",
+        "{semantic.color.accent.solid-selected}",
+        "{semantic.color.accent.text}",
+        "{semantic.color.accent.text-active}",
+        "{semantic.color.accent.text-hover}",
+        "{semantic.color.accent.text-strong}",
+        "{semantic.color.accent.tint}",
+        "{semantic.color.accent.tint-active}",
+        "{semantic.color.accent.tint-hover}",
+        "{semantic.color.accent.tint-selected}",
+        "{semantic.color.border}",
+        "{semantic.color.danger.on-solid}",
+        "{semantic.color.danger.on-tint}",
+        "{semantic.color.danger.outline}",
+        "{semantic.color.danger.outline-hover}",
+        "{semantic.color.danger.solid}",
+        "{semantic.color.danger.solid-active}",
+        "{semantic.color.danger.solid-hover}",
+        "{semantic.color.danger.solid-selected}",
+        "{semantic.color.danger.text}",
+        "{semantic.color.danger.text-active}",
+        "{semantic.color.danger.text-hover}",
+        "{semantic.color.danger.text-strong}",
+        "{semantic.color.danger.tint}",
+        "{semantic.color.danger.tint-active}",
+        "{semantic.color.danger.tint-hover}",
+        "{semantic.color.danger.tint-selected}",
+        "{semantic.color.elevation.0.surface}",
+        "{semantic.color.elevation.1.shadow}",
+        "{semantic.color.elevation.1.surface}",
+        "{semantic.color.elevation.2.shadow}",
+        "{semantic.color.elevation.2.surface}",
+        "{semantic.color.elevation.3.shadow}",
+        "{semantic.color.elevation.3.surface}",
+        "{semantic.color.elevation.4.shadow}",
+        "{semantic.color.elevation.4.surface}",
+        "{semantic.color.elevation.5.surface}",
+        "{semantic.color.info.on-solid}",
+        "{semantic.color.info.on-tint}",
+        "{semantic.color.info.outline}",
+        "{semantic.color.info.outline-hover}",
+        "{semantic.color.info.solid}",
+        "{semantic.color.info.solid-active}",
+        "{semantic.color.info.solid-hover}",
+        "{semantic.color.info.solid-selected}",
+        "{semantic.color.info.text}",
+        "{semantic.color.info.text-active}",
+        "{semantic.color.info.text-hover}",
+        "{semantic.color.info.text-strong}",
+        "{semantic.color.info.tint}",
+        "{semantic.color.info.tint-active}",
+        "{semantic.color.info.tint-hover}",
+        "{semantic.color.info.tint-selected}",
+        "{semantic.color.link.base}",
+        "{semantic.color.link.hover}",
+        "{semantic.color.link.visited}",
+        "{semantic.color.neutral.on-solid}",
+        "{semantic.color.neutral.on-tint}",
+        "{semantic.color.neutral.outline}",
+        "{semantic.color.neutral.outline-hover}",
+        "{semantic.color.neutral.solid}",
+        "{semantic.color.neutral.solid-active}",
+        "{semantic.color.neutral.solid-hover}",
+        "{semantic.color.neutral.solid-selected}",
+        "{semantic.color.neutral.text}",
+        "{semantic.color.neutral.text-active}",
+        "{semantic.color.neutral.text-hover}",
+        "{semantic.color.neutral.text-strong}",
+        "{semantic.color.neutral.tint}",
+        "{semantic.color.neutral.tint-active}",
+        "{semantic.color.neutral.tint-hover}",
+        "{semantic.color.neutral.tint-selected}",
+        "{semantic.color.primary.on-solid}",
+        "{semantic.color.primary.on-tint}",
+        "{semantic.color.primary.outline}",
+        "{semantic.color.primary.outline-hover}",
+        "{semantic.color.primary.solid}",
+        "{semantic.color.primary.solid-active}",
+        "{semantic.color.primary.solid-hover}",
+        "{semantic.color.primary.solid-selected}",
+        "{semantic.color.primary.text}",
+        "{semantic.color.primary.text-active}",
+        "{semantic.color.primary.text-hover}",
+        "{semantic.color.primary.text-strong}",
+        "{semantic.color.primary.tint}",
+        "{semantic.color.primary.tint-active}",
+        "{semantic.color.primary.tint-hover}",
+        "{semantic.color.primary.tint-selected}",
+        "{semantic.color.ring}",
+        "{semantic.color.scrim}",
+        "{semantic.color.secondary.on-solid}",
+        "{semantic.color.secondary.on-tint}",
+        "{semantic.color.secondary.outline}",
+        "{semantic.color.secondary.outline-hover}",
+        "{semantic.color.secondary.solid}",
+        "{semantic.color.secondary.solid-active}",
+        "{semantic.color.secondary.solid-hover}",
+        "{semantic.color.secondary.solid-selected}",
+        "{semantic.color.secondary.text}",
+        "{semantic.color.secondary.text-active}",
+        "{semantic.color.secondary.text-hover}",
+        "{semantic.color.secondary.text-strong}",
+        "{semantic.color.secondary.tint}",
+        "{semantic.color.secondary.tint-active}",
+        "{semantic.color.secondary.tint-hover}",
+        "{semantic.color.secondary.tint-selected}",
+        "{semantic.color.success.on-solid}",
+        "{semantic.color.success.on-tint}",
+        "{semantic.color.success.outline}",
+        "{semantic.color.success.outline-hover}",
+        "{semantic.color.success.solid}",
+        "{semantic.color.success.solid-active}",
+        "{semantic.color.success.solid-hover}",
+        "{semantic.color.success.solid-selected}",
+        "{semantic.color.success.text}",
+        "{semantic.color.success.text-active}",
+        "{semantic.color.success.text-hover}",
+        "{semantic.color.success.text-strong}",
+        "{semantic.color.success.tint}",
+        "{semantic.color.success.tint-active}",
+        "{semantic.color.success.tint-hover}",
+        "{semantic.color.success.tint-selected}",
+        "{semantic.color.text.base}",
+        "{semantic.color.text.disabled}",
+        "{semantic.color.text.inverse}",
+        "{semantic.color.text.muted}",
+        "{semantic.color.text.strong}",
+        "{semantic.color.text.subtle}",
+        "{semantic.color.warning.on-solid}",
+        "{semantic.color.warning.on-tint}",
+        "{semantic.color.warning.outline}",
+        "{semantic.color.warning.outline-hover}",
+        "{semantic.color.warning.solid}",
+        "{semantic.color.warning.solid-active}",
+        "{semantic.color.warning.solid-hover}",
+        "{semantic.color.warning.solid-selected}",
+        "{semantic.color.warning.text}",
+        "{semantic.color.warning.text-active}",
+        "{semantic.color.warning.text-hover}",
+        "{semantic.color.warning.text-strong}",
+        "{semantic.color.warning.tint}",
+        "{semantic.color.warning.tint-active}",
+        "{semantic.color.warning.tint-hover}",
+        "{semantic.color.warning.tint-selected}",
+        "{semantic.duration.fast}",
+        "{semantic.duration.instant}",
+        "{semantic.duration.normal}",
+        "{semantic.duration.slow}",
+        "{semantic.duration.slower}",
+        "{semantic.easing.emphasized}",
+        "{semantic.easing.enter}",
+        "{semantic.easing.exit}",
+        "{semantic.easing.spring}",
+        "{semantic.easing.standard}",
+        "{semantic.font.display}",
+        "{semantic.font.mono}",
+        "{semantic.font.sans}",
+        "{semantic.opacity.disabled}",
+        "{semantic.palette.categorical.1}",
+        "{semantic.palette.categorical.2}",
+        "{semantic.palette.categorical.3}",
+        "{semantic.palette.categorical.4}",
+        "{semantic.palette.categorical.5}",
+        "{semantic.palette.categorical.6}",
+        "{semantic.palette.categorical.7}",
+        "{semantic.palette.categorical.8}",
+        "{semantic.radius.container}",
+        "{semantic.radius.control}",
+        "{semantic.radius.field}",
+        "{semantic.radius.full}",
+        "{semantic.radius.lg}",
+        "{semantic.radius.md}",
+        "{semantic.radius.none}",
+        "{semantic.radius.sm}",
+        "{semantic.radius.xl}",
+        "{semantic.size.control.lg}",
+        "{semantic.size.control.md}",
+        "{semantic.size.control.sm}",
+        "{semantic.space.0}",
+        "{semantic.space.1}",
+        "{semantic.space.10}",
+        "{semantic.space.12}",
+        "{semantic.space.16}",
+        "{semantic.space.2}",
+        "{semantic.space.20}",
+        "{semantic.space.24}",
+        "{semantic.space.3}",
+        "{semantic.space.4}",
+        "{semantic.space.5}",
+        "{semantic.space.6}",
+        "{semantic.space.8}",
+        "{semantic.type.leading.loose}",
+        "{semantic.type.leading.normal}",
+        "{semantic.type.leading.tight}",
+        "{semantic.type.role.body.lg}",
+        "{semantic.type.role.body.md}",
+        "{semantic.type.role.body.sm}",
+        "{semantic.type.role.code.lg}",
+        "{semantic.type.role.code.md}",
+        "{semantic.type.role.code.sm}",
+        "{semantic.type.role.display.lg}",
+        "{semantic.type.role.display.md}",
+        "{semantic.type.role.display.sm}",
+        "{semantic.type.role.heading.lg}",
+        "{semantic.type.role.heading.md}",
+        "{semantic.type.role.heading.sm}",
+        "{semantic.type.role.label.lg}",
+        "{semantic.type.role.label.md}",
+        "{semantic.type.role.label.sm}",
+        "{semantic.type.role.title.lg}",
+        "{semantic.type.role.title.md}",
+        "{semantic.type.role.title.sm}",
+        "{semantic.type.size.2xl}",
+        "{semantic.type.size.3xl}",
+        "{semantic.type.size.4xl}",
+        "{semantic.type.size.lg}",
+        "{semantic.type.size.md}",
+        "{semantic.type.size.sm}",
+        "{semantic.type.size.xl}",
+        "{semantic.type.size.xs}",
+        "{semantic.type.tracking.normal}",
+        "{semantic.type.tracking.tight}",
+        "{semantic.type.tracking.wide}",
+        "{semantic.type.weight.bold}",
+        "{semantic.type.weight.medium}",
+        "{semantic.type.weight.regular}",
+        "{semantic.type.weight.semibold}",
+        "{semantic.z.banner}",
+        "{semantic.z.base}",
+        "{semantic.z.dropdown}",
+        "{semantic.z.hide}",
+        "{semantic.z.modal}",
+        "{semantic.z.overlay}",
+        "{semantic.z.popover}",
+        "{semantic.z.sticky}",
+        "{semantic.z.toast}",
+        "{semantic.z.tooltip}"
+      ]
+    },
+    "value": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/alias"
+        },
+        {}
+      ]
+    },
+    "extensions": {
+      "type": "object",
+      "properties": {
+        "transtyle.modes": {
+          "type": "object"
+        },
+        "transtyle.role": {
+          "type": "object",
+          "properties": {
+            "archetype": {
+              "type": "string",
+              "enum": [
+                "brand",
+                "status",
+                "neutral"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "transtyle.state-mechanism": {}
+      },
+      "additionalProperties": true
+    },
+    "node": {
+      "type": "object",
+      "properties": {
+        "$type": {
+          "type": "string",
+          "enum": [
+            "color",
+            "dimension",
+            "fontFamily",
+            "fontWeight",
+            "duration",
+            "cubicBezier",
+            "number",
+            "typography",
+            "shadow",
+            "border",
+            "gradient",
+            "transition",
+            "strokeStyle"
+          ]
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$deprecated": {
+          "type": [
+            "boolean",
+            "string"
+          ]
+        },
+        "$extensions": {
+          "$ref": "#/$defs/extensions"
+        },
+        "$value": {
+          "$ref": "#/$defs/value"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/node"
+      }
+    }
+  }
+}

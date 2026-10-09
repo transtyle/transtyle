@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Publish the config + report schemas as real draft-2020-12 JSON Schema files
+ * Publish the config + report + token-file schemas as real draft-2020-12 JSON Schema files
  * (audit A7 — the `$schema` URLs Transtyle emits were fictional). The schema
  * *objects* are the source of truth in `@transtyle/core` (used at runtime by
  * validate.js); this script wraps each with draft/$id/title metadata and writes
  * it to website/public/schemas/, from where the deployed site serves it at the
- * `$id` URL. So `"$schema": "https://transtyle.dev/schemas/config/v0.json"` in a
+ * `$id` URL. The token-file schema is generated from the compiler's catalog
+ * (packages/core/src/schema/token.schema.js), not hand-written. So `"$schema": "https://transtyle.dev/schemas/config/v0.json"` in a
  * user's config resolves to a real, matching schema once the site is live (R5).
  *
  * Run: node scripts/gen-schemas.mjs   (also: npm run gen:schemas).
@@ -16,6 +17,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { configSchema, configSchemaMeta } from '../packages/core/src/schema/config.schema.js';
 import { reportSchema, reportSchemaMeta } from '../packages/core/src/schema/report.schema.js';
+import { tokenSchema, tokenSchemaMeta } from '../packages/core/src/schema/token.schema.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DRAFT = 'https://json-schema.org/draft/2020-12/schema';
@@ -28,6 +30,7 @@ export function publishable(schema, meta) {
 const OUTPUTS = [
   { rel: 'website/public/schemas/config/v0.json', doc: publishable(configSchema, configSchemaMeta) },
   { rel: 'website/public/schemas/report/v0.json', doc: publishable(reportSchema, reportSchemaMeta) },
+  { rel: 'website/public/schemas/tokens/v0.json', doc: publishable(tokenSchema(), tokenSchemaMeta) },
 ];
 
 export function render(doc) {
