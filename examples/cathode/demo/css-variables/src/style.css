@@ -16,7 +16,7 @@ body {
   padding: 0.5rem 1rem;
   font-size: 13px;
   background: color-mix(in srgb, var(--color-text-base) 6%, transparent);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-base);
 }
 .demo-chrome span { opacity: 0.65; }
 .demo-chrome button {
@@ -24,7 +24,7 @@ body {
   font: inherit;
   color: inherit;
   background: transparent;
-  border: var(--border-width-thin, 1px) solid var(--color-border);
+  border: var(--border-width-thin, 1px) solid var(--color-border-base);
   border-radius: var(--radius-sm, 6px);
   padding: 0.25rem 0.7rem;
   cursor: pointer;
@@ -42,7 +42,7 @@ code {
 .sample { margin: var(--space-6, 1.5rem) 0; }
 .sample-card {
   background: var(--color-elevation-1-surface);
-  border: var(--border-width-thin) solid var(--color-border);
+  border: var(--border-width-thin) solid var(--color-border-base);
   border-radius: var(--radius-lg);
   box-shadow: var(--elevation-2-shadow);
   padding: var(--space-6, 1.5rem);
@@ -70,11 +70,11 @@ code {
 }
 
 #families { display: grid; gap: var(--space-4, 1rem); }
-.family { border: var(--border-width-thin) solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); }
+.family { border: var(--border-width-thin) solid var(--color-border-base); border-radius: var(--radius-md); padding: var(--space-4); }
 .family h3 { margin: 0 0 var(--space-2, 0.5rem); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; color: var(--color-text-muted); }
 .swatches { display: flex; flex-wrap: wrap; gap: var(--space-2, 0.5rem); }
 .swatch { display: flex; flex-direction: column; align-items: center; font-size: 11px; gap: 0.25rem; width: 5.5rem; }
-.swatch .chip { width: 100%; height: 2.5rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); }
+.swatch .chip { width: 100%; height: 2.5rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border-base); }
 .swatch code { font-size: 10px; word-break: break-all; text-align: center; background: none; padding: 0; }
 .values { font-size: 12px; }
-.values div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; border-bottom: 1px dotted var(--color-border); }
+.values div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; border-bottom: 1px dotted var(--color-border-base); }

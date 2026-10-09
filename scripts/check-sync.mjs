@@ -160,7 +160,8 @@ const DEAD_VOCAB = [
   // real slot's fully-qualified path in prose tripped the guard (found in AL4,
   // documenting `semantic.color.text.base` in a config example). Same two
   // exceptions, now stated in both forms.
-  { name: '<role>.base / .hover / .active / .contrast (old grid, dotted path)', re: /semantic\.color\.(?!text\.base\b|link\.(base|hover)\b)[a-z][\w-]*\.(base|hover|active|contrast)\b/ },
+  // `border.base` is the border ladder's default rung (proposal 0005), like text.base.
+  { name: '<role>.base / .hover / .active / .contrast (old grid, dotted path)', re: /semantic\.color\.(?!text\.base\b|border\.base\b|link\.(base|hover)\b)[a-z][\w-]*\.(base|hover|active|contrast)\b/ },
   { name: 'background.base / surface.base / overlay.base (old surface slots, dotted path)', re: /semantic\.color\.(background|surface|overlay)\.base\b/ },
   { name: 'text-muted.base (old content slot, dotted path)', re: /semantic\.color\.text-muted\.base\b/ },
   // ---- nested-JSON forms (token files, docs code-fences) ----
@@ -209,6 +210,9 @@ const DEAD_VOCAB_MUST_NOT = [
   'semantic.color.text.subtle',                       // text.subtle is a real content rung
   'semantic.color.text.base',                         // dotted form of the ladder rung above
   'semantic.color.link.base',                         // dotted form of the link cells above
+  'semantic.color.border.base',                       // the border ladder's default rung (proposal 0005)
+  'semantic.color.border.subtle',                     // and its lightest rung
+  '"border": { "base": { "$value": "x" } }',
   'semantic.color.link.hover',
   'colorPalette.subtle',                              // Chakra UI's palette key, target vocabulary
   'bg.subtle',                                        // Chakra UI's global tokens, likewise

@@ -34,7 +34,7 @@
         "0": { "surface": { "$value": "{semantic.color.govuk.body-background}" } },
         "1": { "surface": { "$value": "{semantic.color.govuk.template-background}" } }
       },
-      "border": { "$value": "{semantic.color.govuk.border}" },
+      "border": { "base": { "$value": "{semantic.color.govuk.border}" } },
       "ring": {
         "$value": "{semantic.color.govuk.focus}",
         "$description": "GOV.UK's iconic yellow keyboard-focus state (#ffdd00) maps directly onto the catalog's ring slot — one of the cleanest 1:1 mappings found in this adoption."

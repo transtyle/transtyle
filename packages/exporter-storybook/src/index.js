@@ -139,7 +139,7 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
   cov('appBg', 'elevation.1.surface');
   cov('appContentBg', 'elevation.0.surface');
   cov('appPreviewBg', 'elevation.0.surface', undefined, 'the canvas is the DS canvas, not chrome (F18)');
-  cov('appBorderColor', 'border');
+  cov('appBorderColor', 'border.base');
   cov('appBorderRadius', 'semantic.radius.md', 'approximated', `rem → px via remBase ${remBase} (F16)`);
   cov('fontBase', 'semantic.font.sans');
   cov('fontCode', 'semantic.font.mono');
@@ -151,11 +151,11 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
   cov('barHoverColor', 'primary.solid-hover');
   cov('barSelectedColor', 'ring', undefined, 'ring ← primary (F3); lightened in dark for visibility');
   cov('buttonBg', 'neutral.tint');
-  cov('buttonBorder', 'border');
+  cov('buttonBorder', 'border.base');
   cov('booleanBg', 'neutral.tint');
   cov('booleanSelectedBg', 'elevation.2.surface');
   cov('inputBg', 'elevation.0.surface');
-  cov('inputBorder', 'border');
+  cov('inputBorder', 'border.field');
   cov('inputTextColor', 'text.base');
   cov('inputBorderRadius', 'semantic.radius.sm', 'approximated', `rem → px via remBase ${remBase} (F16)`);
   if (first) {
@@ -173,7 +173,7 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
       appBg: hx('elevation.1.surface'),
       appContentBg: hx('elevation.0.surface'),
       appPreviewBg: hx('elevation.0.surface'),
-      appBorderColor: hx('border'),
+      appBorderColor: hx('border.base'),
       appBorderRadius: px('md'),
       fontBase: fontList('sans'),
       fontCode: fontList('mono'),
@@ -185,11 +185,11 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
       barHoverColor: hx('primary.solid-hover'),
       barSelectedColor: hx('ring'),
       buttonBg: hx('neutral.tint'),
-      buttonBorder: hx('border'),
+      buttonBorder: hx('border.base'),
       booleanBg: hx('neutral.tint'),
       booleanSelectedBg: hx('elevation.2.surface'),
       inputBg: hx('elevation.0.surface'),
-      inputBorder: hx('border'),
+      inputBorder: hx('border.field'),
       inputTextColor: hx('text.base'),
       inputBorderRadius: px('sm'),
       brandTitle: brand.title ?? ctx.projectName,

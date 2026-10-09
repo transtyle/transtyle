@@ -136,7 +136,7 @@ await mustFail('a plugin writing `undefined` after a colon', withFiles(':root { 
 await mustFail('a plugin emitting an empty file', withFiles('\n'), 'files-non-empty', 'canonical');
 await mustFail(
   'a plugin claiming `native` for a slot the one-token system never resolves',
-  { ...thirdParty, emit: (ir, ctx) => { const out = thirdParty.emit(ir, ctx); return { ...out, coverage: [...out.coverage, { variable: '--acme-border', slot: 'semantic.color.border', class: 'native' }] }; } },
+  { ...thirdParty, emit: (ir, ctx) => { const out = thirdParty.emit(ir, ctx); return { ...out, coverage: [...out.coverage, { variable: '--acme-radius', slot: 'semantic.radius.md', class: 'native' }] }; } },
   'coverage-honest',
   'one-token',
 );

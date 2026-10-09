@@ -93,10 +93,10 @@ const PAGE_VARS = [
   ['default', 'elevation.1.surface', 'native'],
   ['default-hover', 'neutral.tint-hover', 'native'],
   ['default-color', 'text.base', 'native'],
-  ['default-border', 'border', 'native'],
+  ['default-border', 'border.base', 'native'],
   ['disabled', 'neutral.tint-active', 'approximated', 'no disabled-surface rung in the catalog; the pressed neutral tint is the nearest muted fill'],
   ['disabled-color', 'text.disabled', 'native'],
-  ['disabled-border', 'border', 'approximated', 'no disabled-border rung; the page border is used'],
+  ['disabled-border', 'border.base', 'approximated', 'no disabled-border rung; the page border is used'],
 ];
 
 /**
@@ -109,7 +109,7 @@ const GRAY = [
   'neutral.tint-hover',
   'neutral.tint-active',
   'neutral.outline',
-  'border',
+  'border.base',
   'text.subtle',
   'text.muted',
   'neutral.solid-hover',
@@ -127,7 +127,7 @@ const DARK = [
   null, // mix(text.base, text.muted)
   'text.muted',
   'text.subtle',
-  'border',
+  'border.base',
   'neutral.tint-hover',
   'elevation.1.surface',
   'elevation.0.surface',
@@ -451,6 +451,8 @@ export default {
     row('(z-index ladder)', 'semantic.z.*', 'dropped', "Mantine components take their z-index from getDefaultZIndex() in JS; the --mantine-z-index-* variables are not read by its stylesheet");
     row('(link hover / visited)', `${S}link.{hover,visited}`, 'dropped', 'Mantine has one anchor colour');
     row('(motion, scrim, text.inverse, opacity.disabled)', '—', 'dropped', 'no theme slot: transitions are per-component props and overlays take their colour as a prop');
+    row('(border ladder: subtle, strong, field)', `${S}border.{subtle,strong,field}`, 'dropped', "Mantine has one border variable, --mantine-color-default-border; its inputs read gray-4 / dark-4, the tuple steps filled from border.base, so there is no separate field border to set");
+    row('(inverse pair)', `${S}inverse.{surface,text}`, 'dropped', "Mantine's stylesheet paints the Tooltip from fixed tuple steps (gray-9 on white in light, gray-2 on black in dark); --tooltip-bg and --tooltip-color are per-instance (the color prop), not theme variables");
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     // AL3: measure what was emitted against Mantine's whole theming surface

@@ -62,7 +62,7 @@ The catalog is the fixed set of semantic slots that exporters can rely on existi
 
 - **Color roles** — `primary`, `secondary`, `accent`, `success`, `warning`, `danger`, `info`, `neutral`. Each carries the full grid: `<role>.solid`, `<role>.solid-hover`, `<role>.tint`, `<role>.outline`, `<role>.on-solid`, `<role>.text`, `<role>.text-strong`, and so on.
 - **Elevation** — `elevation.0.surface` through `elevation.5.surface` (the page, cards, raised panels, popovers…), each with a paired `elevation.N.shadow` for levels 1–4; `scrim` is the separate dimming veil behind modals.
-- **Content** — `text.{strong, base, muted, subtle, disabled, inverse}`, `link.{base, hover, visited}`; `border`, `ring` as single-value slots.
+- **Content** — `text.{strong, base, muted, subtle, disabled, inverse}`, `link.{base, hover, visited}`; the border ladder `border.{subtle, base, strong, field}`; the inverse pair `inverse.{surface, text}`; `ring` as a single-value slot.
 - **Also** — `radius.*` (+ `control`/`field`/`container` family aliases), `font.*`, and defaulted scales for `space.*`, `size.control.*`, `border-width.*`, `breakpoint.*`, `z.*`, `type.*` (primitives and composite `type.role.*`), `duration.*`, `easing.*`.
 
 You may add **custom semantic tokens** beyond the catalog — they're carried with full provenance and can be aliased by catalog slots. That's how a design system keeps its own vocabulary: see [the Cathode walkthrough](/docs/examples/#cathode--the-hostile-example).

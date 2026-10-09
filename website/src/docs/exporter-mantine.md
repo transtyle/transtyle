@@ -13,10 +13,10 @@ order: 16
 
 [Mantine](https://mantine.dev/) themes through one object passed to `<MantineProvider>`: colours are named ten-shade tuples, `primaryShade` picks the filled shade per scheme, and `virtualColor()` lets one name stand for a different tuple in light and in dark. That is [the role grid](/docs/language/#color-roles-the-role-grid) in another shape, so this exporter is mostly a mapping table. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `theme` and `cssVariablesResolver`.
 
-<!-- measured: acme.mantine.rows = 194 -->
+<!-- measured: acme.mantine.rows = 196 -->
 <!-- measured: acme.mantine.native = 116 -->
 
-On [Acme](/docs/examples/) that is 194 classified rows in `report.json`, 116 of them native, measured against [Mantine's whole theming surface](#measured-against-mantines-whole-surface).
+On [Acme](/docs/examples/) that is 196 classified rows in `report.json`, 116 of them native, measured against [Mantine's whole theming surface](#measured-against-mantines-whole-surface).
 
 ```json
 "targets": { "mantine": { "output": "dist/mantine" } }

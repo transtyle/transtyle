@@ -157,7 +157,7 @@ export default {
     });
     coverage.push({
       variable: 'semantic.content.*',
-      slot: 'semantic.color.elevation.1.surface + border + text.base',
+      slot: 'semantic.color.elevation.1.surface + border.base + text.base',
       class: 'native',
     });
     coverage.push({
@@ -284,6 +284,31 @@ export default {
       },
     };
 
+    // The inverse pair (proposal 0005) on the tooltip. Aura paints it
+    // surface.700 on surface.0 in BOTH schemes (its surface ramp isn't
+    // reversed in dark), a dark bubble rather than an inverse, so binding the
+    // pair's defaults would darken every tooltip. It is bound only when the
+    // design system authors the pair, which is a statement about its tooltips.
+    const authoredKinds = ['authored', 'aliased'];
+    const inverseAuthored = ['inverse.surface', 'inverse.text'].some((p) =>
+      [light, dark].some((m) => authoredKinds.includes(m?.get(`semantic.color.${p}`)?.provenance.kind)),
+    );
+    let inverseTooltip;
+    if (inverseAuthored && get(light, 'color.inverse.surface') && get(light, 'color.inverse.text')) {
+      const pair = (m) => ({ root: { background: get(m, 'color.inverse.surface'), color: get(m, 'color.inverse.text') } });
+      inverseTooltip = { colorScheme: { light: pair(light), dark: pair(dark ?? light) } };
+      for (const [part, slot] of [['background', 'inverse.surface'], ['color', 'inverse.text']]) {
+        coverage.push({ variable: `components.tooltip.colorScheme.*.root.${part}`, slot: `semantic.color.${slot}`, class: 'native', note: 'the authored inverse pair, per mode' });
+      }
+    } else {
+      coverage.push({
+        variable: 'components.tooltip.root.{background,color}',
+        slot: 'semantic.color.inverse.{surface,text}',
+        class: 'dropped',
+        note: "not bound while the inverse pair is derived: Aura's tooltip is surface.700 on surface.0 in both schemes (a dark bubble, not an inverse), and the pair's defaults would darken every tooltip. Authoring inverse.surface or inverse.text binds it per mode",
+      });
+    }
+
     const button = buildButton(light, dark, { ...ctx, roleArchetypeExtend });
     const tag = buildTag(light, dark);
     const badge = buildBadge(light, dark);
@@ -312,6 +337,7 @@ export default {
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     const components = {
+      ...(inverseTooltip && { tooltip: inverseTooltip }),
       button: button.tokens,
       tag: tag.tokens,
       badge: badge.tokens,
@@ -331,7 +357,7 @@ export default {
     // Emitting a `maxWidth` we didn't derive would be inventing a value.
     const tooltipMaxWidth = light.get('component.tooltip.max-width')?.value;
     if (tooltipMaxWidth !== undefined) {
-      components.tooltip = { root: { maxWidth: String(tooltipMaxWidth) } };
+      components.tooltip = { ...components.tooltip, root: { maxWidth: String(tooltipMaxWidth) } };
       coverage.push({
         variable: 'components.tooltip.root.maxWidth',
         slot: 'component.tooltip.max-width',

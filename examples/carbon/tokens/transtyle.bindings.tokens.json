@@ -40,7 +40,14 @@
         "0": { "surface": { "$value": "{semantic.color.carbon.background}" } },
         "1": { "surface": { "$value": "{semantic.color.carbon.layer-01}" } }
       },
-      "border": { "$value": "{semantic.color.carbon.border-subtle-00}" },
+      "border": { "base": { "$value": "{semantic.color.carbon.border-subtle-00}" } },
+      "inverse": {
+        "surface": {
+          "$value": "{semantic.color.carbon.background-inverse}",
+          "$description": "Carbon's own $background-inverse, the surface of its tooltips and inline notifications on the high-contrast side: Gray 80 on White, Gray 10 on G100."
+        },
+        "text": { "$value": "{semantic.color.carbon.text-inverse}" }
+      },
       "ring": {
         "$value": "{semantic.color.carbon.focus}",
         "$description": "Carbon's own $focus token — another clean 1:1 mapping, and mode-aware out of the box (blue on White, white on G100)."

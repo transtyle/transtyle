@@ -38,7 +38,7 @@ The first line is the [completeness level](/docs/derivation/#what-to-author-next
 ```bash
 npx transtyle build --dry-run --out /tmp/themes
 #
-# shadcn  42% native · 53% derived · 3% approximated · 3% dropped
+# shadcn  42% native · 56% derived · 3% dropped
 #   ↳ would write ../../tmp/themes/shadcn/globals.transtyle.css
 #   ↳ would write ../../tmp/themes/shadcn/report.json
 #
@@ -256,15 +256,15 @@ Exits `0` when the compiled themes are identical, `1` when there are changes (co
 
 Lists every slot of the catalog — the vocabulary exporters bind to — with its DTCG type, the rule that fills it when you don't author it, that rule's inputs, and the optional anchor it needs. It reads no project (run it anywhere; `--cwd` is ignored): the catalog belongs to the language and the rule pack, not to a design system.
 
-<!-- measured: catalog.slots = 259 -->
-<!-- measured: catalog.semantic = 252 -->
+<!-- measured: catalog.slots = 264 -->
+<!-- measured: catalog.semantic = 257 -->
 <!-- measured: catalog.component = 7 -->
 
 ```bash
 npx transtyle catalog
 #
 # Transtyle catalog — IR spec v0-draft, rule pack standard@1
-# 259 slots: 252 semantic, 7 component (168 derived, 84 defaulted, 7 authored only)
+# 264 slots: 257 semantic, 7 component (174 derived, 84 defaulted, 6 authored only)
 # ...
 # semantic · radius (8)
 #   semantic.radius.full   dimension  derived by radius-scale(full)  (needs semantic.radius.md)
@@ -278,12 +278,12 @@ npx transtyle catalog
   "irSpec": "v0-draft",
   "rulePack": "standard@1",
   "counts": {
-    "slots": 259,
-    "semantic": 252,
+    "slots": 264,
+    "semantic": 257,
     "component": 7,
-    "derived": 168,
+    "derived": 174,
     "defaulted": 84,
-    "authoredOnly": 7
+    "authoredOnly": 6
   },
   "roles": ["primary", "secondary", "..."],
   "cells": ["solid", "solid-hover", "..."],
@@ -304,7 +304,7 @@ npx transtyle catalog
 }
 ```
 
-- `kind` is `derived` (a rule computes it from other slots), `defaulted` (a catalog default: a constant, or a projection of other defaults like `type.role.*`) or `authored-only` (no rule: `primary.solid`, `border`, `radius.md`, the fonts, `component.tooltip.max-width`). Authored always wins, whatever the kind.
+- `kind` is `derived` (a rule computes it from other slots), `defaulted` (a catalog default: a constant, or a projection of other defaults like `type.role.*`) or `authored-only` (no rule: `primary.solid`, `radius.md`, the fonts, `component.tooltip.max-width`). Authored always wins, whatever the kind.
 - `rule` and `inputs` are what [`transtyle explain`](#transtyle-explain-slot---mode-name) prints for an unauthored slot, with full paths; `rule` is `null` for an authored-only slot.
 - `requires` names the optional anchor without which the slot doesn't exist (the radius family and the component radii need `radius.md`). `semantic.color.primary.solid` is required by everything and never listed.
 - `role` and `cell` are set on role-grid slots only. A custom role that declares an [archetype](/docs/language/#elevation-content-and-the-rest) gets the same `cells` as a built-in one.

@@ -452,7 +452,52 @@
               "additionalProperties": false
             },
             "border": {
-              "$ref": "#/$defs/node"
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "base": {
+                  "$ref": "#/$defs/node"
+                },
+                "field": {
+                  "$ref": "#/$defs/node"
+                },
+                "strong": {
+                  "$ref": "#/$defs/node"
+                },
+                "subtle": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
             },
             "danger": {
               "type": "object",
@@ -899,6 +944,48 @@
                   "$ref": "#/$defs/node"
                 },
                 "tint-selected": {
+                  "$ref": "#/$defs/node"
+                }
+              },
+              "additionalProperties": false
+            },
+            "inverse": {
+              "type": "object",
+              "properties": {
+                "$type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "dimension",
+                    "fontFamily",
+                    "fontWeight",
+                    "duration",
+                    "cubicBezier",
+                    "number",
+                    "typography",
+                    "shadow",
+                    "border",
+                    "gradient",
+                    "transition",
+                    "strokeStyle"
+                  ]
+                },
+                "$description": {
+                  "type": "string"
+                },
+                "$deprecated": {
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
+                },
+                "$extensions": {
+                  "$ref": "#/$defs/extensions"
+                },
+                "surface": {
+                  "$ref": "#/$defs/node"
+                },
+                "text": {
                   "$ref": "#/$defs/node"
                 }
               },
@@ -2593,7 +2680,10 @@
         "{semantic.color.accent.tint-active}",
         "{semantic.color.accent.tint-hover}",
         "{semantic.color.accent.tint-selected}",
-        "{semantic.color.border}",
+        "{semantic.color.border.base}",
+        "{semantic.color.border.field}",
+        "{semantic.color.border.strong}",
+        "{semantic.color.border.subtle}",
         "{semantic.color.danger.on-solid}",
         "{semantic.color.danger.on-tint}",
         "{semantic.color.danger.outline}",
@@ -2636,6 +2726,8 @@
         "{semantic.color.info.tint-active}",
         "{semantic.color.info.tint-hover}",
         "{semantic.color.info.tint-selected}",
+        "{semantic.color.inverse.surface}",
+        "{semantic.color.inverse.text}",
         "{semantic.color.link.base}",
         "{semantic.color.link.hover}",
         "{semantic.color.link.visited}",

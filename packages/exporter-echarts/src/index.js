@@ -79,7 +79,7 @@ function buildTheme(map, mode, ctx) {
     // JSON.stringify silently omits the key — the right behavior, since ECharts
     // then uses its own default. But the row still claimed `native`, so the
     // report asserted coverage for a property the theme file doesn't contain
-    // (`semantic.color.border` is authored in all four examples and absent from
+    // (`semantic.radius.md` is authored in all four examples and absent from
     // a minimal design system). Only single-path slots are checkable; the
     // palette row's slot is a range label.
     if (/^semantic\.[\w.-]+$/.test(slot) && map.get(slot)?.value === undefined) {
@@ -108,12 +108,12 @@ function buildTheme(map, mode, ctx) {
   const background = hex(`${S}elevation.0.surface`);
   const text = hex(`${S}text.base`);
   const textMuted = hex(`${S}text.muted`);
-  const border = hex(`${S}border`);
+  const border = hex(`${S}border.base`);
   const overlay = hex(`${S}elevation.3.surface`);
   cov('backgroundColor', `${S}elevation.0.surface`, 'native');
   cov('textStyle.color', `${S}text.base`, 'native');
   cov('title/legend/axisLabel', `${S}text.muted`, 'native');
-  cov('axisLine/splitLine/tooltip.borderColor', `${S}border`, 'native');
+  cov('axisLine/splitLine/tooltip.borderColor', `${S}border.base`, 'native');
   cov('tooltip.backgroundColor', `${S}elevation.3.surface`, 'native');
 
   // fontFamily: ECharts wants a single CSS-style string

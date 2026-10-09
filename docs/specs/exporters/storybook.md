@@ -28,7 +28,7 @@ Unique among exporters: Storybook options may reference other configured targets
 
 ## Mapping strategy (highlights)
 
-- `primary/accent` → `colorPrimary`/`colorSecondary`; `background/surface` → `appBg`/`appContentBg`/`appPreviewBg`; `text*` → `textColor`/`textMutedColor`; `border` → `appBorderColor`; `radius.md` → `appBorderRadius` (px conversion at the config's `units.remBase`, default 16px, or the target's `options.remBase` when set; `approximated` if authored in rem); fonts → `fontBase`/`fontCode`: all `native`.
+- `primary/accent` → `colorPrimary`/`colorSecondary`; `background/surface` → `appBg`/`appContentBg`/`appPreviewBg`; `text*` → `textColor`/`textMutedColor`; `border.base` → `appBorderColor`/`buttonBorder`, `border.field` → `inputBorder`; `radius.md` → `appBorderRadius` (px conversion at the config's `units.remBase`, default 16px, or the target's `options.remBase` when set; `approximated` if authored in rem); fonts → `fontBase`/`fontCode`: all `native`.
 - ThemeVars is a small, flat surface — most of the design system is _inexpressible in chrome theming_ and that is fine; it flows through preview composition instead. Coverage honestly reports chrome-inexpressible tokens as `dropped (chrome)` while noting preview-path delivery, a case that validated the coverage model's need for per-artifact context.
 - `unsupported`: Storybook chrome vars without IR equivalents (e.g. `barSelectedColor` nuances) → sensible role defaults, reported.
 

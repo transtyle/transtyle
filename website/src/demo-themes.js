@@ -26,7 +26,7 @@ const SLOTS = {
   surface: '--elevation-1-surface',
   text: '--color-text-base',
   muted: '--color-text-muted',
-  border: '--color-border',
+  border: '--color-border-base',
   primary: '--color-primary-solid',
   onPrimary: '--color-primary-on-solid',
   tint: '--color-primary-tint',

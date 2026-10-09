@@ -63,18 +63,20 @@ No numbered ramps are emitted, and `palette.grey` stays MUI's. It feeds a handfu
 
 ### Page colours
 
-| MUI                                       | Catalog                                        | Class        | Notes                                                                          |
-| ----------------------------------------- | ---------------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
-| `background.default` / `background.paper` | `elevation.0.surface` / `elevation.1.surface`  | native       | every Paper starts from `paper`; the overlays below lift it per elevation      |
-| `text.primary` / `secondary` / `disabled` | `text.base` / `text.muted` / `text.disabled`   | native       | `text.strong`, `subtle` and `inverse` have no MUI rung: dropped                |
-| `action.disabled`                         | `text.disabled`                                | native       | the text of a disabled button                                                  |
-| `action.disabledOpacity`                  | `opacity.disabled`                             | native       |                                                                                |
-| `action.hover` / `action.selected`        | `neutral.tint-hover` / `neutral.tint-selected` | approximated | MUI's are 4% and 8% veils over any surface; the neutral washes are opaque      |
-| `divider`, `TableCell.border`             | `border`                                       | native       | `TableCell.border` replaces MUI's lightened divider                            |
-| `ring` (extra key)                        | `ring`                                         | native       | read by the focus ring (below)                                                 |
-| `transtyle.scrim` (extra key)             | `scrim`                                        | native       | read by `MuiDialog`'s backdrop; Menu and Popover backdrops stay invisible      |
-| `link.*`                                  | —                                              | dropped      | MUI's Link reads `palette[color].main`: links follow the colour they are given |
-| `palette.categorical.*`, `border-width.*` | —                                              | dropped      | no chart slot; MUI writes `1px` borders literally                              |
+| MUI                                       | Catalog                                        | Class        | Notes                                                                                                                      |
+| ----------------------------------------- | ---------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `background.default` / `background.paper` | `elevation.0.surface` / `elevation.1.surface`  | native       | every Paper starts from `paper`; the overlays below lift it per elevation                                                  |
+| `text.primary` / `secondary` / `disabled` | `text.base` / `text.muted` / `text.disabled`   | native       | `text.strong`, `subtle` and `inverse` have no MUI rung: dropped                                                            |
+| `action.disabled`                         | `text.disabled`                                | native       | the text of a disabled button                                                                                              |
+| `action.disabledOpacity`                  | `opacity.disabled`                             | native       |                                                                                                                            |
+| `action.hover` / `action.selected`        | `neutral.tint-hover` / `neutral.tint-selected` | approximated | MUI's are 4% and 8% veils over any surface; the neutral washes are opaque                                                  |
+| `divider`, `TableCell.border`             | `border.base`                                  | native       | `TableCell.border` replaces MUI's lightened divider                                                                        |
+| `ring` (extra key)                        | `ring`                                         | native       | read by the focus ring (below)                                                                                             |
+| `transtyle.scrim` (extra key)             | `scrim`                                        | native       | read by `MuiDialog`'s backdrop; Menu and Popover backdrops stay invisible                                                  |
+| `link.*`                                  | —                                              | dropped      | MUI's Link reads `palette[color].main`: links follow the colour they are given                                             |
+| `palette.categorical.*`, `border-width.*` | —                                              | dropped      | no chart slot; MUI writes `1px` borders literally                                                                          |
+| `border.{subtle,strong,field}`            | —                                              | dropped      | `divider` is MUI's one border colour (`border.base`); the outlined input's border is a fixed alpha in its component styles |
+| `inverse.{surface,text}`                  | —                                              | dropped      | the Tooltip is a fixed grey 700 at 92% in both schemes, in its component styles                                            |
 
 ## Elevation
 

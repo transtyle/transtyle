@@ -250,6 +250,20 @@ export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new 
       return;
     }
     if (hasValue) {
+      // DTCG 2025.10 §6.1: an object with both `$value` and child tokens is
+      // invalid and tools must report it. The walk below stops at `$value`, so
+      // without this the children vanished without a word: the usual case is a
+      // leaf turned into a group by half (`border: { $value, subtle: {…} }`).
+      if (childKeys.length > 0) {
+        diagnostics.error(
+          'TST1311',
+          `${path_.join('.')}: has a $value and child tokens (${childKeys.slice(0, 3).join(', ')}${childKeys.length > 3 ? ', …' : ''}); a token cannot also be a group, so the children are ignored`,
+          {
+            ...where(path_),
+            hint: 'Move the $value into a child token (often `base`) so the node is a group, or move the children elsewhere.',
+          },
+        );
+      }
       if (localType !== undefined && !DTCG_TYPES.has(localType)) {
         diagnostics.warn('TST1306', `${path_.join('.')}: unknown $type "${localType}" — carried through opaque (no type-specific parsing or derivation)`, where(path_));
       }

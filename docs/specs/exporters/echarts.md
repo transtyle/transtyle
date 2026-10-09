@@ -33,7 +33,7 @@ The same rule feeds shadcn's `--chart-*` variables — one brand, one data-viz p
 
 - `background/surface` → `backgroundColor`, tooltip/title/legend backgrounds: `native`.
 - `text`/`text-muted` + typography roles → global `textStyle`, `axisLabel`, `legend.textStyle` (family, size in px — `rem` converted at the config's `units.remBase`, default 16px, `approximated` with the base named): `native`/`approximated`.
-- `border`, `neutral` scale → axis lines, split lines, tooltip borders: `native`.
+- `border.base`, `neutral` scale → axis lines, split lines, tooltip borders: `native`.
 - `success/warning/danger` → visualMap and markLine/markPoint defaults where charts encode status: `native`.
 - Motion tokens → `animationDuration`, `animationEasing` (nearest named easing; cubic-bezier flattening: `approximated`).
 - Radius → tooltip/dataZoom corner radii: `native`; shadows → `native` (px conversion).

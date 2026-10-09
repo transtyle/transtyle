@@ -79,7 +79,7 @@ async function acme() {
       raised: hex('light', 'semantic.color.elevation.1.surface'),
       text: hex('light', 'semantic.color.text.base'),
       muted: hex('light', 'semantic.color.text.muted'),
-      border: hex('light', 'semantic.color.border'),
+      border: hex('light', 'semantic.color.border.base'),
     },
     dark: {
       primary: hex('dark', 'semantic.color.primary.solid'),
@@ -89,7 +89,7 @@ async function acme() {
       raised: hex('dark', 'semantic.color.elevation.1.surface'),
       text: hex('dark', 'semantic.color.text.base'),
       muted: hex('dark', 'semantic.color.text.muted'),
-      border: hex('dark', 'semantic.color.border'),
+      border: hex('dark', 'semantic.color.border.base'),
     },
     radius: raw('light', 'semantic.radius.md'),
     // Counted from the same compile, so the stat strip cannot drift either.

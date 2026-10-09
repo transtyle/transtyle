@@ -41,13 +41,18 @@ export function field(map) {
       background: get(map, 'color.elevation.0.surface'),
       disabledBackground: get(map, 'color.neutral.tint'),
       filledBackground: get(map, 'color.elevation.1.surface'),
-      borderColor: get(map, 'color.neutral.outline'),
+      // The field border at rest (proposal 0005). The hover keeps the neutral
+      // outline-hover cell: the catalog has no field hover rung.
+      borderColor: get(map, 'color.border.field'),
       hoverBorderColor: get(map, 'color.neutral.outline-hover'),
       focusBorderColor: get(map, 'color.primary.solid'),
       invalidBorderColor: get(map, 'color.danger.solid'),
       color: get(map, 'color.text.base'),
       disabledColor: get(map, 'color.text.disabled'),
       placeholderColor: get(map, 'color.text.muted'),
+      // #36: field icons (clear, dropdown chevron, icon fields, input-group
+      // addons) are muted content, as Aura's own surface.400 reads; no icon rung.
+      iconColor: get(map, 'color.text.muted'),
       shadow: 'none', // no direct grid cell for a form-field elevation shadow; PrimeNG's own Aura default is flat too
     },
   };
@@ -74,6 +79,7 @@ export function list(map) {
         focusColor: get(map, 'color.text.base'),
         selectedColor: get(map, 'color.primary.on-tint'),
         selectedFocusColor: get(map, 'color.primary.on-tint'),
+        icon: { color: get(map, 'color.text.muted'), focusColor: get(map, 'color.text.base') },
       },
       optionGroup: { background: 'transparent', color: get(map, 'color.text.muted') },
     },
@@ -101,7 +107,16 @@ export function navigation(map) {
         color: get(map, 'color.text.base'),
         focusColor: get(map, 'color.text.base'),
         activeColor: get(map, 'color.text.base'),
-        icon: { color: get(map, 'color.text.muted'), focusColor: get(map, 'color.text.base') },
+        icon: {
+          color: get(map, 'color.text.muted'),
+          focusColor: get(map, 'color.text.base'),
+          activeColor: get(map, 'color.text.base'),
+        },
+      },
+      submenuIcon: {
+        color: get(map, 'color.text.muted'),
+        focusColor: get(map, 'color.text.base'),
+        activeColor: get(map, 'color.text.base'),
       },
       submenuLabel: { background: 'transparent', color: get(map, 'color.text.muted') },
     },
@@ -151,7 +166,7 @@ export function overlay(map, kind, ctx) {
         ? undefined
         : {
             background: get(map, `color.elevation.${n}.surface`),
-            borderColor: get(map, 'color.neutral.outline'),
+            borderColor: get(map, 'color.border.base'),
             color: get(map, 'color.text.base'),
           },
   };
@@ -164,7 +179,7 @@ export function content(map) {
     colorScheme: {
       background: get(map, 'color.elevation.1.surface'),
       hoverBackground: get(map, 'color.elevation.1.surface'),
-      borderColor: get(map, 'color.neutral.outline'),
+      borderColor: get(map, 'color.border.base'),
       color: get(map, 'color.text.base'),
       hoverColor: get(map, 'color.text.base'),
     },

@@ -41,9 +41,9 @@ The default `recommended` preset authors the honest minimum — **six real decis
 | Card background  | `elevation.1.surface` | First rung above the page              |
 | Body text color  | `text.base`           | Anchors the content hierarchy          |
 | Muted text color | `text.muted`          | Second rung of that hierarchy          |
-| Default border   | `border`              | The neutral hairline everything shares |
+| Default border   | `border.base`         | The neutral hairline everything shares |
 
-The five neutrals start as a near-gray ladder in your brand's hue, each with a dark value: placeholders that already pass contrast, not your design. Only the brand color is required. Leave the page background out and it defaults to white, or near-black in dark mode; leave the body text out and it defaults to whichever of near-black and white contrasts more with the page. Author the body text without a dark value and leave the page out, and dark mode swaps the light pair: the page takes your text color and the text takes white. Both are honest defaults, marked `defaulted` in `report.json`, and the five other decisions are what make the neutrals yours. (Card background and muted text derive from the page and the text too; the scaffold asks for them because they are part of your look.) The `minimal` preset (`--preset minimal`) writes the brand color alone and leaves all of that to the defaults.
+The five neutrals start as a near-gray ladder in your brand's hue, each with a dark value: placeholders that already pass contrast, not your design. Only the brand color is required. Leave the page background out and it defaults to white, or near-black in dark mode; leave the body text out and it defaults to whichever of near-black and white contrasts more with the page. Author the body text without a dark value and leave the page out, and dark mode swaps the light pair: the page takes your text color and the text takes white. Both are honest defaults, marked `defaulted` in `report.json`, and the five other decisions are what make the neutrals yours. (Card background, muted text and the border derive from the page and the text too; the scaffold asks for them because they are part of your look.) The `minimal` preset (`--preset minimal`) writes the brand color alone and leaves all of that to the defaults.
 
 In DTCG form (this is the default scaffold's `tokens/brand.tokens.json`, abridged):
 
@@ -65,7 +65,7 @@ In DTCG form (this is the default scaffold's `tokens/brand.tokens.json`, abridge
         "base": { "$value": "oklch(0.21 0.01 255)" },
         "muted": { "$value": "oklch(0.5 0.01 255)" }
       },
-      "border": { "$value": "oklch(0.9 0.006 255)" }
+      "border": { "base": { "$value": "oklch(0.9 0.006 255)" } }
     }
   }
 }

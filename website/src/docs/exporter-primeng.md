@@ -13,9 +13,9 @@ order: 15
 
 Every other reference exporter binds at the semantic tier only. PrimeNG ships its own explicit three-tier design-token system (`primitive` → `semantic` → `components`), so this exporter overrides an existing preset (`Aura`) rather than authoring one from zero — anything it doesn't emit is inherited from Aura untouched.
 
-<!-- measured: acme.primeng.rows = 356 -->
+<!-- measured: acme.primeng.rows = 357 -->
 
-On [Acme](/docs/examples/) the emitted preset carries 356 classified slots, against the 2759-slot Aura surface the [coverage bar](/docs/concepts/#5-provenance-and-coverage) reconciles them with.
+On [Acme](/docs/examples/) the emitted preset carries 357 classified slots, against the 2759-slot Aura surface the [coverage bar](/docs/concepts/#5-provenance-and-coverage) reconciles them with.
 
 ```json
 "targets": { "primeng": { "output": "dist/primeng" } }
@@ -30,6 +30,8 @@ PrimeNG's per-component color grid (`variant × severity × state × part`) is t
 ## Archetype helpers stay exporter-private
 
 `field`/`list`/`navigation`/`overlay` read straight from existing catalog cells (`space.*`, `radius.*`, `text.*`, `elevation.*`). A [six-ecosystem study](/docs/roadmap/) found none of these groupings convergent across design systems — they live inside this exporter permanently, not the shared catalog.
+
+Field borders read `border.field`, card and overlay borders `border.base`; field, list and menu icons read `text.muted` (`text.base` on focus); the `contrast` severity reads the [inverse pair](/docs/language/#elevation-content-and-the-rest), and the tooltip does too once you author it.
 
 ## Custom roles → PrimeNG's `extend`
 

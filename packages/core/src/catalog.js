@@ -46,7 +46,6 @@ const ANCHORS = {
   'semantic.color.primary.solid': { $type: 'color', $value: 'oklch(0.55 0.18 255)' },
   'semantic.color.elevation.0.surface': { $type: 'color', $value: 'oklch(1 0 0)' },
   'semantic.color.text.base': { $type: 'color', $value: 'oklch(0.2 0.01 255)' },
-  'semantic.color.border': { $type: 'color', $value: 'oklch(0.9 0.005 255)' },
   'semantic.radius.md': { $type: 'dimension', $value: '0.5rem' },
   'semantic.font.sans': { $type: 'fontFamily', $value: ['system-ui', 'sans-serif'] },
   'semantic.font.mono': { $type: 'fontFamily', $value: ['ui-monospace', 'monospace'] },

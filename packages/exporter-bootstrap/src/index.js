@@ -68,8 +68,8 @@ export default {
     r.coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
 
     // AL5: a semantic slot an exporter reads can legitimately be unauthored and
-    // underivable — `semantic.color.border` is aliased in every example, but a
-    // minimal design system has none, and `$border-color: undefined;` is not a
+    // underivable — `semantic.radius.md` is authored in every example, but a
+    // minimal design system has none, and `$border-radius: undefined;` is not a
     // stylesheet. Dropping the declaration is right: Bootstrap's own default
     // then applies, which is exactly what "we have nothing to say about this"
     // should mean. Each dropped declaration becomes a coverage row, so it is
@@ -191,7 +191,9 @@ function resolve(light, dark, ctx) {
       secondaryColor: val(map, 'text.muted'),
       secondaryBg: val(map, 'neutral.tint'),
       tertiaryBg: val(map, 'elevation.1.surface'),
-      border: val(map, 'border'),
+      border: val(map, 'border.base'),
+      inverseSurface: val(map, 'inverse.surface'),
+      inverseText: val(map, 'inverse.text'),
       primary: val(map, 'primary.solid'),
       primaryHover: val(map, 'primary.solid-hover'),
       ring,
@@ -225,7 +227,7 @@ function resolve(light, dark, ctx) {
   cov('$body-secondary-color', `${S}text.muted`, cls('text.muted'));
   cov('$body-secondary-bg', `${S}neutral.tint`, cls('neutral.tint'));
   cov('$body-tertiary-bg', `${S}elevation.1.surface`, cls('elevation.1.surface'));
-  cov('$border-color', `${S}border`, cls('border'));
+  cov('$border-color', `${S}border.base`, cls('border.base'));
   cov(
     '$link-color',
     `${S}primary.solid`,
@@ -341,6 +343,34 @@ function resolve(light, dark, ctx) {
   // blanket "reserved for v2" line. Sass lines + 657 coverage rows.
   const component = componentVariables(light, ctx);
   coverage.push(...component.coverage);
+
+  // The inverse pair (proposal 0005). Bootstrap's tooltip already paints
+  // `var(--bs-emphasis-color)` on `var(--bs-body-bg)`, which this exporter
+  // drives per mode from neutral.text-strong / elevation.0.surface: the pair's
+  // defaults. So nothing is emitted unless the design system authors the pair,
+  // and then it must stay per mode: the component walk resolves recipes against
+  // the light map into Sass, which would bake the light bubble into dark mode.
+  // Both paths write the light value plus a `[data-bs-theme="dark"] .tooltip`
+  // block instead (renderVariables, renderCss).
+  const inverseAuthored = ['inverse.surface', 'inverse.text'].some((p) =>
+    [light, dark].some((m) => ['authored', 'aliased'].includes(provKind(m, p))),
+  );
+  for (const [variable, slot, global] of [
+    ['$tooltip-bg', 'inverse.surface', '--bs-emphasis-color (neutral.text-strong)'],
+    ['$tooltip-color', 'inverse.text', '--bs-body-bg (elevation.0.surface)'],
+  ]) {
+    const row = coverage.find((c) => c.variable === variable);
+    if (!row || val(light, slot) === undefined) continue;
+    row.slot = `${S}${slot}`;
+    delete row.via;
+    if (inverseAuthored) {
+      row.class = 'native';
+      row.note = `per mode: the light value in the Sass variable and a [data-bs-theme="dark"] .tooltip block (CSS path: .tooltip blocks in both modes)`;
+    } else {
+      row.class = 'derived';
+      row.note = `nothing emitted: Bootstrap's own var(${global}) already carries this slot's default in each mode`;
+    }
+  }
   // CSS path (AL1.4): structural component vars + button variant state colors.
   coverage.push(...componentCssBlocks(light, ctx).coverage);
   cov(
@@ -376,6 +406,7 @@ function resolve(light, dark, ctx) {
     hx,
     coverage,
     componentLines: component.lines,
+    inverseAuthored,
     componentActiveColor: hx(val(light, 'primary.on-solid')),
     // AL1.4: grid-cell reader for the CSS path's button variant blocks.
     gridCell: (map) => (roleName, cellName) => hx(val(map, `${roleName}.${cellName}`)),
@@ -500,7 +531,7 @@ function renderVariables(r, ctx) {
       `$border-radius-xxl:  ${xxl(rad.md.value)};  // exporter convention: xl × 2 (F8 watch item)`,
     );
   lines.push("$border-radius-pill: 50rem;  // radius.full, in Bootstrap's own idiom");
-  lines.push(`$border-color:       ${hx(L.border)};  // border`);
+  lines.push(`$border-color:       ${hx(L.border)};  // border.base`);
   lines.push('');
   lines.push('// ------------------------------------------------------------------- shadows');
   lines.push('// Composed from scrim at fixed alpha ramps (F2)');
@@ -514,6 +545,20 @@ function renderVariables(r, ctx) {
   );
   lines.push('');
   lines.push(...r.componentLines);
+  if (r.inverseAuthored) {
+    lines.push('');
+    lines.push('// ------------------------------------------------- tooltip (inverse pair)');
+    lines.push('// Authored inverse.surface / inverse.text. The bubble flips per mode, which a');
+    lines.push('// Sass variable cannot say: the light value here, the dark one in the rule below.');
+    lines.push(`$tooltip-bg:    ${hx(L.inverseSurface)};  // inverse.surface`);
+    lines.push(`$tooltip-color: ${hx(L.inverseText)};  // inverse.text`);
+    if (D) {
+      lines.push('[data-bs-theme="dark"] .tooltip {');
+      lines.push(`  --bs-tooltip-bg: ${hx(D.inverseSurface)};  // inverse.surface (dark)`);
+      lines.push(`  --bs-tooltip-color: ${hx(D.inverseText)};  // inverse.text (dark)`);
+      lines.push('}');
+    }
+  }
   lines.push('');
   return lines.join('\n');
 }
@@ -602,7 +647,7 @@ function renderCss(r, ctx) {
     lines.push(`  --bs-secondary-color: ${hx(M.secondaryColor)};  /* text.muted */`);
     lines.push(`  --bs-secondary-bg: ${hx(M.secondaryBg)};  /* neutral.tint */`);
     lines.push(`  --bs-tertiary-bg: ${hx(M.tertiaryBg)};  /* elevation.1.surface */`);
-    lines.push(`  --bs-border-color: ${hx(M.border)};  /* border */`);
+    lines.push(`  --bs-border-color: ${hx(M.border)};  /* border.base */`);
     lines.push('');
     // Link asymmetry (F13): light links ← primary; dark links ← ring[dark]
     // because CDN users have Bootstrap's stock literals baked in.
@@ -668,6 +713,19 @@ function renderCss(r, ctx) {
   lines.push(' * driven" call). .btn-light/.btn-dark keep Bootstrap defaults (pseudo-roles');
   lines.push(' * have no grid state cells). */');
   lines.push(...buttonVariantBlocks(ROLES, r.gridCell(r.lightMap), rgbTriplet));
+  if (r.inverseAuthored) {
+    lines.push('', '/* tooltip: the authored inverse pair, per mode */');
+    lines.push('.tooltip {');
+    lines.push(`  --bs-tooltip-bg: ${hx(r.light.inverseSurface)};  /* inverse.surface */`);
+    lines.push(`  --bs-tooltip-color: ${hx(r.light.inverseText)};  /* inverse.text */`);
+    lines.push('}');
+    if (r.dark) {
+      lines.push('[data-bs-theme="dark"] .tooltip {');
+      lines.push(`  --bs-tooltip-bg: ${hx(r.dark.inverseSurface)};`);
+      lines.push(`  --bs-tooltip-color: ${hx(r.dark.inverseText)};`);
+      lines.push('}');
+    }
+  }
   if (r.darkMap) {
     lines.push(
       '',

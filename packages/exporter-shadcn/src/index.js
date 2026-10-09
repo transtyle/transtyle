@@ -32,9 +32,9 @@ const MAPPING = [
   { css: '--accent-foreground', slot: `${S}accent.on-tint`, cls: 'native' },
   { css: '--destructive', slot: `${S}danger.solid`, cls: 'native' },
   { css: '--destructive-foreground', slot: `${S}danger.on-solid`, cls: 'native' },
-  { css: '--border', slot: `${S}border`, cls: 'native' },
-  // shadcn distinguishes input borders; the IR does not (exercise F4)
-  { css: '--input', slot: `${S}border`, cls: 'approximated' },
+  { css: '--border', slot: `${S}border.base`, cls: 'native' },
+  // shadcn's input border is the catalog's field border (exercise F4, proposal 0005)
+  { css: '--input', slot: `${S}border.field`, cls: 'native' },
   { css: '--ring', slot: `${S}ring`, cls: 'native' },
   { css: '--chart-1', slot: `${P}1`, cls: 'native' },
   { css: '--chart-2', slot: `${P}2`, cls: 'native' },
@@ -48,7 +48,7 @@ const MAPPING = [
   { css: '--sidebar-primary-foreground', slot: `${S}primary.on-solid`, cls: 'native', note: 'exporter convention' },
   { css: '--sidebar-accent', slot: `${S}accent.tint`, cls: 'native', note: 'exporter convention' },
   { css: '--sidebar-accent-foreground', slot: `${S}accent.on-tint`, cls: 'native', note: 'exporter convention' },
-  { css: '--sidebar-border', slot: `${S}border`, cls: 'native', note: 'exporter convention' },
+  { css: '--sidebar-border', slot: `${S}border.base`, cls: 'native', note: 'exporter convention' },
   { css: '--sidebar-ring', slot: `${S}ring`, cls: 'native', note: 'exporter convention' },
 ];
 

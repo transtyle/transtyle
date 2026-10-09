@@ -239,8 +239,8 @@ export default {
       ['text.secondary', 'text.muted', 'native'],
       ['text.disabled', 'text.disabled', 'native'],
       ['action.disabled', 'text.disabled', 'native', 'the text of a disabled button'],
-      ['divider', 'border', 'native'],
-      ['TableCell.border', 'border', 'native', "replaces MUI's lightened divider"],
+      ['divider', 'border.base', 'native'],
+      ['TableCell.border', 'border.base', 'native', "replaces MUI's lightened divider"],
       ['action.hover', 'neutral.tint-hover', 'approximated', "MUI's is a 4% black or white veil over any surface; the neutral hover wash is opaque"],
       ['action.selected', 'neutral.tint-selected', 'approximated', "MUI's is an 8% veil; the neutral selected wash is opaque"],
       ['ring', 'ring', 'native', 'an extra palette key: the focus ring below reads it'],
@@ -472,6 +472,8 @@ export default {
     row('(text rungs)', `${S}text.{strong,subtle,inverse}`, 'dropped', 'MUI has three text rungs: primary, secondary and disabled');
     row('(categorical palette)', 'semantic.palette.categorical.*', 'dropped', "no chart slot in MUI's theme");
     row('(border widths)', 'semantic.border-width.*', 'dropped', "MUI's components write 1px borders literally");
+    row('(border ladder: subtle, strong, field)', `${S}border.{subtle,strong,field}`, 'dropped', "MUI's palette has one border colour, divider (border.base); the outlined input's border is a fixed black or white alpha in its component styles, not a palette key");
+    row('(inverse pair)', `${S}inverse.{surface,text}`, 'dropped', "MUI's Tooltip paints a fixed grey 700 at 92% in both schemes, in its component styles: not a palette key, and not an inverse");
     coverage.push({
       variable: 'colorSchemes.*.opacity.{inputPlaceholder,inputUnderline,switchTrackDisabled,switchTrack}',
       slot: '—',

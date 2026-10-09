@@ -50,7 +50,7 @@ Each role becomes `semanticTokens.colors.<role>` with Chakra's eight keys, strai
 
 Chakra derives its own hovers (`solid/90` for a solid button, `muted` for the softer variants), so the grid's hover, active and selected cells have no key and are reported `dropped`. Custom roles work like built-in ones: [Cathode](/demo/cathode/chakra/)'s `crt-amber` is `colorPalette="crt-amber"`.
 
-The page colours come from the rest of the catalog: `bg` and `bg.panel` from the elevation ladder, `fg`, `fg.muted`, `fg.subtle` from the text rungs, `border` from the border, and `bg.error`, `fg.error`, `border.error` (and warning, success, info) from the status roles. The modal backdrop takes the design system's `scrim`.
+The page colours come from the rest of the catalog: `bg` and `bg.panel` from the elevation ladder, `fg`, `fg.muted`, `fg.subtle` from the text rungs, `border` and `border.subtle` from the border ladder, `bg.inverted` and `fg.inverted` from the inverse pair, and `bg.error`, `fg.error`, `border.error` (and warning, success, info) from the status roles. The modal backdrop takes the design system's `scrim`.
 
 ## Chakra's defaults read roles, not hues
 

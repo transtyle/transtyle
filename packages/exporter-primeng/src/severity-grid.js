@@ -17,10 +17,10 @@
  *
  * `contrast` is not a real Transtyle role (proposal 0002 gap #3) — it always
  * reads the same two fixed cells regardless of which grid cell a part asks
- * for: background/border-ish parts get `neutral.text-strong` (the near-black/
- * near-white extreme), color-ish parts get `elevation.0.surface` (the page
- * background) — both already correct per-mode with no special-casing needed
- * beyond this one mapping.
+ * for: background/border-ish parts get `inverse.surface`, color-ish parts get
+ * `inverse.text` — the catalog's inverse pair (proposal 0005), whose defaults
+ * are the `neutral.text-strong` / `elevation.0.surface` pair this mapping
+ * read before it existed, so unauthored output is unchanged.
  */
 
 const SEVERITY_ROLE = {
@@ -46,8 +46,8 @@ const BG_CELLS = new Set([
 function resolveCell(map, severity, cellSuffix) {
   if (severity === 'contrast') {
     const path = BG_CELLS.has(cellSuffix)
-      ? 'semantic.color.neutral.text-strong'
-      : 'semantic.color.elevation.0.surface';
+      ? 'semantic.color.inverse.surface'
+      : 'semantic.color.inverse.text';
     return { value: map.get(path)?.value, slot: path };
   }
   const role = SEVERITY_ROLE[severity];

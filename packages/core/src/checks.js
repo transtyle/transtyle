@@ -141,6 +141,7 @@ export const CONTRAST_PAIRS = [
   ['text.base', 'elevation.1.surface', 'body'],
   ['text.muted', 'elevation.0.surface', 'content'],
   ['text.muted', 'elevation.1.surface', 'content'],
+  ['inverse.text', 'inverse.surface', 'content'],
 ];
 
 /**

@@ -176,7 +176,7 @@ const NEUTRALS = [
   [['elevation', '1', 'surface'], 'card', [0.985, 0.003], [0.21, 0.006], 'card/panel background'],
   [['text', 'base'], 'ink', [0.21, 0.01], [0.97, 0.004], 'body text color'],
   [['text', 'muted'], 'ink-muted', [0.5, 0.01], [0.72, 0.01], 'muted/secondary text color'],
-  [['border'], 'line', [0.9, 0.006], [0.32, 0.01], 'default border color'],
+  [['border', 'base'], 'line', [0.9, 0.006], [0.32, 0.01], 'default border color'],
 ];
 
 /** The brand's hue, or none for a gray brand (its hue is noise). */

@@ -33,7 +33,7 @@ The simplest possible backend. Unlike every other reference exporter, it isn't r
 
 ## Naming
 
-Strip `semantic.`, dots become dashes. Color-role [grid](/docs/language/#color-roles-the-role-grid) cells and content keep their `color.` segment — `--color-primary-solid`, `--color-text-base`, `--color-border`. The elevation ladder and `scrim` drop it, since they're surfaces, not role colors — `--elevation-1-surface`, `--elevation-1-shadow`, `--scrim`. Everything else keeps its own top group: `--radius-md` (+ `-control`/`-field`/`-container`), `--space-4`, `--type-size-md`, `--z-modal`, `--duration-normal`, `--easing-standard`.
+Strip `semantic.`, dots become dashes. Color-role [grid](/docs/language/#color-roles-the-role-grid) cells and content keep their `color.` segment — `--color-primary-solid`, `--color-text-base`, `--color-border-base`. The elevation ladder and `scrim` drop it, since they're surfaces, not role colors — `--elevation-1-surface`, `--elevation-1-shadow`, `--scrim`. Everything else keeps its own top group: `--radius-md` (+ `-control`/`-field`/`-container`), `--space-4`, `--type-size-md`, `--z-modal`, `--duration-normal`, `--easing-standard`.
 
 Composite values expand: a typography role (`type.role.body.md`) becomes four longhand properties (`-size`/`-weight`/`-leading`/`-family`); an elevation shadow collapses to one box-shadow-shaped value, usable directly as `box-shadow: var(--elevation-1-shadow)` — an authored stack of shadow layers becomes the same comma-separated list CSS takes. An authored `border` or `transition` composite becomes its CSS shorthand (`2px solid oklch(…)`, `150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms`); a `border` whose `style` is a dash-array object has no shorthand and is left out.
 
@@ -54,11 +54,11 @@ Only the first line of a description is written, and a `*/` in it is broken up s
 
 ## Coverage
 
-<!-- measured: acme.css-variables.decls = 467 -->
-<!-- measured: acme.css-variables.distinct = 305 -->
+<!-- measured: acme.css-variables.decls = 477 -->
+<!-- measured: acme.css-variables.distinct = 310 -->
 <!-- measured: acme.authored = 40 -->
 
-Every variable is `native` — there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 467 declarations across the mode blocks — 305 distinct variables — from 40 authored tokens.
+Every variable is `native` — there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 477 declarations across the mode blocks — 310 distinct variables — from 40 authored tokens.
 
 ## Extra mode dimensions
 

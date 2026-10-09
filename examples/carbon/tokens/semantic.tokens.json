@@ -19,6 +19,14 @@
           "$value": "{option.color.gray.70}",
           "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.30}" } } }
         },
+        "background-inverse": {
+          "$value": "{option.color.gray.80}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.10}" } } }
+        },
+        "text-inverse": {
+          "$value": "{option.color.white}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.100}" } } }
+        },
         "border-subtle-00": {
           "$value": "{option.color.gray.20}",
           "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.80}" } } }
