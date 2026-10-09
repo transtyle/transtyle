@@ -21,22 +21,22 @@ Per `docs/plan/catalog-revision.md` T11: _"a review checklist per target filled 
 
 ## Carbon (`examples/carbon/demo/`, ports 4401–4407, 6401)
 
-| Target        | Port | What to look for                                                                                                                                               | Result |
-| ------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Bootstrap     | 4401 | Both light and dark (`data-bs-theme`) look like real Carbon, not a generic dark mode                                                                           | ☐      |
-| daisyUI       | 4402 | White and G100 theme blocks both register; toggle between them                                                                                                 | ☐      |
-| shadcn/ui     | 4403 | Registry components in both modes; IBM Plex Sans renders (check via devtools computed font, not just visually)                                                 | ☐      |
-| ECharts       | 4404 | Both mode themes look distinctly Carbon (Blue 60 light / Blue 40 dark)                                                                                         | ☐      |
-| Storybook     | 6401 | Chrome themes correctly in both modes via the toolbar switcher                                                                                                 | ☐      |
-| css-variables | 4405 | Full catalog browses cleanly; spot-check `--color-*` dark values against Carbon's G100 token page                                                              | ☐      |
-| Radix         | 4406 | `indigo`/`gray` preset override; dark mode shows real G100 background + Blue 40 primary (already screenshot-verified during engineering — worth a second look) | ☐      |
-| PrimeNG       | 4407 | Aura preset in both modes on real PrimeNG Angular components; IBM Plex renders; `ng build` type-checks the emitted preset                                      | ☐      |
+| Target        | Port | What to look for                                                                                                                                   | Result |
+| ------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Bootstrap     | 4401 | Both light and dark (`data-bs-theme`) look like real Carbon, not a generic dark mode                                                               | ☐      |
+| daisyUI       | 4402 | White and G100 theme blocks both register; toggle between them                                                                                     | ☐      |
+| shadcn/ui     | 4403 | Registry components in both modes; IBM Plex Sans renders (check via devtools computed font, not just visually)                                     | ☐      |
+| ECharts       | 4404 | Both mode themes look distinctly Carbon (Blue 60 primary in both, on White and G100 backgrounds)                                                   | ☐      |
+| Storybook     | 6401 | Chrome themes correctly in both modes via the toolbar switcher                                                                                     | ☐      |
+| css-variables | 4405 | Full catalog browses cleanly; spot-check `--color-*` dark values against Carbon's G100 token page                                                  | ☐      |
+| Radix         | 4406 | `indigo`/`gray` preset override; dark mode shows real G100 background + Blue 60 primary (Carbon's `$button-primary`, the same blue in every theme) | ☐      |
+| PrimeNG       | 4407 | Aura preset in both modes on real PrimeNG Angular components; IBM Plex renders; `ng build` type-checks the emitted preset                          | ☐      |
 
 ## Open items from the findings ledger worth a maintainer opinion
 
 - [ ] GOV.UK: is Black tint-50 (#858686) the right `neutral` anchor, or would tint-25 read better in practice? (`govuk-adoption.md`)
 - [ ] GOV.UK: is purple (#54319f) an acceptable `link.visited` given it's not in GOV.UK's current functional-colour set? (`govuk-adoption.md`)
-- [ ] Carbon: should `secondary`'s G100 value be independently re-verified against a live Carbon page before this ships anywhere real? (`carbon-adoption.md`)
+- [x] Carbon: should `secondary`'s G100 value be independently re-verified against a live Carbon page before this ships anywhere real? Done 2026-10-09 against Carbon's own token source: Gray 60, now bound (`carbon-adoption.md`)
 - [ ] Both: is leaving `warning`/`info`/`secondary`/`accent` (GOV.UK) unbound-and-derived the right call, or should a real GOV.UK adoption bind them to something GOV.UK-specific even without an official functional colour?
 
 ## Sign-off
