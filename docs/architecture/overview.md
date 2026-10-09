@@ -40,7 +40,7 @@ Design rules embedded in this layout:
 
 - **`ir` is sacred and tiny.** Exporters depend on `ir` alone — not on `core`, and not even on `plugin-kit`, which is a checking tool the root scripts run over them rather than a library they import. This is what lets core refactor freely while plugins stay stable, and lets other tools (linters, editors) consume the IR without the compiler.
 - **Monorepo, independent versioning.** Official exporters release on their own cadence (a Bootstrap release should not require a CLI release). See [versioning.md](versioning.md).
-- **Core is a library first, CLI second.** Programmatic API (`compile(config)`) is public from day one — CI integrations, build-tool plugins (Vite, etc.) and the future preview server all consume it.
+- **Core is a library first, CLI second.** Programmatic API (`compile({ cwd })`) is public from day one — CI integrations, build-tool plugins (Vite, etc.) and the future preview server all consume it. Under it, `compileProject({ config, files, exporters })` compiles a project held in memory (the config plus a map of token file paths to their contents) and returns every file without writing one; `compile()` is `loadProject()` → `compileProject()` → `writeResults()`. `@transtyle/core/browser` is that pure part alone, for a browser, a worker or a playground.
 
 ## Data flow contracts
 
@@ -53,7 +53,7 @@ Three data shapes cross public boundaries, and each is schema-versioned:
 ## Key invariants
 
 - **Determinism:** identical inputs (config + tokens + plugin versions) produce byte-identical outputs. No timestamps, no randomness, no network access during build. Verified in CI by double-build comparison.
-- **Isolation:** exporters cannot mutate the IR or affect other exporters — both enforced by `plugin-kit`'s conformance suite, not by convention. Exporters return _file descriptions_ (path + content); only core touches the filesystem, which is what makes `check` a real dry run (same code path, EMIT skipped) and what atomic writes and the emitted-file manifest (drift detection, `TST1312`) build on.
+- **Isolation:** exporters cannot mutate the IR or affect other exporters — both enforced by `plugin-kit`'s conformance suite, not by convention. Exporters return _file descriptions_ (path + content); only core touches the filesystem, and inside core only `load.js` (reading the project and its `extends` chain), `emit.js` (writing the results) and `manifest.js` (the emitted-file manifest and drift detection, `TST1312`, which compare an output directory with its last build). Everything between them runs on the in-memory project, which is what makes `check` a real dry run (same code path, EMIT skipped), what atomic writes and the manifest build on, and what lets the same compiler run with no filesystem at all. `npm run check:browser` loads core's browser entry and every official exporter in a context with no Node built-in and no host global, and compiles each example there byte-identically to `transtyle build`.
 - **Provenance everywhere:** every value in the IR knows whether it was authored, aliased, derived (by which rule, from what), or defaulted. This powers `explain`, coverage classification, and trustworthy diffs.
 - **No network at build time.** Plugin installation (`transtyle add`) touches the network; `transtyle build` never does. Doc generation ([specs/doc-generation.md](../specs/doc-generation.md)) is the sole, explicitly-flagged exception.
 

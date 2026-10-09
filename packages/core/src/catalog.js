@@ -33,6 +33,10 @@ import { Diagnostics } from './diagnostics.js';
 
 const RULE_PACK = 'standard@1';
 
+// A copy of JSON-safe data. Not `structuredClone`: that is a host API (HTML,
+// Node), and the pipeline runs where only ECMAScript is (check:browser).
+const clone = (value) => JSON.parse(JSON.stringify(value));
+
 /**
  * The anchors the probe authors: the slots no rule fills, and the two neutral
  * anchors the engine only defaults. Placeholder values, chosen only to be
@@ -67,7 +71,7 @@ function probe(paths) {
     const segs = p.split('.');
     let node = tree;
     for (const s of segs.slice(0, -1)) node = node[s] ??= {};
-    node[segs.at(-1)] = structuredClone(ANCHORS[p]);
+    node[segs.at(-1)] = clone(ANCHORS[p]);
   }
   const diagnostics = new Diagnostics();
   const normalized = normalize([{ file: '(catalog probe)', tree }], PROBE_CONFIG, diagnostics);
@@ -205,7 +209,7 @@ let cached;
  */
 export function catalog() {
   cached ??= build();
-  return structuredClone(cached);
+  return clone(cached);
 }
 
 let slotSet;

@@ -32,7 +32,7 @@ const fill = (text, values) => text.replace(PLACEHOLDER, (_, name) => values[nam
 const sample = (list) => list.slice(0, 3).join(', ') + (list.length > 3 ? `, … (${list.length} in all)` : '');
 
 /**
- * @param trees the loaded token trees (`loadTokenTrees()`)
+ * @param trees the loaded token trees (`readTokenTrees()`, project.js)
  * @param config the validated config
  * @param labels optional, one per rule: how diagnostics name it (default `bindings[i]`)
  * @returns null when the config has no `bindings`; otherwise

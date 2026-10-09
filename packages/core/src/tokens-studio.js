@@ -12,6 +12,8 @@
  * layer (the themes mapped to every dimension's default) and one mode-scoped
  * layer per other mode value, exactly what a hand-written DTCG layout would
  * give the rest of the pipeline. Nothing in the export is modified on disk.
+ * It reads from the in-memory project (project.js), like the rest of LOAD:
+ * `loadProject()` puts every `.json` file of the export in the map.
  *
  * What it does, in order:
  * 1. Read the sets, their order and the themes (TST1003 for a broken export).
@@ -32,12 +34,10 @@
  *    with a warning (TST1009).
  */
 
-import { readFile, stat } from 'node:fs/promises';
-import path from 'node:path';
 import { locateJson } from './locate.js';
 import { Expression } from './expressions.js';
 import { FONT_WEIGHT_KEYWORDS, plainNumber } from './values.js';
-import { isStyleDictionaryLeaf } from './load.js';
+import { isStyleDictionaryLeaf, normalizePath, projectPath } from './project.js';
 import { needsStyleDictionaryMigration } from './migrate-style-dictionary.js';
 
 const TIERS = new Set(['option', 'semantic', 'component']);
@@ -78,72 +78,82 @@ const MATH = /(\d|\))\s*[-+*/]\s*(\d|\(|\.)|\b(roundTo|min|max|floor|ceil|round)
 
 // ---------- 1. reading the export ----------
 
-async function readJson(file, rel, diagnostics, what) {
-  let text;
-  try {
-    text = await readFile(file, 'utf8');
-  } catch (e) {
-    diagnostics.error('TST1003', `Tokens Studio export ${rel}: cannot read ${what} (${e.code ?? e.message})`, {
-      file: rel,
+/** `a/b` for POSIX paths, `b` when `a` is the project root (`''`). */
+const join = (a, b) => (a ? `${a}/${b}` : b);
+
+/**
+ * One file of the export from the project's map: JSON text is parsed (and
+ * keeps its positions), an object is copied (the dialect rewrite below works in
+ * place and must not touch the caller's object).
+ */
+function readJson(files, file, diagnostics, what) {
+  const contents = files.get(file);
+  if (contents === undefined) {
+    const code = [...files.keys()].some((k) => k.startsWith(file + '/')) ? 'EISDIR' : 'ENOENT';
+    diagnostics.error('TST1003', `Tokens Studio export ${file}: cannot read ${what} (${code})`, {
+      file,
       hint: 'Point "tokensStudio" at the folder Tokens Studio syncs to (the one holding $metadata.json), or at a single-file export.',
     });
     return null;
   }
+  if (typeof contents !== 'string') return { json: JSON.parse(JSON.stringify(contents)), text: undefined };
   try {
-    return { json: JSON.parse(text), text };
+    return { json: JSON.parse(contents), text: contents };
   } catch (e) {
-    diagnostics.error('TST1002', `Failed to parse ${rel}: ${e.message}`, { file: rel });
+    diagnostics.error('TST1002', `Failed to parse ${file}: ${e.message}`, { file });
     return null;
   }
 }
+
+/** Source positions of a file read by readJson (none for an object). */
+const positionsOf = (r) => (r.text === undefined ? new Map() : locateJson(r.text));
 
 /**
  * The export as `{ sets: [{ name, file, tree, positions }], order, themes }`,
  * or null when it is unusable (already reported).
  */
-async function readExport(cwd, source, diagnostics) {
-  const abs = path.resolve(cwd, source);
-  const rel = path.relative(cwd, abs);
-  let info;
-  try {
-    info = await stat(abs);
-  } catch {
+function readExport(files, source, diagnostics, root) {
+  const rel = projectPath(source, '', root); // an absolute source, relative to the root like on disk
+  const isDirectory = [...files.keys()].some((k) => k.startsWith(rel === '' ? '' : rel + '/'));
+  if (!files.has(rel) && !isDirectory) {
     diagnostics.error('TST1003', `Tokens Studio export not found: ${rel}`, {
-      hint: `Resolved relative to ${cwd}. Check "tokensStudio" in transtyle.config.json.`,
+      hint: root
+        ? `Resolved relative to ${root}. Check "tokensStudio" in transtyle.config.json.`
+        : 'Resolved against the paths of the files passed in. Check "tokensStudio" in transtyle.config.json.',
     });
     return null;
   }
   const invalid = (message, extra = {}) => diagnostics.error('TST1003', `Tokens Studio export ${rel}: ${message}`, extra);
 
-  if (info.isDirectory()) {
-    const meta = await readJson(path.join(abs, '$metadata.json'), path.join(rel, '$metadata.json'), diagnostics, '$metadata.json');
+  if (!files.has(rel)) {
+    const metaFile = join(rel, '$metadata.json');
+    const meta = readJson(files, metaFile, diagnostics, '$metadata.json');
     if (!meta) return null;
     const order = meta.json?.tokenSetOrder;
     if (!Array.isArray(order) || !order.every((s) => typeof s === 'string')) {
-      invalid('$metadata.json has no "tokenSetOrder" list of set names', { file: path.join(rel, '$metadata.json') });
+      invalid('$metadata.json has no "tokenSetOrder" list of set names', { file: metaFile });
       return null;
     }
     let themes = [];
-    const themesFile = path.join(abs, '$themes.json');
-    const hasThemes = await stat(themesFile).then(() => true, () => false);
-    if (hasThemes) {
-      const t = await readJson(themesFile, path.join(rel, '$themes.json'), diagnostics, '$themes.json');
+    const themesFile = join(rel, '$themes.json');
+    if (files.has(themesFile)) {
+      const t = readJson(files, themesFile, diagnostics, '$themes.json');
       if (!t) return null;
       themes = t.json;
     }
     const sets = [];
     for (const name of order) {
-      const file = path.join(rel, `${name}.json`);
-      const r = await readJson(path.join(abs, `${name}.json`), file, diagnostics, `the file of set "${name}"`);
+      const file = normalizePath(join(rel, `${name}.json`));
+      const r = readJson(files, file, diagnostics, `the file of set "${name}"`);
       if (!r) continue;
       if (!isPlainObject(r.json)) { invalid(`set "${name}" is not a JSON object`, { file }); continue; }
-      const positions = locateJson(r.text);
+      const positions = positionsOf(r);
       sets.push({ name, file, tree: r.json, at: (p) => positions.get(p) });
     }
     return { rel, order, themes, sets };
   }
 
-  const r = await readJson(abs, rel, diagnostics, 'the file');
+  const r = readJson(files, rel, diagnostics, 'the file');
   if (!r) return null;
   if (!isPlainObject(r.json)) { invalid('not a JSON object'); return null; }
   const names = Object.keys(r.json).filter((k) => !k.startsWith('$'));
@@ -152,7 +162,7 @@ async function readExport(cwd, source, diagnostics) {
     invalid('"$metadata.tokenSetOrder" is not a list of set names', { file: rel });
     return null;
   }
-  const positions = locateJson(r.text);
+  const positions = positionsOf(r);
   const sets = [];
   for (const name of order) {
     if (!isPlainObject(r.json[name])) {
@@ -518,8 +528,8 @@ function treeOf(flat) {
  * Load one `{ "tokensStudio": … }` entry. Returns the layers it lowers to
  * (possibly none, when the export is unusable; every reason is reported).
  */
-export async function loadTokensStudio(cwd, entry, config, diagnostics) {
-  const exp = await readExport(cwd, entry.tokensStudio, diagnostics);
+export function readTokensStudio(files, entry, config, diagnostics, root) {
+  const exp = readExport(files, entry.tokensStudio, diagnostics, root);
   if (!exp) return [];
   const { rel, order } = exp;
   const setsByName = new Map(exp.sets.map((s) => [s.name, s]));

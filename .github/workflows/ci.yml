@@ -44,6 +44,7 @@ jobs:
       - run: npm run check:fixtures
       - run: npm run check:determinism
       - run: npm run check:atomic-emit
+      - run: npm run check:browser
       - run: npm run check:schemas
       - run: npm run check:cli
       - run: npm run check:explain

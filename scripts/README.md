@@ -1,6 +1,6 @@
 # The checkers
 
-Thirty scripts, one job each — twenty-six chained by `npm run check:all` and
+Thirty-one scripts, one job each — twenty-seven chained by `npm run check:all` and
 run individually by CI, plus four that guard a release, a deploy, the history
 itself, and the compiler's speed at scale.
 Every one exists because something real broke or could have: they are not a
@@ -20,6 +20,7 @@ already made once.
 | `check-rem-base.mjs`          | The config-level rem base (`units.remBase`): a custom base reaches ECharts and Storybook, the default is byte-identical, a bad base is `TST1010`                                                                                           |
 | `check-determinism.mjs`       | Two builds of every example and of the mode-dimensions fixture, byte-compared                                                                                                                                                              |
 | `check-atomic-emit.mjs`       | A failed build leaves every output directory byte-for-byte as it was, with no staging directory left behind                                                                                                                                |
+| `check-browser.mjs`           | Core's browser entry and every exporter load with no Node; each example compiles in memory as on disk                                                                                                                                      |
 | `check-schemas.mjs`           | Published JSON schemas match their source objects; every config, report and manifest validates                                                                                                                                             |
 | `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` / `catalog` / `bind --suggest` / drift golden paths and errors                                                                                                                               |
 | `check-explain.mjs`           | `explainToken()` golden paths: authored, aliased and derived slots, plus the walk's edge cases                                                                                                                                             |

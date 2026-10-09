@@ -10,7 +10,8 @@
  * Run: node scripts/check-color.mjs (also: npm run check:color; in check:all).
  */
 import { parseColor, formatHex, contrastRatio, mix, DTCG_COLOR_SPACES } from '../packages/core/src/color.js';
-import { loadContrast, wcagContrast } from '../packages/core/src/contrast.js';
+import { wcagContrast } from '../packages/core/src/contrast.js';
+import { loadContrast } from '../packages/core/src/apca.js';
 
 let failures = 0;
 const eq = (label, got, want) => {

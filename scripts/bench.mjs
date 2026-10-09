@@ -103,8 +103,8 @@ async function timedCompile(compile, cwd) {
 
 /** The shared stages, called in compile()'s order (see the header). */
 async function timedStages(cwd) {
-  const [{ Diagnostics }, load, { expandBindings }, norm, der, { runChecks }, { fillLocations }] = await Promise.all(
-    ['diagnostics.js', 'load.js', 'bindings.js', 'normalize.js', 'derive.js', 'checks.js', 'locations.js'].map(core),
+  const [{ Diagnostics }, load, project, { expandBindings }, norm, der, { runChecks }, { fillLocations }] = await Promise.all(
+    ['diagnostics.js', 'load.js', 'project.js', 'bindings.js', 'normalize.js', 'derive.js', 'checks.js', 'locations.js'].map(core),
   );
   const out = {};
   let t = performance.now();
@@ -114,8 +114,8 @@ async function timedStages(cwd) {
     t = now;
   };
   const diagnostics = new Diagnostics();
-  const { config } = await load.loadConfig(cwd);
-  const trees = await load.loadTokenTrees(cwd, config.tokens, diagnostics);
+  const { config, files } = await load.loadProject(cwd);
+  const trees = project.readTokenTrees(project.toFileMap(files), config.tokens, diagnostics, cwd, config);
   const bindings = expandBindings(trees, config, diagnostics);
   if (bindings && bindings.aliases.length > 0) {
     trees.push({ file: 'transtyle.config.json (bindings)', tree: bindings.tree, modeScope: undefined, bindingRules: bindings.rules });
