@@ -13,7 +13,7 @@ cd examples/acme
 npx transtyle build shadcn
 ```
 
-Ten target instances across nine exporters are configured (note the `exporter` field enabling two shadcn instances):
+Eleven target instances across ten exporters are configured (note the `exporter` field enabling two shadcn instances):
 
 - `npx transtyle build shadcn` → `dist/shadcn/`: Tailwind **v4** era — `globals.transtyle.css` with `:root` + `.dark` + `@theme inline`, OKLCH values.
 - `npx transtyle build shadcn-v3` → `dist/shadcn-v3/`: Tailwind **v3** era — HSL channel triplets in `@layer base` plus a `tailwind.theme.transtyle.cjs` snippet to merge into `tailwind.config`.
@@ -25,14 +25,15 @@ Ten target instances across nine exporters are configured (note the `exporter` f
 - `npx transtyle build radix` → `dist/radix/`: Radix Colors 12-step scales + alpha + contrast — the role grid's own acceptance test.
 - `npx transtyle build primeng` → `dist/primeng/`: a PrimeNG `definePreset(Aura, …)` module, with a component-tier colour grid.
 - `npx transtyle build mantine` → `dist/mantine/`: a Mantine 9 `createTheme` object and `cssVariablesResolver`, one virtual colour per role.
-- `npx transtyle build` builds all nine (plus the second shadcn instance, `shadcn-v3`). Each output includes a generated `usage.md` (paste instructions) and `report.json` (coverage + provenance per variable).
+- `npx transtyle build chakra` → `dist/chakra/`: a Chakra UI v3 `createSystem` config, every role a colour palette with Chakra's eight semantic keys.
+- `npx transtyle build` builds all ten (plus the second shadcn instance, `shadcn-v3`). Each output includes a generated `usage.md` (paste instructions) and `report.json` (coverage + provenance per variable).
 
 `npx transtyle check` runs the same pipeline without writing files (validation, contrast checks, coverage); `--json` prints a machine-readable report to stdout.
 
-**See it rendered:** [demo/](demo/) contains nine real npm projects — the same fake page in Bootstrap (Sass path), shadcn/ui, daisyUI, `@radix-ui/themes`, PrimeNG on Angular and Mantine, an ECharts dashboard, a minimal themed Storybook, and a plain-CSS-variables page — each consuming only the `dist/` artifacts this example compiles (spec: [docs/specs/demo-app.md](../../docs/specs/demo-app.md)). From the repo root:
+**See it rendered:** [demo/](demo/) contains ten real npm projects — the same fake page in Bootstrap (Sass path), shadcn/ui, daisyUI, `@radix-ui/themes`, PrimeNG on Angular, Mantine and Chakra UI, an ECharts dashboard, a minimal themed Storybook, and a plain-CSS-variables page — each consuming only the `dist/` artifacts this example compiles (spec: [docs/specs/demo-app.md](../../docs/specs/demo-app.md)). From the repo root:
 
 ```bash
-npm run dev -w acme-demo-bootstrap   # port 4101   (also: -daisyui 4102, -shadcn 4103, -echarts 4104, -storybook 6101, -css-variables 4105, -radix 4106, -primeng 4107, -mantine 4108)
+npm run dev -w acme-demo-bootstrap   # port 4101   (also: -daisyui 4102, -shadcn 4103, -echarts 4104, -storybook 6101, -css-variables 4105, -radix 4106, -primeng 4107, -mantine 4108, -chakra 4109)
 ```
 
 ## Things to try

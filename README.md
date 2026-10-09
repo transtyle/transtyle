@@ -67,9 +67,9 @@ npx transtyle build
 
 ## Targets
 
-<!-- measured: exporters = 9 -->
+<!-- measured: exporters = 10 -->
 
-Nine exporters ship today:
+Ten exporters ship today:
 
 | Target                                                 | Emits                                                                        |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------- |
@@ -81,6 +81,7 @@ Nine exporters ship today:
 | [Radix](docs/specs/exporters/radix.md)                 | 12-step color scales + alpha variants, for Radix Themes or standalone        |
 | [PrimeNG](docs/specs/exporters/primeng.md)             | an Aura-based preset, severities and component archetypes                    |
 | [Mantine](docs/specs/exporters/mantine.md)             | a `createTheme` object + `cssVariablesResolver`, one virtual colour per role |
+| [Chakra UI](docs/specs/exporters/chakra.md)            | a `createSystem` config: every role a palette with Chakra's eight keys       |
 | [css-variables](docs/specs/exporters/css-variables.md) | plain custom properties — also the reference plugin implementation           |
 
 The core knows nothing about any of them: every one is a plugin on the same public API, so a
@@ -154,7 +155,7 @@ Four examples compile end to end, each with runnable demo projects under
 | [GOV.UK](examples/govuk/)    | a real published system, adopted without renaming anything                                  |
 | [Carbon](examples/carbon/)   | IBM's, likewise — real values, real accessibility constraints                               |
 
-All 36 of those demos (4 examples × 9 targets) are deployed and browsable:
+All 40 of those demos (4 examples × 10 targets) are deployed and browsable:
 **[transtyle.github.io/transtyle/demo](https://transtyle.github.io/transtyle/demo/)**. Within a
 target the page is byte-identical across all four design systems — enforced in CI — so anything
 that differs between them came out of the compiler. Each demo has a switcher in the corner for
@@ -167,7 +168,7 @@ npm run dev -w acme-demo-bootstrap     # the same page in real Bootstrap, port 4
 npm run dev -w acme-demo-shadcn        # …and in real shadcn/ui, port 4103
 npm run dev -w cathode-demo-storybook  # a phosphor-green Storybook, port 6201
 
-npm run demos:all                      # build all 36 + the site, exactly as deployed
+npm run demos:all                      # build all 40 + the site, exactly as deployed
 ```
 
 ## Status

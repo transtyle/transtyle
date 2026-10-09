@@ -200,10 +200,13 @@ surfaces per the sync rule.
 
 **Progress.** Order set by the maintainer on 2026-10-07: Mantine, Chakra, then MUI, ahead of the P3
 pilot. **Mantine shipped 2026-10-09** ([#72](https://github.com/transtyle/transtyle/issues/72),
-[spec](specs/exporters/mantine.md)); Chakra ([#73](https://github.com/transtyle/transtyle/issues/73))
-and MUI ([#71](https://github.com/transtyle/transtyle/issues/71)) are queued as their own issues. For BL-19: Mantine reopened none of the four deferred
+[spec](specs/exporters/mantine.md)), and **Chakra UI** the same day
+([#73](https://github.com/transtyle/transtyle/issues/73), [spec](specs/exporters/chakra.md)); MUI
+([#71](https://github.com/transtyle/transtyle/issues/71)) is queued as its own issue. For BL-19: Mantine reopened none of the four deferred
 promotions. Its control sizes are height-driven and its size ladder is xs to xl, a third shape next
-to Bootstrap's and PrimeNG's, which strengthens the case for leaving the sm/lg ladder out.
+to Bootstrap's and PrimeNG's, which strengthens the case for leaving the sm/lg ladder out. Chakra UI
+reopened none either: its controls are height-driven too, on a seven-rung ladder (2xs to 2xl) whose
+sm/md/lg take the catalog's `size.control` rungs by name.
 
 ### BL-08
 

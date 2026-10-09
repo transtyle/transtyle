@@ -25,6 +25,7 @@ const OFFICIAL_EXPORTERS = {
   radix: '@transtyle/exporter-radix',
   primeng: '@transtyle/exporter-primeng',
   mantine: '@transtyle/exporter-mantine',
+  chakra: '@transtyle/exporter-chakra',
 };
 
 /**

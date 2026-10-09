@@ -27,12 +27,12 @@ cd examples/carbon
 npx transtyle build
 ```
 
-All nine targets are configured — `shadcn`, `echarts`, `daisyui`, `bootstrap`, `storybook`, `css-variables`, `radix`, `primeng`, `mantine`. `npx transtyle check --json` prints diagnostics + coverage as JSON.
+All ten targets are configured — `shadcn`, `echarts`, `daisyui`, `bootstrap`, `storybook`, `css-variables`, `radix`, `primeng`, `mantine`, `chakra`. `npx transtyle check --json` prints diagnostics + coverage as JSON.
 
 From the **repo root**, without `cd`-ing in: `npm run example:build:carbon` / `npm run example:check:carbon`.
 
-**See it rendered:** [demo/](demo/) — the same nine demo projects as Acme/Cathode/GOV.UK, themed with Carbon's real colors and real IBM Plex fonts. From the repo root:
+**See it rendered:** [demo/](demo/) — the same ten demo projects as Acme/Cathode/GOV.UK, themed with Carbon's real colors and real IBM Plex fonts. From the repo root:
 
 ```bash
-npm run dev -w carbon-demo-bootstrap   # port 4401   (also: -daisyui 4402, -shadcn 4403, -echarts 4404, -storybook 6401, -css-variables 4405, -radix 4406, -primeng 4407, -mantine 4408)
+npm run dev -w carbon-demo-bootstrap   # port 4401   (also: -daisyui 4402, -shadcn 4403, -echarts 4404, -storybook 6401, -css-variables 4405, -radix 4406, -primeng 4407, -mantine 4408, -chakra 4409)
 ```

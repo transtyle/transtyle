@@ -736,12 +736,12 @@ try {
 // ---------- #99: init's answers — flags, presets, layouts, prompts ----------
 // Every answer has a flag, validated before anything is written; without a
 // terminal nothing is asked; the same answers give the same bytes; every
-// preset × layout × schemes builds clean on all nine targets; the prompts
+// preset × layout × schemes builds clean on all ten targets; the prompts
 // (driven here by scripted streams, as a terminal would) re-ask a wrong answer
 // and give up cleanly when input ends.
 {
   const { promptAnswers, scaffold, INIT_DEFAULTS } = await import(join(root, 'packages/cli/src/init.js'));
-  const ALL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css-variables', 'radix', 'primeng', 'mantine'];
+  const ALL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css-variables', 'radix', 'primeng', 'mantine', 'chakra'];
   const fresh = (label) => mkdtempSync(join(tmpdir(), `transtyle-check-99-${label}-`));
   const report = (cwd) => {
     const r = run(['check', '--cwd', cwd, '--json']);
@@ -772,7 +772,7 @@ try {
       .every((f) => readFileSync(join(dir, f), 'utf8').replace(/"name": "[^"]*"/, '') === readFileSync(join(twin, f), 'utf8').replace(/"name": "[^"]*"/, ''));
     expect('init: same answers give byte-identical files (target order ignored)', same);
 
-    // Every preset × layout × schemes, all nine targets, no error, no warning, each file loaded once.
+    // Every preset × layout × schemes, all ten targets, no error, no warning, each file loaded once.
     for (const preset of ['recommended', 'minimal']) {
       for (const layout of ['single', 'layered']) {
         for (const schemes of ['light,dark', 'light']) {
@@ -780,7 +780,7 @@ try {
           r = run(['init', '--cwd', dir, '--brand', '#e8590c', '--preset', preset, '--layout', layout, '--schemes', schemes, '--targets', ALL.join(',')]);
           j = report(dir);
           const label = `init --preset ${preset} --layout ${layout} --schemes ${schemes}`;
-          expect(`${label}: builds on all nine targets with no error or warning`, r.code === 0 && j.targets.length === 9 && loud(j).length === 0, `${r.out}\n${loud(j).join('\n')}`);
+          expect(`${label}: builds on all ten targets with no error or warning`, r.code === 0 && j.targets.length === 10 && loud(j).length === 0, `${r.out}\n${loud(j).join('\n')}`);
           expect(`${label}: no file loaded twice (no TST1103)`, !j.diagnostics.some((d) => d.code === 'TST1103'));
         }
       }
