@@ -1,6 +1,6 @@
 # CLI specification
 
-> **Status:** `build`, `check`, `explain`, `bindings --expand`, `init`, `add`, `diff`, `catalog` are implemented (`packages/cli/src/main.js`; golden-tested by `scripts/check-cli.mjs`) — a real subset of the full surface below, not yet the whole vision. Implemented `init` asks for the brand color, color schemes, targets, preset and file layout on a terminal, takes each from a flag (`--brand`, `--schemes`, `--targets`, `--preset`, `--layout`, `--yes`) and never asks without one, then checks what it wrote (see [`init`](#init) below); `add <target>` validates against the CLI's own exporter registry and read-modify-writes the config; `explain <slot> [--mode <name>]` prints the resolved value, provenance, and rule inputs recursively (see the corrected example below — no `--target` filtering or WCAG candidate list yet, and there's no per-token file:line tracking in provenance); `check --json` prints the diagnostics array, the `suppressed` list + per-target coverage to stdout as one JSON object (human logs still go to stderr); a diagnostic about an authored token prints its location after the code (`✖ TST1105 tokens/brand.tokens.json:17:9 …`) and carries `path`, `file`, `line`, `column` in the JSON, and `check.suppress` silences warnings and infos (see [validation-and-coverage.md](validation-and-coverage.md#suppressions)); `catalog [--json]` prints the catalog (below); `check --matrix` prints which targets read each catalog slot (below), and adds it to the `--json` object as `matrix`. `--out`, `--dry-run` remain specced, not implemented ([issue #5](https://github.com/transtyle/transtyle/issues/5)); `--frozen` likewise ([issue #1](https://github.com/transtyle/transtyle/issues/1)); `import`, `migrate` wait on the importer contract (ROADMAP I1/I2, Phase 3).
+> **Status:** `build`, `check`, `explain`, `bindings --expand`, `init`, `add`, `diff`, `catalog` are implemented (`packages/cli/src/main.js`; golden-tested by `scripts/check-cli.mjs`) — a real subset of the full surface below, not yet the whole vision. Implemented `init` asks for the brand color, color schemes, targets, preset and file layout on a terminal, takes each from a flag (`--brand`, `--schemes`, `--targets`, `--preset`, `--layout`, `--yes`) and never asks without one, then checks what it wrote (see [`init`](#init) below); `add <target>` validates against the CLI's own exporter registry and read-modify-writes the config; `explain <slot> [--mode <name>]` prints the resolved value, provenance, rule inputs and alias targets recursively (see the corrected example below), `explain <slot> --target <t>` adds the target variables that consume the slot, and `explain --variable <name> --target <t>` goes the other way, from a target variable to its slot(s) (no WCAG candidate list yet, and there's no per-token file:line tracking in provenance); `check --json` prints the diagnostics array, the `suppressed` list + per-target coverage to stdout as one JSON object (human logs still go to stderr); a diagnostic about an authored token prints its location after the code (`✖ TST1105 tokens/brand.tokens.json:17:9 …`) and carries `path`, `file`, `line`, `column` in the JSON, and `check.suppress` silences warnings and infos (see [validation-and-coverage.md](validation-and-coverage.md#suppressions)); `catalog [--json]` prints the catalog (below); `check --matrix` prints which targets read each catalog slot (below), and adds it to the `--json` object as `matrix`. `--out`, `--dry-run` remain specced, not implemented ([issue #5](https://github.com/transtyle/transtyle/issues/5)); `--frozen` likewise ([issue #1](https://github.com/transtyle/transtyle/issues/1)); `import`, `migrate` wait on the importer contract (ROADMAP I1/I2, Phase 3).
 
 ## Design corrections from the original vision
 
@@ -24,9 +24,11 @@ transtyle check [target...]         pipeline minus emit: validation, contrast, c
       --fail-on <level>       override config policy (error|warning|approximation)
       --json                  machine-readable report to stdout
       --matrix                slot × target consumption matrix: which targets read each catalog slot
-transtyle explain <token> [--target <t>] [--mode <dim>=<v>]
+transtyle explain <token> [--target <t>] [--mode <dim>=<v>] [--json]
                               provenance chain: authored where / derived by which rule from what /
                               mapped to which target variable and why
+transtyle explain --variable <name> --target <t>
+                              reverse lookup: from a target variable to the slot(s) it reads, then their provenance
 transtyle bindings --expand           print the config's `bindings` pattern rules as the plain alias token file they expand to
                                       (stdout; what each rule skipped goes to stderr)
 transtyle import <source> [--write] materialize an importer's output as token files (review, then adopt)
@@ -69,13 +71,54 @@ semantic.color.primary.on-tint = oklch(0.48 0.162 255)  [#005bb6]
      └─ derived by rule mix-toward-surface(0.92)@standard@1
         inputs: semantic.color.primary.solid = oklch(0.55 0.18 255)  [#026fd7]
          └─ aliased → option.color.blue.600
+             └─ authored
         inputs: semantic.color.elevation.1.surface = oklch(0.985 0.003 255)  [#f9fafc]
          └─ aliased → option.color.gray.50
+             └─ authored
 ```
 
-An unknown slot exits 2 and lists the 5 closest catalog names (Levenshtein distance) instead of a bare error — e.g. asking for the pre-revision `primary.subtle` surfaces `primary.tint`, `primary.outline`, `primary.on-tint`. `--target` filtering, per-token file:line provenance, and the WCAG candidate list shown in the original mockup above remain specced.
+An alias is followed to its target, one level in, without repeating the value (it is the same): `component.button.radius` shows `aliased → semantic.radius.full`, then how `semantic.radius.full` is derived from the authored `semantic.radius.md`. Aliases don't count toward the depth limit of three levels of rule inputs.
+
+An unknown slot exits 2 and lists the 5 closest catalog names (Levenshtein distance) instead of a bare error — e.g. asking for the pre-revision `primary.subtle` surfaces `primary.tint`, `primary.outline`, `primary.on-tint`. Per-token file:line provenance and the WCAG candidate list shown in the original mockup above remain specced.
 
 `explain` also names the rule behind a slot that a `bindings` rule produced: `└─ aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)`. `transtyle bindings --expand` is a thin wrapper over `compile()`'s `bindings` result (`expandBindings()` in core); see [configuration.md](configuration.md#binding-rules).
+
+## `explain --target`, `--variable` — from a slot to target variables and back
+
+The question a developer debugging a rendered page asks is the other direction: "why is `$btn-border-radius` 9999px?" ([issue #98](https://github.com/transtyle/transtyle/issues/98)). `--target <t>` takes a target instance (the config key, so `shadcn-v3` works); the CLI compiles that one target without writing (`emit: false`) and reads its coverage rows, so no prior build is needed.
+
+```
+$ transtyle explain --variable '$form-select-border-radius' --target bootstrap
+bootstrap:
+  $form-select-border-radius  derived  via $input-border-radius
+    $input-border-radius  derived  → component.control.radius
+
+component.control.radius = 0.5rem
+ └─ derived by rule alias(radius.control)@standard@1
+    inputs: semantic.radius.control = 0.5rem
+     └─ derived by rule alias(radius.md)@standard@1
+        inputs: semantic.radius.md = 0.5rem
+         └─ authored
+
+$ transtyle explain component.button.radius --target bootstrap
+component.button.radius = 9999px
+ └─ aliased → semantic.radius.full
+     └─ derived by rule radius-scale(full)@standard@1
+        inputs: semantic.radius.md = 0.5rem
+         └─ authored
+
+consumed by bootstrap:
+  $btn-border-radius             native
+  $navbar-toggler-border-radius  derived  via $btn-border-radius
+```
+
+- **What a row reads.** A coverage row's `slot` is a label. The lookup reads the row's structured fields instead ([validation-and-coverage.md](validation-and-coverage.md#structured-fields-slots-and-via)): `slots` (the IR paths the variable reads), else `slot` when it is itself an IR path, and `via` (the target variables it follows). A row that reads no slot and follows nothing (dropped, unsupported, exporter-private, a wildcard such as Radix's `semantic.color.primary.*`) prints its class and note and exits 0: that is the honest answer.
+- **`--variable <name>`** prints the variable's row(s), the rows its `via` chain reaches (at most 6 hops, cycle-safe), then the provenance tree of each slot reached. A `via` name with no row of its own (a variable the target leaves at its own default, or one only a summary row covers) ends the chain with `(no coverage row names it)`. Bootstrap names are accepted with or without `$`. An unknown variable exits 2 with the 5 nearest names of that target.
+- **`explain <slot> --target <t>`** appends `consumed by <t>:` with each row whose slots name the slot, then the rows that reach it through `via` (with the chain). When no row names it, the read recording of `check --matrix` (below) still tells "read as an input, no coverage row names it" from "not read".
+- **A bare name with `--target`** that is not a catalog slot is looked up as a variable of the target. A catalog slot always wins, so `primary.solid` (the catalog) and `semantic.primary.50` (a PrimeNG variable) stay unambiguous; an unknown name exits 2 with both lists of near names.
+- `--mode` applies to the provenance trees. The variable → slot mapping is the target's, read from one compile (Bootstrap resolves its Sass rows from the light map).
+- `--json` prints the data to stdout: for a slot, `explainToken()`'s tree plus `target: { name, read, consumers }` (each consumer `{ variable, class, through }`); for a variable, `explainVariable()`'s result plus `mode` and `trees` (one `explainToken()` tree per slot reached). Deterministic, byte for byte.
+- An unconfigured target is the `TST1301` error (with its "did you mean"), and exits 2. `--target` and `--variable` on any other command are usage errors.
 
 ## `catalog` — the contract as data
 
@@ -101,11 +144,11 @@ The semantic contract ([ir.md](../architecture/ir.md#the-semantic-contract)) as 
 
 `explain` answers "where does this value come from"; `check --matrix` answers the reverse question an author asks before touching a slot: "if I author `elevation.3.surface`, which targets change?" ([issue #95](https://github.com/transtyle/transtyle/issues/95)).
 
-Coverage rows can't answer it. A row's `slot` is a label for humans, often not a catalog path: ECharts names its palette as one range row (`semantic.palette.categorical.1–8`), Radix names its ramps with role wildcards (`semantic.color.primary.*`), Bootstrap answers most rows "via driven roots", PrimeNG has brace patterns. Matching those labels against catalog paths found 8 of the 82 slots Radix reads on Acme, and 54 of PrimeNG's 96.
+Coverage rows can't answer it. A row's `slot` is a label for humans, often not a catalog path: ECharts names its palette as one range row (`semantic.palette.categorical.1–8`), Radix names its ramps with role wildcards (`semantic.color.primary.*`), Bootstrap answers most rows "via driven roots", PrimeNG has brace patterns. Matching those labels against catalog paths found 8 of the 82 slots Radix reads on Acme, and 54 of PrimeNG's 96. The structured `slots` and `via` fields `explain --target` reads (above) name what one variable reads, where an exporter fills them; they still don't cover a read no row describes (a Radix ramp step, a PrimeNG surface), so the matrix keeps recording.
 
 So the CLI records reads instead (`packages/cli/src/matrix.js`). While an exporter's `emit()` runs, each resolved mode map it receives is a recording `Map` that notes every slot looked up with `get` or `has`, and every entry the exporter opens while iterating. Listing keys is not a read: css-variables walks every key and keeps the `semantic.*` ones, and only those it then reads count. The IR the exporter sees is unchanged (same keys, same entries, `modes.light` still the same object as its combo map), the exporter needs no change, and a third-party exporter gets it for free. The wrapping lives in the CLI's exporter loader, not in core: `compile()` already takes the loader as a parameter.
 
-Each reader is classed from that target's coverage rows that name the slot exactly, best first (`native`, `derived`, `approximated`). A read slot no row names is `input`: it feeds a value described under another slot or a pattern. This over-approximates in the safe direction: an exporter that reads a slot and discards it still counts as a reader, so an empty cell is a guarantee.
+Each reader is classed from that target's coverage rows that name the slot exactly (in their `slots`, or as their `slot`), best first (`native`, `derived`, `approximated`). A read slot no row names is `input`: it feeds a value described under another slot or a pattern. This over-approximates in the safe direction: an exporter that reads a slot and discards it still counts as a reader, so an empty cell is a guarantee.
 
 - Human output: one block per catalog section (each role of the grid, then the other semantic groups, then components), one line per slot with "read by n/N" and the readers.
 - `--json`: the check report gains `matrix: { targets, slots }`, where `slots[slot][target] = { class, variables }` for each target that read it (`variables`: the coverage rows naming the slot) and `{}` for a slot nobody reads. Keys sorted; the output is deterministic.
@@ -114,7 +157,7 @@ Each reader is classed from that target's coverage rows that name the slot exact
 
 ## Behavioral contracts
 
-- **Exit codes:** 0 success; 1 diagnostics at/above the fail-on threshold; 2 usage/config errors. Stable, documented, CI-safe. An exporter that throws is not a usage error: it becomes a `TST3001` error diagnostic naming the target, the other targets still run so every crash is reported, nothing is written to disk (atomic EMIT), and the run exits 1 (`TST3002` for an exporter that cannot be loaded). `TRANSTYLE_DEBUG=1` prints the stack under the message. `explain` loads and runs no exporter, so a broken one cannot fail it.
+- **Exit codes:** 0 success; 1 diagnostics at/above the fail-on threshold; 2 usage/config errors. Stable, documented, CI-safe. An exporter that throws is not a usage error: it becomes a `TST3001` error diagnostic naming the target, the other targets still run so every crash is reported, nothing is written to disk (atomic EMIT), and the run exits 1 (`TST3002` for an exporter that cannot be loaded). `TRANSTYLE_DEBUG=1` prints the stack under the message. `explain` without `--target` loads and runs no exporter, so a broken one cannot fail it.
 - **Output streams:** human logs → stderr; requested data (`--json`, `explain`) → stdout. Pipeable by construction.
 - **Non-interactive by default** when not a TTY; anything interactive has a flag equivalent. `init` is the only command that asks (above).
 - **No telemetry.** If ever proposed, opt-in only, and it gets its own ADR and public schema.
@@ -122,4 +165,4 @@ Each reader is classed from that target's coverage rows that name the slot exact
 
 ## Programmatic parity
 
-The goal is that every command that computes something be a thin wrapper over `@transtyle/core`'s public API, so the CLI never holds logic a build-tool integration cannot reach. `build` and `check` are `compile({ emit })`, `diff` is `compile()` twice plus `diffResolved()`/`contrastRegressions()`, `catalog` is `catalog()`, and `explain` is `compile({ emit: false })` plus `explainToken(normalized, slot, { mode })`, which returns the provenance walk as a JSON-serialisable tree (`{ slot, mode, entry, inputs }`, with `seen`, `unresolved` and `truncated` markers) and throws an `Error` with a `code` of `unknown-mode` (`available`) or `unknown-slot` (`closest`); the CLI only formats the tree. `init` and `add` are **CLI-only on purpose**: they scaffold files and rewrite the config, and `add` validates against the CLI's own list of official exporters, which core deliberately does not know.
+The goal is that every command that computes something be a thin wrapper over `@transtyle/core`'s public API, so the CLI never holds logic a build-tool integration cannot reach. `build` and `check` are `compile({ emit })`, `diff` is `compile()` twice plus `diffResolved()`/`contrastRegressions()`, `catalog` is `catalog()`, and `explain` is `compile({ emit: false })` plus `explainToken(normalized, slot, { mode })`, which returns the provenance walk as a JSON-serialisable tree (`{ slot, mode, entry, inputs }`, an aliased entry's one input being its alias target, with `seen`, `unresolved` and `truncated` markers) and throws an `Error` with a `code` of `unknown-mode` (`available`) or `unknown-slot` (`closest`); the CLI only formats the tree. `explain --target` adds `slotConsumers(result, target, slot)` and `explain --variable` is `explainVariable(result, target, variable)` (both over `compile()`'s result; errors `unknown-target` with `available`, `unknown-variable` with `closest`), with `coverageSlots(row, normalized)` as the rule for what a row reads; only the read recording of `check --matrix` stays in the CLI, as it wraps the CLI's exporter loader. `init` and `add` are **CLI-only on purpose**: they scaffold files and rewrite the config, and `add` validates against the CLI's own list of official exporters, which core deliberately does not know.

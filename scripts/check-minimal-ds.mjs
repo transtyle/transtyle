@@ -427,7 +427,7 @@ for (const [fixture, shape, modes] of sweep) {
 
       // 4. Coverage honesty. Only rows whose `slot` is a single, complete IR path
       //    are checkable — many rows legitimately carry a summary label instead
-      //    (`semantic.{font.sans, type.size.md}`, `semantic.color.primary.1–8`, or a
+      //    (`semantic.color.elevation.1.surface + border + text.base`, `semantic.color.primary.*`, or a
       //    target's own namespace such as PrimeNG's `{primary.color}` runtime
       //    reference). Those are skipped rather than guessed at.
       for (const c of emitted.coverage ?? []) {

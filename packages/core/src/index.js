@@ -23,7 +23,7 @@ export { parseColor, formatColor, formatHslTriplet, formatHex, contrastRatio, mi
 export { Diagnostics } from './diagnostics.js';
 export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';
-export { explainToken } from './explain.js';
+export { explainToken, explainVariable, slotConsumers, coverageSlots } from './explain.js';
 export { catalog } from './catalog.js';
 export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
 

@@ -17,12 +17,15 @@
  * included, and the recording never touches the IR the exporter sees: same
  * keys, same entry values, same map identity across mode aliases.
  *
- * The cell's class comes from the coverage rows that name the slot exactly
- * (the best of native, derived, approximated). A slot that is read but named
+ * The cell's class comes from the coverage rows that name the slot exactly,
+ * in their `slots` or as their `slot` (`coverageSlots()` from core; the best
+ * of native, derived, approximated). A slot that is read but named
  * by no row is `input`: it feeds a value some other row describes (a Radix
  * ramp step, a PrimeNG surface, a Bootstrap chained variable). That errs on
  * the safe side: an exporter that reads a slot and ignores it still counts.
  */
+
+import { coverageSlots } from '@transtyle/core';
 
 const CLASS_RANK = ['native', 'derived', 'approximated'];
 
@@ -148,9 +151,12 @@ export function consumption(result, readSets) {
   result.results.forEach((r, i) => {
     const named = new Map();
     for (const row of r.coverage) {
-      if (!catalog.has(row.slot) || !CLASS_RANK.includes(row.class)) continue;
-      if (!named.has(row.slot)) named.set(row.slot, []);
-      named.get(row.slot).push(row);
+      if (!CLASS_RANK.includes(row.class)) continue;
+      for (const slot of coverageSlots(row, result.normalized)) {
+        if (!catalog.has(slot)) continue;
+        if (!named.has(slot)) named.set(slot, []);
+        named.get(slot).push(row);
+      }
     }
     for (const slot of [...(readSets[i] ?? [])].filter((s) => catalog.has(s)).sort()) {
       const rows = named.get(slot) ?? [];

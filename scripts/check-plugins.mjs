@@ -151,6 +151,19 @@ await mustFail(
   'object-form',
 );
 
+await mustFail(
+  'a coverage row whose `slots` names a path missing from the IR',
+  { ...thirdParty, emit: (ir, ctx) => { const out = thirdParty.emit(ir, ctx); return { ...out, coverage: [...out.coverage, { variable: '--acme-radius', slot: 'radius', slots: ['semantic.radius.mdd'], class: 'native' }] }; } },
+  'coverage-slots-exist',
+  'canonical',
+);
+await mustFail(
+  'a coverage row whose `via` is not a list of variable names',
+  { ...thirdParty, emit: (ir, ctx) => { const out = thirdParty.emit(ir, ctx); return { ...out, coverage: [...out.coverage, { variable: '--acme-radius', slot: 'via --acme-base', via: '--acme-base', class: 'derived' }] }; } },
+  'coverage-fields-shape',
+  'canonical',
+);
+
 if (failures.length) {
   console.error(`\n✖ check-plugins: ${failures.length} conformance failure(s)`);
   process.exit(1);

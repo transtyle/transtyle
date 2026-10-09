@@ -116,12 +116,22 @@ export default {
     const oModalLight = overlay(light, 'modal', ctx),
       oModalDark = overlay(dark, 'modal', ctx);
     const oNavLight = overlay(light, 'navigation', ctx);
-    coverage.push({
-      variable: 'semantic.formField.{paddingX,paddingY,borderRadius}',
-      slot: 'component.control.{padding-x,padding-y,radius}',
-      class: 'native',
-      note: 'AL2-promoted shared control geometry (proposal 0003)',
-    });
+    // One row per variable, so a reverse lookup (`transtyle explain --variable`)
+    // finds each preset path and its slot without pairing brace lists. A slot
+    // this design system leaves unresolved (no radius scale, no font stack) is
+    // filtered out of the preset, so its row says Aura's default stands.
+    const bound = (variable, slot, note) =>
+      light.get(slot)?.value === undefined
+        ? {
+            variable,
+            slot: '—',
+            class: 'dropped',
+            note: `nothing to bind: this design system has no ${slot}, so Aura's default stands — author it (or the scale it derives from) and this variable starts being driven`,
+          }
+        : { variable, slot, class: 'native', note };
+    for (const [key, slot] of [['paddingX', 'padding-x'], ['paddingY', 'padding-y'], ['borderRadius', 'radius']]) {
+      coverage.push(bound(`semantic.formField.${key}`, `component.control.${slot}`, 'AL2-promoted shared control geometry (proposal 0003)'));
+    }
     coverage.push({
       variable: 'semantic.formField.* (rest)',
       slot: 'exporter-private: field()',
@@ -133,12 +143,9 @@ export default {
       class: 'native',
       note: 'AL2 promotion — was a hardcoded PrimeNG constant',
     });
-    coverage.push({
-      variable: 'components.button.root.{borderRadius,paddingX,paddingY}',
-      slot: 'component.button.{radius,padding-x,padding-y}',
-      class: 'native',
-      note: 'AL2 parity: the button layer, which defaults from component.control.*',
-    });
+    for (const [key, slot] of [['borderRadius', 'radius'], ['paddingX', 'padding-x'], ['paddingY', 'padding-y']]) {
+      coverage.push(bound(`components.button.root.${key}`, `component.button.${slot}`, 'AL2 parity: the button layer, which defaults from component.control.*'));
+    }
     coverage.push({
       variable: 'semantic.list.*',
       slot: 'exporter-private: list()',
@@ -165,12 +172,9 @@ export default {
       class: 'native',
       note: 'scrim carries its own alpha — the veil strength needs no separate slot (proposal 0003, overlay pass)',
     });
-    coverage.push({
-      variable: 'semantic.typography.{fontFamily,fontSize,fontWeight,lineHeight}',
-      slot: 'semantic.{font.sans, type.size.md, type.weight.regular, type.leading.normal}',
-      class: 'native',
-      note: "PrimeNG's semantic type base; 60 component slots reference it, so they follow the design system's typography instead of Aura's (AL3 follow-up)",
-    });
+    for (const [key, slot] of [['fontFamily', 'font.sans'], ['fontSize', 'type.size.md'], ['fontWeight', 'type.weight.regular'], ['lineHeight', 'type.leading.normal']]) {
+      coverage.push(bound(`semantic.typography.${key}`, `semantic.${slot}`, "PrimeNG's semantic type base; 60 component slots reference it, so they follow the design system's typography instead of Aura's (AL3 follow-up)"));
+    }
     coverage.push({
       variable: 'semantic.mask.transitionDuration',
       slot: 'semantic.duration.normal',

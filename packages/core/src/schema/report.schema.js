@@ -13,7 +13,15 @@ const coverageItem = {
   additionalProperties: false,
   properties: {
     variable: { type: 'string' },
+    // A human label: an IR path, or prose such as `via driven roots`.
     slot: { type: 'string' },
+    // The fully qualified IR paths the variable reads, when `slot` alone
+    // doesn't say (a member suffix, a pair of slots). Absent: a `slot` that is
+    // an IR path counts as `[slot]`.
+    slots: { type: 'array', items: { type: 'string' } },
+    // The target variables this one follows (a Sass `!default` chain, a
+    // global custom property), each the `variable` of another row.
+    via: { type: 'array', items: { type: 'string' } },
     class: { type: 'string', enum: ['native', 'derived', 'approximated', 'dropped', 'unsupported'] },
     provenance: { type: 'string', enum: ['authored', 'aliased', 'derived', 'defaulted'] },
     note: { type: 'string' },

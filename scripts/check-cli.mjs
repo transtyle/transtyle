@@ -654,6 +654,92 @@ try {
   expect('build --matrix: refused as a usage error (exit 2)', r.code === 2, `exit ${r.code}`);
 }
 
+// ---------- explain --target / --variable: slot ↔ target variable (#98) ----------
+{
+  const acme = join(root, 'examples/acme');
+  const parse = (out) => { try { return JSON.parse(out); } catch { return null; } };
+  const explain = (...a) => run(['explain', ...a, '--cwd', acme]);
+
+  // Goldens: the whole stdout, so the layout is pinned too.
+  let r = explain('--variable', '$form-select-border-radius', '--target', 'bootstrap');
+  expect('explain --variable: a chained Bootstrap variable follows $input-border-radius to its slot (golden)', r.code === 0 && r.stdout === [
+    'bootstrap:',
+    '  $form-select-border-radius  derived  via $input-border-radius',
+    '    $input-border-radius  derived  → component.control.radius',
+    '',
+    'component.control.radius = 0.5rem',
+    ' └─ derived by rule alias(radius.control)@standard@1',
+    '    inputs: semantic.radius.control = 0.5rem',
+    '     └─ derived by rule alias(radius.md)@standard@1',
+    '        inputs: semantic.radius.md = 0.5rem',
+    '         └─ authored',
+    '',
+  ].join('\n'), r.out);
+
+  r = explain('component.button.radius', '--target', 'bootstrap');
+  expect('explain <slot> --target: the tree follows the alias to the authored radius.md, then lists the consumers (golden)', r.code === 0 && r.stdout === [
+    'component.button.radius = 9999px',
+    ' └─ aliased → semantic.radius.full',
+    '     └─ derived by rule radius-scale(full)@standard@1',
+    '        inputs: semantic.radius.md = 0.5rem',
+    '         └─ authored',
+    '',
+    'consumed by bootstrap:',
+    '  $btn-border-radius             native',
+    '  $navbar-toggler-border-radius  derived  via $btn-border-radius',
+    '',
+  ].join('\n'), r.out);
+
+  r = explain('--variable', '$btn-border-radius', '--target', 'bootstrap');
+  expect('explain --variable $btn-border-radius: → component.button.radius, tree reaches the authored semantic.radius.md',
+    r.code === 0 && r.stdout.startsWith('bootstrap:\n  $btn-border-radius  native  → component.button.radius\n') && r.stdout.includes('inputs: semantic.radius.md = 0.5rem\n         └─ authored'), r.out);
+  r = explain('--variable', 'btn-border-radius', '--target', 'bootstrap');
+  expect('explain --variable: a Bootstrap name works without its $', r.code === 0 && r.stdout.includes('$btn-border-radius  native  → component.button.radius'), r.out);
+  r = explain('--variable', '$btn-border-radius-sm', '--target', 'bootstrap');
+  expect('explain --variable: a var(--bs-*) alias follows the Sass variable behind it', r.code === 0 && r.stdout.includes('$btn-border-radius-sm  derived  via $border-radius-sm') && r.stdout.includes('$border-radius-sm  derived  → semantic.radius.sm'), r.out);
+  r = explain('--variable', '$btn-transition', '--target', 'bootstrap');
+  expect('explain --variable: a row reading two slots shows both trees', r.code === 0 && r.stdout.includes('→ semantic.duration.fast, semantic.easing.standard') && r.stdout.includes('\nsemantic.easing.standard = '), r.out);
+  r = explain('--variable', 'components.button.root.borderRadius', '--target', 'primeng');
+  expect('explain --variable: a nested PrimeNG preset path resolves to component.button.radius', r.code === 0 && r.stdout.startsWith('primeng:\n  components.button.root.borderRadius  native  → component.button.radius\n\ncomponent.button.radius = 9999px\n'), r.out);
+  r = explain('--variable', '$form-check-radio-border-radius', '--target', 'bootstrap');
+  expect('explain --variable: a dropped variable prints its class and note (exit 0)', r.code === 0 && r.stdout.includes('$form-check-radio-border-radius  dropped\n    structural/behavioral option') && !r.stdout.includes(' = '), r.out);
+  r = explain('--variable', '$btn-boder-radius', '--target', 'bootstrap');
+  expect('explain --variable: an unknown variable exits 2 with the nearest names', r.code === 2 && r.out.includes('Unknown bootstrap variable: $btn-boder-radius') && r.out.includes('  $btn-border-radius\n'), r.out);
+
+  r = explain('btn-border-radius', '--target', 'bootstrap');
+  expect('explain <name> --target: a name that is not a slot is looked up as a variable', r.code === 0 && r.stdout.startsWith('bootstrap:\n  $btn-border-radius  native'), r.out);
+  r = explain('primary.solid', '--target', 'shadcn');
+  expect('explain <slot> --target: a catalog slot always wins', r.code === 0 && r.stdout.startsWith('semantic.color.primary.solid = ') && r.stdout.includes('consumed by shadcn:\n  --primary'), r.out);
+  r = explain('semantic.color.elevation.3.surface', '--target', 'primeng');
+  expect('explain <slot> --target: a slot read with no row naming it says so', r.code === 0 && r.stdout.endsWith('consumed by primeng: read as an input, no coverage row names it\n'), r.out);
+  r = explain('semantic.palette.categorical.1', '--target', 'daisyui');
+  expect('explain <slot> --target: a slot the target never reads says so', r.code === 0 && r.stdout.endsWith('consumed by daisyui: not read\n'), r.out);
+
+  r = explain('--variable', '$btn-border-radius');
+  expect('explain --variable without --target: usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+  r = explain('primary.solid', '--target', 'bootstrp');
+  expect('explain --target: an unconfigured target exits 2 with the TST1301 suggestion', r.code === 2 && r.out.includes('Did you mean "bootstrap"?'), r.out);
+  r = explain('--variable', '$btn-border-radius', '--target', 'bootstrap', '--mode', 'sepia');
+  expect('explain --variable: an unknown mode exits 2', r.code === 2 && r.out.includes('Unknown mode "sepia"'), r.out);
+  r = run(['check', '--target', 'bootstrap', '--cwd', acme]);
+  expect('--target outside explain: usage error (exit 2)', r.code === 2 && r.out.includes('--target is a `transtyle explain` option'), r.out);
+
+  r = explain('--variable', '$form-select-border-radius', '--target', 'bootstrap', '--json');
+  const v = parse(r.stdout);
+  expect('explain --variable --json: rows, the via chain, the slots reached and their trees',
+    r.code === 0 && v?.variable === '$form-select-border-radius' && v.rows[0].via[0].variable === '$input-border-radius'
+      && v.slots.join() === 'component.control.radius' && v.trees[0].slot === 'component.control.radius' && v.mode === 'light', r.stdout.slice(0, 400));
+  const again = explain('--variable', '$form-select-border-radius', '--target', 'bootstrap', '--json');
+  expect('explain --json: deterministic (two runs, same bytes)', again.stdout === r.stdout);
+  r = explain('component.control.radius', '--target', 'bootstrap', '--json');
+  const f = parse(r.stdout);
+  expect('explain <slot> --target --json: the tree plus the target\'s consumers, chained ones with their path',
+    r.code === 0 && f?.slot === 'component.control.radius' && f.target?.name === 'bootstrap' && f.target.read === true
+      && f.target.consumers.some((c) => c.variable === '$form-select-border-radius' && c.through.join() === '$input-border-radius'), r.stdout.slice(0, 400));
+  r = explain('primary.solid', '--json');
+  expect('explain <slot> --json without --target: the explainToken() tree', r.code === 0 && parse(r.stdout)?.slot === 'semantic.color.primary.solid' && !('target' in parse(r.stdout)), r.stdout.slice(0, 200));
+}
+
 // ---------- #59: binding pattern rules ----------
 // The same design system bound by 6 rules and by the plain alias file those
 // rules expand to must build byte-identical output; the committed plain file is
@@ -999,4 +1085,4 @@ if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain/diff/check --matrix golden path and error cases all pass');
+console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix golden path and error cases all pass');

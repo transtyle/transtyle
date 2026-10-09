@@ -271,7 +271,7 @@ function runFixture(plugin, { ir, config }, fixture, twin, addCheck) {
     `a JavaScript value (undefined, null, NaN, [object Object]) leaked into output: ${list(leaked)}`);
 
   // Only rows whose `slot` is one complete IR path are checkable: many carry a
-  // summary label instead (`semantic.{font.sans, type.size.md}`, a target's own
+  // summary label instead (`semantic.color.primary.*`, a target's own
   // namespace). Those are skipped rather than guessed at.
   const map = ir.modes[ir.defaultMode];
   const unresolved = coverage
@@ -280,6 +280,21 @@ function runFixture(plugin, { ir, config }, fixture, twin, addCheck) {
   add('coverage-honest', !unresolved.length,
     'validation-and-coverage.md#coverage-report ("absence is not coverage")',
     `coverage rows claim a slot that does not resolve: ${list(unresolved)}`);
+
+  // The optional structured fields a reverse lookup reads (`transtyle explain
+  // --variable`): `slots` must name paths of the IR the exporter was given,
+  // and `via` other rows' variables. A label (`slot`) stays free prose.
+  const strings = (v) => v === undefined || (Array.isArray(v) && v.every((x) => typeof x === 'string'));
+  add('coverage-fields-shape',
+    coverage.every((c) => strings(c.slots) && strings(c.via)),
+    'docs/specs/validation-and-coverage.md#structured-fields-slots-and-via',
+    'coverage slots and via must be string arrays when present');
+  const irKeys = new Set();
+  for (const m of Object.values(ir.modes)) if (m instanceof Map) for (const k of m.keys()) irKeys.add(k);
+  const unknownSlots = [...new Set(coverage.flatMap((c) => (Array.isArray(c.slots) ? c.slots : [])).filter((s) => !irKeys.has(s)))];
+  add('coverage-slots-exist', !unknownSlots.length,
+    'docs/specs/validation-and-coverage.md#structured-fields-slots-and-via',
+    `coverage slots name paths that are not in the IR: ${list(unknownSlots)}`);
 
   if (fixture.marks) {
     const silent = Object.entries(fixture.marks)

@@ -57,6 +57,18 @@
               "slot": {
                 "type": "string"
               },
+              "slots": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "via": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "class": {
                 "type": "string",
                 "enum": [
