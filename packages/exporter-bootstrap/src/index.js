@@ -28,7 +28,7 @@
  *    private exporter fallback table.
  */
 
-import { droppedDimensions, entryNotes, lineComment } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, fontStack, lineComment } from '@transtyle/ir';
 import { componentVariables, componentCssBlocks, buttonVariantBlocks } from './components.js';
 
 const S = 'semantic.color.';
@@ -387,7 +387,6 @@ function resolve(light, dark, ctx) {
 
 // ---------- shared formatting ----------
 
-const fontList = (value) => value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ');
 const rgbTriplet = (hex) => {
   if (hex === undefined) return undefined; // absent color: the declaration is dropped with it
   const n = parseInt(hex.slice(1), 16);
@@ -464,9 +463,9 @@ function renderVariables(r, ctx) {
   lines.push('');
   lines.push('// ---------------------------------------------------------------- typography');
   if (r.fontSans)
-    lines.push(`$font-family-sans-serif: ${fontList(r.fontSans.value)};  // font.sans`);
+    lines.push(`$font-family-sans-serif: ${fontStack(r.fontSans.value)};  // font.sans`);
   if (r.fontMono)
-    lines.push(`$font-family-monospace:  ${fontList(r.fontMono.value)};  // font.mono`);
+    lines.push(`$font-family-monospace:  ${fontStack(r.fontMono.value)};  // font.mono`);
   const ts = r.typeScale;
   lines.push(`$font-size-base:   ${ts.base};  // type.size.md`);
   lines.push(`$line-height-base: ${ts.leading};   // type.leading.normal`);
@@ -654,8 +653,8 @@ function renderCss(r, ctx) {
   if (rad.xl) lines.push(`  --bs-border-radius-xl: ${rad.xl.value};`);
   if (rad.md) lines.push(`  --bs-border-radius-xxl: ${xxl(rad.md.value)};`);
   lines.push('  --bs-border-radius-pill: 50rem;');
-  if (r.fontSans) lines.push(`  --bs-font-sans-serif: ${fontList(r.fontSans.value)};`);
-  if (r.fontMono) lines.push(`  --bs-font-monospace: ${fontList(r.fontMono.value)};`);
+  if (r.fontSans) lines.push(`  --bs-font-sans-serif: ${fontStack(r.fontSans.value)};`);
+  if (r.fontMono) lines.push(`  --bs-font-monospace: ${fontStack(r.fontMono.value)};`);
   lines.push('}');
   if (r.dark) {
     lines.push('', '[data-bs-theme="dark"] {', ...modeBlock(r.dark, true), '}');

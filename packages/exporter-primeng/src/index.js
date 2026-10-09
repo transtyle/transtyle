@@ -23,7 +23,7 @@
  * builds both per-mode maps and assembles that split throughout.
  */
 
-import { droppedDimensions } from '@transtyle/ir';
+import { droppedDimensions, fontStack } from '@transtyle/ir';
 import { projectRamp } from './ramp.js';
 import { field, list, navigation, overlay, content } from './archetypes.js';
 import { coverageRows, INVENTORY } from './surface-coverage.js';
@@ -42,12 +42,6 @@ import {
 } from './descriptors.js';
 
 const get = (map, path) => map.get(`semantic.${path}`)?.value;
-/** DTCG fontFamily is a list; render it as a CSS stack, quoting names that need it. */
-const fontStack = (value) =>
-  Array.isArray(value)
-    ? value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ')
-    : (value ?? undefined);
-
 export default {
   name: 'primeng',
 

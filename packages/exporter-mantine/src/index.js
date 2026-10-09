@@ -28,7 +28,7 @@
  * so it keeps the IR's own `oklch()` (and its alpha, e.g. `text.disabled`).
  */
 
-import { COLOR_ROLES, droppedDimensions } from '@transtyle/ir';
+import { COLOR_ROLES, droppedDimensions, fontStack } from '@transtyle/ir';
 import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
@@ -477,9 +477,6 @@ export default {
 };
 
 // ---------- helpers ----------
-
-const fontStack = (value) =>
-  Array.isArray(value) ? value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ') : String(value);
 
 function scale(map, prefix, keys, row, label) {
   const out = {};

@@ -146,6 +146,14 @@
  * color objects and one malformed member, and an srgb hex that disagrees with
  * its components (TST1123, top level and member).
  *
+ * `fontFamily` (issue #183) rides the same twin the other way round: the DTCG
+ * array (`["Inter", "system-ui", "sans-serif"]`) is the form exporters read,
+ * and the one-string CSS list (`"Inter, system-ui, sans-serif"`, a quoted name
+ * included) must compile to the same bytes, as an option token bound to
+ * `semantic.font.sans` (the shape the issue reported), as a direct
+ * `semantic.font.mono`, and as a typography member. Before values.js split the
+ * string, shadcn, ECharts, Bootstrap and Storybook crashed on it (TST3001).
+ *
  * **Per-target mode subsets** (issue #89, `targets.<t>.modes`): Acme with one
  * target narrowed at a time. Restricted to light, a target emits no dark block
  * and no `dropped` coverage row for the deliberate exclusion, its usage.md
@@ -996,7 +1004,10 @@ const twinTokens = (structured) => {
   return {
     // Colors (issue #25): an option aliased by a role, so the object form also
     // reaches a slot through an alias.
-    option: { color: { teal: { $type: 'color', $value: pick('oklch(0.62 0.12 195)', { colorSpace: 'oklch', components: [0.62, 0.12, 195] }) } } },
+    option: {
+      color: { teal: { $type: 'color', $value: pick('oklch(0.62 0.12 195)', { colorSpace: 'oklch', components: [0.62, 0.12, 195] }) } },
+      font: { sans: { $type: 'fontFamily', $value: pick('Inter, system-ui, sans-serif', ['Inter', 'system-ui', 'sans-serif']) } },
+    },
     semantic: {
       ...MINIMAL_TOKENS.semantic,
       color: {
@@ -1025,6 +1036,10 @@ const twinTokens = (structured) => {
         danger: { solid: { $type: 'color', $value: pick('color(display-p3 0.85 0.1 0.12)', { colorSpace: 'display-p3', components: [0.85, 0.1, 0.12] }) } },
         success: { solid: { $type: 'color', $value: pick('hwb(140 10% 40%)', { colorSpace: 'hwb', components: [140, 10, 40] }) } },
       },
+      font: {
+        sans: { $type: 'fontFamily', $value: '{option.font.sans}' },
+        mono: { $type: 'fontFamily', $value: pick("'JetBrains Mono',ui-monospace,  monospace", ['JetBrains Mono', 'ui-monospace', 'monospace']) },
+      },
       radius: { md: { $type: 'dimension', $value: pick('0.375rem', { value: 0.375, unit: 'rem' }) } },
       space: {
         $type: 'dimension',
@@ -1045,7 +1060,7 @@ const twinTokens = (structured) => {
             md: {
               $type: 'typography',
               $value: {
-                fontFamily: 'Inter',
+                fontFamily: pick('"IBM Plex Sans", sans-serif', ['IBM Plex Sans', 'sans-serif']),
                 fontSize: pick('1rem', { value: 1, unit: 'rem' }),
                 fontWeight: pick(300, 'light'),
                 lineHeight: 1.5,
@@ -1109,7 +1124,7 @@ for (const name of Object.keys(EXPORTERS)) {
     const a = f.contents.split('\n');
     const b = g.contents.split('\n');
     const i = a.findIndex((line, n) => line !== b[n]);
-    errors.push(`object-form twin: ${name}/${f.path}:${i + 1} differs from the string twin — "${b[i]?.trim()}" vs "${a[i]?.trim()}". DTCG object forms must canonicalize to the CSS string in NORMALIZE (packages/core/src/values.js)`);
+    errors.push(`object-form twin: ${name}/${f.path}:${i + 1} differs from the string twin — "${b[i]?.trim()}" vs "${a[i]?.trim()}". DTCG object forms must canonicalize to the CSS string, and a fontFamily string to its array of names, in NORMALIZE (packages/core/src/values.js)`);
   }
   for (const f of [...want, ...got]) {
     f.contents.split('\n').forEach((line, i) => {
@@ -1134,6 +1149,9 @@ const MALFORMED = {
   'string-component': ['color', { colorSpace: 'srgb', components: [0, '0.5', 1] }],
   'alpha-out-of-range': ['color', { colorSpace: 'oklch', components: [0.5, 0.1, 30], alpha: 2 }],
   'short-hex': ['color', { colorSpace: 'srgb', components: [1, 1, 1], hex: '#fff' }],
+  'empty-family': ['fontFamily', 'Inter, , sans-serif'],
+  'family-number': ['fontFamily', ['Inter', 400]],
+  'family-object': ['fontFamily', { name: 'Inter' }],
 };
 // …and the same mistakes inside a composite, where resolveComposite() hands
 // each member to the same parser: reported under the member's own path, with

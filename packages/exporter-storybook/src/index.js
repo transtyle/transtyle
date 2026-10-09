@@ -12,7 +12,7 @@
  * parse oklch() — the per-target output-syntax choice ir.md provides for.
  */
 
-import { droppedDimensions } from '@transtyle/ir';
+import { droppedDimensions, fontStack } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const GAMUT_NOTE = 'sRGB gamut clamp during oklch → hex';
@@ -131,7 +131,7 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
   };
   const fontList = (k) => {
     const e = map.get(`semantic.font.${k}`);
-    return e ? e.value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ') : undefined;
+    return e ? fontStack(e.value) : undefined;
   };
 
   cov('colorPrimary', 'primary.solid');

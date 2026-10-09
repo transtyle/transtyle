@@ -16,8 +16,9 @@ const ROLE_SOLID = /^semantic\.color\.([\w-]+)\.solid$/;
  * Entry = { type, value, provenance }
  * Color values are parsed to { l, c, h, alpha }; the DTCG object/array/keyword
  * forms of dimension, duration, cubicBezier and fontWeight (and the same members
- * inside composites) are canonicalized to the CSS strings exporters read
- * (values.js); everything else is kept as authored.
+ * inside composites) are canonicalized to the CSS strings exporters read, a
+ * fontFamily string to its array of names (values.js); everything else is kept
+ * as authored.
  *
  * Multi-dimension modes (T8, docs/architecture/ir.md#modes): every configured
  * dimension is resolved independently, then combos are the cross-product,
@@ -570,7 +571,8 @@ function evaluateWith(expr, type, at, tokenPath, diagnostics, lookup) {
  * fills, exactly like a top-level alias — and every other member goes through
  * the same per-type parsers as a top-level token (values.js), so a dimension,
  * duration, cubicBezier or fontWeight member authored in its DTCG structured
- * form becomes the CSS string too, and the rest is carried as authored.
+ * form becomes the CSS string too, a `typography.fontFamily` string becomes the
+ * array of names, and the rest is carried as authored.
  *
  * `required` lists the members an exporter renders positionally (a box-shadow,
  * a border shorthand): a missing one would print `undefined` into a

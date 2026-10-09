@@ -99,6 +99,77 @@ export function droppedDimensions(dimensionNames, expressed) {
 export { SURFACE_FAMILY_ROW, surfaceCounts, surfaceRows, surfaceStatus } from './surface.js';
 
 /**
+ * A `fontFamily` value as its list of names, most preferred first
+ * (docs/architecture/ir.md#values-and-canonicalization). DTCG writes a family
+ * as an array of names or as one string, and a string can be a whole CSS list
+ * (`"Inter, system-ui, sans-serif"`), so four exporters that called `.map` or
+ * `.join` on the value crashed on it (issue #183). NORMALIZE now stores the
+ * array this returns, and exporters read it through `fontStack()` so a value
+ * that never went through NORMALIZE (a hand-built IR) renders too.
+ *
+ * An array is returned as authored. A string is split on the commas outside
+ * quotes and parentheses; each name is trimmed, a quoted name loses its quotes
+ * (and backslash escapes) so it reads like the array form's
+ * (`"'Helvetica Neue', Arial"` → `["Helvetica Neue", "Arial"]`), a CSS function
+ * (`var(--font)`) is kept whole, and the inner spaces of an unquoted name
+ * collapse to one, as CSS reads them. An empty name stays in the list as `""`,
+ * for NORMALIZE to reject; anything else is `[]`.
+ */
+export function fontNames(value) {
+  if (Array.isArray(value)) return value.map(String);
+  if (typeof value !== 'string') return [];
+  const segments = [];
+  let current = '';
+  let quote = null;
+  let depth = 0;
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i];
+    if (quote) {
+      if (ch === '\\' && i + 1 < value.length) current += ch + value[++i];
+      else {
+        if (ch === quote) quote = null;
+        current += ch;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === '(') depth++;
+    else if (ch === ')' && depth > 0) depth--;
+    else if (ch === ',' && depth === 0) {
+      segments.push(current);
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  segments.push(current);
+  return segments.map((segment) => {
+    const s = segment.trim();
+    const quoted = /^(["'])((?:\\.|(?!\1)[^\\])*)\1$/s.exec(s);
+    if (quoted) return quoted[2].replace(/\\(.)/gs, '$1');
+    if (s.includes('(')) return s;
+    return s.replace(/\s+/g, ' ');
+  });
+}
+
+/**
+ * A `fontFamily` value as a CSS `font-family` list: each name from
+ * `fontNames()`, quoted unless it is a lowercase keyword-like name
+ * (`system-ui`, `sans-serif`), already quoted, or a CSS function (`var(…)`).
+ * The quoting rule is the one every official exporter used before it moved
+ * here, so existing output does not change.
+ */
+export function fontStack(value) {
+  return fontNames(value)
+    .filter((name) => name !== '')
+    .map((name) => {
+      if (/^(["']).*\1$/s.test(name) || name.includes('(')) return name;
+      return /[^a-z-]/.test(name) ? `"${name.replace(/["\\]/g, '\\$&')}"` : name;
+    })
+    .join(', ');
+}
+
+/**
  * Component tier (docs/plan/component-tier.md C2; docs/specs/component-layer.md;
  * generalized by AL2 — docs/proposals/0003-component-catalog-generalization.md).
  * Per component, per token: `defaultFrom` is a bare `semantic.*` path the token

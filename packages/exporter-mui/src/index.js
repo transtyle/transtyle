@@ -29,7 +29,7 @@
  * options merge under any other `createTheme(options, yours)` argument.
  */
 
-import { COLOR_ROLES, GRID_CELLS, droppedDimensions } from '@transtyle/ir';
+import { COLOR_ROLES, GRID_CELLS, droppedDimensions, fontStack } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const GAMUT_NOTE = 'sRGB gamut clamp during oklch → hex (MUI parses only sRGB colour syntaxes)';
@@ -537,9 +537,6 @@ function toHex(value, ctx) {
   if (alpha >= 1) return { text, clamped };
   return { text: `${text}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`, clamped };
 }
-
-const fontStack = (value) =>
-  Array.isArray(value) ? value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ') : String(value);
 
 function shadowCss(value, ctx) {
   const layers = Array.isArray(value) ? value : [value];

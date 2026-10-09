@@ -154,7 +154,7 @@ A warning or info you have looked at and accept can be silenced in `transtyle.co
 }
 ```
 
-`reason` is required (an empty or blank one fails config load as `TST1010`). `path` is optional: an exact token path, or a prefix ending in `.*` (`component.button.*` matches the group's children, not the group). Without `path`, the entry matches every diagnostic with that code, the only way to silence one that isn't about a token. A suppressed diagnostic is silenced, not downgraded: it is no longer printed and no longer counts for `check.failOn`, and it is listed with its reason under `suppressed` in `report.json` and `check --json`, so it stays auditable. Errors can't be suppressed. An entry that matches nothing raises `TST1012` (an `info`).
+`reason` is required (an empty or blank one fails config load as `TST1010`). `path` is optional: an exact token path, or a prefix ending in `.*` (`component.button.*` matches the group's children, not the group). Without `path`, the entry matches every diagnostic with that code, the only way to silence one that isn't about a token, such as an exporter's own `TST2104`. A suppressed diagnostic is silenced, not downgraded: it is no longer printed and no longer counts for `check.failOn`, and it is listed with its reason under `suppressed` in `report.json` and `check --json`, so it stays auditable. Errors can't be suppressed. An entry that matches nothing raises `TST1012` (an `info`).
 
 ### Where a diagnostic points
 

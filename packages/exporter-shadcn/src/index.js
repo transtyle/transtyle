@@ -6,7 +6,7 @@
  * options.era in transtyle.config.json — never via CLI flags.
  */
 
-import { droppedDimensions, entryNotes, blockComment } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, blockComment, fontNames, fontStack } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
@@ -161,8 +161,6 @@ const header = (ctx, era) => [
 const cssLine = (name, value, slot, prov) =>
   `  ${name}: ${value}; /* ${slot.replace('semantic.', '')}${prov === 'derived' ? ' · derived' : ''} */`;
 
-const fontList = (value) => value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ');
-
 function colorBlocks(vars, fmt) {
   const lines = { light: [], dark: [] };
   for (const v of vars) {
@@ -181,8 +179,8 @@ function emitV4({ vars, radius, fontSans, fontMono, ctx }) {
   const lines = colorBlocks(vars, (c) => ctx.formatColor(c));
   const themeVars = vars.map((v) => `  --color${v.css.slice(1)}: var(${v.css});`);
   const extras = [];
-  if (fontSans) extras.push(`  --font-sans: ${fontList(fontSans.value)};`);
-  if (fontMono) extras.push(`  --font-mono: ${fontList(fontMono.value)};`);
+  if (fontSans) extras.push(`  --font-sans: ${fontStack(fontSans.value)};`);
+  if (fontMono) extras.push(`  --font-mono: ${fontStack(fontMono.value)};`);
   if (radius) {
     extras.push('  --radius-sm: calc(var(--radius) - 4px);');
     extras.push('  --radius-md: calc(var(--radius) - 2px);');
@@ -260,8 +258,8 @@ function emitV3({ vars, radius, fontSans, fontMono, ctx }) {
     '  },',
     ...(fontSans || fontMono ? [
       '  fontFamily: {',
-      ...(fontSans ? [`    sans: ${JSON.stringify(fontSans.value)},`] : []),
-      ...(fontMono ? [`    mono: ${JSON.stringify(fontMono.value)},`] : []),
+      ...(fontSans ? [`    sans: ${JSON.stringify(fontNames(fontSans.value))},`] : []),
+      ...(fontMono ? [`    mono: ${JSON.stringify(fontNames(fontMono.value))},`] : []),
       '  },',
     ] : []),
     '};',

@@ -71,17 +71,17 @@ Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the _
 
 `@transtyle/plugin-kit` (shipped, P1) exports `conformance(plugin, { manifest?, fixtures? })`. It runs the plugin against nine fixture design systems bundled with the kit (`fixtures/<name>/`, plain DTCG projects compiled by the real loader), so a plugin is tested on the shapes real projects come in, not one complete system:
 
-| Fixture          | Exercises                                                                                                                                                |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `canonical`      | a brand color, both `color-scheme` modes, elevation, text, border, fonts; radius, a duration and an easing in DTCG structured form                       |
-| `one-token`      | only `semantic.color.primary.solid`, the one token the engine cannot invent                                                                              |
-| `three-token`    | brand, page background and text, with dark values; no radius, spacing or fonts                                                                           |
-| `two-dimension`  | `color-scheme` × `density`, with `space.4` authored differently under `density: compact`                                                                 |
-| `single-mode`    | `color-scheme` with `light` only                                                                                                                         |
-| `component-tier` | authored `component.control.radius`, `component.button.radius` (an alias to a derived slot), `component.button.padding-x`, `component.tooltip.max-width` |
-| `custom-role`    | a custom role joining the grid through `$extensions.transtyle.role`                                                                                      |
-| `composites`     | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                                                             |
-| `object-form`    | colors, dimensions, durations, cubicBezier, fontWeight and typography members in DTCG structured form, compared with their CSS-string twin               |
+| Fixture          | Exercises                                                                                                                                                      |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canonical`      | a brand color, both `color-scheme` modes, elevation, text, border, fonts; radius, a duration and an easing in DTCG structured form                             |
+| `one-token`      | only `semantic.color.primary.solid`, the one token the engine cannot invent                                                                                    |
+| `three-token`    | brand, page background and text, with dark values; no radius, spacing or fonts                                                                                 |
+| `two-dimension`  | `color-scheme` × `density`, with `space.4` authored differently under `density: compact`                                                                       |
+| `single-mode`    | `color-scheme` with `light` only                                                                                                                               |
+| `component-tier` | authored `component.control.radius`, `component.button.radius` (an alias to a derived slot), `component.button.padding-x`, `component.tooltip.max-width`       |
+| `custom-role`    | a custom role joining the grid through `$extensions.transtyle.role`                                                                                            |
+| `composites`     | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                                                                   |
+| `object-form`    | colors, dimensions, durations, cubicBezier, fontWeight, typography members and a fontFamily array in DTCG structured form, compared with their CSS-string twin |
 
 Every fixture runs by default; `fixtures: 'canonical'` (or an array of names) narrows it. The kit asserts the contract above:
 

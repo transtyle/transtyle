@@ -80,8 +80,8 @@ export const FIXTURES = Object.freeze([
   },
   {
     name: 'object-form',
-    exercises: 'colors (srgb with a hex, oklch, display-p3 outside sRGB), dimension, duration, cubicBezier, fontWeight and typography members in DTCG structured form, under two dimensions',
-    spec: 'ir.md#values-and-canonicalization (structured forms compile byte-identical to the string form)',
+    exercises: 'colors (srgb with a hex, oklch, display-p3 outside sRGB), dimension, duration, cubicBezier, fontWeight and typography members in DTCG structured form, and a fontFamily array, under two dimensions',
+    spec: 'ir.md#values-and-canonicalization (structured forms compile byte-identical to the string form, a fontFamily array to the one-string CSS list)',
     // Same design system authored with CSS strings: the plugin must not be
     // able to tell them apart.
     twin: 'object-form-twin',
