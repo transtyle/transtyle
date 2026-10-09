@@ -41,6 +41,25 @@ export default {
         const solid = get('solid');
         if (!solid) continue;
 
+        // The IR paths each step's value is computed from (coverage `slots`).
+        const E = `${S}elevation.`;
+        const own = (cell) => `${S}${role}.${cell}`;
+        const stepSlots = {
+          1: [`${E}0.surface`],
+          2: [own('solid'), `${E}0.surface`],
+          3: [own('tint')],
+          4: [own('tint-hover')],
+          5: [own('tint-active')],
+          6: [own('solid'), `${E}1.surface`],
+          7: [own('outline')],
+          8: [own('outline-hover')],
+          9: [own('solid')],
+          10: [own('solid-hover')],
+          11: [own('text')],
+          12: [own('text-strong')],
+        };
+        const roleSlots = new Set(get('on-solid') ? [own('on-solid')] : []);
+
         const steps = {
           1: surface0,
           2: surface0 && ctx.mix(solid, surface0, 0.96),
@@ -58,6 +77,8 @@ export default {
 
         for (const [step, value] of Object.entries(steps)) {
           if (!value) continue;
+          const slots = stepSlots[step];
+          for (const sl of slots) roleSlots.add(sl);
           const name = `--${role}-${step}`;
           lines.push(`  ${name}: ${ctx.formatColor(value)};`);
           if (isFirst) {
@@ -67,18 +88,18 @@ export default {
               ...(mixed ? ['no direct grid cell — mixed toward the surface at a ratio filling the gap between tint and outline'] : []),
               ...(clamped ? ['out of sRGB gamut at this lightness/chroma combination — browsers gamut-map oklch(), which may render noticeably differently than intended'] : []),
             ];
-            coverage.push({ variable: name, slot: `${S}${role}.*`, class: (mixed || clamped) ? 'approximated' : 'native', ...(notes.length && { note: notes.join('; ') }) });
+            coverage.push({ variable: name, slot: `${S}${role}.*`, slots, class: (mixed || clamped) ? 'approximated' : 'native', ...(notes.length && { note: notes.join('; ') }) });
           }
           const alpha = ALPHA_RAMP[Number(step) - 1];
           const aName = `--${role}-a${step}`;
           lines.push(`  ${aName}: ${ctx.formatColor({ ...value, alpha })};`);
-          if (isFirst) coverage.push({ variable: aName, slot: `${S}${role}.*`, class: 'approximated', note: 'fixed alpha ramp, not a colorimetric derivation of Radix\'s real per-color alpha' });
+          if (isFirst) coverage.push({ variable: aName, slot: `${S}${role}.*`, slots, class: 'approximated', note: 'fixed alpha ramp, not a colorimetric derivation of Radix\'s real per-color alpha' });
         }
 
         const onSolid = get('on-solid');
         if (onSolid) {
           lines.push(`  --${role}-contrast: ${ctx.formatColor(onSolid)};`);
-          if (isFirst) coverage.push({ variable: `--${role}-contrast`, slot: `${S}${role}.on-solid`, class: 'native' });
+          if (isFirst) coverage.push({ variable: `--${role}-contrast`, slot: `${S}${role}.on-solid`, slots: [`${S}${role}.on-solid`], class: 'native' });
         }
 
         if (role === 'neutral') {
@@ -87,7 +108,7 @@ export default {
             lines.push(`  --gray-a${step}: var(--neutral-a${step});`);
           }
           lines.push('  --gray-contrast: var(--neutral-contrast);');
-          if (isFirst) coverage.push({ variable: '--gray-*', slot: `${S}neutral.*`, class: 'native', note: 'Radix\'s conventional paired-gray name, aliased from neutral' });
+          if (isFirst) coverage.push({ variable: '--gray-*', slot: `${S}neutral.*`, slots: [...roleSlots].sort(), class: 'native', note: 'Radix\'s conventional paired-gray name, aliased from neutral' });
         }
       }
       return lines;
