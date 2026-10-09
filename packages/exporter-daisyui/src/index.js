@@ -17,7 +17,7 @@ const COLOR_MAPPING = [
   { css: '--color-base-100', slot: `${S}elevation.0.surface`, cls: 'native' },
   { css: '--color-base-200', slot: `${S}elevation.1.surface`, cls: 'native' },
   // base-300 is the third step of a background ramp; border is the closest tone we have
-  { css: '--color-base-300', slot: `${S}border`, cls: 'approximated', note: 'bg-ramp step ← border tone' },
+  { css: '--color-base-300', slot: `${S}border.base`, cls: 'approximated', note: 'bg-ramp step ← border tone' },
   { css: '--color-base-content', slot: `${S}text.base`, cls: 'native' },
   { css: '--color-primary', slot: `${S}primary.solid`, cls: 'native' },
   { css: '--color-primary-content', slot: `${S}primary.on-solid`, cls: 'native' },

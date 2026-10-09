@@ -11,7 +11,7 @@
         "0": { "surface": { "$value": "{semantic.color.crt.tube}" } },
         "1": { "surface": { "$value": "{semantic.color.crt.glass}" } }
       },
-      "border": { "$value": "{semantic.color.crt.scanline}" },
+      "border": { "base": { "$value": "{semantic.color.crt.scanline}" } },
       "warning": { "solid": { "$value": "{semantic.color.crt.amber}" } },
       "danger": { "solid": { "$value": "{semantic.color.crt.meltdown}" } },
       "crt-amber": {

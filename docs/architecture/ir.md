@@ -37,11 +37,11 @@ Tier is structural (top-level group name: `option.*`, `semantic.*`, `component.*
 
 A fixed, versioned catalog of semantic slots that exporters may rely on existing after DERIVE. **The catalog — the role grid**, derived from a comparative study of ~14 design-system ecosystems ([proposal 0001](../proposals/0001-universal-token-ir.md)) to be the smallest set of concepts capable of representing all of them:
 
-<!-- measured: catalog.slots = 259 -->
-<!-- measured: catalog.semantic = 252 -->
+<!-- measured: catalog.slots = 264 -->
+<!-- measured: catalog.semantic = 257 -->
 <!-- measured: catalog.component = 7 -->
 
-**Machine-readable form:** `catalog()` in `@transtyle/core`, printed by `transtyle catalog --json` ([cli.md](../specs/cli.md#catalog--the-contract-as-data)) — 259 slots today, 252 semantic and 7 component, each with its DTCG type, the rule that fills it when unauthored, that rule's inputs and the anchor it requires. It is read off the engine by a probe compile, so it is the implemented catalog; where this page and it disagree, this page is the one to fix.
+**Machine-readable form:** `catalog()` in `@transtyle/core`, printed by `transtyle catalog --json` ([cli.md](../specs/cli.md#catalog--the-contract-as-data)) — 264 slots today, 257 semantic and 7 component, each with its DTCG type, the rule that fills it when unauthored, that rule's inputs and the anchor it requires. It is read off the engine by a probe compile, so it is the implemented catalog; where this page and it disagree, this page is the one to fix.
 
 ### Color: the role grid
 
@@ -70,7 +70,11 @@ strong         —                —               —                text-stro
 
 ### Content hierarchy
 
-`semantic.color.text.{strong, base, muted, subtle, disabled, inverse}` and `semantic.color.link.{base, hover, visited}`. (`text.base` is the _default rung_ of this ladder — not a leftover of the old `.base` state suffix, which no longer exists outside the grid.) `border` and `ring` are single-value slots (`semantic.color.border`, `semantic.color.ring` — no `.base` suffix).
+`semantic.color.text.{strong, base, muted, subtle, disabled, inverse}` and `semantic.color.link.{base, hover, visited}`. (`text.base` is the _default rung_ of this ladder — not a leftover of the old `.base` state suffix, which no longer exists outside the grid.) `ring` is a single-value slot (`semantic.color.ring`).
+
+**Borders** are a ladder too, `semantic.color.border.{subtle, base, strong, field}` ([proposal 0005](../proposals/0005-border-ladder-inverse-pair.md)): content borders by strength (separators and cards, the default border, a boundary at 3:1), plus `field`, the neutral border of a form field at rest. They are the _content_ borders; the role grid's `<role>.outline` cells stay the _role-tinted_ ones (outlined buttons, alerts), the same split as `text.*` against `<role>.text`. Until proposal 0005 the catalog had one leaf, `semantic.color.border`; it was renamed in place to `border.base` under [ADR-0010](../adr/0010-pre-release-breaking-changes.md), and a token left at the old path is an error (`TST1122`), not a silent custom token.
+
+**The inverse pair**, `semantic.color.inverse.{surface, text}` (proposal 0005), is the bubble tooltips and contrast toasts are painted with: dark on a light page, light on a dark one. It is not `text.inverse`, which is the other mode's body text (what Storybook's `textInverseColor` wants): the targets put `elevation.0.surface` on an inverse surface, not the other mode's text.
 
 ### Data visualization
 

@@ -47,6 +47,29 @@ export const GRID_CELLS = [
 /** Content hierarchy rungs under `semantic.color.text.<rung>` (docs/architecture/ir.md). */
 export const TEXT_RUNGS = ['strong', 'base', 'muted', 'subtle', 'disabled', 'inverse'];
 
+/**
+ * Border ladder under `semantic.color.border.<rung>` (proposal 0005): content
+ * borders by strength, plus the neutral border of a form field at rest. The
+ * role grid's `<role>.outline` cells stay the role-tinted borders.
+ */
+export const BORDER_RUNGS = ['subtle', 'base', 'strong', 'field'];
+
+/**
+ * Inverse surface pair under `semantic.color.inverse.<slot>` (proposal 0005):
+ * the dark-on-light (or light-on-dark) bubble of tooltips and contrast toasts.
+ * Distinct from `text.inverse`, which is the other mode's body text.
+ */
+export const INVERSE_SLOTS = ['surface', 'text'];
+
+/**
+ * Catalog slots renamed in place before the first stable release (ADR-0010):
+ * an authored token at the old path is an error (TST1122) naming the new one,
+ * never a silent custom token.
+ */
+export const RENAMED_SLOTS = {
+  'semantic.color.border': 'semantic.color.border.base',
+};
+
 /** Elevation ladder: surfaces at levels 0-5, shadows at levels 1-4 (F2: scrim stays separate). */
 export const ELEVATION_LEVELS = [0, 1, 2, 3, 4, 5];
 export const SHADOW_LEVELS = [1, 2, 3, 4];

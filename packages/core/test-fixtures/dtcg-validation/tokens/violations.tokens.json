@@ -12,7 +12,11 @@
         "$value": "oklch(0.6 0.1 100)",
         "$extensions": { "com.example.thing": { "note": "not a transtyle namespace" } }
       },
-      "dangling-alias": { "$value": "{semantic.color.does.not.exist}" }
+      "dangling-alias": { "$value": "{semantic.color.does.not.exist}" },
+      "border": {
+        "$value": "oklch(0.9 0 0)",
+        "subtle": { "$value": "oklch(0.95 0 0)" }
+      }
     }
   }
 }

@@ -71,7 +71,7 @@ const COLORS = {
   surface: 'semantic.color.elevation.1.surface',
   text: 'semantic.color.text.base',
   muted: 'semantic.color.text.muted',
-  border: 'semantic.color.border',
+  border: 'semantic.color.border.base',
   primary: 'semantic.color.primary.solid',
   onPrimary: 'semantic.color.primary.on-solid',
   tint: 'semantic.color.primary.tint',

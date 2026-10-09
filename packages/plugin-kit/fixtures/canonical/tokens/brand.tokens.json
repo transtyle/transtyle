@@ -37,8 +37,10 @@
         }
       },
       "border": {
-        "$value": "{option.color.gray.200}",
-        "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } } }
+        "base": {
+          "$value": "{option.color.gray.200}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.900}" } } }
+        }
       }
     },
     "radius": { "md": { "$type": "dimension", "$value": { "value": 0.5, "unit": "rem" } } },
