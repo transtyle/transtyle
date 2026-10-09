@@ -17,6 +17,27 @@
 
 import { COMPLETENESS_LEVELS } from '../completeness.js';
 
+/** How one Tokens Studio theme group compiles: mapped to a mode dimension, or one theme fixed. */
+const themeGroup = {
+  anyOf: [
+    {
+      type: 'object',
+      required: ['dimension', 'map'],
+      additionalProperties: false,
+      properties: {
+        dimension: { type: 'string', minLength: 1 },
+        map: { type: 'object', additionalProperties: { type: 'string' } },
+      },
+    },
+    {
+      type: 'object',
+      required: ['fixed'],
+      additionalProperties: false,
+      properties: { fixed: { type: 'string', minLength: 1 } },
+    },
+  ],
+};
+
 const tokenLayer = {
   anyOf: [
     { type: 'string' },
@@ -31,6 +52,22 @@ const tokenLayer = {
         files: { anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
         mode: { type: 'object', additionalProperties: { type: 'string' } },
         override: { enum: [true, 'extend'] },
+      },
+    },
+    // A Tokens Studio export (docs/specs/configuration.md#tokens-studio-exports):
+    // a folder synced by the plugin or a single-file export, lowered at LOAD to
+    // a base layer plus one mode-scoped layer per non-default mode.
+    {
+      type: 'object',
+      required: ['tokensStudio'],
+      additionalProperties: false,
+      properties: {
+        tokensStudio: { type: 'string', minLength: 1, description: 'the export folder (holding $metadata.json) or a single-file export' },
+        // One entry per theme group, or the group mapping itself when the
+        // export's themes have no group.
+        themes: { anyOf: [themeGroup, { type: 'object', additionalProperties: themeGroup }] },
+        // Set name (or pattern with `*`) → the tier its tokens are placed under; default option.
+        sets: { type: 'object', additionalProperties: { enum: ['option', 'semantic', 'component'] } },
       },
     },
   ],

@@ -1,6 +1,6 @@
 # The checkers
 
-Twenty-five scripts, one job each — twenty-two chained by `npm run check:all` and
+Twenty-six scripts, one job each — twenty-three chained by `npm run check:all` and
 run individually by CI, plus three that guard a release, a deploy, and the
 history itself.
 Every one exists because something real broke or could have: they are not a
@@ -21,6 +21,7 @@ already made once.
 | `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                                                             |
 | `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` / `catalog` / `bind --suggest` golden paths and errors                                             |
 | `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a semantic alias into it is `TST1113`                                            |
+| `check-tokens-studio.mjs`     | A Tokens Studio export (folder, single file, legacy) compiles byte-identical to its plain DTCG twin                                              |
 | `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                                                                      |
 | `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG/Mantine/Chakra slot is accounted for, with a note on every gap                                               |
 | `check-gamut-rows.mjs`        | An out-of-gamut primary is `approximated` per variable in all five hex/HSL writers                                                               |

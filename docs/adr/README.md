@@ -17,3 +17,4 @@ Format: [MADR](https://adr.github.io/madr/)-lite — Status / Context / Decision
 | [0011](0011-v0-freeze-readiness.md)          | IR spec v0 freeze-ready; plugin API freeze deferred to the conformance kit (P1) | proposed |
 | [0012](0012-binding-rules.md)                | Binding rules: the config declares data that expands into plain aliases at LOAD | accepted |
 | [0013](0013-apca-optional-peer.md)           | APCA comes from the `apca-w3` package, an optional peer dependency of core      | accepted |
+| [0014](0014-tokens-studio-input.md)          | Tokens Studio exports load in place, in core, as a layer form                   | accepted |

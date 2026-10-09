@@ -42,7 +42,7 @@ const DIMENSION_UNITS = ['px', 'rem'];
 const DURATION_UNITS = ['ms', 's'];
 
 /** DTCG `fontWeight` keywords and their numeric values (DTCG 2025.10, font weight table). */
-const FONT_WEIGHT_KEYWORDS = {
+export const FONT_WEIGHT_KEYWORDS = {
   thin: 100,
   hairline: 100,
   'extra-light': 200,

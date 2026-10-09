@@ -1,0 +1,139 @@
+{
+  "color": {
+    "white": {
+      "$type": "color",
+      "$value": "#ffffff"
+    },
+    "black": {
+      "$type": "color",
+      "$value": "#000000"
+    },
+    "gray": {
+      "50": {
+        "$type": "color",
+        "$value": "#f8fafc"
+      },
+      "200": {
+        "$type": "color",
+        "$value": "#e2e8f0"
+      },
+      "600": {
+        "$type": "color",
+        "$value": "#475569"
+      },
+      "700": {
+        "$type": "color",
+        "$value": "#334155"
+      },
+      "800": {
+        "$type": "color",
+        "$value": "#1e293b"
+      },
+      "900": {
+        "$type": "color",
+        "$value": "#0f172a"
+      }
+    },
+    "blue": {
+      "400": {
+        "$type": "color",
+        "$value": "#60a5fa"
+      },
+      "600": {
+        "$type": "color",
+        "$value": "#2563eb"
+      }
+    },
+    "red": {
+      "600": {
+        "$type": "color",
+        "$value": "#dc2626"
+      }
+    }
+  },
+  "space": {
+    "base": {
+      "$type": "spacing",
+      "$value": "4"
+    },
+    "md": {
+      "$type": "spacing",
+      "$value": "{space.base} * 4"
+    }
+  },
+  "radius": {
+    "sm": {
+      "$type": "borderRadius",
+      "$value": "4"
+    },
+    "md": {
+      "$type": "borderRadius",
+      "$value": "roundTo({radius.sm} * 1.75)"
+    }
+  },
+  "font": {
+    "family": {
+      "sans": {
+        "$type": "fontFamilies",
+        "$value": "Inter, system-ui, sans-serif"
+      }
+    },
+    "size": {
+      "base": {
+        "$type": "fontSizes",
+        "$value": "16"
+      }
+    },
+    "weight": {
+      "regular": {
+        "$type": "fontWeights",
+        "$value": "Regular"
+      },
+      "semibold": {
+        "$type": "fontWeights",
+        "$value": "Semi Bold"
+      }
+    },
+    "line-height": {
+      "$type": "lineHeights",
+      "$value": "150%"
+    },
+    "tracking": {
+      "tight": {
+        "$type": "letterSpacing",
+        "$value": "-2%"
+      }
+    }
+  },
+  "opacity": {
+    "disabled": {
+      "$type": "opacity",
+      "$value": "50%"
+    }
+  },
+  "shadow": {
+    "md": {
+      "$type": "boxShadow",
+      "$value": {
+        "x": "0",
+        "y": "4",
+        "blur": "8",
+        "spread": "0",
+        "color": "rgba({color.black}, 0.2)",
+        "type": "dropShadow"
+      }
+    }
+  },
+  "typography": {
+    "body": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": "{font.weight.regular}",
+        "fontSize": "{font.size.base}",
+        "lineHeight": "{font.line-height}",
+        "letterSpacing": "0"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "6f1c2a0e-light",
+    "name": "Light",
+    "group": "Mode",
+    "selectedTokenSets": {
+      "core": "source",
+      "semantic/light": "enabled",
+      "semantic/dark": "disabled"
+    },
+    "$figmaCollectionId": "VariableCollectionId:1:1",
+    "$figmaModeId": "1:0"
+  },
+  {
+    "id": "6f1c2a0e-dark",
+    "name": "Dark",
+    "group": "Mode",
+    "selectedTokenSets": {
+      "core": "source",
+      "semantic/light": "disabled",
+      "semantic/dark": "enabled"
+    },
+    "$figmaCollectionId": "VariableCollectionId:1:1",
+    "$figmaModeId": "1:1"
+  }
+]

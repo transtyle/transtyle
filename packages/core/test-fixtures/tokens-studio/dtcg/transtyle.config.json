@@ -1,0 +1,70 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "tokens-studio-fixture",
+  "tokens": [
+    "option.tokens.json",
+    "semantic.tokens.json",
+    {
+      "files": "semantic.dark.tokens.json",
+      "mode": {
+        "color-scheme": "dark"
+      }
+    },
+    "../transtyle.bindings.tokens.json"
+  ],
+  "modes": {
+    "color-scheme": {
+      "values": [
+        "light",
+        "dark"
+      ],
+      "default": "light"
+    }
+  },
+  "derivation": {
+    "rules": "standard@1",
+    "autoDark": false
+  },
+  "targets": {
+    "shadcn": {
+      "output": "dist/shadcn"
+    },
+    "echarts": {
+      "output": "dist/echarts"
+    },
+    "daisyui": {
+      "output": "dist/daisyui"
+    },
+    "bootstrap": {
+      "output": "dist/bootstrap"
+    },
+    "storybook": {
+      "output": "dist/storybook"
+    },
+    "css-variables": {
+      "output": "dist/css-variables"
+    },
+    "radix": {
+      "output": "dist/radix"
+    },
+    "primeng": {
+      "output": "dist/primeng"
+    },
+    "mantine": {
+      "output": "dist/mantine"
+    },
+    "chakra": {
+      "output": "dist/chakra"
+    },
+    "mui": {
+      "output": "dist/mui"
+    },
+    "shadcn-v3": {
+      "exporter": "shadcn",
+      "output": "dist/shadcn-v3",
+      "options": {
+        "era": "tailwind-v3"
+      }
+    }
+  }
+}

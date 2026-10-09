@@ -27,7 +27,8 @@ console.log(result.report.coverage);
 
 ## What it does
 
-Six phases, in order: **load** (DTCG token files) → **normalize** (one canonical tree) →
+Six phases, in order: **load** (DTCG token files, or a Tokens Studio export read as it is) →
+**normalize** (one canonical tree) →
 **derive** (fill every slot you did not author, by versioned deterministic rules) →
 **resolve** (per mode combination) → **emit** (hand the resolved IR to each exporter) →
 **report**. Nothing is random and nothing depends on the clock or the filesystem order, so

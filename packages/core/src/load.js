@@ -3,6 +3,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { locateJson, parseErrorLocation } from './locate.js';
+import { loadTokensStudio } from './tokens-studio.js';
 
 export async function loadConfig(cwd) {
   const file = path.join(cwd, 'transtyle.config.json');
@@ -62,9 +63,11 @@ export async function expandTokenFiles(cwd, entries) {
  * `mode` declares a mode-scoped layer (a pure DTCG file whose values apply to
  * one mode of one dimension); `override` (`true` | `"extend"`) marks a layer
  * that redefines earlier layers on purpose
- * (docs/specs/configuration.md#token-layering).
+ * (docs/specs/configuration.md#token-layering). A `{ tokensStudio, themes?,
+ * sets? }` entry is a Tokens Studio export, lowered to the same base and
+ * mode-scoped layers (tokens-studio.js). `config` gives it the declared modes.
  */
-export async function loadTokenTrees(cwd, entries, diagnostics) {
+export async function loadTokenTrees(cwd, entries, diagnostics, config = {}) {
   const trees = [];
   const seenExtensionNamespaces = new Set(); // compile-wide, so TST1304 fires once per namespace, not once per file
   // A file a mode-scoped entry matches is that mode's overlay, never also a
@@ -79,6 +82,13 @@ export async function loadTokenTrees(cwd, entries, diagnostics) {
     for (const g of [].concat(entry.files)) for (const f of await expandGlob(cwd, g)) claimed.add(f);
   }
   for (const entry of entries) {
+    if (typeof entry !== 'string' && entry.tokensStudio !== undefined) {
+      for (const layer of await loadTokensStudio(cwd, entry, config, diagnostics)) {
+        validateTokenTree(layer.tree, layer.file, diagnostics, seenExtensionNamespaces, layer.positions);
+        trees.push(layer);
+      }
+      continue;
+    }
     const globs = typeof entry === 'string' ? [entry] : [].concat(entry.files);
     const modeScope = typeof entry === 'string' ? undefined : entry.mode;
     const override = typeof entry === 'string' ? undefined : entry.override;

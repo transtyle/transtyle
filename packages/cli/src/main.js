@@ -688,17 +688,25 @@ function printExplain(entry, inputs, depth) {
   const overrides = () => {
     if (prov.overrides?.length) console.log(`${indent}    overrides ${prov.overrides.join(', ')}  (from ${prov.layer})`);
   };
+  // A token loaded from a Tokens Studio export names the set file and the
+  // path the designers know it by.
+  const source = () => {
+    const s = prov.source;
+    if (s) console.log(`${indent}    from ${s.file}${s.line ? `:${s.line}:${s.column}` : ''} (Tokens Studio set "${s.set}", ${s.path})`);
+  };
   if (prov.kind === 'authored') {
     // A DTCG color object compiles to OKLCH: show what was written, since the value line no longer does.
     const raw = entry.rawValue;
-    const asObject = entry.type === 'color' && raw !== null && typeof raw === 'object' && !Array.isArray(raw);
-    console.log(`${indent} └─ authored${asObject ? ` as ${JSON.stringify(raw)}` : ''}`);
+    const asObject = entry.type === 'color' && !prov.expression && raw !== null && typeof raw === 'object' && !Array.isArray(raw);
+    console.log(`${indent} └─ authored${asObject ? ` as ${JSON.stringify(raw)}` : ''}${prov.expression ? `  ← ${prov.expression}` : ''}`);
+    source();
     overrides();
     printMembers(entry, indent);
     return;
   }
   if (prov.kind === 'aliased') {
     console.log(`${indent} └─ aliased → ${prov.target}${prov.rule ? `  (from rule ${prov.rule})` : ''}`);
+    source();
     overrides();
     // The alias target (explainToken's one input here) holds the same value:
     // only its own provenance is shown, one level in.
