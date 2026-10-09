@@ -104,6 +104,34 @@ Reference other tokens with the DTCG brace syntax:
 
 Aliases resolve per mode, chain freely (semantic → semantic → option), and cycles are a hard error with the full chain printed (`TST1104`).
 
+## Describing and deprecating tokens
+
+DTCG's `$description` and `$deprecated` travel with the token:
+
+```json
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "legacy-red": { "$value": "#d0021b", "$deprecated": "Use option.color.red.600 instead." }
+    }
+  },
+  "semantic": {
+    "radius": {
+      "md": {
+        "$type": "dimension",
+        "$value": "0.5rem",
+        "$description": "Corner radius for interactive controls only."
+      }
+    }
+  }
+}
+```
+
+- **The description** is written as a comment above the variable in the targets whose files take comments (CSS variables, shadcn, daisyUI, and Bootstrap's theme colours), added to the slot's items in every `report.json`, and printed by [`transtyle explain`](/docs/cli/#transtyle-explain-slot---mode-name). Only its first line goes into a comment. A slot bound to another token keeps its own description, not its target's.
+- **`$deprecated`** is `true` or a sentence saying why and what to use instead. Set on a group, it covers every token in it; a token opts out with `"$deprecated": false`. A semantic or component slot whose value still reaches a deprecated token warns `TST1122`, with your sentence as the hint, and every target's `usage.md` gets a "Deprecated tokens" section listing the variables still fed by it. With `check.failOn: "warning"` that fails the build until the binding moves; a planned deprecation can be [suppressed](/docs/diagnostics/#suppressing-a-diagnostic) by the slot's `path` meanwhile. A deprecated option token nothing reads stays silent.
+- A description that isn't a string, or a `$deprecated` that isn't `true`, `false` or a string, warns `TST1311` and is ignored.
+
 ## Tiers
 
 Top-level groups declare the tier: `option` (your raw palette, private), `semantic` (meaning — where exporters bind), `component` (parsed and carried, reserved for v2). Custom semantic tokens beyond the [catalog](/docs/concepts/#3-the-semantic-catalog) are welcome — see the binding pattern below.

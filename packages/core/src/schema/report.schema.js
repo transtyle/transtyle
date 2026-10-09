@@ -35,6 +35,14 @@ const coverageItem = {
       pattern: '^[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*)*$',
       description: 'dot-separated kebab-case segments, e.g. "icon.size"',
     },
+    // Issue #30: token metadata, added by core from the default mode's entry
+    // for `slot` (never by exporters). `description` is the slot's own DTCG
+    // `$description`; `deprecated` (the `$deprecated` reason, or `true`) and
+    // `deprecatedBy` (that token's path) are set when the slot, or a token its
+    // value comes through, is deprecated. Absent otherwise.
+    description: { type: 'string' },
+    deprecated: { type: ['boolean', 'string'], description: 'true, or the reason given in $deprecated' },
+    deprecatedBy: { type: 'string', description: 'path of the deprecated token the value comes through (may be the slot itself)' },
   },
 };
 

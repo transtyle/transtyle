@@ -207,28 +207,82 @@ export function aliasTarget(value) {
 }
 
 /**
+ * A DTCG `$deprecated` value as the IR carries it: `true`, or the reason when
+ * it is a non-empty string; `false` for an explicit `false`; `undefined` when
+ * absent or malformed (core's LOAD reports a malformed one).
+ */
+function readDeprecated(raw) {
+  if (raw === true || raw === false) return raw;
+  if (typeof raw === 'string') return raw.trim() === '' ? true : raw;
+  return undefined;
+}
+
+/**
  * Collect tokens from a merged DTCG(-superset) tree.
- * Returns Map<path, { type, value, modeValues: {dimension: {modeName: value}} }>.
+ * Returns Map<path, { type, value, modeValues: {dimension: {modeName: value}}, description?, deprecated? }>.
  * Handles group-level $type inheritance and the transtyle.modes extension.
+ *
+ * Token metadata (DTCG 2025.10 §5.2, §6.3): `description` is the token's own
+ * `$description` (a group's description stays on the group, the format gives
+ * it no inheritance). `deprecated` is `true` or the reason string, and is
+ * inherited from the nearest group that sets `$deprecated`; a token (or a
+ * nested group) opts out with `$deprecated: false`. Both are absent when not
+ * set, and a value of the wrong type is ignored.
  */
 export function collectTokens(tree) {
   const out = new Map();
-  const walk = (node, path, inheritedType) => {
+  const walk = (node, path, inheritedType, inheritedDeprecated) => {
     if (node === null || typeof node !== 'object' || Array.isArray(node)) return;
     const type = node.$type ?? inheritedType;
+    const deprecated = readDeprecated(node.$deprecated) ?? inheritedDeprecated;
     if ('$value' in node) {
       const modeValues = node.$extensions?.['transtyle.modes'] ?? {};
-      out.set(path.join('.'), { type, value: node.$value, modeValues });
+      out.set(path.join('.'), {
+        type,
+        value: node.$value,
+        modeValues,
+        ...(typeof node.$description === 'string' ? { description: node.$description } : {}),
+        ...(deprecated ? { deprecated } : {}),
+      });
       return;
     }
     for (const [key, child] of Object.entries(node)) {
       if (key.startsWith('$')) continue;
-      walk(child, [...path, key], type);
+      walk(child, [...path, key], type, deprecated);
     }
   };
-  walk(tree, [], undefined);
+  walk(tree, [], undefined, undefined);
   return out;
 }
+
+/**
+ * The comment text an exporter writes above a declaration for one IR entry:
+ * the first non-empty line of its `description`, then a `Deprecated` line when
+ * the token itself is deprecated. Plain one-line strings, not yet made safe for
+ * any comment syntax: wrap each with `blockComment()` or `lineComment()`.
+ * Empty for an entry with neither (every derived and defaulted slot).
+ */
+export function entryNotes(entry) {
+  const firstLine = (s) => String(s).split(/\r\n|\r|\n/).map((l) => l.trim()).find((l) => l !== '') ?? '';
+  const notes = [];
+  const description = typeof entry?.description === 'string' ? firstLine(entry.description) : '';
+  if (description) notes.push(description);
+  if (entry?.deprecated) {
+    const reason = typeof entry.deprecated === 'string' ? firstLine(entry.deprecated) : '';
+    notes.push(reason ? `Deprecated: ${reason}` : 'Deprecated.');
+  }
+  return notes;
+}
+
+/**
+ * A `/* … *\/` comment holding `text`, safe for CSS and JS/TS: a `*\/` inside
+ * the text would close the comment early and leave the rest as code, so it is
+ * broken up. `text` is one line (see `entryNotes()`).
+ */
+export const blockComment = (text) => `/* ${String(text).replace(/\*\//g, '* /')} */`;
+
+/** A `// …` comment (Sass, JS/TS) holding one line of `text`; line breaks become spaces. */
+export const lineComment = (text) => `// ${String(text).replace(/[\r\n]+/g, ' ')}`;
 
 /**
  * Custom color roles opting into the full grid via `$extensions.transtyle.role`

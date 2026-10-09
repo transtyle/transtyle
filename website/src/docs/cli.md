@@ -131,6 +131,16 @@ A color authored as a [DTCG color object](/docs/authoring-tokens/#colors) shows 
 
 A slot produced by a [`bindings` rule](/docs/configuration/#binding-rules) names it: `└─ aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)`.
 
+A token's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describing-and-deprecating-tokens) print under its value line, and under each input the walk shows; a deprecated token further down the alias chain is named with `via deprecated`:
+
+```bash
+npx transtyle explain primary.solid --cwd examples/govuk
+#
+# semantic.color.primary.solid = oklch(0.535 0.136 249.9)  [#1d70b8]
+#   description: GOV.UK's govuk-functional-colour("brand") — #1d70b8.
+#  └─ aliased → semantic.color.govuk.brand
+```
+
 ### `transtyle explain --target <t>`, `--variable <name>`
 
 The other direction, for when a rendered page surprises you: "why is `$btn-border-radius` 9999px?". `--target` takes a target instance from your config (`bootstrap`, `shadcn-v3`); the CLI compiles that one target without writing anything, so no build is needed first.

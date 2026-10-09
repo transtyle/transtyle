@@ -10,6 +10,7 @@ import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
 import { expandBindings } from './bindings.js';
 import { normalize, resolveDeferredAliases, reportModeCarryOver, reportTierViolations } from './normalize.js';
+import { reportDeprecatedReach, withMetadata, withDeprecatedSection } from './metadata.js';
 import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
@@ -28,6 +29,7 @@ export { Diagnostics } from './diagnostics.js';
 export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';
 export { explainToken, explainVariable, slotConsumers, coverageSlots } from './explain.js';
+export { deprecationsReached } from './metadata.js';
 export { catalog } from './catalog.js';
 export { loadConfig, expandTokenFiles } from './load.js';
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
@@ -101,6 +103,11 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // Judged here because only now does every alias, deferred ones included,
   // carry its final provenance.
   reportTierViolations(normalized, diagnostics);
+
+  // TST1122: a catalog slot still reaching a `$deprecated` token. Same reason
+  // to wait for this point: only now does every alias, deferred ones
+  // included, carry the target its chain is walked through.
+  reportDeprecatedReach(normalized, diagnostics);
 
   // TST1205 (an alias DERIVE read before its target existed, so what it feeds
   // was skipped) is judged here, not in DERIVE: only now is it known whether
@@ -313,6 +320,10 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       if (d.severity === 'warning') diagnostics.warn(d.code, `${name}: ${d.message}`, context);
       else diagnostics.info(d.code, `${name}: ${d.message}`, context);
     }
+    // Deprecated tokens still feeding this target (#30), listed in its
+    // usage.md by core so every exporter, third-party ones included, gets it.
+    const viewDefault = view.modes[view.defaultMode];
+    files = files.map((f) => (f.path === 'usage.md' ? { ...f, contents: withDeprecatedSection(f.contents, coverage, viewDefault) } : f));
     if (targetConfig.modes) {
       files = files.map((f) => (f.path === 'usage.md' ? { ...f, contents: withModesNote(f.contents, name, view) } : f));
       coverage = coverage.filter((c) => !(c.class === 'dropped' && [...narrowed].some((d) => c.variable === `(mode:${d})`)));
@@ -327,7 +338,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       // build is committed atomically below (src/emit.js).
       const staged = files.map((f) => ({ path: f.path, contents: f.contents }));
       for (const f of files) written.push(path.relative(cwd, path.join(outDir, f.path)));
-      const report = buildReport(name, targetConfig, coverage, reads, diagnostics, [...written]);
+      const report = buildReport(name, targetConfig, withMetadata(coverage, viewDefault), reads, diagnostics, [...written]);
       staged.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
       written.push(path.relative(cwd, path.join(outDir, 'report.json')));
       staged.forEach((f, i) => planned.push({ path: written[i], bytes: Buffer.byteLength(f.contents, 'utf8') }));

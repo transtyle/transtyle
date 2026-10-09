@@ -62,7 +62,7 @@ A compiler shouldn't invent design decisions the source never made. Where GOV.UK
   <div class="jcall chose">
     <div class="jc-slot"><span class="sw" style="--c:#858686"></span>neutral.solid</div>
     <div class="jc-tag">chose · recorded</div>
-    <div class="jc-body">GOV.UK has no "neutral brand" colour. Bound to Black tint-50 (<code>#858686</code>), the closest authored gray. A different reasonable choice existed (tint-25, <code>#484949</code>); the reason for this one is in the token's <code>$description</code>.</div>
+    <div class="jc-body">GOV.UK has no "neutral brand" colour. Bound to Black tint-50 (<code>#858686</code>), the closest authored gray. A different reasonable choice existed (tint-25, <code>#484949</code>); the reason for this one is in the token's <code>$description</code>, which now ships as a comment above <code>--color-neutral-solid</code> in the CSS-variables output and in <code>report.json</code>.</div>
   </div>
   <div class="jcall chose">
     <div class="jc-slot"><span class="sw" style="--c:#54319f"></span>link.visited</div>

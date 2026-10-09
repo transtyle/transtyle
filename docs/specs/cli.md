@@ -88,6 +88,8 @@ An alias is followed to its target, one level in, without repeating the value (i
 
 An unknown slot exits 2 and lists the 5 closest catalog names (Levenshtein distance) instead of a bare error — e.g. asking for the pre-revision `primary.subtle` surfaces `primary.tint`, `primary.outline`, `primary.on-tint`. Per-token file:line provenance and the WCAG candidate list shown in the original mockup above remain specced.
 
+`explain` prints a token's own `$description` and `$deprecated` under its value line (`  description: …`, `  deprecated: <reason>`), and under each input it walks; a deprecated token further down the alias chain gets a `  via deprecated <token>: <reason>` line (`deprecationsReached()` in core, the walk behind `TST1122`). See [validation-and-coverage.md](validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 `explain` also names the rule behind a slot that a `bindings` rule produced: `└─ aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)`. `transtyle bindings --expand` is a thin wrapper over `compile()`'s `bindings` result (`expandBindings()` in core); see [configuration.md](configuration.md#binding-rules).
 
 ## `explain --target`, `--variable` — from a slot to target variables and back

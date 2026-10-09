@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, formatColor, formatHex } from '@transtyle/core';
+import { compile, catalog, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
@@ -557,7 +557,7 @@ function printSlotExplain(tree, args, result) {
     console.log(JSON.stringify({ ...tree, ...(target ? { target } : {}) }, null, 2));
     return;
   }
-  console.log(`${tree.slot} = ${formatEntryValue(tree.entry)}`);
+  printSlotHeader(tree, result.normalized);
   printExplain(tree.entry, tree.inputs, 0);
   if (!target) return;
   console.log('');
@@ -593,9 +593,31 @@ function printVariableExplain(found, args, explainSlot, normalized) {
   for (const row of found.rows) printRow(row, '  ');
   for (const tree of trees) {
     console.log('');
-    console.log(`${tree.slot} = ${formatEntryValue(tree.entry)}`);
+    printSlotHeader(tree, normalized);
     printExplain(tree.entry, tree.inputs, 0);
   }
+}
+
+/**
+ * The value line of an explained slot, then its own `$description` and
+ * `$deprecated` (#30), then any deprecated token further down its alias chain
+ * (the TST1122 walk): the slot itself may be fine while what it is bound to is
+ * on its way out.
+ */
+function printSlotHeader(tree, normalized) {
+  console.log(`${tree.slot} = ${formatEntryValue(tree.entry)}`);
+  printMeta(tree.entry, '');
+  for (const { token, reason } of deprecationsReached(normalized.modes[tree.mode], tree.slot)) {
+    if (token !== tree.slot) console.log(`  via deprecated ${token}${reason ? `: ${oneLine(reason)}` : ''}`);
+  }
+}
+
+const oneLine = (s) => String(s).split(/\r\n|\r|\n/).map((l) => l.trim()).filter(Boolean).join(' ');
+
+/** A token's own `$description` and `$deprecated` (#30), under its value line. */
+function printMeta(entry, indent) {
+  if (typeof entry.description === 'string' && entry.description.trim()) console.log(`${indent}  description: ${oneLine(entry.description)}`);
+  if (entry.deprecated) console.log(`${indent}  deprecated${typeof entry.deprecated === 'string' ? `: ${oneLine(entry.deprecated)}` : ''}`);
 }
 
 // Round a contrast ratio down to one decimal so a pair just under a threshold
@@ -692,6 +714,7 @@ function printExplain(entry, inputs, depth) {
       console.log(`${indent}    inputs: ${path} = ${formatEntryValue(input.entry)} (see above)`);
     } else {
       console.log(`${indent}    inputs: ${path} = ${formatEntryValue(input.entry)}`);
+      printMeta(input.entry, `${indent}    `);
       printExplain(input.entry, input.inputs, depth + 2);
     }
   }

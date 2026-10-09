@@ -6,7 +6,7 @@
  * options.era in transtyle.config.json — never via CLI flags.
  */
 
-import { droppedDimensions } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, blockComment } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
@@ -166,6 +166,9 @@ const fontList = (value) => value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f))
 function colorBlocks(vars, fmt) {
   const lines = { light: [], dark: [] };
   for (const v of vars) {
+    // The slot's own $description / $deprecated (#30), above its light
+    // declaration only (the dark block re-declares the same variable).
+    for (const note of entryNotes(v.lightEntry)) lines.light.push(`  ${blockComment(note)}`);
     lines.light.push(cssLine(v.css, fmt(v.lightEntry.value), v.slot, v.lightEntry.provenance.kind));
     if (v.darkEntry?.value) lines.dark.push(cssLine(v.css, fmt(v.darkEntry.value), v.slot, v.darkEntry.provenance.kind));
   }

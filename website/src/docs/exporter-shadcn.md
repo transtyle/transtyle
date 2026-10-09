@@ -57,6 +57,8 @@ The full 33-variable set is emitted; highlights worth understanding:
 
 Every mapping decision is recorded per-variable in `report.json` with its coverage class and provenance.
 
+A slot's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describing-and-deprecating-tokens) are written as comment lines above its variable in `:root` (both eras), not repeated under `.dark`.
+
 ## Mode handling
 
 `color-scheme` maps to shadcn's class strategy: `:root` gets **light** values, `.dark` gets dark. This binds mode _names_ — a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) compiles correctly, its native look under `.dark`.
