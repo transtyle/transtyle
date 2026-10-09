@@ -213,9 +213,10 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     // not a loss, so it gets no `dropped` coverage row.
     const view = targetConfig.modes ? targetView(normalized, targetConfig.modes) : normalized;
     const narrowed = targetConfig.modes ? narrowedDimensions(normalized, view) : new Set();
-    let files, coverage;
+    let files, coverage, notes;
     try {
-      ({ files, coverage } = exporter.emit(view, ctx));
+      ({ files, coverage, diagnostics: notes = [] } = exporter.emit(view, ctx));
+      checkExporterDiagnostics(notes);
     } catch (e) {
       // Only the exporter's own code is wrapped: file-system errors below are
       // not exporter bugs and keep failing loudly.
@@ -224,6 +225,17 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
         : 'This is a bug in the exporter, not in your design system. Re-run with TRANSTYLE_DEBUG=1 for the stack.');
       files = [];
       coverage = [];
+      notes = [];
+    }
+    // Exporter diagnostics (optional `diagnostics` in emit's return value): what
+    // a target's own conventions do to a value, which only the exporter knows.
+    // The message is prefixed with the instance name, so two instances of one
+    // exporter report separately and `report.json` (which lists every
+    // diagnostic of the run) says which target each line is about.
+    for (const d of notes) {
+      const context = { target: name, ...(d.hint !== undefined ? { hint: d.hint } : {}) };
+      if (d.severity === 'warning') diagnostics.warn(d.code, `${name}: ${d.message}`, context);
+      else diagnostics.info(d.code, `${name}: ${d.message}`, context);
     }
     if (targetConfig.modes) {
       files = files.map((f) => (f.path === 'usage.md' ? { ...f, contents: withModesNote(f.contents, name, view) } : f));
@@ -261,6 +273,26 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   }
 
   return { config, diagnostics, results, normalized, bindings };
+}
+
+const EXPORTER_SEVERITIES = ['info', 'warning'];
+
+/**
+ * An exporter's `diagnostics` must be `{ severity, code, message, hint? }[]`
+ * with severity `info` or `warning`: an exporter cannot stop the build from
+ * inside emit (a throw is TST3001). A malformed entry is an exporter bug, so it
+ * throws here and is reported as TST3001 like any other contract violation.
+ */
+export function checkExporterDiagnostics(list) {
+  if (!Array.isArray(list)) throw new Error('emit() returned a `diagnostics` field that is not an array');
+  list.forEach((d, i) => {
+    const at = `emit() returned an invalid diagnostics[${i}]`;
+    if (!d || typeof d !== 'object') throw new Error(`${at}: not an object`);
+    if (!EXPORTER_SEVERITIES.includes(d.severity)) throw new Error(`${at}: severity must be "info" or "warning", got ${JSON.stringify(d.severity)}`);
+    if (typeof d.code !== 'string' || !d.code) throw new Error(`${at}: code must be a non-empty string`);
+    if (typeof d.message !== 'string' || !d.message) throw new Error(`${at}: message must be a non-empty string`);
+    if (d.hint !== undefined && typeof d.hint !== 'string') throw new Error(`${at}: hint must be a string when present`);
+  });
 }
 
 function buildReport(target, targetConfig, coverage, diagnostics, files) {

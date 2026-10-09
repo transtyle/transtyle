@@ -4,7 +4,7 @@
  * plugins.md is prose and drifts; this suite is the contract that doesn't.
  * `conformance(plugin)` runs a plugin against a canonical fixture design system
  * and asserts it honors the real interface: a single `emit(normalizedIR, ctx) →
- * { files, coverage }` hook that is deterministic, pure (never mutates the IR),
+ * { files, coverage, diagnostics? }` hook that is deterministic, pure (never mutates the IR),
  * and honest (every coverage class is one of the five). Passing it is what
  * "official" means and what community exporters advertise.
  *
@@ -15,7 +15,7 @@
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { compile, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
+import { compile, checkExporterDiagnostics, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
 const FIXTURE = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixture');
 const COVERAGE_CLASSES = new Set(['native', 'derived', 'approximated', 'dropped', 'unsupported']);
@@ -96,11 +96,21 @@ export async function conformance(plugin, opts = {}) {
     'docs/specs/validation-and-coverage.md',
     `every coverage.class must be one of ${[...COVERAGE_CLASSES].join(', ')}`);
 
+  // Optional: `diagnostics` ({ severity: info|warning, code, message, hint? }[])
+  // for what a target's own conventions do to a value. Core rejects a malformed
+  // list as TST3001, so the harness fails it here first.
+  if (out1.diagnostics !== undefined) {
+    let bad;
+    try { checkExporterDiagnostics(out1.diagnostics); } catch (e) { bad = e.message; }
+    add('emit-diagnostics-valid', !bad, 'plugins.md#the-exporter-interface', bad);
+  }
+
   const out2 = plugin.emit(ir, ctx);
   add('deterministic',
-    JSON.stringify(out1.files) === JSON.stringify(out2.files),
+    JSON.stringify(out1.files) === JSON.stringify(out2.files)
+      && JSON.stringify(out1.diagnostics) === JSON.stringify(out2.diagnostics),
     'plugins.md ("emit must be deterministic")',
-    'two emit() runs on the same IR produced different files');
+    'two emit() runs on the same IR produced different files or diagnostics');
 
   add('ir-immutable',
     snapshotIR(ir) === before,

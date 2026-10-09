@@ -45,7 +45,8 @@ Per target. The exporter's mapping runs against the IR — the complete one, or,
 - the exporter owns its mapping table and applies it in its own `emit` — an earlier draft had core evaluating declarative tables through a `resolve`/`emit` split, and [plugins.md](plugins.md) records why that was dropped: eight exporters were written against the single-hook interface and none needed it;
 - programmatic resolution handles what a table can't express (ECharts' categorical palette, PrimeNG's severity grid);
 - **specced:** version selection against the exporter's compat ranges ([versioning.md](versioning.md)). Today a target era is an explicit option (shadcn's `tailwind-v3`/`v4`, daisyUI's `v5`), not a range match;
-- each mapping decision is classified for the coverage report: `native | derived | approximated | dropped | unsupported`.
+- each mapping decision is classified for the coverage report: `native | derived | approximated | dropped | unsupported`;
+- an exporter may also return `info`/`warning` diagnostics about what its target's own conventions do to an authored value (shadcn's radius rungs, `TST2104`); core validates them and adds them to the shared collector under the target instance's name ([plugins.md](plugins.md#the-exporter-interface-v0-as-implemented)).
 
 Output: per-target **resolution** — a pure data structure, still no files.
 

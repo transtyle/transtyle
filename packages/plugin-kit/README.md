@@ -13,7 +13,7 @@ The executable specification of the **[Transtyle](https://transtyle.github.io/tr
 > output you regenerate — never as something to hand-edit and keep.
 > ([why](https://github.com/transtyle/transtyle/blob/main/docs/adr/0010-pre-release-breaking-changes.md))
 
-An exporter is one function: `emit(normalized, ctx) → { files, coverage }`. This package is
+An exporter is one function: `emit(normalized, ctx) → { files, coverage, diagnostics? }`. This package is
 the conformance suite that proves yours honors the contract — the same suite every official
 exporter runs against in CI.
 
@@ -23,15 +23,16 @@ exporter runs against in CI.
 import { conformance } from '@transtyle/plugin-kit';
 import plugin from './src/index.js';
 
-const { passed, failures } = await conformance(plugin);
-if (!passed) {
-  console.error(failures);
+const { pass, checks } = await conformance(plugin);
+if (!pass) {
+  console.error(checks.filter((c) => !c.pass));
   process.exit(1);
 }
 ```
 
 It runs a canonical fixture through your plugin and checks shape, determinism, IR
-immutability, honest coverage classification, and manifest and options-schema validity —
+immutability, honest coverage classification, well-formed diagnostics (when the plugin returns
+any), and manifest and options-schema validity —
 each failure citing the line of the spec it enforces. `fixtureIR` hands you the same
 fixture if you want to write your own assertions on top.
 
