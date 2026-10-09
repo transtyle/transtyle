@@ -16,6 +16,16 @@
       "summary": "A wide-gamut (P3) variant of each colour. Radix ships a P3 pair per scale; the IR holds one OKLCH value per slot. Single-source so far.",
       "ref": "docs/specs/exporters/radix.md"
     },
+    "color.gradient": {
+      "status": "open",
+      "summary": "A default gradient (start colour, end colour, angle) for a gradient variant: the IR has no gradient. Single-source so far (Mantine's `defaultGradient`).",
+      "ref": "docs/specs/exporters/mantine.md"
+    },
+    "color.named-palette": {
+      "status": "target-specific",
+      "summary": "The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept.",
+      "ref": "docs/specs/exporters/mantine.md"
+    },
     "geometry.component": {
       "status": "rejected",
       "summary": "Bespoke component geometry (spinner, popover, modal widths, offcanvas, dropdown and toast widths): one-sided or false friends when measured against the second reference target.",
@@ -55,10 +65,20 @@
       "summary": "Theme-level stylistic effects and control-size scales (daisyUI --depth, --noise, --size-selector, --size-field): themable, but the IR has no vocabulary for them. Single-source so far.",
       "ref": "docs/specs/exporters/daisyui.md"
     },
+    "target.config": {
+      "status": "target-specific",
+      "summary": "Target configuration rather than a design value: behaviour switches (focus-ring visibility, reduced motion, cursor, font smoothing), class names, algorithm parameters (Mantine's autoContrast luminance threshold, its global rem scale) and constants (the colour-scheme name).",
+      "ref": "docs/specs/exporters/mantine.md"
+    },
     "type.display-ladder": {
       "status": "disagreement",
       "summary": "The display type sizes. `semantic.type.role.display.*` ships, but the target's ladder has twice the rungs over a different range, so mapping either invents rungs or drops them.",
       "ref": "docs/worklog/2026-07-27-coverage-bar-asymmetry.md"
+    },
+    "type.text-wrap": {
+      "status": "open",
+      "summary": "How headings wrap (`text-wrap: wrap | balance | pretty`): the IR has no text-wrap slot. Single-source so far (Mantine's `headings.textWrap`).",
+      "ref": "docs/specs/exporters/mantine.md"
     }
   }
 }

@@ -135,7 +135,7 @@ A row can say what it is missing in an optional **`meaning`** field: a key of do
 
 `disagreement` answers the open question the [2026-07-27 worklog](../worklog/2026-07-27-coverage-bar-asymmetry.md) left: `unsupported` keeps covering both a gap and a disagreement, and the status tells them apart without a sixth coverage class.
 
-`npm run gen:catalog-signals` compiles every example against every official exporter and writes [`docs/findings/catalog-signals.md`](../findings/catalog-signals.md): totals per exporter, every meaning with the exporters and rows behind it and the proposal that settled it, PrimeNG's slots that wait on an undriven Aura path, the rows with no meaning yet, and the catalog slots targets `dropped`. PrimeNG reports one row per family, so for it the page reads the slots one by one (the exporter's own `classifySurface()` over its emitted preset) and reconciles the total with the report. `check:catalog-signals`, part of `check:all`, fails when the page is stale, when a row declares a key the registry doesn't list, and when the registry keeps a key nothing reports (other than `promoted`).
+`npm run gen:catalog-signals` compiles every example against every official exporter and writes [`docs/findings/catalog-signals.md`](../findings/catalog-signals.md): totals per exporter, every meaning with the exporters and rows behind it and the proposal that settled it, PrimeNG's slots that wait on an undriven Aura path, the rows with no meaning yet, and the catalog slots targets `dropped`. PrimeNG reports one row per family, so for it the page reads the slots one by one (the exporter's own `classifySurface()` over its emitted preset) and reconciles the total with the report; Mantine reports one summary row per family and a named row per entry it leaves on Mantine's default, and the page counts the named rows. `check:catalog-signals`, part of `check:all`, fails when the page is stale, when a row declares a key the registry doesn't list, and when the registry keeps a key nothing reports (other than `promoted`).
 
 **Absence is not coverage.** A row classed `native` or `derived` names a slot that has a value. When a design system leaves a slot out, the exporter skips it, or reports it `dropped` or `unsupported`; it never claims it, and never crashes for want of it. A mode dimension the target cannot express is one `dropped` row named `(mode:<dimension>)`, never silence. The plugin kit checks both on every plugin (`coverage-honest`, `mode-dimensions-accounted`).
 
@@ -185,6 +185,13 @@ Two consequences for reading the bar:
 2. **A ref-resolving target rewards semantic-tier work; a per-variable target rewards exporter-tier work.** The same engineering hour buys very different coverage depending on which side of that line the target sits.
 
 A third consequence for the catalog: on a per-variable target, an `unsupported` slot is evidence the IR lacks a concept. On a ref-resolving target it may only mean the exporter hasn't driven a path it could — check which before reading it as catalog-growth signal.
+
+<!-- measured: mantine.surface.total = 203 -->
+<!-- measured: acme.mantine.set = 106 -->
+<!-- measured: acme.mantine.follow = 66 -->
+<!-- measured: acme.mantine.default = 31 -->
+
+Mantine is a third shape, measured since 2026-10-09: a small theme object from which Mantine computes most of its CSS variables at runtime, so its 203-entry inventory holds both the theme keys and the variables, and an entry either is **set** by the exporter, **follows** from what is set, or keeps **Mantine's default** with a reason. On Acme that is 106 set, 66 follow and 31 on Mantine's default. Its follow count plays the role of PrimeNG's `inherited` (a multiplier, smaller because Mantine's surface is), and most of its defaults are behaviour switches with no design value rather than catalog gaps, so it reads against neither of the other two. The rule and its numbers per example are in the [Mantine exporter spec](exporters/mantine.md#measured-against-mantines-whole-surface).
 
 ## Report format
 

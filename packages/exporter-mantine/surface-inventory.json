@@ -1,0 +1,1788 @@
+{
+  "mantineVersion": "9.7.1",
+  "generatedBy": "packages/exporter-mantine/tools/extract-surface.mjs",
+  "palettes": {
+    "collapsed": [
+      "pink",
+      "grape",
+      "violet",
+      "indigo",
+      "blue",
+      "cyan",
+      "green",
+      "lime",
+      "yellow",
+      "orange"
+    ],
+    "named": [
+      "dark",
+      "gray",
+      "red",
+      "teal"
+    ]
+  },
+  "counts": {
+    "total": 203,
+    "theme": 73,
+    "variables": 130,
+    "constants": 7,
+    "families": {
+      "theme": 73,
+      "variables": 80,
+      "light": 25,
+      "dark": 25
+    }
+  },
+  "entries": [
+    {
+      "id": "theme.activeClassName",
+      "block": "theme",
+      "path": "activeClassName",
+      "kind": "string",
+      "value": "mantine-active"
+    },
+    {
+      "id": "theme.autoContrast",
+      "block": "theme",
+      "path": "autoContrast",
+      "kind": "boolean",
+      "value": "false"
+    },
+    {
+      "id": "theme.black",
+      "block": "theme",
+      "path": "black",
+      "kind": "string",
+      "value": "#000"
+    },
+    {
+      "id": "theme.breakpoints.lg",
+      "block": "theme",
+      "path": "breakpoints.lg",
+      "kind": "string",
+      "value": "75em"
+    },
+    {
+      "id": "theme.breakpoints.md",
+      "block": "theme",
+      "path": "breakpoints.md",
+      "kind": "string",
+      "value": "62em"
+    },
+    {
+      "id": "theme.breakpoints.sm",
+      "block": "theme",
+      "path": "breakpoints.sm",
+      "kind": "string",
+      "value": "48em"
+    },
+    {
+      "id": "theme.breakpoints.xl",
+      "block": "theme",
+      "path": "breakpoints.xl",
+      "kind": "string",
+      "value": "88em"
+    },
+    {
+      "id": "theme.breakpoints.xs",
+      "block": "theme",
+      "path": "breakpoints.xs",
+      "kind": "string",
+      "value": "36em"
+    },
+    {
+      "id": "theme.colors.<color>",
+      "block": "theme",
+      "path": "colors.<color>",
+      "kind": "palette",
+      "members": 10
+    },
+    {
+      "id": "theme.colors.dark",
+      "block": "theme",
+      "path": "colors.dark",
+      "kind": "palette",
+      "value": "#C9C9C9 #b8b8b8 #828282 #696969 #424242 #3b3b3b #2e2e2e #242424 #1f1f1f #141414"
+    },
+    {
+      "id": "theme.colors.gray",
+      "block": "theme",
+      "path": "colors.gray",
+      "kind": "palette",
+      "value": "#f8f9fa #f1f3f5 #e9ecef #dee2e6 #ced4da #adb5bd #868e96 #495057 #343a40 #212529"
+    },
+    {
+      "id": "theme.colors.red",
+      "block": "theme",
+      "path": "colors.red",
+      "kind": "palette",
+      "value": "#fff5f5 #ffe3e3 #ffc9c9 #ffa8a8 #ff8787 #ff6b6b #fa5252 #f03e3e #e03131 #c92a2a"
+    },
+    {
+      "id": "theme.colors.teal",
+      "block": "theme",
+      "path": "colors.teal",
+      "kind": "palette",
+      "value": "#e6fcf5 #c3fae8 #96f2d7 #63e6be #38d9a9 #20c997 #12b886 #0ca678 #099268 #087f5b"
+    },
+    {
+      "id": "theme.cursorType",
+      "block": "theme",
+      "path": "cursorType",
+      "kind": "string",
+      "value": "default"
+    },
+    {
+      "id": "theme.defaultGradient.deg",
+      "block": "theme",
+      "path": "defaultGradient.deg",
+      "kind": "number",
+      "value": "45"
+    },
+    {
+      "id": "theme.defaultGradient.from",
+      "block": "theme",
+      "path": "defaultGradient.from",
+      "kind": "string",
+      "value": "blue"
+    },
+    {
+      "id": "theme.defaultGradient.to",
+      "block": "theme",
+      "path": "defaultGradient.to",
+      "kind": "string",
+      "value": "cyan"
+    },
+    {
+      "id": "theme.defaultRadius",
+      "block": "theme",
+      "path": "defaultRadius",
+      "kind": "string",
+      "value": "md"
+    },
+    {
+      "id": "theme.focusClassName",
+      "block": "theme",
+      "path": "focusClassName",
+      "kind": "string",
+      "value": ""
+    },
+    {
+      "id": "theme.focusRing",
+      "block": "theme",
+      "path": "focusRing",
+      "kind": "string",
+      "value": "auto"
+    },
+    {
+      "id": "theme.fontFamily",
+      "block": "theme",
+      "path": "fontFamily",
+      "kind": "string",
+      "value": "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji"
+    },
+    {
+      "id": "theme.fontFamilyMonospace",
+      "block": "theme",
+      "path": "fontFamilyMonospace",
+      "kind": "string",
+      "value": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace"
+    },
+    {
+      "id": "theme.fontSizes.lg",
+      "block": "theme",
+      "path": "fontSizes.lg",
+      "kind": "string",
+      "value": "calc(1.125rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.fontSizes.md",
+      "block": "theme",
+      "path": "fontSizes.md",
+      "kind": "string",
+      "value": "calc(1rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.fontSizes.sm",
+      "block": "theme",
+      "path": "fontSizes.sm",
+      "kind": "string",
+      "value": "calc(0.875rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.fontSizes.xl",
+      "block": "theme",
+      "path": "fontSizes.xl",
+      "kind": "string",
+      "value": "calc(1.25rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.fontSizes.xs",
+      "block": "theme",
+      "path": "fontSizes.xs",
+      "kind": "string",
+      "value": "calc(0.75rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.fontSmoothing",
+      "block": "theme",
+      "path": "fontSmoothing",
+      "kind": "boolean",
+      "value": "true"
+    },
+    {
+      "id": "theme.fontWeights.bold",
+      "block": "theme",
+      "path": "fontWeights.bold",
+      "kind": "string",
+      "value": "700"
+    },
+    {
+      "id": "theme.fontWeights.medium",
+      "block": "theme",
+      "path": "fontWeights.medium",
+      "kind": "string",
+      "value": "600"
+    },
+    {
+      "id": "theme.fontWeights.regular",
+      "block": "theme",
+      "path": "fontWeights.regular",
+      "kind": "string",
+      "value": "400"
+    },
+    {
+      "id": "theme.headings.fontFamily",
+      "block": "theme",
+      "path": "headings.fontFamily",
+      "kind": "string",
+      "value": "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji"
+    },
+    {
+      "id": "theme.headings.fontWeight",
+      "block": "theme",
+      "path": "headings.fontWeight",
+      "kind": "string",
+      "value": "700"
+    },
+    {
+      "id": "theme.headings.sizes.h1.fontSize",
+      "block": "theme",
+      "path": "headings.sizes.h1.fontSize",
+      "kind": "string",
+      "value": "calc(2.125rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.headings.sizes.h1.lineHeight",
+      "block": "theme",
+      "path": "headings.sizes.h1.lineHeight",
+      "kind": "string",
+      "value": "1.3"
+    },
+    {
+      "id": "theme.headings.sizes.h2.fontSize",
+      "block": "theme",
+      "path": "headings.sizes.h2.fontSize",
+      "kind": "string",
+      "value": "calc(1.625rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.headings.sizes.h2.lineHeight",
+      "block": "theme",
+      "path": "headings.sizes.h2.lineHeight",
+      "kind": "string",
+      "value": "1.35"
+    },
+    {
+      "id": "theme.headings.sizes.h3.fontSize",
+      "block": "theme",
+      "path": "headings.sizes.h3.fontSize",
+      "kind": "string",
+      "value": "calc(1.375rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.headings.sizes.h3.lineHeight",
+      "block": "theme",
+      "path": "headings.sizes.h3.lineHeight",
+      "kind": "string",
+      "value": "1.4"
+    },
+    {
+      "id": "theme.headings.sizes.h4.fontSize",
+      "block": "theme",
+      "path": "headings.sizes.h4.fontSize",
+      "kind": "string",
+      "value": "calc(1.125rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.headings.sizes.h4.lineHeight",
+      "block": "theme",
+      "path": "headings.sizes.h4.lineHeight",
+      "kind": "string",
+      "value": "1.45"
+    },
+    {
+      "id": "theme.headings.sizes.h5.fontSize",
+      "block": "theme",
+      "path": "headings.sizes.h5.fontSize",
+      "kind": "string",
+      "value": "calc(1rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.headings.sizes.h5.lineHeight",
+      "block": "theme",
+      "path": "headings.sizes.h5.lineHeight",
+      "kind": "string",
+      "value": "1.5"
+    },
+    {
+      "id": "theme.headings.sizes.h6.fontSize",
+      "block": "theme",
+      "path": "headings.sizes.h6.fontSize",
+      "kind": "string",
+      "value": "calc(0.875rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.headings.sizes.h6.lineHeight",
+      "block": "theme",
+      "path": "headings.sizes.h6.lineHeight",
+      "kind": "string",
+      "value": "1.5"
+    },
+    {
+      "id": "theme.headings.textWrap",
+      "block": "theme",
+      "path": "headings.textWrap",
+      "kind": "string",
+      "value": "wrap"
+    },
+    {
+      "id": "theme.lineHeights.lg",
+      "block": "theme",
+      "path": "lineHeights.lg",
+      "kind": "string",
+      "value": "1.6"
+    },
+    {
+      "id": "theme.lineHeights.md",
+      "block": "theme",
+      "path": "lineHeights.md",
+      "kind": "string",
+      "value": "1.55"
+    },
+    {
+      "id": "theme.lineHeights.sm",
+      "block": "theme",
+      "path": "lineHeights.sm",
+      "kind": "string",
+      "value": "1.45"
+    },
+    {
+      "id": "theme.lineHeights.xl",
+      "block": "theme",
+      "path": "lineHeights.xl",
+      "kind": "string",
+      "value": "1.65"
+    },
+    {
+      "id": "theme.lineHeights.xs",
+      "block": "theme",
+      "path": "lineHeights.xs",
+      "kind": "string",
+      "value": "1.4"
+    },
+    {
+      "id": "theme.luminanceThreshold",
+      "block": "theme",
+      "path": "luminanceThreshold",
+      "kind": "number",
+      "value": "0.3"
+    },
+    {
+      "id": "theme.primaryColor",
+      "block": "theme",
+      "path": "primaryColor",
+      "kind": "string",
+      "value": "blue"
+    },
+    {
+      "id": "theme.primaryShade.dark",
+      "block": "theme",
+      "path": "primaryShade.dark",
+      "kind": "number",
+      "value": "8"
+    },
+    {
+      "id": "theme.primaryShade.light",
+      "block": "theme",
+      "path": "primaryShade.light",
+      "kind": "number",
+      "value": "6"
+    },
+    {
+      "id": "theme.radius.lg",
+      "block": "theme",
+      "path": "radius.lg",
+      "kind": "string",
+      "value": "calc(1rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.radius.md",
+      "block": "theme",
+      "path": "radius.md",
+      "kind": "string",
+      "value": "calc(0.5rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.radius.sm",
+      "block": "theme",
+      "path": "radius.sm",
+      "kind": "string",
+      "value": "calc(0.25rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.radius.xl",
+      "block": "theme",
+      "path": "radius.xl",
+      "kind": "string",
+      "value": "calc(2rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.radius.xs",
+      "block": "theme",
+      "path": "radius.xs",
+      "kind": "string",
+      "value": "calc(0.125rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.respectReducedMotion",
+      "block": "theme",
+      "path": "respectReducedMotion",
+      "kind": "boolean",
+      "value": "false"
+    },
+    {
+      "id": "theme.scale",
+      "block": "theme",
+      "path": "scale",
+      "kind": "number",
+      "value": "1"
+    },
+    {
+      "id": "theme.shadows.lg",
+      "block": "theme",
+      "path": "shadows.lg",
+      "kind": "string",
+      "value": "0 calc(0.0625rem * var(--mantine-scale)) calc(0.1875rem * var(--mantine-scale)) rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0 calc(1.75rem * var(--mantine-scale)) calc(1.4375rem * var(--mantine-scale)) calc(-0.4375rem * var(--mantine-scale)), rgba(0, 0, 0, 0.04) 0 calc(0.75rem * var(--mantine-scale)) calc(0.75rem * var(--mantine-scale)) calc(-0.4375rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.shadows.md",
+      "block": "theme",
+      "path": "shadows.md",
+      "kind": "string",
+      "value": "0 calc(0.0625rem * var(--mantine-scale)) calc(0.1875rem * var(--mantine-scale)) rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0 calc(1.25rem * var(--mantine-scale)) calc(1.5625rem * var(--mantine-scale)) calc(-0.3125rem * var(--mantine-scale)), rgba(0, 0, 0, 0.04) 0 calc(0.625rem * var(--mantine-scale)) calc(0.625rem * var(--mantine-scale)) calc(-0.3125rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.shadows.sm",
+      "block": "theme",
+      "path": "shadows.sm",
+      "kind": "string",
+      "value": "0 calc(0.0625rem * var(--mantine-scale)) calc(0.1875rem * var(--mantine-scale)) rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0 calc(0.625rem * var(--mantine-scale)) calc(0.9375rem * var(--mantine-scale)) calc(-0.3125rem * var(--mantine-scale)), rgba(0, 0, 0, 0.04) 0 calc(0.4375rem * var(--mantine-scale)) calc(0.4375rem * var(--mantine-scale)) calc(-0.3125rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.shadows.xl",
+      "block": "theme",
+      "path": "shadows.xl",
+      "kind": "string",
+      "value": "0 calc(0.0625rem * var(--mantine-scale)) calc(0.1875rem * var(--mantine-scale)) rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0 calc(2.25rem * var(--mantine-scale)) calc(1.75rem * var(--mantine-scale)) calc(-0.4375rem * var(--mantine-scale)), rgba(0, 0, 0, 0.04) 0 calc(1.0625rem * var(--mantine-scale)) calc(1.0625rem * var(--mantine-scale)) calc(-0.4375rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.shadows.xs",
+      "block": "theme",
+      "path": "shadows.xs",
+      "kind": "string",
+      "value": "0 calc(0.0625rem * var(--mantine-scale)) calc(0.1875rem * var(--mantine-scale)) rgba(0, 0, 0, 0.05), 0 calc(0.0625rem * var(--mantine-scale)) calc(0.125rem * var(--mantine-scale)) rgba(0, 0, 0, 0.1)"
+    },
+    {
+      "id": "theme.spacing.lg",
+      "block": "theme",
+      "path": "spacing.lg",
+      "kind": "string",
+      "value": "calc(1.25rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.spacing.md",
+      "block": "theme",
+      "path": "spacing.md",
+      "kind": "string",
+      "value": "calc(1rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.spacing.sm",
+      "block": "theme",
+      "path": "spacing.sm",
+      "kind": "string",
+      "value": "calc(0.75rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.spacing.xl",
+      "block": "theme",
+      "path": "spacing.xl",
+      "kind": "string",
+      "value": "calc(2rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.spacing.xs",
+      "block": "theme",
+      "path": "spacing.xs",
+      "kind": "string",
+      "value": "calc(0.625rem * var(--mantine-scale))"
+    },
+    {
+      "id": "theme.white",
+      "block": "theme",
+      "path": "white",
+      "kind": "string",
+      "value": "#fff"
+    },
+    {
+      "id": "variables.--mantine-breakpoint-lg",
+      "block": "variables",
+      "name": "--mantine-breakpoint-lg",
+      "members": 1,
+      "from": [
+        "theme.breakpoints.lg"
+      ]
+    },
+    {
+      "id": "variables.--mantine-breakpoint-md",
+      "block": "variables",
+      "name": "--mantine-breakpoint-md",
+      "members": 1,
+      "from": [
+        "theme.breakpoints.md"
+      ]
+    },
+    {
+      "id": "variables.--mantine-breakpoint-sm",
+      "block": "variables",
+      "name": "--mantine-breakpoint-sm",
+      "members": 1,
+      "from": [
+        "theme.breakpoints.sm"
+      ]
+    },
+    {
+      "id": "variables.--mantine-breakpoint-xl",
+      "block": "variables",
+      "name": "--mantine-breakpoint-xl",
+      "members": 1,
+      "from": [
+        "theme.breakpoints.xl"
+      ]
+    },
+    {
+      "id": "variables.--mantine-breakpoint-xs",
+      "block": "variables",
+      "name": "--mantine-breakpoint-xs",
+      "members": 1,
+      "from": [
+        "theme.breakpoints.xs"
+      ]
+    },
+    {
+      "id": "variables.--mantine-color-<color>-<shade>",
+      "block": "variables",
+      "name": "--mantine-color-<color>-<shade>",
+      "members": 100,
+      "from": [
+        "theme.colors.<color>"
+      ]
+    },
+    {
+      "id": "variables.--mantine-color-black",
+      "block": "variables",
+      "name": "--mantine-color-black",
+      "members": 1,
+      "from": [
+        "theme.black"
+      ]
+    },
+    {
+      "id": "variables.--mantine-color-dark-<shade>",
+      "block": "variables",
+      "name": "--mantine-color-dark-<shade>",
+      "members": 10,
+      "from": [
+        "theme.colors.dark"
+      ]
+    },
+    {
+      "id": "variables.--mantine-color-gray-<shade>",
+      "block": "variables",
+      "name": "--mantine-color-gray-<shade>",
+      "members": 10,
+      "from": [
+        "theme.colors.gray"
+      ]
+    },
+    {
+      "id": "variables.--mantine-color-red-<shade>",
+      "block": "variables",
+      "name": "--mantine-color-red-<shade>",
+      "members": 10,
+      "from": [
+        "theme.colors.red"
+      ]
+    },
+    {
+      "id": "variables.--mantine-color-teal-<shade>",
+      "block": "variables",
+      "name": "--mantine-color-teal-<shade>",
+      "members": 10,
+      "from": [
+        "theme.colors.teal"
+      ]
+    },
+    {
+      "id": "variables.--mantine-color-white",
+      "block": "variables",
+      "name": "--mantine-color-white",
+      "members": 1,
+      "from": [
+        "theme.white"
+      ]
+    },
+    {
+      "id": "variables.--mantine-cursor-type",
+      "block": "variables",
+      "name": "--mantine-cursor-type",
+      "members": 1,
+      "from": [
+        "theme.cursorType"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-family",
+      "block": "variables",
+      "name": "--mantine-font-family",
+      "members": 1,
+      "from": [
+        "theme.fontFamily"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-family-headings",
+      "block": "variables",
+      "name": "--mantine-font-family-headings",
+      "members": 1,
+      "from": [
+        "theme.headings.fontFamily"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-family-monospace",
+      "block": "variables",
+      "name": "--mantine-font-family-monospace",
+      "members": 1,
+      "from": [
+        "theme.fontFamilyMonospace"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-size-lg",
+      "block": "variables",
+      "name": "--mantine-font-size-lg",
+      "members": 1,
+      "from": [
+        "theme.fontSizes.lg"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-size-md",
+      "block": "variables",
+      "name": "--mantine-font-size-md",
+      "members": 1,
+      "from": [
+        "theme.fontSizes.md"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-size-sm",
+      "block": "variables",
+      "name": "--mantine-font-size-sm",
+      "members": 1,
+      "from": [
+        "theme.fontSizes.sm"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-size-xl",
+      "block": "variables",
+      "name": "--mantine-font-size-xl",
+      "members": 1,
+      "from": [
+        "theme.fontSizes.xl"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-size-xs",
+      "block": "variables",
+      "name": "--mantine-font-size-xs",
+      "members": 1,
+      "from": [
+        "theme.fontSizes.xs"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-weight-bold",
+      "block": "variables",
+      "name": "--mantine-font-weight-bold",
+      "members": 1,
+      "from": [
+        "theme.fontWeights.bold"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-weight-medium",
+      "block": "variables",
+      "name": "--mantine-font-weight-medium",
+      "members": 1,
+      "from": [
+        "theme.fontWeights.medium"
+      ]
+    },
+    {
+      "id": "variables.--mantine-font-weight-regular",
+      "block": "variables",
+      "name": "--mantine-font-weight-regular",
+      "members": 1,
+      "from": [
+        "theme.fontWeights.regular"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h1-font-size",
+      "block": "variables",
+      "name": "--mantine-h1-font-size",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h1.fontSize"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h1-font-weight",
+      "block": "variables",
+      "name": "--mantine-h1-font-weight",
+      "members": 1,
+      "from": [
+        "theme.headings.fontWeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h1-line-height",
+      "block": "variables",
+      "name": "--mantine-h1-line-height",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h1.lineHeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h2-font-size",
+      "block": "variables",
+      "name": "--mantine-h2-font-size",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h2.fontSize"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h2-font-weight",
+      "block": "variables",
+      "name": "--mantine-h2-font-weight",
+      "members": 1,
+      "from": [
+        "theme.headings.fontWeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h2-line-height",
+      "block": "variables",
+      "name": "--mantine-h2-line-height",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h2.lineHeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h3-font-size",
+      "block": "variables",
+      "name": "--mantine-h3-font-size",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h3.fontSize"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h3-font-weight",
+      "block": "variables",
+      "name": "--mantine-h3-font-weight",
+      "members": 1,
+      "from": [
+        "theme.headings.fontWeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h3-line-height",
+      "block": "variables",
+      "name": "--mantine-h3-line-height",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h3.lineHeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h4-font-size",
+      "block": "variables",
+      "name": "--mantine-h4-font-size",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h4.fontSize"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h4-font-weight",
+      "block": "variables",
+      "name": "--mantine-h4-font-weight",
+      "members": 1,
+      "from": [
+        "theme.headings.fontWeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h4-line-height",
+      "block": "variables",
+      "name": "--mantine-h4-line-height",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h4.lineHeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h5-font-size",
+      "block": "variables",
+      "name": "--mantine-h5-font-size",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h5.fontSize"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h5-font-weight",
+      "block": "variables",
+      "name": "--mantine-h5-font-weight",
+      "members": 1,
+      "from": [
+        "theme.headings.fontWeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h5-line-height",
+      "block": "variables",
+      "name": "--mantine-h5-line-height",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h5.lineHeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h6-font-size",
+      "block": "variables",
+      "name": "--mantine-h6-font-size",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h6.fontSize"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h6-font-weight",
+      "block": "variables",
+      "name": "--mantine-h6-font-weight",
+      "members": 1,
+      "from": [
+        "theme.headings.fontWeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-h6-line-height",
+      "block": "variables",
+      "name": "--mantine-h6-line-height",
+      "members": 1,
+      "from": [
+        "theme.headings.sizes.h6.lineHeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-heading-font-weight",
+      "block": "variables",
+      "name": "--mantine-heading-font-weight",
+      "members": 1,
+      "from": [
+        "theme.headings.fontWeight"
+      ]
+    },
+    {
+      "id": "variables.--mantine-heading-text-wrap",
+      "block": "variables",
+      "name": "--mantine-heading-text-wrap",
+      "members": 1,
+      "from": [
+        "theme.headings.textWrap"
+      ]
+    },
+    {
+      "id": "variables.--mantine-line-height",
+      "block": "variables",
+      "name": "--mantine-line-height",
+      "members": 1,
+      "from": [
+        "theme.lineHeights.md"
+      ]
+    },
+    {
+      "id": "variables.--mantine-line-height-lg",
+      "block": "variables",
+      "name": "--mantine-line-height-lg",
+      "members": 1,
+      "from": [
+        "theme.lineHeights.lg"
+      ]
+    },
+    {
+      "id": "variables.--mantine-line-height-md",
+      "block": "variables",
+      "name": "--mantine-line-height-md",
+      "members": 1,
+      "from": [
+        "theme.lineHeights.md"
+      ]
+    },
+    {
+      "id": "variables.--mantine-line-height-sm",
+      "block": "variables",
+      "name": "--mantine-line-height-sm",
+      "members": 1,
+      "from": [
+        "theme.lineHeights.sm"
+      ]
+    },
+    {
+      "id": "variables.--mantine-line-height-xl",
+      "block": "variables",
+      "name": "--mantine-line-height-xl",
+      "members": 1,
+      "from": [
+        "theme.lineHeights.xl"
+      ]
+    },
+    {
+      "id": "variables.--mantine-line-height-xs",
+      "block": "variables",
+      "name": "--mantine-line-height-xs",
+      "members": 1,
+      "from": [
+        "theme.lineHeights.xs"
+      ]
+    },
+    {
+      "id": "variables.--mantine-moz-font-smoothing",
+      "block": "variables",
+      "name": "--mantine-moz-font-smoothing",
+      "members": 1,
+      "from": [
+        "theme.fontSmoothing"
+      ]
+    },
+    {
+      "id": "variables.--mantine-primary-color-<shade>",
+      "block": "variables",
+      "name": "--mantine-primary-color-<shade>",
+      "members": 10,
+      "from": [
+        "theme.primaryColor",
+        "variables.--mantine-color-<color>-<shade>"
+      ]
+    },
+    {
+      "id": "variables.--mantine-primary-color-filled",
+      "block": "variables",
+      "name": "--mantine-primary-color-filled",
+      "members": 1,
+      "from": [
+        "dark.--mantine-color-<color>-filled",
+        "light.--mantine-color-<color>-filled",
+        "theme.primaryColor"
+      ]
+    },
+    {
+      "id": "variables.--mantine-primary-color-filled-hover",
+      "block": "variables",
+      "name": "--mantine-primary-color-filled-hover",
+      "members": 1,
+      "from": [
+        "dark.--mantine-color-<color>-filled-hover",
+        "light.--mantine-color-<color>-filled-hover",
+        "theme.primaryColor"
+      ]
+    },
+    {
+      "id": "variables.--mantine-primary-color-light",
+      "block": "variables",
+      "name": "--mantine-primary-color-light",
+      "members": 1,
+      "from": [
+        "dark.--mantine-color-<color>-light",
+        "light.--mantine-color-<color>-light",
+        "theme.primaryColor"
+      ]
+    },
+    {
+      "id": "variables.--mantine-primary-color-light-color",
+      "block": "variables",
+      "name": "--mantine-primary-color-light-color",
+      "members": 1,
+      "from": [
+        "dark.--mantine-color-<color>-light-color",
+        "light.--mantine-color-<color>-light-color",
+        "theme.primaryColor"
+      ]
+    },
+    {
+      "id": "variables.--mantine-primary-color-light-hover",
+      "block": "variables",
+      "name": "--mantine-primary-color-light-hover",
+      "members": 1,
+      "from": [
+        "dark.--mantine-color-<color>-light-hover",
+        "light.--mantine-color-<color>-light-hover",
+        "theme.primaryColor"
+      ]
+    },
+    {
+      "id": "variables.--mantine-radius-default",
+      "block": "variables",
+      "name": "--mantine-radius-default",
+      "members": 1,
+      "from": [
+        "theme.defaultRadius",
+        "theme.radius.md"
+      ]
+    },
+    {
+      "id": "variables.--mantine-radius-lg",
+      "block": "variables",
+      "name": "--mantine-radius-lg",
+      "members": 1,
+      "from": [
+        "theme.radius.lg"
+      ]
+    },
+    {
+      "id": "variables.--mantine-radius-md",
+      "block": "variables",
+      "name": "--mantine-radius-md",
+      "members": 1,
+      "from": [
+        "theme.radius.md"
+      ]
+    },
+    {
+      "id": "variables.--mantine-radius-sm",
+      "block": "variables",
+      "name": "--mantine-radius-sm",
+      "members": 1,
+      "from": [
+        "theme.radius.sm"
+      ]
+    },
+    {
+      "id": "variables.--mantine-radius-xl",
+      "block": "variables",
+      "name": "--mantine-radius-xl",
+      "members": 1,
+      "from": [
+        "theme.radius.xl"
+      ]
+    },
+    {
+      "id": "variables.--mantine-radius-xs",
+      "block": "variables",
+      "name": "--mantine-radius-xs",
+      "members": 1,
+      "from": [
+        "theme.radius.xs"
+      ]
+    },
+    {
+      "id": "variables.--mantine-scale",
+      "block": "variables",
+      "name": "--mantine-scale",
+      "members": 1,
+      "from": [
+        "theme.scale"
+      ]
+    },
+    {
+      "id": "variables.--mantine-shadow-lg",
+      "block": "variables",
+      "name": "--mantine-shadow-lg",
+      "members": 1,
+      "from": [
+        "theme.shadows.lg"
+      ]
+    },
+    {
+      "id": "variables.--mantine-shadow-md",
+      "block": "variables",
+      "name": "--mantine-shadow-md",
+      "members": 1,
+      "from": [
+        "theme.shadows.md"
+      ]
+    },
+    {
+      "id": "variables.--mantine-shadow-sm",
+      "block": "variables",
+      "name": "--mantine-shadow-sm",
+      "members": 1,
+      "from": [
+        "theme.shadows.sm"
+      ]
+    },
+    {
+      "id": "variables.--mantine-shadow-xl",
+      "block": "variables",
+      "name": "--mantine-shadow-xl",
+      "members": 1,
+      "from": [
+        "theme.shadows.xl"
+      ]
+    },
+    {
+      "id": "variables.--mantine-shadow-xs",
+      "block": "variables",
+      "name": "--mantine-shadow-xs",
+      "members": 1,
+      "from": [
+        "theme.shadows.xs"
+      ]
+    },
+    {
+      "id": "variables.--mantine-spacing-lg",
+      "block": "variables",
+      "name": "--mantine-spacing-lg",
+      "members": 1,
+      "from": [
+        "theme.spacing.lg"
+      ]
+    },
+    {
+      "id": "variables.--mantine-spacing-md",
+      "block": "variables",
+      "name": "--mantine-spacing-md",
+      "members": 1,
+      "from": [
+        "theme.spacing.md"
+      ]
+    },
+    {
+      "id": "variables.--mantine-spacing-sm",
+      "block": "variables",
+      "name": "--mantine-spacing-sm",
+      "members": 1,
+      "from": [
+        "theme.spacing.sm"
+      ]
+    },
+    {
+      "id": "variables.--mantine-spacing-xl",
+      "block": "variables",
+      "name": "--mantine-spacing-xl",
+      "members": 1,
+      "from": [
+        "theme.spacing.xl"
+      ]
+    },
+    {
+      "id": "variables.--mantine-spacing-xs",
+      "block": "variables",
+      "name": "--mantine-spacing-xs",
+      "members": 1,
+      "from": [
+        "theme.spacing.xs"
+      ]
+    },
+    {
+      "id": "variables.--mantine-webkit-font-smoothing",
+      "block": "variables",
+      "name": "--mantine-webkit-font-smoothing",
+      "members": 1,
+      "from": [
+        "theme.fontSmoothing"
+      ]
+    },
+    {
+      "id": "variables.--mantine-z-index-app",
+      "block": "variables",
+      "name": "--mantine-z-index-app",
+      "members": 1,
+      "from": []
+    },
+    {
+      "id": "variables.--mantine-z-index-max",
+      "block": "variables",
+      "name": "--mantine-z-index-max",
+      "members": 1,
+      "from": []
+    },
+    {
+      "id": "variables.--mantine-z-index-modal",
+      "block": "variables",
+      "name": "--mantine-z-index-modal",
+      "members": 1,
+      "from": []
+    },
+    {
+      "id": "variables.--mantine-z-index-overlay",
+      "block": "variables",
+      "name": "--mantine-z-index-overlay",
+      "members": 1,
+      "from": []
+    },
+    {
+      "id": "variables.--mantine-z-index-popover",
+      "block": "variables",
+      "name": "--mantine-z-index-popover",
+      "members": 1,
+      "from": []
+    },
+    {
+      "id": "light.--mantine-color-<color>-filled",
+      "block": "light",
+      "name": "--mantine-color-<color>-filled",
+      "members": 14,
+      "from": [
+        "theme.primaryShade.light",
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-<color>-filled-hover",
+      "block": "light",
+      "name": "--mantine-color-<color>-filled-hover",
+      "members": 14,
+      "from": [
+        "theme.primaryShade.light",
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-<color>-light",
+      "block": "light",
+      "name": "--mantine-color-<color>-light",
+      "members": 14,
+      "from": [
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-<color>-light-color",
+      "block": "light",
+      "name": "--mantine-color-<color>-light-color",
+      "members": 14,
+      "from": [
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-<color>-light-hover",
+      "block": "light",
+      "name": "--mantine-color-<color>-light-hover",
+      "members": 14,
+      "from": [
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-<color>-outline",
+      "block": "light",
+      "name": "--mantine-color-<color>-outline",
+      "members": 14,
+      "from": [
+        "theme.primaryShade.light",
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-<color>-outline-hover",
+      "block": "light",
+      "name": "--mantine-color-<color>-outline-hover",
+      "members": 14,
+      "from": [
+        "theme.colors.<color>",
+        "theme.colors.dark",
+        "theme.colors.gray",
+        "theme.colors.red",
+        "theme.colors.teal",
+        "theme.primaryShade.light"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-<color>-text",
+      "block": "light",
+      "name": "--mantine-color-<color>-text",
+      "members": 14,
+      "from": [
+        "light.--mantine-color-<color>-filled"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-anchor",
+      "block": "light",
+      "name": "--mantine-color-anchor",
+      "members": 1,
+      "from": [
+        "theme.primaryColor",
+        "theme.primaryShade.light",
+        "variables.--mantine-color-<color>-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-body",
+      "block": "light",
+      "name": "--mantine-color-body",
+      "members": 1,
+      "from": [
+        "theme.white"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-bright",
+      "block": "light",
+      "name": "--mantine-color-bright",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-black"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-default",
+      "block": "light",
+      "name": "--mantine-color-default",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-white"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-default-border",
+      "block": "light",
+      "name": "--mantine-color-default-border",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-gray-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-default-color",
+      "block": "light",
+      "name": "--mantine-color-default-color",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-black"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-default-hover",
+      "block": "light",
+      "name": "--mantine-color-default-hover",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-gray-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-dimmed",
+      "block": "light",
+      "name": "--mantine-color-dimmed",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-gray-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-disabled",
+      "block": "light",
+      "name": "--mantine-color-disabled",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-gray-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-disabled-border",
+      "block": "light",
+      "name": "--mantine-color-disabled-border",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-gray-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-disabled-color",
+      "block": "light",
+      "name": "--mantine-color-disabled-color",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-gray-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-error",
+      "block": "light",
+      "name": "--mantine-color-error",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-red-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-placeholder",
+      "block": "light",
+      "name": "--mantine-color-placeholder",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-gray-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-scheme",
+      "block": "light",
+      "name": "--mantine-color-scheme",
+      "members": 1,
+      "from": []
+    },
+    {
+      "id": "light.--mantine-color-success",
+      "block": "light",
+      "name": "--mantine-color-success",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "light.--mantine-color-text",
+      "block": "light",
+      "name": "--mantine-color-text",
+      "members": 1,
+      "from": [
+        "theme.black"
+      ]
+    },
+    {
+      "id": "light.--mantine-primary-color-contrast",
+      "block": "light",
+      "name": "--mantine-primary-color-contrast",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-white"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-<color>-filled",
+      "block": "dark",
+      "name": "--mantine-color-<color>-filled",
+      "members": 14,
+      "from": [
+        "theme.primaryShade.dark",
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-<color>-filled-hover",
+      "block": "dark",
+      "name": "--mantine-color-<color>-filled-hover",
+      "members": 14,
+      "from": [
+        "theme.primaryShade.dark",
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-<color>-light",
+      "block": "dark",
+      "name": "--mantine-color-<color>-light",
+      "members": 14,
+      "from": [
+        "theme.colors.<color>",
+        "theme.colors.dark",
+        "theme.colors.gray",
+        "theme.colors.red",
+        "theme.colors.teal"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-<color>-light-color",
+      "block": "dark",
+      "name": "--mantine-color-<color>-light-color",
+      "members": 14,
+      "from": [
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-<color>-light-hover",
+      "block": "dark",
+      "name": "--mantine-color-<color>-light-hover",
+      "members": 14,
+      "from": [
+        "theme.colors.<color>",
+        "theme.colors.dark",
+        "theme.colors.gray",
+        "theme.colors.red",
+        "theme.colors.teal"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-<color>-outline",
+      "block": "dark",
+      "name": "--mantine-color-<color>-outline",
+      "members": 14,
+      "from": [
+        "theme.primaryShade.dark",
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-<color>-outline-hover",
+      "block": "dark",
+      "name": "--mantine-color-<color>-outline-hover",
+      "members": 14,
+      "from": [
+        "theme.colors.<color>",
+        "theme.colors.dark",
+        "theme.colors.gray",
+        "theme.colors.red",
+        "theme.colors.teal",
+        "theme.primaryShade.dark"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-<color>-text",
+      "block": "dark",
+      "name": "--mantine-color-<color>-text",
+      "members": 14,
+      "from": [
+        "variables.--mantine-color-<color>-<shade>",
+        "variables.--mantine-color-dark-<shade>",
+        "variables.--mantine-color-gray-<shade>",
+        "variables.--mantine-color-red-<shade>",
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-anchor",
+      "block": "dark",
+      "name": "--mantine-color-anchor",
+      "members": 1,
+      "from": [
+        "theme.primaryColor",
+        "variables.--mantine-color-<color>-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-body",
+      "block": "dark",
+      "name": "--mantine-color-body",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-bright",
+      "block": "dark",
+      "name": "--mantine-color-bright",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-white"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-default",
+      "block": "dark",
+      "name": "--mantine-color-default",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-default-border",
+      "block": "dark",
+      "name": "--mantine-color-default-border",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-default-color",
+      "block": "dark",
+      "name": "--mantine-color-default-color",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-white"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-default-hover",
+      "block": "dark",
+      "name": "--mantine-color-default-hover",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-dimmed",
+      "block": "dark",
+      "name": "--mantine-color-dimmed",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-disabled",
+      "block": "dark",
+      "name": "--mantine-color-disabled",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-disabled-border",
+      "block": "dark",
+      "name": "--mantine-color-disabled-border",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-disabled-color",
+      "block": "dark",
+      "name": "--mantine-color-disabled-color",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-error",
+      "block": "dark",
+      "name": "--mantine-color-error",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-red-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-placeholder",
+      "block": "dark",
+      "name": "--mantine-color-placeholder",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-scheme",
+      "block": "dark",
+      "name": "--mantine-color-scheme",
+      "members": 1,
+      "from": []
+    },
+    {
+      "id": "dark.--mantine-color-success",
+      "block": "dark",
+      "name": "--mantine-color-success",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-teal-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-color-text",
+      "block": "dark",
+      "name": "--mantine-color-text",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-dark-<shade>"
+      ]
+    },
+    {
+      "id": "dark.--mantine-primary-color-contrast",
+      "block": "dark",
+      "name": "--mantine-primary-color-contrast",
+      "members": 1,
+      "from": [
+        "variables.--mantine-color-white"
+      ]
+    }
+  ]
+}
