@@ -1,0 +1,21 @@
+{
+  "color": {
+    "brand": {
+      "primary": {
+        "value": "#0d6efd",
+        "comment": "Brand blue",
+        "attributes": { "category": "color", "type": "brand" }
+      },
+      "secondary": { "value": "{color.brand.primary.value}", "type": "color" }
+    }
+  },
+  "size": {
+    "radius": { "md": { "value": "0.5rem" } },
+    "space": { "4": { "value": "16px" } }
+  },
+  "font": {
+    "family": {
+      "base": { "value": "Inter, sans-serif", "type": "fontFamilies" }
+    }
+  }
+}

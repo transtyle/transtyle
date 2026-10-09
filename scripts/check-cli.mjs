@@ -95,6 +95,93 @@ try {
   expect('style dictionary legacy: no TST1201 / TST1305 noise', !codes.includes('TST1201') && !codes.includes('TST1305'), codes.join(', '));
 }
 
+// ---------- #54: transtyle migrate --from style-dictionary ----------
+// The codemod half: a dry run changes nothing, --write rewrites to DTCG, the
+// result passes check and builds, and a second run is a no-op.
+{
+  const fixture = join(root, 'packages/core/test-fixtures/style-dictionary-migrate');
+  const tmp = mkdtempSync(join(tmpdir(), 'transtyle-check-migrate-'));
+  const tmp2 = mkdtempSync(join(tmpdir(), 'transtyle-check-migrate-'));
+  try {
+    cpSync(fixture, tmp, { recursive: true });
+    cpSync(fixture, tmp2, { recursive: true });
+    const read = (d) => readdirSync(join(d, 'tokens')).map((f) => readFileSync(join(d, 'tokens', f), 'utf8')).join('\n---\n');
+    const before = read(tmp);
+
+    let r = run(['check', '--cwd', tmp]);
+    expect('migrate: the unmigrated fixture reports TST1307 (exit 1)', r.code === 1 && r.out.includes('TST1307'), `exit ${r.code}: ${r.out}`);
+
+    r = run(['migrate', '--from', 'style-dictionary', '--cwd', tmp]);
+    expect('migrate: dry run exits 0', r.code === 0, r.out);
+    expect('migrate: dry run prints the diff on stdout', r.stdout.includes('+++ tokens/base.json') && r.stdout.includes('+ ') && r.stdout.includes('"$value"') && r.stdout.includes('- '), r.stdout);
+    expect('migrate: dry run says nothing was written', r.out.includes('nothing was written'));
+    expect('migrate: dry run leaves the files byte-identical', read(tmp) === before);
+    expect('migrate: dry run names the tier placement', r.out.includes('under "option"'), r.out);
+
+    r = run(['migrate', '--from', 'style-dictionary', '--write', '--cwd', tmp]);
+    expect('migrate --write: exit 0', r.code === 0, r.out);
+    const migrated = JSON.parse(readFileSync(join(tmp, 'tokens/base.json'), 'utf8'));
+    const primary = migrated.option?.color?.brand?.primary;
+    expect('migrate --write: value/type/comment become $value/$type/$description', primary?.$value === '#0d6efd' && primary?.$type === 'color' && primary?.$description === 'Brand blue', JSON.stringify(primary));
+    expect('migrate --write: attributes move under $extensions["style-dictionary"]', primary?.$extensions?.['style-dictionary']?.attributes?.category === 'color', JSON.stringify(primary));
+    expect('migrate --write: ".value" is stripped from references, under the new tier', migrated.option?.color?.brand?.secondary?.$value === '{option.color.brand.primary}', JSON.stringify(migrated.option?.color?.brand?.secondary));
+    expect('migrate --write: SD types are renamed (fontFamilies → fontFamily), missing ones inferred (size → dimension)', migrated.option?.font?.family?.base?.$type === 'fontFamily' && migrated.option?.size?.radius?.md?.$type === 'dimension');
+    expect('migrate --write: the DTCG file is left alone', readFileSync(join(tmp, 'tokens/semantic.json'), 'utf8') === readFileSync(join(fixture, 'tokens/semantic.json'), 'utf8'));
+
+    r = run(['check', '--cwd', tmp]);
+    expect('migrate --write: the result passes check (exit 0, no TST1307)', r.code === 0 && !r.out.includes('TST1307'), r.out);
+    r = run(['build', '--cwd', tmp]);
+    expect('migrate --write: the result builds (exit 0)', r.code === 0 && existsSync(join(tmp, 'dist/css-variables/variables.transtyle.css')), r.out);
+
+    const written = read(tmp);
+    r = run(['migrate', '--from', 'style-dictionary', '--write', '--cwd', tmp]);
+    expect('migrate: a second run is a no-op (exit 0, byte-identical)', r.code === 0 && read(tmp) === written && r.out.includes('Nothing to migrate'), r.out);
+
+    run(['migrate', '--from', 'style-dictionary', '--write', '--cwd', tmp2]);
+    expect('migrate: deterministic (two projects migrate to the same bytes)', read(tmp2) === written);
+
+    r = run(['migrate', '--cwd', tmp]);
+    expect('migrate: without --from is a usage error (exit 2)', r.code === 2 && r.out.includes('--from'), `exit ${r.code}: ${r.out}`);
+    r = run(['migrate', '--from', 'tokens-studio', '--cwd', tmp]);
+    expect('migrate: an unknown source is a usage error naming the valid ones (exit 2)', r.code === 2 && r.out.includes('style-dictionary'), `exit ${r.code}: ${r.out}`);
+    r = run(['check', '--write', '--cwd', tmp]);
+    expect('migrate: --write on another command is a usage error (exit 2)', r.code === 2 && r.out.includes('migrate'), `exit ${r.code}: ${r.out}`);
+    r = run(['migrate', '--from', 'style-dictionary', '--cwd', join(tmp, 'nope')]);
+    expect('migrate: no config is a usage error (exit 2)', r.code === 2, `exit ${r.code}: ${r.out}`);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+    rmSync(tmp2, { recursive: true, force: true });
+  }
+}
+
+// The transform rules, without the CLI (core's migrateStyleDictionary is a pure function).
+{
+  const { migrateStyleDictionary, needsStyleDictionaryMigration } = await import('@transtyle/core');
+  const m = (tree) => migrateStyleDictionary(tree);
+  const j = (v) => JSON.stringify(v);
+
+  let { tree, notes } = m({ color: { a: { value: '#fff', comment: 'c', name: 'color-a' } } });
+  expect('transform: renames value, comment, and moves other keys to $extensions', j(tree.option.color.a) === j({ $type: 'color', $value: '#fff', $description: 'c', $extensions: { 'style-dictionary': { name: 'color-a' } } }), j(tree));
+
+  ({ tree } = m({ size: { value: { a: { value: '1px' } } } }));
+  expect('transform: a group with a child called "value" stays a group', tree.option.size.value.a.$value === '1px' && !('$value' in tree.option.size), j(tree));
+
+  ({ tree } = m({ semantic: { color: { x: { value: '{semantic.color.y.value}' }, y: { value: '#000', type: 'color' } } } }));
+  expect('transform: a tier group stays where it is, and references into a tier are not prefixed', !('option' in tree) && tree.semantic.color.x.$value === '{semantic.color.y}', j(tree));
+
+  ({ tree } = m({ shadow: { s: { value: { x: '0', color: '{color.a.value}' }, type: 'boxShadow' } }, color: { a: { value: '#000' } } }));
+  expect('transform: references inside composite values are rewritten, boxShadow → shadow', tree.option.shadow.s.$value.color === '{option.color.a}' && tree.option.shadow.s.$type === 'shadow', j(tree));
+
+  ({ tree, notes } = m({ x: { a: { value: '1', type: 'weird' } } }));
+  expect('transform: an unknown type is kept and flagged', tree.option.x.a.$type === 'weird' && notes.some((n) => n.includes('"weird"')), j(notes));
+
+  ({ tree } = m({ b: { z: { value: '1' } }, a: { y: { value: '2' } } }));
+  expect('transform: key order is preserved', j(Object.keys(tree.option)) === j(['b', 'a']) && j(Object.keys(tree.option.b)) === j(['z']));
+
+  expect('transform: needsStyleDictionaryMigration is false for DTCG, for mixed files and for the output', !needsStyleDictionaryMigration({ option: { a: { $value: '1' } } }) && !needsStyleDictionaryMigration({ a: { value: '1' }, b: { $value: '2' } }) && !needsStyleDictionaryMigration(m({ a: { value: '1' } }).tree));
+  expect('transform: migrating twice changes nothing (the output is not legacy)', (() => { const once = m({ color: { a: { value: '#fff' } } }).tree; return !needsStyleDictionaryMigration(once); })());
+}
+
 // ---------- #121: a glob that also matches a mode-scoped overlay ----------
 // `["tokens/*.tokens.json", { files: "tokens/dark.tokens.json", mode: dark }]`,
 // the layout `init` plus authoring-tokens.md lead to, loaded dark.tokens.json

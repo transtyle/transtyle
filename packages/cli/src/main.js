@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * transtyle CLI (docs/specs/cli.md). Commands: build, check, explain, diff, catalog, init, add.
+ * transtyle CLI (docs/specs/cli.md). Commands: build, check, explain, bindings, diff, catalog, init, add, migrate.
  * Human logs → stderr; exit codes: 0 ok, 1 diagnostics ≥ fail-on, 2 usage error.
  */
 
@@ -13,6 +13,7 @@ import { execSync } from 'node:child_process';
 import process from 'node:process';
 import { compile, catalog, diffResolved, contrastRegressions, explainToken, explainVariable, slotConsumers, formatColor, formatHex } from '@transtyle/core';
 import { recordingLoader, consumption, renderMatrix } from './matrix.js';
+import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
 
 const OFFICIAL_EXPORTERS = {
@@ -70,6 +71,8 @@ function parseArgs(argv) {
     else if (a === '--json') args.json = true;
     else if (a === '--matrix') args.matrix = true;
     else if (a === '--expand') args.expand = true;
+    else if (a === '--from') args.from = argv[++i];
+    else if (a === '--write') args.write = true;
     else if (a.startsWith('--') && INIT_VALUE_FLAGS.includes(a.slice(2))) {
       const v = argv[++i];
       if (v === undefined || v.startsWith('--')) { console.error(`Flag ${a} needs a value`); process.exit(2); }
@@ -96,12 +99,16 @@ Usage:
   transtyle catalog               list every catalog slot: type, derivation rule, inputs (no project needed)
   transtyle init [name]           scaffold transtyle.config.json + token files (asks on a terminal)
   transtyle add <target>          add a target to transtyle.config.json
+  transtyle migrate --from style-dictionary [--write]
+                                  rewrite Style Dictionary v3 token files (value/type) to DTCG ($value/$type); a diff unless --write
 Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
   --mode <name>                   mode to resolve for (explain only; default: the DS's default mode)
   --target <t>                    explain only: a target instance; lists the variables consuming the slot
   --variable <name>               explain only (with --target): the target variable to look up
   --expand                        bindings only: required, prints the expansion to stdout
+  --from <source>                 migrate only: what to migrate from (style-dictionary)
+  --write                         migrate only: apply the rewrite (default: print the diff, change nothing)
   --json                          check/diff/catalog/explain only: print a machine-readable report to stdout
   --matrix                        check only: print which targets read each catalog slot (with --json: a "matrix" key)
 init options (each skips its question; without a terminal, unset ones take the default):
@@ -140,7 +147,7 @@ function printDiagnostics(diagnostics) {
   const n = diagnostics.suppressed.length;
   if (n > 0) console.error(`${ICONS.info} ${n} diagnostic${n === 1 ? '' : 's'} suppressed by check.suppress (listed in report.json)`);
 }
-const COMMANDS = ['build', 'check', 'explain', 'bindings', 'diff', 'catalog', 'init', 'add'];
+const COMMANDS = ['build', 'check', 'explain', 'bindings', 'diff', 'catalog', 'init', 'add', 'migrate'];
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -160,6 +167,11 @@ async function main() {
     console.error(`✖ ${args.target !== undefined ? '--target' : '--variable'} is a \`transtyle explain\` option`);
     process.exit(2);
   }
+  if (args.command !== 'migrate' && (args.from !== undefined || args.write)) {
+    console.error(`✖ ${args.from !== undefined ? '--from' : '--write'} is a \`transtyle migrate\` option`);
+    process.exit(2);
+  }
+  if (args.command === 'migrate') return cmdMigrate(args);
   if (args.command === 'explain') return cmdExplain(args);
   if (args.command === 'bindings') return cmdBindings(args);
   if (args.command === 'diff') return cmdDiff(args);

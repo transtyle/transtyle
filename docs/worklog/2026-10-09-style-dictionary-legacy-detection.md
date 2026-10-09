@@ -30,8 +30,6 @@ Documented in the diagnostics page and in
 - **Hint wording.** The hint says the codemod is planned, not that it exists
   (implemented-only policy); the CLI spec still lists `migrate` as specced.
 
-## Left for a follow-up
+## Follow-up
 
-`transtyle migrate --from style-dictionary [--write]` (the codemod, with its
-transform rules and tier placement) is the issue's second deliverable and is not
-in this change.
+The codemod landed afterwards, see [the migrate worklog entry](2026-10-09-migrate-from-style-dictionary.md). The hint now says what it does instead of calling it planned.
