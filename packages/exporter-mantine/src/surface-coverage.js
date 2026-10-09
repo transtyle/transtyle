@@ -54,16 +54,31 @@ export function collapseVariable(name, palettes, named = [], suffixes = null) {
   const prefix = '--mantine-color-';
   if (!name.startsWith(prefix)) return name;
   const rest = name.slice(prefix.length);
-  const candidates = [...palettes, ...named].sort((a, b) => b.length - a.length || (a < b ? -1 : 1));
-  for (const palette of candidates) {
-    if (!rest.startsWith(`${palette}-`)) continue;
-    const tail = rest.slice(palette.length + 1);
+  // Longest palette first: a palette is `rest` up to one of its hyphens, so
+  // try the hyphens right to left and look each prefix up, rather than test
+  // every palette name against every variable (500 custom roles made that the
+  // slowest step of a 10,000-token build, #97).
+  const candidates = candidatesFor(palettes, named);
+  for (let at = rest.lastIndexOf('-'); at !== -1; at = at === 0 ? -1 : rest.lastIndexOf('-', at - 1)) {
+    const palette = rest.slice(0, at);
+    if (!candidates.has(palette)) continue;
+    const tail = rest.slice(at + 1);
     if (/^\d$/.test(tail)) {
       return named.includes(palette) ? `${prefix}${palette}-<shade>` : `${prefix}<color>-<shade>`;
     }
     if (!suffixes || suffixes.includes(tail)) return `${prefix}<color>-${tail}`;
   }
   return name;
+}
+
+/** The palette names as a set, built once per `palettes`/`named` pair. */
+const candidateSets = new WeakMap();
+function candidatesFor(palettes, named) {
+  const cached = candidateSets.get(palettes);
+  if (cached?.named === named) return cached.set;
+  const set = new Set([...palettes, ...named]);
+  candidateSets.set(palettes, { named, set });
+  return set;
 }
 
 const behaviour = (what) => ({
@@ -193,10 +208,11 @@ export function classifySurface(inv, emitted) {
   const suffixes = inv.entries
     .map((e) => /^--mantine-color-<color>-(?!<shade>)(.+)$/.exec(e.name ?? '')?.[1])
     .filter(Boolean);
+  const palettes = [...collapsed, ...extra];
   const written = new Set();
   for (const [block, vars] of Object.entries(emitted.blocks)) {
     for (const name of Object.keys(vars ?? {})) {
-      written.add(`${block}.${collapseVariable(name, [...collapsed, ...extra], named, suffixes)}`);
+      written.add(`${block}.${collapseVariable(name, palettes, named, suffixes)}`);
     }
   }
   const isSet = (entry) => {

@@ -18,18 +18,35 @@ const CATALOG_TIERS = ['semantic.', 'component.'];
 export function deprecationsReached(map, slot) {
   const out = [];
   const seen = new Set();
-  const walk = (p) => {
-    if (seen.has(p)) return;
+  // Depth first, the alias target before the members, with an explicit stack:
+  // a recursive call per hop overflowed on a chain of a few thousand aliases
+  // (#97). Children are pushed in reverse so they are visited in order.
+  const stack = [slot];
+  while (stack.length) {
+    const p = stack.pop();
+    if (seen.has(p)) continue;
     seen.add(p);
     const entry = map.get(p);
-    if (!entry) return;
+    if (!entry) continue;
     if (entry.deprecated) out.push({ token: p, reason: typeof entry.deprecated === 'string' ? entry.deprecated : undefined });
     const prov = entry.provenance ?? {};
-    if (prov.kind === 'aliased' && typeof prov.target === 'string') walk(prov.target);
-    for (const target of Object.values(prov.members ?? {})) walk(target);
-  };
-  walk(slot);
+    const next = [];
+    if (prov.kind === 'aliased' && typeof prov.target === 'string') next.push(prov.target);
+    next.push(...Object.values(prov.members ?? {}));
+    for (let i = next.length - 1; i >= 0; i--) stack.push(next[i]);
+  }
   return out;
+}
+
+/**
+ * Whether any token of `map` is deprecated. Without one, no slot reaches one,
+ * so the callers below skip the walk per slot: on a long alias chain that walk
+ * is the length of the chain for every slot on it, and most design systems
+ * deprecate nothing (#97).
+ */
+function hasDeprecated(map) {
+  for (const entry of map.values()) if (entry?.deprecated) return true;
+  return false;
 }
 
 /**
@@ -46,6 +63,7 @@ export function reportDeprecatedReach(normalized, diagnostics) {
   for (const map of Object.values(normalized.modes)) {
     if (!map || seen.has(map)) continue; // modes.light/dark alias the combo maps
     seen.add(map);
+    if (!hasDeprecated(map)) continue;
     for (const slot of map.keys()) {
       if (!CATALOG_TIERS.some((t) => slot.startsWith(t))) continue;
       for (const { token, reason } of deprecationsReached(map, slot)) {
@@ -78,10 +96,11 @@ export function reportDeprecatedReach(normalized, diagnostics) {
  */
 export function withMetadata(items, map) {
   if (!map) return items;
+  const deprecated = hasDeprecated(map);
   return items.map((item) => {
     const entry = typeof item.slot === 'string' ? map.get(item.slot) : undefined;
     if (!entry) return item;
-    const [dep] = deprecationsReached(map, item.slot);
+    const [dep] = deprecated ? deprecationsReached(map, item.slot) : [];
     if (entry.description === undefined && !dep) return item;
     return {
       ...item,
@@ -100,7 +119,7 @@ const EMITTED = new Set(['native', 'derived', 'approximated']);
  * before the token goes. Unchanged when nothing deprecated feeds the target.
  */
 export function withDeprecatedSection(contents, items, map) {
-  if (!map) return contents;
+  if (!map || !hasDeprecated(map)) return contents;
   const rows = [];
   const seen = new Set();
   for (const item of items) {
