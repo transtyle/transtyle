@@ -42,6 +42,22 @@ async function expandGlob(cwd, pattern) {
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
+ * Every token file the config's `tokens` entries match (globs and
+ * `{ files, mode?, override? }` objects alike), absolute, sorted, without
+ * duplicates. What the codemods walk; `loadTokenTrees` keeps its own per-entry
+ * loop because it needs to know which entry matched what.
+ */
+export async function expandTokenFiles(cwd, entries) {
+  const files = new Set();
+  for (const entry of entries) {
+    for (const g of typeof entry === 'string' ? [entry] : [].concat(entry.files)) {
+      for (const f of await expandGlob(cwd, g)) files.add(f);
+    }
+  }
+  return [...files].sort();
+}
+
+/**
  * Token entries are strings (globs) or objects `{ files, mode?, override? }`:
  * `mode` declares a mode-scoped layer (a pure DTCG file whose values apply to
  * one mode of one dimension); `override` (`true` | `"extend"`) marks a layer
@@ -105,21 +121,33 @@ export async function loadTokenTrees(cwd, entries, diagnostics) {
 // ---------- structural DTCG validation (T10, docs/specs/validation-and-coverage.md) ----------
 
 /** The DTCG $type set this IR understands (docs/architecture/ir.md#foundation-dtcg-superset). */
-const DTCG_TYPES = new Set([
+export const DTCG_TYPES = new Set([
   'color', 'dimension', 'fontFamily', 'fontWeight', 'duration', 'cubicBezier', 'number',
   'typography', 'shadow', 'border', 'gradient', 'transition', 'strokeStyle',
 ]);
 /** The three-tier token model (docs/architecture/ir.md#the-three-tier-token-model). */
-const TIERS = new Set(['option', 'semantic', 'component']);
+export const TIERS = new Set(['option', 'semantic', 'component']);
 /** Transtyle's own reserved `$extensions` namespaces (proposal 0001 §4.4) — anything else is foreign. */
 const KNOWN_EXTENSION_NAMESPACES = new Set(['transtyle.modes', 'transtyle.role', 'transtyle.state-mechanism']);
 
 /**
+ * Is `node` a Style Dictionary v3 token (leaf)? An object with a `value` key
+ * that is a primitive or array; a composite object value counts only with a
+ * sibling `type`/`comment`/`attributes`, so a group that merely has a child
+ * called `value` is not mistaken for a token. Shared with the
+ * `migrate --from style-dictionary` codemod, so detection and migration
+ * agree on what a legacy token is.
+ */
+export function isStyleDictionaryLeaf(node) {
+  if (node === null || typeof node !== 'object' || Array.isArray(node) || !('value' in node)) return false;
+  const v = node.value;
+  const plainObject = v !== null && typeof v === 'object' && !Array.isArray(v);
+  return !plainObject || ['type', 'comment', 'attributes'].some((k) => k in node);
+}
+
+/**
  * The path of the first Style Dictionary v3 leaf in a tree that has no `$value`
- * anywhere, else null. A leaf is an object with a `value` key that is a
- * primitive or array (a composite object value counts only with a sibling
- * `type`/`comment`/`attributes`, so a group that merely has a child called
- * `value` is not mistaken for a token).
+ * anywhere, else null.
  */
 function findStyleDictionaryLeaf(tree) {
   let legacy = null;
@@ -127,14 +155,9 @@ function findStyleDictionaryLeaf(tree) {
   const walk = (node, path_) => {
     if (hasDtcg || node === null || typeof node !== 'object' || Array.isArray(node)) return;
     if ('$value' in node) { hasDtcg = true; return; }
-    if ('value' in node) {
-      const v = node.value;
-      const plainObject = v !== null && typeof v === 'object' && !Array.isArray(v);
-      const sdSibling = ['type', 'comment', 'attributes'].some((k) => k in node);
-      if (!plainObject || sdSibling) {
-        legacy ??= path_;
-        return;
-      }
+    if (isStyleDictionaryLeaf(node)) {
+      legacy ??= path_;
+      return;
     }
     for (const [key, child] of Object.entries(node)) {
       if (!key.startsWith('$')) walk(child, [...path_, key]);
@@ -172,7 +195,7 @@ export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new 
       `${file}: looks like a Style Dictionary (v3) token file — tokens use "value"/"type" without the "$" prefix (first one: ${legacyAt.join('.') || '(root)'}), so none of them is a DTCG token`,
       {
         ...where(legacyAt),
-        hint: 'Rename "value" → "$value", "type" → "$type" and "comment" → "$description", strip ".value" from "{a.b.c.value}" references, and put the tokens under option/semantic/component. `transtyle migrate --from style-dictionary` is planned to do this for you (docs/specs/cli.md).',
+        hint: 'Run `transtyle migrate --from style-dictionary` (it prints the diff; `--write` applies it), or by hand: rename "value" → "$value", "type" → "$type" and "comment" → "$description", strip ".value" from "{a.b.c.value}" references, and put the tokens under option/semantic/component.',
       },
     );
     return;

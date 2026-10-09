@@ -25,6 +25,8 @@ export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';
 export { explainToken, explainVariable, slotConsumers, coverageSlots } from './explain.js';
 export { catalog } from './catalog.js';
+export { loadConfig, expandTokenFiles } from './load.js';
+export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
 export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
 
 /**

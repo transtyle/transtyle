@@ -1,0 +1,9 @@
+{
+  "semantic": {
+    "color": {
+      "primary": {
+        "solid": { "$type": "color", "$value": "{option.color.brand.primary}" }
+      }
+    }
+  }
+}

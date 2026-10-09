@@ -241,6 +241,26 @@ The `recommended` neutrals are a starting ladder in your brand's hue, light and 
 
 Validates the target against the CLI's known exporters and inserts `"<target>": { "output": "dist/<target>" }` into the existing config. Refuses (exit 2) for an unknown or already-configured target.
 
+### `transtyle migrate --from style-dictionary [--write]`
+
+Rewrites [Style Dictionary](https://styledictionary.com/) v3 token files (`value`/`type` without the `$`) to DTCG, the format Transtyle reads. It is what the [`TST1307`](/docs/diagnostics/#diagnostic-code-reference) error points you to. Without `--write` it prints a diff per file and changes nothing; with it, the files are rewritten in place. It reads the files your config's `tokens` list matches, and leaves any file that is not Style Dictionary v3 alone, so running it twice changes nothing the second time.
+
+```bash
+npx transtyle migrate --from style-dictionary          # diff only
+npx transtyle migrate --from style-dictionary --write  # apply
+npx transtyle check
+```
+
+What it changes:
+
+- `value` → `$value`, `type` → `$type`, `comment` → `$description`.
+- `{color.brand.primary.value}` → `{color.brand.primary}`: the trailing `.value` of a reference goes.
+- Style Dictionary type names become DTCG ones (`size` → `dimension`, `fontFamilies` → `fontFamily`, `fontWeights` → `fontWeight`, `boxShadow` → `shadow`). A token with no `type`, which is the usual case since the category is the top-level key, gets its `$type` from that key when it is one of those names; the output says so.
+- Build metadata (`attributes`, `name`, `filePath`, `isSource`, `original`, `path`) is kept, under `$extensions["style-dictionary"]`, so nothing is lost silently.
+- Style Dictionary has no tiers, so every top-level group moves under `option` and references follow (`{option.color.brand.primary}`). Binding the `semantic` tokens, at least `semantic.color.primary.solid`, is yours to do: Transtyle does not guess it.
+
+The files are re-serialized with their own indentation, and the diff compares the file before and after that, so only real changes show. Exit `0` when it ran, `1` if a token file does not parse (nothing is written), `2` for a usage or config error (no `--from`, an unknown source, no config). It does not read Style Dictionary's `config.json` platforms, and Style Dictionary v4 files that already use `$value` load as they are.
+
 ## Exit codes
 
 | Code | Meaning                                                                  |
@@ -272,4 +292,4 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle import <source>`                    | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
 | `transtyle preview`                            | Local themed preview site across all targets                                            |
 
-Programmatic use: `build`, `check`, `diff`, `explain` and `catalog` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).
+Programmatic use: `build`, `check`, `diff`, `explain`, `catalog` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `migrateStyleDictionary()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).

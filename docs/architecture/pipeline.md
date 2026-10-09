@@ -23,7 +23,7 @@ Discover and parse inputs: `transtyle.config.*`, token files it references, and 
 
 Turn the raw forest into canonical IR:
 
-- validate the DTCG structure per file at LOAD (unrecognized `$type` `TST1306`, a `$type` with no value `TST1302`, a top-level group that isn't a tier `TST1305`, a Style Dictionary v3 file with `value`/`type` and no `$value` `TST1307`) and reject malformed values here (`TST1106`);
+- validate the DTCG structure per file at LOAD (unrecognized `$type` `TST1306`, a `$type` with no value `TST1302`, a top-level group that isn't a tier `TST1305`, a Style Dictionary v3 file with `value`/`type` and no `$value` `TST1307`, which `transtyle migrate --from style-dictionary` rewrites) and reject malformed values here (`TST1106`);
 - resolve `$ref`/alias chains (`{color.brand.500}`), detecting cycles;
 - expand mode definitions into the mode matrix ([ir.md](ir.md#modes));
 - canonicalize colors to OKLCH internally, keeping the authored text alongside for provenance and for exporters that want it back in its original form. Dimension **units** are not converted — `0.5rem` stays `0.5rem` all the way to the target, and unit conversion happens in the exporter that needs it (which is why `rem → px` shows up as an `approximated` row on ECharts rather than as a normalization step). What NORMALIZE does canonicalize is the DTCG structured form of `dimension`, `duration`, `cubicBezier` and `fontWeight` (also as composite members): `{ "value": 0.5, "unit": "rem" }` becomes the string `0.5rem`, `[0.2, 0, 0, 1]` becomes `cubic-bezier(0.2, 0, 0, 1)`, `"semi-bold"` becomes `600`, so exporters only ever see the CSS form and both authoring forms compile to the same bytes ([ir.md](ir.md#values-and-canonicalization));
