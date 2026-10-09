@@ -25,12 +25,17 @@ export { explainToken } from './explain.js';
  * same code path by design, docs/architecture/pipeline.md).
  */
 /**
+ * `skipExporters: true` stops after the shared pipeline stages: no exporter is
+ * loaded or run (`explain` only walks provenance, so a broken exporter must not
+ * be able to fail it). `debug: true` keeps a crashed exporter's stack on its
+ * TST3001/TST3002 diagnostic (the CLI sets it from TRANSTYLE_DEBUG).
+ *
  * `knownExporters` (AL5) is the caller's list of exporter names it can resolve —
  * the CLI's OFFICIAL_EXPORTERS keys. Core stays exporter-agnostic (it never
  * imports one), but TST1301 can then tell "you typo'd" apart from "that
  * exporter exists, you just haven't configured it", which are opposite fixes.
  */
-export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [] }) {
+export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false }) {
   const diagnostics = new Diagnostics();
   const { config } = await loadConfig(cwd);
 
@@ -99,8 +104,22 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     }
   }
 
-  const targetNames = targets?.length ? targets : Object.keys(config.targets ?? {});
+  const targetNames = skipExporters ? [] : targets?.length ? targets : Object.keys(config.targets ?? {});
   const results = [];
+  // Exporter crashes (TST3001/TST3002) are recorded per target and must not
+  // trip the "never emit with errors present" guards below: a throwing exporter
+  // is not a pipeline error, and stopping at it would hide every later target.
+  let crashes = 0;
+  const pipelineErrors = () => diagnostics.errors.length - crashes;
+  const crash = (code, name, stage, e, hint) => {
+    const cause = e instanceof Error ? e : new Error(String(e));
+    diagnostics.error(code, `Exporter "${name}" crashed in ${stage}: ${cause.message}`, {
+      target: name,
+      hint,
+      ...(debug && cause.stack ? { stack: cause.stack } : {}),
+    });
+    crashes++;
+  };
 
   for (const name of targetNames) {
     const targetConfig = config.targets?.[name];
@@ -125,12 +144,19 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       );
       continue;
     }
-    if (diagnostics.errors.length > 0) break; // never emit with errors present
+    if (pipelineErrors() > 0) break; // never emit with errors present
 
     // Target instances: the config key is the instance name; `exporter` selects
     // the plugin (defaults to the key), so one exporter can be configured twice
     // with different options (docs/specs/configuration.md#target-instances).
-    const exporter = await loadExporter(targetConfig.exporter ?? name);
+    let exporter;
+    try {
+      exporter = await loadExporter(targetConfig.exporter ?? name);
+    } catch (e) {
+      crash('TST3002', name, 'load', e, 'Install the exporter package in this project, or fix its `exporter` field in transtyle.config.json. Set TRANSTYLE_DEBUG=1 for the stack.');
+      results.push({ target: name, files: [], coverage: [], emitted: [] });
+      continue;
+    }
 
     // Validate this instance's options against the exporter's own schema (audit
     // A8): unknown or mis-typed options are errors. Exporters without options
@@ -141,7 +167,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
         diagnostics.error('TST1011', `target "${name}" options: ${p === '(root)' ? '' : p + ' '}${message}`);
       }
     }
-    if (diagnostics.errors.length > 0) break; // don't emit with invalid options
+    if (pipelineErrors() > 0) break; // don't emit with invalid options
 
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
     const ctx = {
@@ -155,7 +181,18 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
         name: n, exporter: t.exporter ?? n, output: t.output ?? `dist/${n}`,
       })),
     };
-    const { files, coverage } = exporter.emit(normalized, ctx);
+    let files, coverage;
+    try {
+      ({ files, coverage } = exporter.emit(normalized, ctx));
+    } catch (e) {
+      // Only the exporter's own code is wrapped: file-system errors below are
+      // not exporter bugs and keep failing loudly.
+      crash('TST3001', name, 'emit', e, debug
+        ? 'This is a bug in the exporter, not in your design system. The stack is above.'
+        : 'This is a bug in the exporter, not in your design system. Re-run with TRANSTYLE_DEBUG=1 for the stack.');
+      files = [];
+      coverage = [];
+    }
 
     const outDir = path.resolve(cwd, targetConfig.output ?? `dist/${name}`);
     const written = [];

@@ -85,6 +85,9 @@ Options:
   --json                          check/diff only: also print a machine-readable report to stdout
 `;
 
+/** TRANSTYLE_DEBUG=1: print the stack of a crashed exporter (until `--verbose`, #5, exists). */
+const DEBUG = !!process.env.TRANSTYLE_DEBUG && process.env.TRANSTYLE_DEBUG !== '0';
+
 const ICONS = { error: '✖', warning: '⚠', info: 'ℹ' };
 
 /**
@@ -95,6 +98,7 @@ const ICONS = { error: '✖', warning: '⚠', info: 'ℹ' };
  */
 function printDiagnostic(d) {
   console.error(`${ICONS[d.severity] ?? '·'} ${d.code} ${d.message}`);
+  if (d.stack) console.error(d.stack.split('\n').map((l) => `    ${l}`).join('\n'));
   if (d.hint) console.error(`  ↳ ${d.hint}`);
 }
 const COMMANDS = ['build', 'check', 'explain', 'diff', 'init', 'add'];
@@ -120,7 +124,7 @@ async function cmdBuildOrCheck(args) {
   const emit = args.command === 'build';
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter: makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS) });
+    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter: makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: DEBUG });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
@@ -152,7 +156,10 @@ async function cmdBuildOrCheck(args) {
   const failOn = config.check?.failOn ?? 'error';
   if (diagnostics.shouldFail(failOn)) {
     console.error(`\n✖ failed (fail-on: ${failOn})`);
-    process.exit(1);
+    // exitCode, not process.exit(): `check --json` writes tens of KB to a pipe,
+    // and process.exit() would cut that write short (same as `diff`).
+    process.exitCode = 1;
+    return;
   }
   console.error(emit ? '\n✔ build complete' : '\n✔ check passed');
 }
@@ -165,7 +172,7 @@ async function cmdExplain(args) {
 
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd) });
+    result = await compile({ cwd: args.cwd, targets: [], emit: false, skipExporters: true, loadExporter: makeLoadExporter(args.cwd) });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);

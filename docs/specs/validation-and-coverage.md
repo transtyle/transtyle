@@ -48,6 +48,17 @@ Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — ca
 
 `transtyle check --json` prints the full diagnostics array (plus per-target coverage) to stdout as one JSON object — human logs still go to stderr, so both can run in the same invocation without interleaving (`docs/specs/cli.md` "Behavioral contracts").
 
+## Exporter failures (`TST3xxx`)
+
+A throw inside an exporter is a diagnostic, not a crash of the whole run (`packages/core/src/index.js`, around `exporter.emit`). Only the exporter's own code is wrapped: a file-system error while writing the output still fails loudly, because it is not an exporter bug.
+
+| Code      | Severity | Meaning                                                                                                              | Remediation                                                                                                    |
+| --------- | -------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `TST3001` | error    | An exporter threw in `emit`; the message names the target instance. Its `report.json` lists no files and no coverage | An exporter bug: re-run with `TRANSTYLE_DEBUG=1` for the stack. The other targets are built as usual           |
+| `TST3002` | error    | An exporter could not be loaded; the message names the target instance                                               | Install the package in the project, or fix the target's `exporter` field. The other targets are built as usual |
+
+These errors do not stop later targets (the "never emit with errors present" guard counts pipeline errors only), and they go through `check.failOn` and exit 1 like every other error. The stack is attached to the diagnostic (`stack`, also in `report.json`) only with `TRANSTYLE_DEBUG=1`, so default output stays deterministic. `--verbose` ([issue #5](https://github.com/transtyle/transtyle/issues/5)) will replace the variable.
+
 ## Coverage report
 
 Produced per target in RESOLVE ([pipeline.md](../architecture/pipeline.md#4-resolve)). Every binding between an IR value and target output is classified:

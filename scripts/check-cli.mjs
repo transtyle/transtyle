@@ -245,6 +245,69 @@ try {
   }
 }
 
+// ---------- #28: an exporter that throws names its target ----------
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-crash-'));
+  try {
+    run(['init', 'crash-ds', '--cwd', dir]);
+    // A local exporter loaded through the `exporter` field, like a third-party plugin.
+    writeFileSync(join(dir, 'boom.mjs'), `export default {
+  name: 'boom',
+  emit() { throw new TypeError("Cannot read properties of undefined (reading 'c')"); },
+};
+`);
+    const cp = join(dir, 'transtyle.config.json');
+    const cfg = JSON.parse(readFileSync(cp, 'utf8'));
+    cfg.targets = {
+      'css-variables': { output: 'dist/css-variables' },
+      boom: { exporter: './boom.mjs', output: 'dist/boom' },
+      gone: { exporter: './no-such-exporter.mjs', output: 'dist/gone' },
+      after: { exporter: 'css-variables', output: 'dist/after' },
+    };
+    writeFileSync(cp, JSON.stringify(cfg, null, 2));
+    const runCrash = (args, env = {}) => {
+      const r = spawnSync('node', [cli, ...args, '--cwd', dir], { encoding: 'utf8', env: { ...process.env, TRANSTYLE_DEBUG: '', ...env } });
+      return { code: r.status ?? 1, out: (r.stdout ?? '') + (r.stderr ?? ''), stdout: r.stdout ?? '' };
+    };
+
+    let r = runCrash(['build']);
+    expect('crash: exit 1, not 2', r.code === 1, `exit ${r.code}: ${r.out}`);
+    expect('crash: names the target and the stage', r.out.includes('TST3001 Exporter "boom" crashed in emit: Cannot read properties of undefined'), r.out);
+    expect('crash: hint points at TRANSTYLE_DEBUG', r.out.includes('TRANSTYLE_DEBUG=1'), r.out);
+    expect('crash: no stack by default', !r.out.includes('at Object.emit') && !r.out.includes('boom.mjs:'), r.out);
+    expect('load failure: names the target (TST3002)', r.out.includes('TST3002 Exporter "gone" crashed in load'), r.out);
+    expect('crash: the target before it is built', existsSync(join(dir, 'dist/css-variables/report.json')));
+    expect('crash: the target after it is built too', existsSync(join(dir, 'dist/after/report.json')), r.out);
+    const report = JSON.parse(readFileSync(join(dir, 'dist/boom/report.json'), 'utf8'));
+    expect('crash: report.json lists no files', report.files.length === 0, JSON.stringify(report.files));
+    expect('crash: report.json lists the TST3001 diagnostic', report.diagnostics.some((d) => d.code === 'TST3001' && d.target === 'boom'), JSON.stringify(report.diagnostics));
+    expect('crash: report.json coverage is empty', report.coverage.items.length === 0);
+
+    r = runCrash(['build'], { TRANSTYLE_DEBUG: '1' });
+    expect('crash: TRANSTYLE_DEBUG=1 prints the stack', /TypeError[\s\S]*boom\.mjs/.test(r.out), r.out);
+
+    r = runCrash(['check', '--json']);
+    const json = (() => { try { return JSON.parse(r.stdout); } catch { return null; } })();
+    expect('check --json: lists the crash as a diagnostic', !!json && json.diagnostics.some((d) => d.code === 'TST3001' && d.message.includes('"boom"')), r.out);
+    expect('check --json: the crashed target is listed, with empty coverage', !!json && json.targets.some((t) => t.target === 'boom' && t.coverage.length === 0), r.out);
+    expect('check: exit 1', r.code === 1, `exit ${r.code}`);
+
+    r = runCrash(['explain', 'primary.solid']);
+    expect('explain: runs no exporter (exit 0, no crash)', r.code === 0 && !r.out.includes('TST300'), `exit ${r.code}: ${r.out}`);
+
+    const git = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' });
+    git('init', '-q');
+    git('config', 'user.email', 't@t.test');
+    git('config', 'user.name', 'test');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'initial');
+    r = runCrash(['diff']);
+    expect('diff: a crashed target is not a usage error (exit 0, nothing changed)', r.code === 0, `exit ${r.code}: ${r.out}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
