@@ -56,7 +56,7 @@ current model docs before assigning it anything rather than guessing.
 | [BL-04](#bl-04) | Fix the site header overflowing on mobile                 | Site      | High  | S      | queued               | Sonnet        |
 | [BL-05](#bl-05) | Register `transtyle.dev`                                  | Infra     | High  | S      | blocked (maintainer) | human         |
 | [BL-06](#bl-06) | `create-transtyle` initializer                            | Adoption  | High  | M      | ready                | Sonnet        |
-| [BL-07](#bl-07) | A ninth exporter, from the B3 order                       | Ecosystem | High  | L      | idea                 | Opus → Sonnet |
+| [BL-07](#bl-07) | A ninth exporter, from the B3 order                       | Ecosystem | High  | L      | queued               | Opus → Sonnet |
 | [BL-08](#bl-08) | Side-by-side compare view for two demos                   | Site      | Med   | M      | done                 | Opus → Sonnet |
 | [BL-09](#bl-09) | Hostile-adoption round two                                | Evidence  | Med   | M      | ready                | Opus          |
 | [BL-10](#bl-10) | Compiled figures on the exporter docs pages               | Docs      | Med   | M      | ready                | Sonnet        |
@@ -185,7 +185,7 @@ projects have proven is the convincing part.
 
 ### BL-07
 
-**A ninth exporter, from the B3 order** · Ecosystem · High · L · idea · Opus for the mapping study, Sonnet to implement
+**A ninth exporter, from the B3 order** · Ecosystem · High · L · queued · Opus for the mapping study, Sonnet to implement
 
 **What.** The next target from the priority list: **Mantine** (CSS vars + a TS theme object),
 then Chakra (semantic-token native, close to a 1:1 with the catalog), MUI (enormous adoption,
@@ -197,6 +197,13 @@ is the cheapest and MUI is the most persuasive.
 
 **Done when** it passes the conformance kit, has a demo for all four examples, and lands on all five
 surfaces per the sync rule.
+
+**Progress.** Order set by the maintainer on 2026-10-07: Mantine, Chakra, then MUI, ahead of the P3
+pilot. **Mantine shipped 2026-10-09** ([#72](https://github.com/transtyle/transtyle/issues/72),
+[spec](specs/exporters/mantine.md)); Chakra ([#73](https://github.com/transtyle/transtyle/issues/73))
+and MUI ([#71](https://github.com/transtyle/transtyle/issues/71)) are queued as their own issues. For BL-19: Mantine reopened none of the four deferred
+promotions. Its control sizes are height-driven and its size ladder is xs to xl, a third shape next
+to Bootstrap's and PrimeNG's, which strengthens the case for leaving the sm/lg ladder out.
 
 ### BL-08
 

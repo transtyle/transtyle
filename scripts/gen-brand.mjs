@@ -5,7 +5,7 @@
  * There is exactly one description of the logo — the geometry and palette
  * constants below — and every asset the repository ships is rendered from it:
  * the two SVG variants in brand/, their PNG rasters, the wordmark lockup, the
- * feed icon, and a favicon for each of the thirty-two example demo projects.
+ * feed icon, and a favicon for each of the thirty-six example demo projects.
  * Nothing is hand-drawn twice. (The site's own favicons and app icons are the
  * committed files in website/src/brand/, served by @deramond.dev/astro.)
  *
@@ -239,7 +239,7 @@ export const OUTPUTS = [
 /**
  * A `public/favicon.svg` for every example demo project.
  *
- * The demos are thirty-two separate applications — six Vite ones, an Angular
+ * The demos are thirty-six separate applications — seven Vite ones, an Angular
  * one and a Storybook per example — and every one of them ran with the
  * browser's default blank page icon. A tab that says "· transtyle demo"
  * deserves the mark next to it.

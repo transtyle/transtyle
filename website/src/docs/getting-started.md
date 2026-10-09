@@ -75,7 +75,7 @@ Note the two tiers: `option.color.brand.500` is _your_ name for _your_ value; `p
 ```bash
 npx transtyle build             # starts with css-variables
 npx transtyle add shadcn        # registers another target in the config
-npx transtyle add bootstrap     # …any of the eight official exporters
+npx transtyle add bootstrap     # …any of the nine official exporters
 npx transtyle build
 ```
 

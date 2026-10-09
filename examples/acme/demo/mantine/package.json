@@ -1,0 +1,27 @@
+{
+  "name": "acme-demo-mantine",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "transtyle build --cwd ../..",
+    "dev": "vite --port 4108",
+    "prebuild": "transtyle build --cwd ../..",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4108"
+  },
+  "dependencies": {
+    "@mantine/core": "^9.7.0",
+    "@mantine/hooks": "^9.7.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@transtyle/cli": "0.1.0-alpha.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "~5.7.0",
+    "vite": "^6.0.0"
+  }
+}

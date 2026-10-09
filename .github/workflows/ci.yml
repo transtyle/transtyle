@@ -66,6 +66,7 @@ jobs:
           - acme-demo-css-variables
           - acme-demo-radix
           - acme-demo-primeng
+          - acme-demo-mantine
           - cathode-demo-bootstrap
           - cathode-demo-shadcn
           - cathode-demo-daisyui
@@ -74,6 +75,7 @@ jobs:
           - cathode-demo-css-variables
           - cathode-demo-radix
           - cathode-demo-primeng
+          - cathode-demo-mantine
           - govuk-demo-bootstrap
           - govuk-demo-shadcn
           - govuk-demo-daisyui
@@ -82,6 +84,7 @@ jobs:
           - govuk-demo-css-variables
           - govuk-demo-radix
           - govuk-demo-primeng
+          - govuk-demo-mantine
           - carbon-demo-bootstrap
           - carbon-demo-shadcn
           - carbon-demo-daisyui
@@ -90,6 +93,7 @@ jobs:
           - carbon-demo-css-variables
           - carbon-demo-radix
           - carbon-demo-primeng
+          - carbon-demo-mantine
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

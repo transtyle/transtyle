@@ -8,7 +8,7 @@ order: 13
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/css-variables/">Acme</a> · <a href="/demo/cathode/css-variables/">Cathode</a> · <a href="/demo/govuk/css-variables/">GOV.UK</a> · <a href="/demo/carbon/css-variables/">Carbon</a> — one page, four design systems, compiled to CSS variables. <a href="/demo/">All 32 demos →</a></p>
+  <p><a href="/demo/acme/css-variables/">Acme</a> · <a href="/demo/cathode/css-variables/">Cathode</a> · <a href="/demo/govuk/css-variables/">GOV.UK</a> · <a href="/demo/carbon/css-variables/">Carbon</a> — one page, four design systems, compiled to CSS variables. <a href="/demo/">All 36 demos →</a></p>
 </div>
 
 The simplest possible backend. Unlike every other reference exporter, it isn't really a _translation_ target — it's a 1:1 dump of the resolved semantic catalog as `--custom-properties`, with no framework mapping logic in the way. Two reasons it exists:

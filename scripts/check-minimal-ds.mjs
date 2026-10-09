@@ -145,6 +145,7 @@ const EXPORTERS = {
   'css-variables': '@transtyle/exporter-css-variables',
   radix: '@transtyle/exporter-radix',
   primeng: '@transtyle/exporter-primeng',
+  mantine: '@transtyle/exporter-mantine',
 };
 
 /**

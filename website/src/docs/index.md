@@ -6,7 +6,7 @@ order: 1
 
 # A compiler for design systems
 
-Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts**. Eight targets ship today: shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, and plain CSS variables.
+Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts**. Nine targets ship today: shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, and plain CSS variables.
 
 Describe your design system once. Change it in one place. Regenerate every target.
 
@@ -21,7 +21,7 @@ now, <span class="badge spec">specced</span> means it exists in the
 <a href="/docs/roadmap/">roadmap</a> is the authority on the difference.</p>
 </div>
 
-<div class="schema" role="img" aria-label="You write design tokens; Transtyle normalizes, derives and validates them; you ship eight native themes plus a coverage report">
+<div class="schema" role="img" aria-label="You write design tokens; Transtyle normalizes, derives and validates them; you ship nine native themes plus a coverage report">
   <div class="s-col">
     <span class="s-kicker">You write</span>
     <span class="s-main">Design tokens (DTCG)</span>
@@ -37,7 +37,7 @@ now, <span class="badge spec">specced</span> means it exists in the
   <div class="s-col">
     <span class="s-kicker">You ship</span>
     <span class="s-main">8 native themes</span>
-    <span class="s-sub">shadcn, Bootstrap, ECharts, daisyUI, Storybook, Radix, PrimeNG, CSS variables — each idiomatic, plus a coverage report</span>
+    <span class="s-sub">shadcn, Bootstrap, ECharts, daisyUI, Storybook, Radix, PrimeNG, Mantine, CSS variables — each idiomatic, plus a coverage report</span>
   </div>
 </div>
 
@@ -66,7 +66,7 @@ npx transtyle build
   <a href="/docs/internals/">
     <span class="path-kicker">Extend</span>
     <span class="path-title">Write an exporter</span>
-    <span class="path-desc">All eight official exporters use the same public plugin API — the core knows nothing about any target.</span>
+    <span class="path-desc">All nine official exporters use the same public plugin API — the core knows nothing about any target.</span>
   </a>
 </div>
 
@@ -118,9 +118,9 @@ Every one of these is deterministic, provenance-tagged, contrast-checked where i
 
 <!-- measured: acme.authored = 40 -->
 
-The [Acme example](/docs/examples/) authors **40 tokens** — nine of them actual design decisions — and compiles complete themes for all eight targets. [Cathode](/docs/examples/#cathode--the-hostile-example) proves the hostile direction: alien vocabulary (`crt.ink`, `crt.tube`), dark-native, bound through the same catalog with one-line aliases. And two **real, independently-designed systems** — [GOV.UK and IBM Carbon](/docs/examples/) — compile to every target with zero warnings or errors, using only their published values (Carbon draws informational notes where its dark theme reuses a light value — the compiler saying so rather than hiding it). For the full worked proof — source values, judgment calls, and per-target coverage all shown — see [GOV.UK, end to end](/docs/govuk-showcase/).
+The [Acme example](/docs/examples/) authors **40 tokens** — nine of them actual design decisions — and compiles complete themes for all nine targets. [Cathode](/docs/examples/#cathode--the-hostile-example) proves the hostile direction: alien vocabulary (`crt.ink`, `crt.tube`), dark-native, bound through the same catalog with one-line aliases. And two **real, independently-designed systems** — [GOV.UK and IBM Carbon](/docs/examples/) — compile to every target with zero warnings or errors, using only their published values (Carbon draws informational notes where its dark theme reuses a light value — the compiler saying so rather than hiding it). For the full worked proof — source values, judgment calls, and per-target coverage all shown — see [GOV.UK, end to end](/docs/govuk-showcase/).
 
-> **Status honesty:** Transtyle is published as an alpha (`@transtyle/cli@alpha`) — early enough that the token vocabulary, the generated output and the CLI surface can each change between releases. What's real today: the full pipeline, the derivation engine (role grids, elevation, scales, modes), `build` / `check` / `explain` / `init` / `add` / `diff`, eight exporters, four examples with runnable demo projects for every target, and CI-verified deterministic builds. What's specced but not implemented: `import`, `preview`, and the importers. The [roadmap](/docs/roadmap/) tells the truth about which is which.
+> **Status honesty:** Transtyle is published as an alpha (`@transtyle/cli@alpha`) — early enough that the token vocabulary, the generated output and the CLI surface can each change between releases. What's real today: the full pipeline, the derivation engine (role grids, elevation, scales, modes), `build` / `check` / `explain` / `init` / `add` / `diff`, nine exporters, four examples with runnable demo projects for every target, and CI-verified deterministic builds. What's specced but not implemented: `import`, `preview`, and the importers. The [roadmap](/docs/roadmap/) tells the truth about which is which.
 
 Start with the path card above that matches your situation — or read [Core concepts](/docs/concepts/) first if you want the mental model before touching files: three token tiers, [the catalog as pivot language](/docs/language/), modes, and the provenance/coverage trust system.
 

@@ -1,12 +1,12 @@
 /**
- * The demo harness, as data — one description of the 32 demo projects that the
+ * The demo harness, as data — one description of the 36 demo projects that the
  * builder, the assembler, the website gallery and the guards all read.
  *
  * There are two halves here, and the split is deliberate:
  *
  *   `discoverDemos()` reads the filesystem. Which demos exist, what toolchain
  *   each one uses and which port it serves on are facts about the repo, so
- *   they are *found*, never listed. A ninth target or a fifth example is then
+ *   they are *found*, never listed. A tenth target or a fifth example is then
  *   picked up by the builder, the CI matrix check and the gallery page on the
  *   commit that adds it, with no list anywhere to forget.
  *
@@ -67,7 +67,7 @@ export const EXAMPLES = [
 ];
 
 /**
- * The eight targets, ordered as the docs sidebar orders them (nav.js "Targets"):
+ * The nine targets, ordered as the docs sidebar orders them (nav.js "Targets"):
  * the two most-asked-for first, then the rest, with the plain-CSS reference
  * exporter last because it is the one you read rather than look at.
  *
@@ -125,6 +125,13 @@ export const TARGETS = [
     blurb: "A typed PrimeNG preset — checked against PrimeNG's own DesignTokens types at build.",
   },
   {
+    id: 'mantine',
+    title: 'Mantine',
+    doc: 'exporter-mantine',
+    stack: 'React · @mantine/core 9',
+    blurb: 'A createTheme object and a CSS-variables resolver — every role a virtual colour, type-checked at build.',
+  },
+  {
     id: 'css-variables',
     title: 'CSS variables',
     doc: 'exporter-css-variables',
@@ -142,7 +149,7 @@ export const targetById = (id) => TARGETS.find((t) => t.id === id);
  * Each profile answers three questions: what command builds it, what argument
  * makes the output work from a *subdirectory* (see below), and where the files
  * land. Nothing here is configured per demo — the marker file decides, so the
- * ninth target inherits a profile by looking like one.
+ * tenth target inherits a profile by looking like one.
  *
  * The subpath argument is the whole reason this table exists. Hosted, a demo
  * lives at /transtyle/demo/<example>/<target>/, and a bundler that assumes the

@@ -22,6 +22,7 @@ Each example design system (Acme, Cathode, future ones) ships runnable demo proj
 | `demo/css-variables` | Vite, framework-free                                                                                            | The **same Nimbus Console**, plain HTML/CSS — the reference projection every other exporter's output is some mapping of                                                                                                                                            | `variables.transtyle.css` imported directly; every value is a custom property, nothing else                                                                                                                                                                              |
 | `demo/radix`         | Vite + React + `@radix-ui/themes`                                                                               | The **same Nimbus Console** with real Radix Themes components                                                                                                                                                                                                      | `radix-colors.transtyle.css` overrides one existing Radix preset's scale (`--violet-*` etc. → `--primary-*`), passed to `<Theme accentColor="...">`                                                                                                                      |
 | `demo/primeng`       | **Angular** (standalone components, `@angular/build:application`) — the first non-Vite/React profile, see below | The **same Nimbus Console** with real PrimeNG components                                                                                                                                                                                                           | `preset.transtyle.ts` (a `definePreset(Aura, overrides)` module) passed to `providePrimeNG({ theme: { preset } })` in `app.config.ts`                                                                                                                                    |
+| `demo/mantine`       | Vite + React 19 + `@mantine/core` 9                                                                             | The **same Nimbus Console** with real Mantine components                                                                                                                                                                                                           | `theme.transtyle.ts` exports `theme` (a `createTheme` object) and `cssVariablesResolver`, both passed to `<MantineProvider>` in `main.tsx`; the build runs `tsc --noEmit` first, so the emitted theme is type-checked against Mantine's own types                        |
 
 **Nimbus Console** — the shared fake page (deliberately _not_ named after any example DS): §1 header (brand, 3 nav links one active, primary action) · §2 buttons in every role the target names + badges (+ alert where idiomatic) · §3 form (input + help, invalid input + error, select, checkbox, radio pair, switch, submit/cancel) · §4 card (title, muted subtitle, body with link + `code`, action footer) · §5 table (4 rows, status badges across roles) · §6 modal (real trigger, confirm/cancel, the target's own modal mechanism). A thin **demo chrome bar** above the app (not part of the fake page) carries the DS label, a one-line status note, and the mode toggle wired to the target's own mechanism (`data-bs-theme` / `.dark` / `data-theme`).
 
@@ -37,7 +38,7 @@ Each example design system (Acme, Cathode, future ones) ships runnable demo proj
   The checker carries one exception the prose above had missed, and it is a genuine finding rather than a patch: **`demo/radix/src/theme-override.css`**. Radix's `<Theme accentColor>` prop only accepts Radix's own preset names, so each example aliases a different one onto our primary ramp (violet for Acme, green for Cathode, blue for GOV.UK, indigo for Carbon). That is a per-design-system mapping the target forces, not demo drift.
 
 - **Real components only.** Markup/components come from the target's own docs (Bootstrap components, shadcn registry sources, daisyUI classes). No hand-rolled imitations.
-- **npm-launchable.** Every project is a workspace: `npm run dev -w <example>-demo-<target>`. Ports follow `<example-block>0<target-slot>`: Acme 4101–4107 (bootstrap/daisyui/shadcn/echarts/css-variables/radix/primeng) + 6101 (Storybook); Cathode 4201–4207 + 6201; GOV.UK 4301–4307 + 6301; Carbon 4401–4407 + 6401 (see `.claude/launch.json` for the exact per-target assignment).
+- **npm-launchable.** Every project is a workspace: `npm run dev -w <example>-demo-<target>`. Ports follow `<example-block>0<target-slot>`: Acme 4101–4108 (bootstrap/daisyui/shadcn/echarts/css-variables/radix/primeng/mantine) + 6101 (Storybook); Cathode 4201–4208 + 6201; GOV.UK 4301–4308 + 6301; Carbon 4401–4408 + 6401 (see `.claude/launch.json` for the exact per-target assignment).
 - **Mode polarity.** Cathode's projects default to dark (the terminal is native); the toggle always drives the target's own mechanism.
 
 ## The Angular profile (`demo/primeng`, the first non-Vite/React project)
@@ -59,7 +60,7 @@ A new **target** = one new project directory per example (same fake page, that t
 ## The hosted exhibit
 
 Everything above describes the demo _projects_ — what a contributor clones and runs. Publishing the
-same 32 projects as one browsable exhibit needs two things the projects deliberately do not carry,
+same 36 projects as one browsable exhibit needs two things the projects deliberately do not carry,
 both injected at assembly time (`scripts/lib/demo-chrome.mjs`, called from `scripts/assemble-demos.mjs`)
 rather than checked in. A navigation widget for a website the demos know nothing about has no
 business in a file a reader is meant to copy, and it could not be byte-identical across four examples
@@ -128,10 +129,10 @@ anything closer. The page says the scale out loud rather than leaving it to be n
 **How one control drives two demos.** The compare page and the demos are same-origin, so the page
 _could_ walk each frame's document itself. It does not: every target encodes the mode its own way
 (`data-bs-theme`, `.dark`, `data-theme`, a re-`init`ed ECharts instance, an Angular signal), and a
-parent reaching in would have to learn all eight and re-learn the ninth. The demos already agree on
+parent reaching in would have to learn all nine and re-learn the tenth. The demos already agree on
 something better — **every one of them puts the mode on a real button labelled with the mode it
 switches _to_** (`☀ light` while dark, `☾ dark` while light) — so the bridge presses that button and
-each demo does its own thing. `check:demos` proves that convention still holds in all 28 projects,
+each demo does its own thing. `check:demos` proves that convention still holds in all 32 projects,
 because renaming that label in one target would break the sync silently and only in the hosted build.
 
 Three consequences worth knowing:
