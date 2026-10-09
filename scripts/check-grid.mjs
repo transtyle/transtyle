@@ -65,15 +65,16 @@ const FROZEN_HEX = {
   'semantic.color.neutral.text-strong': '#171b20', // = old Bootstrap $dark / neutral.contrast
 };
 
-// (d) A two-mode design system with only the engine's required anchor, a
-// surface and text.base authored, plus the role bindings under test.
+// (d) A two-mode design system with only the engine's required anchor, a page
+// background (elevation.0.surface) and text.base authored, plus the role
+// bindings under test.
 async function compileBound(roles, semantic = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-grid-alias-'));
   try {
     mkdirSync(join(dir, 'tokens'));
     const color = {
       primary: { solid: { $type: 'color', $value: '#0d6efd' } },
-      surface: { $type: 'color', $value: '#ffffff' },
+      elevation: { 0: { surface: { $type: 'color', $value: '#ffffff' } } },
       text: { base: { $type: 'color', $value: '#212529' } },
       ...roles,
     };
