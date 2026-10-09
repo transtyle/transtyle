@@ -23,12 +23,17 @@
  *      is a catalog slot, and every family it names has catalog members, so a
  *      renamed or removed slot cannot leave `check --completeness` pointing
  *      at a token nobody can author.
+ *  (f) `isCatalogSlot()`, what the adoption report (#61) uses to tell the
+ *      catalog from a project's own vocabulary, agrees with catalog(): every
+ *      catalog path passes it, and on each of the four examples every slot the
+ *      engine fills passes it unless it is a custom role's cell, while a custom
+ *      token (Cathode's `crt.ink`) does not.
  */
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compile } from '@transtyle/core';
-import { formatHex, catalog, completenessLevels } from '@transtyle/core';
+import { formatHex, catalog, completenessLevels, isCatalogSlot } from '@transtyle/core';
 
 // A derivation-only stand-in for any exporter — permissive optionsSchema so it
 // accepts whatever options the example configs carry (this test exercises the
@@ -128,6 +133,24 @@ async function main() {
     }
   }
 
+  // (f) isCatalogSlot ⇄ catalog(), on every example.
+  for (const p of CATALOG_PATHS) if (!isCatalogSlot(p)) errors.push(`isCatalogSlot: rejects the catalog slot ${p}`);
+  for (const p of ['semantic.color.crt.ink', 'semantic.color.surface', 'semantic.color.crt-amber.solid']) {
+    if (isCatalogSlot(p)) errors.push(`isCatalogSlot: accepts ${p}, which is not a catalog slot`);
+  }
+  let examplesFilled = 0;
+  for (const example of ['acme', 'cathode', 'govuk', 'carbon']) {
+    const { normalized: n } = await compile({ cwd: `examples/${example}`, targets: [], emit: false, loadExporter });
+    const roleCell = (path) => [...n.roleArchetypes.keys()].some((r) => path.startsWith(`semantic.color.${r}.`));
+    for (const key of n.allCombos) {
+      for (const [slot, entry] of n.modes[key]) {
+        if (!['derived', 'defaulted'].includes(entry.provenance?.kind)) continue;
+        examplesFilled++;
+        if (!isCatalogSlot(slot) && !roleCell(slot)) errors.push(`${example} ${key}: the engine fills ${slot} but isCatalogSlot() rejects it`);
+      }
+    }
+  }
+
   // (d) A `.solid` bound to a derived slot — later in role order, earlier in
   // role order, a derived cell, and on an archetyped role (which must not read
   // as "no authored .solid", TST1203).
@@ -197,7 +220,7 @@ async function main() {
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log(`✔ check-grid: all ${REQUIRED_SLOTS.length} rule-filled catalog slots present in both modes and nothing filled outside the catalog; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes; ${BOUND.length} roles bound to a derived slot get theirs too, a late-derived binding raises TST1205 and a dangling one TST1105 alone; radius.none derives to 0 and an authored one wins; the ${levels.at(-1).items.length} items of the completeness levels name catalog slots`);
+  console.log(`✔ check-grid: all ${REQUIRED_SLOTS.length} rule-filled catalog slots present in both modes and nothing filled outside the catalog; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes; ${BOUND.length} roles bound to a derived slot get theirs too, a late-derived binding raises TST1205 and a dangling one TST1105 alone; radius.none derives to 0 and an authored one wins; the ${levels.at(-1).items.length} items of the completeness levels name catalog slots; isCatalogSlot() accepts all ${examplesFilled} engine-filled slots across the four examples`);
 }
 
 main();

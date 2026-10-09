@@ -125,6 +125,8 @@ npx transtyle build
 
 Open `report.json` (or read the `· derived` comments in the output). Every variable is classified: what came from _your_ system, what was derived from it, what was approximated. Derived values aren't wrong — they're **proposals computed from your brand**. The hover states and tinted backgrounds will already be coherent with your colors.
 
+Then read what is left on your side: `npx transtyle check` ends with an adoption block that counts your own semantic tokens and lists the ones no catalog slot reads. Those reach css-variables verbatim and no other target. Each comes with hints: the slots already set to the same value (GOV.UK's `govuk.focus-text` is "same value as `text.base`", the black drawn on the yellow focus state, which the catalog has no foreground slot for), or the slot whose name it shadows (`semantic.color.surface` is not the page background; `elevation.0.surface` is). Bind it, or keep it as a css-variables-only token on purpose. `check --json` carries the same report as `adoption`.
+
 ## 5. Tighten as trust grows
 
 Where a derived value contradicts your system, bind it — one alias, versioned, visible. When your vocabulary is regular (a ramp per role), one [`bindings` rule](/docs/configuration/#binding-rules) binds the whole grid instead of one alias per cell. When bindings stabilize, encode policy:
@@ -165,4 +167,4 @@ Math, references inside values, Figma weight names, unitless pixels and the lega
 The failures we see are never technical — they're these two, both preventable on day one.
 </div>
 
-**Don't rename your system into our catalog.** The catalog names never leak into your design language — they're the compilation interface. If your team says "flame", your tokens say "flame" forever. **Don't bind by name similarity.** Your "secondary" and shadcn's `--secondary` and Bootstrap's `$secondary` are three different concepts that happen to share a word — bind by _meaning_, and read [the language reference](/docs/language/#false-friends) before assuming. The [Cathode example](/docs/examples/#cathode--the-hostile-example) runs this whole playbook against a maximally alien system, with file layout included.
+**Don't rename your system into our catalog.** The catalog names never leak into your design language — they're the compilation interface. If your team says "flame", your tokens say "flame" forever. **Don't bind by name similarity.** Your "secondary" and shadcn's `--secondary` and Bootstrap's `$secondary` are three different concepts that happen to share a word — bind by _meaning_, and read [the language reference](/docs/language/#false-friends) before assuming. `check` notes the two known cases (`TST1124`): `secondary.solid` or `accent.solid` bound to a token of that name whose value is the gray or the wash shadcn means by the word. The [Cathode example](/docs/examples/#cathode--the-hostile-example) runs this whole playbook against a maximally alien system, with file layout included.

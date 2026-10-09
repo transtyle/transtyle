@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca } from '@transtyle/core';
+import { compile, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
@@ -208,6 +208,38 @@ function printDiagnostics(diagnostics) {
   const n = diagnostics.suppressed.length;
   if (n > 0) console.error(`${ICONS.info} ${n} diagnostic${n === 1 ? '' : 's'} suppressed by check.suppress (listed in report.json)`);
 }
+/** `semantic.color.text.base` → `text.base`, `semantic.font.transport` → `font.transport`. */
+const shortPath = (p) => p.replace(/^semantic\.color\./, '').replace(/^semantic\./, '');
+const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** One hint of the adoption report, as a sentence. */
+function adoptionHint(h) {
+  if (h.match === 'name') {
+    const others = h.others ? ` (or ${plural(h.others, 'other slot')} ending in .${h.slot.split('.').at(-1)})` : '';
+    return `did you mean to author ${shortPath(h.slot)}${others}?`;
+  }
+  const how = h.binding === 'bound' ? `bound via ${shortPath(h.via)}` : h.binding;
+  return `${h.deltaE === 0 ? 'same value as' : `ΔE ${h.deltaE.toFixed(3)} from`} ${shortPath(h.slot)} (${how})`;
+}
+
+/**
+ * The adoption block `check` prints after the diagnostics: the project's own
+ * semantic vocabulary, how much of it a catalog slot reads, and the rest with
+ * hints. Nothing for a project that authors catalog paths only.
+ */
+function printAdoption(a) {
+  if (a.custom === 0 && a.roles.length === 0) return;
+  const tokens = a.custom === 0
+    ? 'no custom tokens'
+    : `${plural(a.custom, 'custom token')}, ${a.unbound.length ? `${a.bound} bound, ${a.unbound.length} unbound` : 'all bound'}`;
+  const roles = a.roles.length ? `; ${plural(a.roles.length, 'custom role')} (${a.roles.map((r) => r.role).join(', ')})` : '';
+  console.error(`\nadoption  ${tokens}${roles}`);
+  for (const u of a.unbound) {
+    console.error(`  ○ ${shortPath(u.path)}: no catalog slot reads it, so only css-variables emits it`);
+    for (const h of u.hints) console.error(`    ↳ ${adoptionHint(h)}`);
+  }
+}
+
 const COMMANDS = ['build', 'check', 'explain', 'bindings', 'bind', 'diff', 'catalog', 'init', 'add', 'migrate'];
 
 async function main() {
@@ -289,6 +321,11 @@ async function cmdBuildOrCheck(args) {
     console.error(`\nauthored ${completeness.authored}/${completeness.total} ${level}${next}`);
   }
 
+  // The adoption report (#61): `check` only, since it is about the source and
+  // not about what a build wrote. --quiet leaves it to `--json`.
+  const adopted = !emit && result.normalized ? adoption(result.normalized) : null;
+  if (adopted && !QUIET) printAdoption(adopted);
+
   for (const r of results) {
     const counts = {};
     for (const c of r.coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
@@ -318,6 +355,7 @@ async function cmdBuildOrCheck(args) {
       diagnostics: diagnostics.items,
       suppressed: diagnostics.suppressed,
       targets: results.map((r) => ({ target: r.target, coverage: r.coverage, reads: r.reads })),
+      ...(adopted ? { adoption: adopted } : {}),
       ...(matrix ? { matrix } : {}),
       ...(completeness ? { completeness: completenessJson(completeness) } : {}),
     }, null, 2));

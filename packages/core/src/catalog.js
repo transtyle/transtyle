@@ -207,3 +207,17 @@ export function catalog() {
   cached ??= build();
   return structuredClone(cached);
 }
+
+let slotSet;
+
+/**
+ * Whether `path` is a catalog slot: a path the engine guarantees or reads,
+ * read off the same probe compile as `catalog()`. A project's own vocabulary
+ * (`semantic.color.crt.ink`, the cells of a custom role) is not. `check:grid`
+ * keeps the probe and DERIVE in step, so this list cannot drift from the rules.
+ */
+export function isCatalogSlot(path) {
+  cached ??= build();
+  slotSet ??= new Set(cached.slots.map((s) => s.path));
+  return slotSet.has(path);
+}

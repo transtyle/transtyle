@@ -72,9 +72,21 @@ npx transtyle check --completeness complete --cwd examples/acme
 #      the padding and radius buttons and fields share
 ```
 
+### Adoption report
+
+After the diagnostics, `check` prints an **adoption** block when the project has vocabulary of its own: the `semantic.*` tokens that are not catalog slots, how many of them a catalog slot reads (following the alias chain, in every mode), and the ones none reads, each with hints. An unbound token reaches css-variables verbatim and no other target. A hint names the catalog slots already set to the same value, or the slot whose name the token shadows (`semantic.color.surface` for `elevation.0.surface`). Roles declared with `$extensions.transtyle.role` are listed apart: their grid is derived like a built-in role's. A project that authors catalog paths only gets no block, and `--quiet` leaves it out (`--json` still carries it).
+
+```bash
+npx transtyle check --cwd examples/govuk
+#
+# adoption  14 custom tokens, 13 bound, 1 unbound
+#   ○ govuk.focus-text: no catalog slot reads it, so only css-variables emits it
+#     ↳ same value as text.base (bound via govuk.text)
+```
+
 ### `--json`
 
-`check`, `diff` and `catalog`. For `check`, prints the contrast standard the checks used, the full diagnostics array, the `suppressed` list, per-target coverage and the completeness to-do to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
+`check`, `diff` and `catalog`. For `check`, prints the contrast standard the checks used, the full diagnostics array, the `suppressed` list, per-target coverage, the completeness to-do and the adoption report to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
 
 ```bash
 npx transtyle check --json
@@ -83,10 +95,17 @@ npx transtyle check --json
 #                         "path": "scratch", "file": "tokens/brand.tokens.json", "line": 74, "column": 3 }, ... ],
 #   "suppressed": [ ... ],
 #   "targets": [ { "target": "shadcn", "coverage": [ ... ], "reads": [ ... ] }, ... ],
-#   "completeness": { "level": "recommended", "authored": 14, "total": 14, "todo": [] } }
+#   "completeness": { "level": "recommended", "authored": 14, "total": 14, "todo": [] },
+#   "adoption": { "custom": 14, "bound": 13,
+#                 "unbound": [ { "path": "semantic.color.govuk.focus-text", "type": "color",
+#                                "hints": [ { "slot": "semantic.color.text.base", "match": "value", "deltaE": 0,
+#                                             "binding": "bound", "via": "semantic.color.govuk.text" } ] } ],
+#                 "roles": [] } }
 ```
 
 `completeness.todo` lists the items left, in order: `{ "slot", "state", "mode"?, "rule"?, "reason" }`, where `state` is `missing`, `derived`, `defaulted` or `carried-over`, `mode` is `color-scheme=dark` on a dark neutral, and a scale carries `authoredMembers` and `members`. `--completeness` picks the level.
+
+In `adoption`, `custom` and `bound` are counts and `unbound` lists the tokens no catalog slot reads, in path order. A hint is `{ slot, match: "value", deltaE, binding, via? }` (a slot whose default-mode value is within ΔE<sub>OK</sub> 0.05; `binding` is `authored`, `bound` with the token it aliases in `via`, `derived` or `defaulted`) or `{ slot, match: "name", others }` (the slot whose name the token shadows; `others` counts the other slots ending the same way). `roles` lists custom roles as `{ role, archetype, cells }`.
 
 ### `--matrix`
 
@@ -371,4 +390,4 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle import <source>`                    | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
 | `transtyle preview`                            | Local themed preview site across all targets                                            |
 
-Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `completenessStatus()`, `suggestBindings()`, `migrateStyleDictionary()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).
+Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `completenessStatus()`, `adoption()`, `suggestBindings()`, `migrateStyleDictionary()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).
