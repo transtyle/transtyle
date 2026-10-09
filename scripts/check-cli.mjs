@@ -477,6 +477,85 @@ try {
   }
 }
 
+// ---------- #93: small authoring checks (TST1120, TST1121, TST2104) ----------
+// One edit per case on the init scaffold, with two shadcn instances (one per
+// era) added so TST2104 can fire. Each edit raises its code once with a hint;
+// the controls (the clean scaffold, radius.md 0, one in-order space rung, an
+// out-of-gamut option token no slot reads) raise none of the three.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-93-'));
+  const tp = join(dir, 'tokens/brand.tokens.json');
+  const cp = join(dir, 'transtyle.config.json');
+  const CODES = ['TST1120', 'TST1121', 'TST2104'];
+  try {
+    run(['init', 'authoring-ds', '--cwd', dir]);
+    const cfg = JSON.parse(readFileSync(cp, 'utf8'));
+    cfg.targets.shadcn = { output: 'dist/shadcn' };
+    cfg.targets['shadcn-v3'] = { exporter: 'shadcn', output: 'dist/shadcn-v3', options: { era: 'tailwind-v3' } };
+    writeFileSync(cp, JSON.stringify(cfg, null, 2));
+    const scaffold = JSON.parse(readFileSync(tp, 'utf8'));
+    const withEdit = (edit) => {
+      const tree = structuredClone(scaffold);
+      edit(tree);
+      writeFileSync(tp, JSON.stringify(tree, null, 2));
+      const r = run(['check', '--cwd', dir, '--json']);
+      let j = null;
+      try { j = JSON.parse(r.stdout); } catch { /* reported below */ }
+      const ours = (j?.diagnostics ?? []).filter((d) => CODES.includes(d.code));
+      return { r, j, ours, byCode: (c) => ours.filter((d) => d.code === c) };
+    };
+
+    let h = withEdit(() => {});
+    expect('authoring control: the clean scaffold reports none of TST1120/1121/2104', h.j && h.ours.length === 0, JSON.stringify(h.ours) || h.r.out);
+
+    h = withEdit((t) => { t.option.color.brand['500'].$value = 'oklch(0.7 0.3 145)'; });
+    let [d] = h.byCode('TST1120');
+    expect('TST1120: an out-of-sRGB brand colour is reported once, as info', h.byCode('TST1120').length === 1 && d.severity === 'info' && h.r.code === 0, JSON.stringify(h.ours));
+    expect('TST1120: names the source token, the slot and the hex fallback', d?.message === 'option.color.brand.500 = oklch(0.7 0.3 145) is outside sRGB (used by semantic.color.primary.solid)' && d.hint?.includes('#00c800') && d.hex === '#00c800', JSON.stringify(d));
+
+    h = withEdit((t) => { t.option.color.brand['900'] = { $value: 'oklch(0.7 0.3 145)' }; });
+    expect('TST1120 control: an out-of-gamut option token no slot reads stays silent', h.byCode('TST1120').length === 0, JSON.stringify(h.ours));
+
+    h = withEdit((t) => { t.semantic.radius.md.$value = '0.125rem'; });
+    const radius = h.byCode('TST2104');
+    expect('TST2104: radius.md 0.125rem is reported once per shadcn instance', radius.length === 2 && radius.every((x) => x.severity === 'info' && x.hint?.includes('0.25rem')), JSON.stringify(h.ours));
+    expect('TST2104: each message names its instance and its era\'s variables', radius.some((x) => x.target === 'shadcn' && x.message.startsWith('shadcn: --radius-sm and --radius-md resolve to 0 or less with radius.md = 0.125rem (2px)'))
+      && radius.some((x) => x.target === 'shadcn-v3' && x.message.startsWith('shadcn-v3: borderRadius.sm and borderRadius.md')), JSON.stringify(radius));
+    const b = run(['build', '--cwd', dir]);
+    const built = (() => { try { return JSON.parse(readFileSync(join(dir, 'dist/shadcn/report.json'), 'utf8')); } catch { return null; } })();
+    expect('TST2104: build exits 0 and report.json carries it', b.code === 0 && built?.diagnostics.some((x) => x.code === 'TST2104' && x.target === 'shadcn'), b.out);
+
+    h = withEdit((t) => { t.semantic.radius.md.$value = '0rem'; });
+    expect('TST2104 control: radius.md 0rem (a square design) stays silent', h.byCode('TST2104').length === 0, JSON.stringify(h.ours));
+
+    h = withEdit((t) => { t.semantic.space = { $type: 'dimension', 1: { $value: '0.5rem' }, 2: { $value: '1rem' }, 3: { $value: '1.5rem' }, 4: { $value: '2rem' } }; });
+    [d] = h.byCode('TST1121');
+    expect('TST1121: an 8px space.1..4 next to the 4px defaults is one warning', h.byCode('TST1121').length === 1 && d.severity === 'warning', JSON.stringify(h.ours));
+    expect('TST1121: names the inverted pair', d?.message === 'space is out of order: space.4 = 2rem (authored) > space.5 = 1.25rem (catalog default)' && d.hint?.includes('space.5'), JSON.stringify(d));
+
+    h = withEdit((t) => { t.semantic.space = { $type: 'dimension', sm: { $value: '0.5rem' }, md: { $value: '1rem' }, lg: { $value: '2rem' } }; });
+    [d] = h.byCode('TST1121');
+    expect('TST1121: a scale under its own names is reported as renamed', h.byCode('TST1121').length === 1 && d.message.startsWith('space has authored tokens (space.lg, space.md, space.sm) but none of the catalog\'s rungs'), JSON.stringify(h.ours));
+
+    h = withEdit((t) => { t.semantic.space = { $type: 'dimension', 4: { $value: '1rem' } }; });
+    expect('TST1121 control: one rung tuned in order stays silent', h.byCode('TST1121').length === 0, JSON.stringify(h.ours));
+
+    // The exporter diagnostics channel rejects what an exporter may not say:
+    // an error from emit is a contract violation, reported as TST3001.
+    writeFileSync(join(dir, 'loud.mjs'), `export default {
+  name: 'loud',
+  emit: () => ({ files: [], coverage: [], diagnostics: [{ severity: 'error', code: 'X0001', message: 'stop' }] }),
+};
+`);
+    writeFileSync(cp, JSON.stringify({ ...cfg, targets: { ...cfg.targets, loud: { exporter: './loud.mjs', output: 'dist/loud' } } }, null, 2));
+    h = withEdit(() => {});
+    const loud = (h.j?.diagnostics ?? []).filter((x) => x.code === 'TST3001');
+    expect('exporter diagnostics: an error-severity entry is a TST3001 naming the target', h.r.code === 1 && loud.length === 1 && loud[0].message.includes('"loud"') && loud[0].message.includes('severity must be "info" or "warning"'), JSON.stringify(loud) || h.r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- #28: an exporter that throws names its target ----------
 {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-crash-'));

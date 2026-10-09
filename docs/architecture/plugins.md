@@ -35,12 +35,12 @@ exporter-bootstrap/
 
 ## The exporter interface (v0, as implemented)
 
-**One hook.** A plugin's default export is an object with a name and a single `emit`, which receives the fully resolved IR and returns both the files to write and their coverage classification:
+**One hook.** A plugin's default export is an object with a name and a single `emit`, which receives the fully resolved IR and returns the files to write, their coverage classification, and optionally diagnostics about the target's own conventions:
 
 ```ts
 interface Exporter {
   name: string;
-  emit(ir: ResolvedIR, ctx: TargetContext): { files: FileSpec[]; coverage: CoverageItem[] };
+  emit(ir: ResolvedIR, ctx: TargetContext): { files: FileSpec[]; coverage: CoverageItem[]; diagnostics?: ExporterDiagnostic[] };
   optionsSchema?: JSONSchema;   // validated by core against `targets.<t>.options` (audit A8)
   doc?(...): DocPlan;           // reserved, capability-gated; no exporter implements it yet
 }
@@ -48,7 +48,10 @@ interface Exporter {
 type FileSpec     = { path: string; contents: string; kind: string };
 type CoverageItem = { variable: string; slot: string; class: CoverageClass; provenance?: string; note?: string };
 type CoverageClass = 'native' | 'derived' | 'approximated' | 'dropped' | 'unsupported';
+type ExporterDiagnostic = { severity: 'info' | 'warning'; code: string; message: string; hint?: string };
 ```
+
+**Exporter diagnostics** (issue #93) report what only the exporter knows: what its target's own conventions do to a value the design system authored (shadcn's `--radius-sm` collapsing to 0 under a small `radius.md`, `TST2104`). They are returned like `files` and `coverage`, not pushed into a collector, so `emit` stays a pure function the kit can double-run. Core validates them and adds them to the run's diagnostics with the target instance name in front of the message (`shadcn-v3: …`) and a `target` field. Severity is `info` or `warning` only: an exporter cannot stop the build from inside `emit`, and a malformed entry (an `error` severity, a missing code or message) is a contract violation reported as `TST3001`, like a throw.
 
 Why one hook and not a `resolve`/`emit` split with core-evaluated JSON mapping tables (which earlier drafts of this document specified): eight exporters were written against the real interface and none needed the split. Mapping tables still exist — they're just **the exporter's own data structure**, declared in its source and applied by its own `emit`, which keeps the mapping and the emitting honest about each other. Coverage is returned by the exporter for the same reason: only the exporter knows whether a given mapping was lossless.
 
@@ -73,7 +76,8 @@ Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the _
 | `emit-returns-files`     | `files` are `{ path, contents, kind }`                                               |
 | `emit-returns-coverage`  | `coverage` items are `{ variable, slot, class }`                                     |
 | `coverage-classes-valid` | every class is one of the five                                                       |
-| `deterministic`          | two `emit` runs produce byte-identical files                                         |
+| `emit-diagnostics-valid` | `diagnostics`, if returned, are `{ severity: info\|warning, code, message, hint? }`  |
+| `deterministic`          | two `emit` runs produce byte-identical files and diagnostics                         |
 | `ir-immutable`           | `emit` did not mutate the IR it was given                                            |
 | `manifest-valid`         | the `transtyle` manifest has `kind`, `name`, `irSpec`, `pluginApi`, `capabilities[]` |
 | `options-schema-shape`   | `optionsSchema`, if present, is a JSON-Schema object                                 |

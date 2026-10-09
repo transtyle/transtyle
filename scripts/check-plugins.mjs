@@ -88,6 +88,8 @@ const thirdParty = {
     return {
       files: [{ path: 'acme.css', contents: `:root { ${line} }\n`, kind: 'stylesheet' }],
       coverage: [{ variable: '--acme-primary', slot: 'semantic.color.primary.solid', class: 'native' }],
+      // The optional diagnostics channel, exercised by a plugin the kit doesn't know.
+      diagnostics: [{ severity: 'info', code: 'ACME0001', message: 'acme.css writes hex only', hint: 'Nothing to do.' }],
     };
   },
 };
@@ -110,6 +112,17 @@ if (brokenResult.pass) {
   failures.push('negative-test');
 } else {
   console.log('✔ negative test: a broken plugin (bad coverage class) is correctly rejected');
+}
+
+// An exporter cannot raise an error from emit (a throw is TST3001): a
+// diagnostic with severity "error" breaks the contract and must be rejected.
+const loud = { name: 'loud', emit: () => ({ files: [], coverage: [], diagnostics: [{ severity: 'error', code: 'X0001', message: 'stop' }] }) };
+const loudResult = await conformance(loud);
+if (loudResult.pass || !loudResult.checks.some((c) => c.name === 'emit-diagnostics-valid' && !c.pass)) {
+  console.error('✖ negative test: a plugin returning an error-severity diagnostic was NOT rejected');
+  failures.push('negative-test-diagnostics');
+} else {
+  console.log('✔ negative test: a plugin returning an error-severity diagnostic is correctly rejected');
 }
 
 if (failures.length) {

@@ -57,7 +57,7 @@ What to study:
 - **Mode polarity.** `:root` in the output is paper mode, `.dark` is the terminal: exporters bind mode names, not your default flag. Cathode found this bug during development; it's now a stated IR rule.
 - **Derivation under stress.** `--primary-foreground` in dark mode is near-black, contrast-picked against glowing green. The chart palette derives green-anchored — build the ECharts target and open the dark theme: phosphor-green series on tube-black, a dashboard from 1983. `success` derives to hue 150 — nearly phosphor. On a CRT, everything is success.
 - **The honest limitation.** Derived `info` is conventionally blue — coherent, wrong for the aesthetic, and fixed by one authored line. Derivation has no taste; that's your job.
-- **A CSS curiosity.** `--radius: 0rem` makes shadcn's `calc(var(--radius) - 4px)` negative; browsers reject negative radii and render 0 — the correct brutalist result by accident of CSS.
+- **A CSS curiosity.** `--radius: 0rem` makes shadcn's `calc(var(--radius) - 4px)` negative; browsers clamp a negative `calc()` radius to 0 — the correct brutalist result by accident of CSS, which is why `TST2104` only speaks up for a small radius above 0.
 
 ## GOV.UK — a real design system
 

@@ -744,6 +744,20 @@ const TYPE_WEIGHT = { regular: 400, medium: 500, semibold: 600, bold: 700 };
 const TYPE_LEADING = { tight: 1.25, normal: 1.5, loose: 1.75 };
 const TYPE_TRACKING = { tight: '-0.01em', normal: '0', wide: '0.02em' };
 const DURATION = { instant: '0ms', fast: '150ms', normal: '250ms', slow: '400ms', slower: '600ms' };
+
+/**
+ * The ordered scales DERIVE completes with catalog defaults, smallest rung
+ * first. TST1121 (authoring.js) reads them to tell a partially authored
+ * scale that stays in order from one the defaults turn upside down.
+ */
+export const ORDERED_SCALES = {
+  'semantic.space': SPACE_KEYS.map(String),
+  'semantic.type.size': Object.keys(TYPE_SIZE),
+  'semantic.size.control': Object.keys(SIZE_CONTROL),
+  'semantic.border-width': Object.keys(BORDER_WIDTH),
+  'semantic.breakpoint': Object.keys(BREAKPOINT),
+  'semantic.duration': Object.keys(DURATION),
+};
 const EASING = {
   standard: 'cubic-bezier(0.2, 0, 0, 1)',
   enter: 'cubic-bezier(0, 0, 0, 1)',

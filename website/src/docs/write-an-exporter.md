@@ -22,7 +22,7 @@ One function. It receives the fully resolved design system and returns files plu
 ```ts
 {
   name: string,
-  emit(ir, ctx) → { files: [{ path, contents, kind }], coverage: [...] }
+  emit(ir, ctx) → { files: [{ path, contents, kind }], coverage: [...], diagnostics?: [...] }
 }
 ```
 
@@ -193,6 +193,7 @@ Three things worth pointing at:
 - **A missing slot is data, not a crash.** If the IR has no `accent.solid`, record `unsupported` and carry on. Never throw because a design system didn't author something.
 - **The dropped rows are the point.** A terminal can't express radius or type. Saying so, in the report, is the difference between a translation and a guess.
 - **Read only what you use.** `transtyle check --matrix` records every slot an exporter looks up in the mode maps (`get`, `has`, or an entry opened while iterating) and lists your target as a reader of each. Looking a slot up "just in case" makes your target show up as depending on it. Listing the keys to filter them, as css-variables does, is not a read.
+- **Diagnostics are optional, and for your target's quirks.** When your target's own conventions turn an authored value into something the author didn't ask for, return `diagnostics: [{ severity: 'info', code, message, hint }]` next to `files` and `coverage` (shadcn does this when its radius offsets collapse a small `radius.md` to 0, [`TST2104`](/docs/diagnostics/)). Core prints them with your target's name in front. Only `info` and `warning`: to stop a build, the design system has to be wrong, and core already checks that.
 
 ## 4. Prove it
 
@@ -222,7 +223,7 @@ node conformance.test.mjs
 ✔ emit-returns-files   ✔ deterministic           ✔ options-schema-shape
 ```
 
-The kit runs your plugin against a canonical fixture design system, twice, and checks the contract — including that you didn't mutate the IR and that two runs are byte-identical. Passing it is what "official" means, and community exporters can advertise it.
+The kit runs your plugin against a canonical fixture design system, twice, and checks the contract — including that you didn't mutate the IR and that two runs are byte-identical. A plugin that returns `diagnostics` gets a tenth check, `emit-diagnostics-valid`. Passing it is what "official" means, and community exporters can advertise it.
 
 ## 5. Use it in a real project
 

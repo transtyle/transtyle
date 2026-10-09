@@ -1,6 +1,7 @@
 /** Built-in accessibility/consistency checks (docs/specs/validation-and-coverage.md). */
 
 import { contrastRatio } from './color.js';
+import { aliasRoot, checkOutOfGamut, checkPartialScales } from './authoring.js';
 
 const S = 'semantic.color.';
 
@@ -22,19 +23,6 @@ export function deltaEOK(a, b) {
   const [l1, a1, b1] = lab(a);
   const [l2, a2, b2] = lab(b);
   return Math.hypot(l1 - l2, a1 - a2, b1 - b2);
-}
-
-/** The token an aliased entry ends up pointing at, following the chain to its end. */
-function aliasRoot(map, path) {
-  const seen = new Set();
-  let target = null;
-  let entry = map.get(path);
-  while (entry?.provenance?.kind === 'aliased' && entry.provenance.target && !seen.has(entry.provenance.target)) {
-    target = entry.provenance.target;
-    seen.add(target);
-    entry = map.get(target);
-  }
-  return target;
 }
 
 /**
@@ -206,6 +194,8 @@ export function runChecks(normalized, config, diagnostics) {
     }
   }
   checkDistinguishability(normalized, diagnostics);
+  checkOutOfGamut(normalized, diagnostics);
+  checkPartialScales(normalized, config, diagnostics);
 }
 
 /** Epsilon for "the same colour written two ways": far below a visible difference. */

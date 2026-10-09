@@ -52,7 +52,7 @@ The full 33-variable set is emitted; highlights worth understanding:
 | `--ring`                             | `ring`                                        | derived from primary, lightened in dark mode                                                                                                                     |
 | `--chart-1…5`                        | `palette.categorical.1–5`                     | derived data-viz palette anchored on your brand hue                                                                                                              |
 | `--sidebar-*`                        | elevation/text/primary/accent grid cells      | exporter convention; properly a component-tier concern (v2)                                                                                                      |
-| `--radius`                           | `radius.md`                                   | shadcn derives sm/md/lg/xl from it via `calc()`                                                                                                                  |
+| `--radius`                           | `radius.md`                                   | shadcn derives sm/md/lg/xl from it via `calc()` (sm = −4px, md = −2px); a `radius.md` between 0 and 4px collapses sm (and md) to 0, reported as `TST2104`        |
 | `--font-sans` / `--font-mono`        | `font.sans` / `font.mono`                     | v4: `@theme`; v3: `fontFamily` in the config snippet                                                                                                             |
 
 Every mapping decision is recorded per-variable in `report.json` with its coverage class and provenance.

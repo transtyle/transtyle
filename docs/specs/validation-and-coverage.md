@@ -1,6 +1,8 @@
 # Validation, diagnostics, and coverage
 
-> **Status (re-verified 2026-10-09):** the diagnostics collector, the 25 shipped
+<!-- measured: codes = 41 -->
+
+> **Status (re-verified 2026-10-09):** the diagnostics collector, the 41 shipped
 > `TST` codes, DTCG structural validation, contrast checking, the coverage
 > classes, `report.json`, and `check --json` are **implemented**. Still specced:
 > per-diagnostic source locations, config suppressions,
@@ -29,6 +31,7 @@ Implemented:
 - **Option hygiene** — `option.*` tokens that no alias resolves to (`TST1114`) and option tokens of one type that resolve to the same value (`TST1115`; colors compared in OKLCH within a tolerance far below a visible difference, hue ignored near zero chroma, other types exactly). Both are `info` by default, once per build, with the count and first paths in the message and the full lists (`paths`) on the diagnostic in `check --json`; `check.hygiene.unusedOption` / `duplicateOption` set `info` | `warning` | `off`.
 - **Binding rules** — a malformed `bindings` rule (`TST1117`), a `required` rule whose target token is missing (`TST1118`), and two rules binding one slot, where the earlier wins (`TST1119`, `info`). See [configuration.md](configuration.md#binding-rules).
 - **Contrast** — every `<role>.on-solid`/`<role>.on-tint` pairing and `text`/`elevation.N.surface` pairing measured per mode against `check.contrast.standard` (`TST2101`; WCAG 2.1 AA default, AAA available). Accessibility is a compiler check, not a plugin.
+- **Authored values a target turns into something else** (issue #93) — an authored colour that a slot reaches and that lies outside sRGB (`TST1120`, info, once per source token: the targets that write hex or HSL clamp it, and Bootstrap and Storybook say so nowhere else; the predicate is `formatHex`'s own `clamped`, so the diagnostic and the `approximated` rows agree, and derived colours or option tokens no slot reads are out of scope); a partially authored ordered scale (`space`, `type.size`, `size.control`, `border-width`, `breakpoint`, `duration`) that the catalog defaults make wrong, either a default out of order with an authored neighbour or a group whose authored tokens are all outside the catalog's rung names (`TST1121`, warning, once per scale, compared in px with rem at `units.remBase` or in ms; one tuned rung that stays in order is silent, an empty group is already `TST1302`); and a shadcn rung that its own offsets bring to 0 or below while `radius.md` is above 0 (`TST2104`, info, from the exporter, below).
 - **Distinguishability** — the eight `palette.categorical.N` entries (`TST2102`) and the `solid` colors of `success`/`warning`/`danger`/`info` plus every role archetyped `status` (`TST2103`) must be pairwise at least ΔE<sub>OK</sub> 0.05 apart in each mode, measured as the Euclidean OKLab distance on the resolved values, with no gamut mapping, so the result is deterministic and target-independent. 0.05 is 2.5x CSS Color 4's just-noticeable difference (0.02) and stays under the derived palette's closest pair (0.082), so a derived design system never warns; the constant (`DISTINGUISHABLE_DELTA_E`) is recorded here and in the [worklog](../worklog/2026-10-09-bl-18-distinguishability.md), not configurable. Colors under it are grouped into clusters (connected components) and each cluster is one warning per mode. A pair whose two slots alias the same token (following the chain) is skipped: sharing a token is intent. `transtyle diff` does not report distinguishability regressions yet.
 
 Specced, not implemented:
@@ -62,6 +65,10 @@ Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — ca
 `TST1109` already means "a mode-scoped _layer_ targets an undeclared mode" (a token-file mistake), so the target-level mistake has its own code. A dimension narrowed to a single value by a target is a deliberate exclusion, not a loss: it produces no `dropped` coverage row, even for an exporter that never expresses that dimension. Dimensions the subset doesn't name keep all their values (and keep their `dropped` row where the exporter can't express them).
 
 `transtyle check --json` prints the full diagnostics array (plus per-target coverage) to stdout as one JSON object — human logs still go to stderr, so both can run in the same invocation without interleaving (`docs/specs/cli.md` "Behavioral contracts").
+
+## Exporter diagnostics
+
+Some findings only an exporter can make, because they depend on its target's own conventions: shadcn subtracts 4px and 2px from `--radius` for its `sm` and `md` rungs, so a 2px `radius.md` ships square `rounded-sm` and `rounded-md` (`TST2104`). An exporter returns them next to `files` and `coverage` as `diagnostics: [{ severity, code, message, hint? }]` ([plugins.md](../architecture/plugins.md#the-exporter-interface-v0-as-implemented)). Core accepts `info` and `warning` only (an exporter cannot stop a build from inside `emit`), prefixes the message with the target instance name, sets `target`, and adds them to the run's diagnostics; a malformed list is a contract violation and becomes `TST3001`. `plugin-kit` checks the same shape (`emit-diagnostics-valid`).
 
 ## Exporter failures (`TST3xxx`)
 

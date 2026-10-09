@@ -405,6 +405,11 @@ async function measure(metric) {
     return memo(metric, () => (cliSrc.match(/OFFICIAL_EXPORTERS\s*=\s*\{([\s\S]*?)\}/)?.[1].match(/^\s*['"]?[\w-]+['"]?:/gm) ?? []).length);
   }
   if (metric === 'examples') return memo(metric, () => exampleNames().length);
+  // Shipped diagnostic codes: the rows of diagnostics.md's code table, which
+  // check-docs holds equal to the codes packages/*/src emits.
+  if (metric === 'codes') {
+    return memo(metric, () => new Set(read('website/src/docs/diagnostics.md').match(/^\|\s*`TST\d{4}`/gm) ?? []).size);
+  }
   if (metric === 'demos') {
     return memo(metric, () =>
       exampleNames().reduce((n, ex) => {

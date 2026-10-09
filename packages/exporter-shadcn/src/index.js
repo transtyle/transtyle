@@ -113,9 +113,40 @@ export default {
     const shared = { vars, radius, fontSans, fontMono, ctx };
     const files = era === 'tailwind-v4' ? emitV4(shared) : emitV3(shared);
     files.push({ path: 'usage.md', contents: renderUsage(ctx, coverage, era, Boolean(normalized.modes.dark)), kind: 'doc' });
-    return { files, coverage };
+    const collapsed = radius && collapsedRungs(radius.value, era, ctx.units);
+    const diagnostics = collapsed ? [collapsed] : [];
+    return { files, coverage, diagnostics };
   },
 };
+
+/** shadcn's own radius rungs, as offsets from --radius in px (both eras write the same arithmetic). */
+const RADIUS_OFFSETS = { sm: -4, md: -2 };
+
+/**
+ * TST2104 (info): shadcn derives its smaller rungs by subtracting a fixed
+ * offset from --radius, so a small non-zero radius.md (2px, say) gives
+ * `rounded-sm` and `rounded-md` a negative radius, which browsers clamp to 0:
+ * the author asked for rounded corners and gets square ones. Never fires for
+ * radius.md = 0, where every rung at 0 is exactly what was asked. Lengths are
+ * read in px, rem at the config's `units.remBase` through ctx.units (16px for a
+ * ctx without it); any other unit is left alone.
+ */
+function collapsedRungs(value, era, units) {
+  const m = /^(\d*\.?\d+)(px|rem)$/.exec(String(value).trim());
+  if (!m) return null;
+  const px = units?.toPx(m[0]) ?? parseFloat(m[1]) * (m[2] === 'rem' ? 16 : 1);
+  if (px <= 0) return null;
+  const rungs = Object.entries(RADIUS_OFFSETS).filter(([, off]) => px + off <= 0).map(([rung]) => rung);
+  if (!rungs.length) return null;
+  const name = (rung) => (era === 'tailwind-v4' ? `--radius-${rung}` : `borderRadius.${rung}`);
+  const shown = m[2] === 'rem' ? `${value} (${+px.toFixed(3)}px)` : value;
+  return {
+    severity: 'info',
+    code: 'TST2104',
+    message: `${rungs.map(name).join(' and ')} ${rungs.length > 1 ? 'resolve' : 'resolves'} to 0 or less with radius.md = ${shown}; browsers clamp ${rungs.length > 1 ? 'them' : 'it'} to 0`,
+    hint: `shadcn rounds its sm and md rungs at radius − 4px and radius − 2px. Author radius.md above ${+(4 / (units?.remBase ?? 16)).toFixed(4)}rem (4px) to keep every rung rounded, or 0 for a square design.`,
+  };
+}
 
 // ---------- shared helpers ----------
 
