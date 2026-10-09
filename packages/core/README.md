@@ -35,7 +35,9 @@ Six phases, in order: **load** (DTCG token files, or a Tokens Studio export read
 two builds of the same input are byte-identical — there is a check in CI that proves it.
 
 Also exported: `catalog()` (every catalog slot with its type, derivation rule and inputs, as
-data — what `transtyle catalog --json` prints), `diffResolved` and `contrastRegressions` (the
+data — what `transtyle catalog --json` prints) and `isCatalogSlot(path)`, `adoption(normalized)` (the
+project's own semantic tokens, which ones no catalog slot reads, with hints — the `adoption` field of
+`transtyle check --json`), `diffResolved` and `contrastRegressions` (the
 semantic diff), `explainToken` (the provenance walk behind `transtyle explain`, as a JSON
 tree), `explainVariable` and `slotConsumers` (from a target variable to the slots it reads, and
 back, over a compile's coverage rows), `coverageSlots` (what one coverage row reads), `consumption` (which targets read each catalog

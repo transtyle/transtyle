@@ -14,6 +14,7 @@ import { reportDeprecatedReach, withMetadata, withDeprecatedSection } from './me
 import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
 import { loadContrast, checkStandard, APCA_PACKAGE } from './contrast.js';
+import { checkFalseFriends } from './adoption.js';
 import { Diagnostics } from './diagnostics.js';
 import { fillLocations } from './locations.js';
 import { nearestName } from './nearest.js';
@@ -32,7 +33,8 @@ export { diffResolved, contrastRegressions } from './diff.js';
 export { loadContrast, loadApca, CONTRAST_STANDARDS, APCA_LEVELS, APCA_BASE_ALGORITHM } from './contrast.js';
 export { explainToken, explainVariable, slotConsumers, coverageSlots } from './explain.js';
 export { deprecationsReached } from './metadata.js';
-export { catalog } from './catalog.js';
+export { catalog, isCatalogSlot } from './catalog.js';
+export { adoption } from './adoption.js';
 export { loadConfig, expandTokenFiles } from './load.js';
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
 export { consumption } from './reads.js';
@@ -170,6 +172,8 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   }
 
   runChecks(normalized, config, diagnostics, contrast.check);
+  // TST1124: a binding that reads a slot's word with another ecosystem's meaning.
+  checkFalseFriends(normalized, diagnostics);
 
   // derivation.require: listed slots must be authored (or aliased: a binding is
   // a choice too), not derived, defaulted or absent. Color roles require their

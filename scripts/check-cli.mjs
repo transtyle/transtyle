@@ -1803,6 +1803,110 @@ try {
   }
 }
 
+// ---------- #61: the adoption report and false-friend bindings (TST1124) ----------
+// `check` prints the project's own semantic vocabulary after the diagnostics
+// and `check --json` carries it as `adoption`. Bound follows the alias chain,
+// a custom role is listed apart, and an unbound token gets hints: the slots
+// set to the same value, or the slot whose name it shadows. The examples are
+// the golden cases (GOV.UK has one unbound token, Cathode none, Acme no
+// custom vocabulary at all); two small fixtures cover the rest.
+{
+  const checkJson = (cwd) => {
+    const r = run(['check', 'css-variables', '--cwd', cwd, '--json']);
+    let j = null;
+    try { j = JSON.parse(r.stdout); } catch { /* reported by the caller */ }
+    return { r, j };
+  };
+  const govuk = checkJson(join(root, 'examples/govuk'));
+  const a = govuk.j?.adoption;
+  expect('adoption: govuk --json counts 14 custom tokens, 13 bound', a?.custom === 14 && a?.bound === 13, JSON.stringify(a));
+  expect('adoption: govuk lists govuk.focus-text as the one unbound token', a?.unbound.length === 1 && a.unbound[0].path === 'semantic.color.govuk.focus-text', JSON.stringify(a?.unbound));
+  const [hint] = a?.unbound[0]?.hints ?? [];
+  expect('adoption: govuk.focus-text is hinted to text.base, same value, bound via govuk.text',
+    hint?.slot === 'semantic.color.text.base' && hint.match === 'value' && hint.deltaE === 0 && hint.binding === 'bound' && hint.via === 'semantic.color.govuk.text', JSON.stringify(hint));
+  const quiet = run(['check', 'css-variables', '--cwd', join(root, 'examples/govuk'), '--quiet']);
+  expect('adoption: --quiet prints no adoption block', quiet.code === 0 && !quiet.out.includes('adoption  '), quiet.out);
+  expect('adoption: govuk prints the block with the hint', govuk.r.out.includes('adoption  14 custom tokens, 13 bound, 1 unbound') && govuk.r.out.includes('↳ same value as text.base (bound via govuk.text)'), govuk.r.out);
+
+  const cathode = checkJson(join(root, 'examples/cathode'));
+  expect('adoption: cathode has 7 custom tokens, all bound, and the crt-amber role',
+    cathode.j?.adoption?.custom === 7 && cathode.j.adoption.unbound.length === 0 && cathode.j.adoption.roles.map((x) => x.role).join() === 'crt-amber', JSON.stringify(cathode.j?.adoption));
+  expect('adoption: cathode prints "7 custom tokens, all bound; 1 custom role (crt-amber)"', cathode.r.out.includes('adoption  7 custom tokens, all bound; 1 custom role (crt-amber)'), cathode.r.out);
+
+  const acme = checkJson(join(root, 'examples/acme'));
+  expect('adoption: acme has no custom vocabulary and prints no block', acme.j?.adoption?.custom === 0 && !acme.r.out.includes('\nadoption  '), acme.r.out);
+
+  for (const [name, res] of [['acme', acme], ['cathode', cathode], ['govuk', govuk], ['carbon', checkJson(join(root, 'examples/carbon'))]]) {
+    expect(`false friends: ${name} raises no TST1124`, res.j && !res.j.diagnostics.some((d) => d.code === 'TST1124'), JSON.stringify(res.j?.diagnostics.filter((d) => d.code === 'TST1124')));
+  }
+
+  // A custom token at a slot's name with its middle part left out
+  // (`semantic.color.surface` for `elevation.0.surface`) is named, whatever
+  // its colour: a dark #101114 page is nowhere near the default white canvas.
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-adoption-'));
+  try {
+    writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify({
+      tokens: ['tokens/ds.tokens.json'],
+      modes: { 'color-scheme': { values: ['light'], default: 'light' } },
+      targets: { 'css-variables': { output: 'dist/css-variables' } },
+    }));
+    const tokens = (semantic) => JSON.stringify({ semantic: { color: { $type: 'color', primary: { solid: { $value: '#3b5bdb' } }, text: { base: { $value: '#e9ecef' } }, ...semantic } } });
+    const write = (semantic) => {
+      mkdirSync(join(dir, 'tokens'), { recursive: true });
+      writeFileSync(join(dir, 'tokens/ds.tokens.json'), tokens(semantic));
+    };
+    write({ surface: { $value: '#101114' } });
+    let res = checkJson(dir);
+    const surface = res.j?.adoption?.unbound;
+    expect('adoption: semantic.color.surface is unbound with a "did you mean elevation.0.surface" hint',
+      surface?.length === 1 && surface[0].path === 'semantic.color.surface' && surface[0].hints[0]?.match === 'name' && surface[0].hints[0].slot === 'semantic.color.elevation.0.surface', JSON.stringify(surface));
+    expect('adoption: the name hint is printed', res.r.out.includes('↳ did you mean to author elevation.0.surface (or 5 other slots ending in .surface)?'), res.r.out);
+
+    // Bound through another custom token: slot → my.a → my.b binds both.
+    write({ elevation: { 0: { surface: { $value: '{semantic.color.my.a}' } } }, my: { a: { $value: '{semantic.color.my.b}' }, b: { $value: '#ffffff' } } });
+    res = checkJson(dir);
+    expect('adoption: a token reached through another custom token is bound', res.j?.adoption?.custom === 2 && res.j.adoption.bound === 2, JSON.stringify(res.j?.adoption));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+
+  // False friends: the scaffold's blue brand with secondary.solid (or
+  // accent.solid) bound to a token named for the slot. Only shadcn's meaning,
+  // a near-white gray, is noted; Bootstrap's $secondary gray, a real second
+  // brand colour and a gray whose name isn't the slot's word stay silent.
+  const ff = mkdtempSync(join(tmpdir(), 'transtyle-check-false-friend-'));
+  try {
+    run(['init', 'ff-ds', '--cwd', ff, '--yes']);
+    const tp = join(ff, 'tokens/brand.tokens.json');
+    const scaffold = readFileSync(tp, 'utf8');
+    const bindTo = (role, name, value) => {
+      const t = JSON.parse(scaffold);
+      t.option.color[name] = { $value: value };
+      t.semantic.color[role] = { solid: { $value: `{option.color.${name}}` } };
+      writeFileSync(tp, JSON.stringify(t, null, 2));
+      const res = checkJson(ff);
+      return { res, notes: (res.j?.diagnostics ?? []).filter((d) => d.code === 'TST1124') };
+    };
+    let { res, notes } = bindTo('secondary', 'secondary', 'oklch(0.97 0 0)');
+    expect('false friend: secondary bound to shadcn\'s gray gets one TST1124 info, exit 0',
+      res.r.code === 0 && notes.length === 1 && notes[0].severity === 'info' && notes[0].path === 'semantic.color.secondary.solid' && notes[0].message.startsWith('secondary.solid is bound to option.color.secondary, ΔE 0.020 from neutral.tint'), JSON.stringify(notes) + res.r.out);
+    expect('false friend: the note points at the binding in the token file', notes[0]?.file === 'tokens/brand.tokens.json' && notes[0].line > 0, JSON.stringify(notes[0]));
+    for (const [label, role, name, value] of [
+      ['Bootstrap\'s $secondary gray', 'secondary', 'secondary', '#6c757d'],
+      ['a real second brand colour', 'secondary', 'secondary', '#e8590c'],
+      ['shadcn\'s gray under a name without the word', 'secondary', 'gray-100', 'oklch(0.97 0 0)'],
+      ['a real accent colour', 'accent', 'accent', '#e8590c'],
+    ]) {
+      ({ notes } = bindTo(role, name, value));
+      expect(`false friend: ${label} stays silent`, notes.length === 0, JSON.stringify(notes));
+    }
+    ({ notes } = bindTo('accent', 'accent', 'oklch(0.97 0 0)'));
+    expect('false friend: accent bound to shadcn\'s gray wash gets TST1124', notes.length === 1 && notes[0].message.startsWith('accent.solid is bound to option.color.accent'), JSON.stringify(notes));
+  } finally {
+    rmSync(ff, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
