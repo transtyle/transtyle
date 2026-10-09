@@ -10,21 +10,24 @@ Transtyle is designed to be operated by AI agents as a first-class use case — 
 
 ## Why the design already fits agents
 
-| Property                            | Why it matters to an agent                                                                                                           |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Deterministic builds**            | Same inputs → byte-identical outputs. An agent can reason about cause and effect; a diff means _its_ change did it.                  |
-| **Config is data**                  | The entire project state is JSON (manifest + DTCG token files). No code execution needed to read, write, or validate a project.      |
-| **Stable diagnostic codes**         | `TST1104` means the same thing forever. Agents can pattern-match remediation instead of parsing prose.                               |
-| **Stable exit codes**               | 0 / 1 / 2 with documented meaning; stderr for logs. Scriptable without heuristics.                                                   |
-| **`report.json`**                   | Schema-versioned coverage + provenance for every emitted variable — the build explains itself in JSON.                               |
-| **`check` = build minus emit**      | Agents can validate hypothetical states cheaply and safely before writing anything.                                                  |
-| **Authored-always-wins derivation** | An agent can make minimal edits with bounded blast radius: authoring one token changes that token and its derivatives, nothing else. |
+| Property                            | Why it matters to an agent                                                                                                              |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Deterministic builds**            | Same inputs → byte-identical outputs. An agent can reason about cause and effect; a diff means _its_ change did it.                     |
+| **Config is data**                  | The entire project state is JSON (manifest + DTCG token files). No code execution needed to read, write, or validate a project.         |
+| **Stable diagnostic codes**         | `TST1104` means the same thing forever. Agents can pattern-match remediation instead of parsing prose.                                  |
+| **Stable exit codes**               | 0 / 1 / 2 with documented meaning; stderr for logs. Scriptable without heuristics.                                                      |
+| **`report.json`**                   | Schema-versioned coverage + provenance for every emitted variable — the build explains itself in JSON.                                  |
+| **`transtyle catalog --json`**      | Every slot exporters bind to, with its type, the rule that fills it and that rule's inputs — the vocabulary as data, no project needed. |
+| **`check` = build minus emit**      | Agents can validate hypothetical states cheaply and safely before writing anything.                                                     |
+| **Authored-always-wins derivation** | An agent can make minimal edits with bounded blast radius: authoring one token changes that token and its derivatives, nothing else.    |
 
 ## The agent workflow
 
 The same loop a careful human uses, and it's fully machine-executable:
 
 ```bash
+# 0. Learn the vocabulary: every slot, its type, how it derives
+npx transtyle catalog --json
 # 1. Author or edit tokens (plain JSON, schema known)
 # 2. Validate without side effects
 npx transtyle check          # exit code + coded diagnostics on stderr

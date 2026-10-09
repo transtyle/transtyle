@@ -33,8 +33,10 @@ Six phases, in order: **load** (DTCG token files) → **normalize** (one canonic
 **report**. Nothing is random and nothing depends on the clock or the filesystem order, so
 two builds of the same input are byte-identical — there is a check in CI that proves it.
 
-Also exported: `diffResolved` and `contrastRegressions` (the semantic diff), `explainToken`
-(the provenance walk behind `transtyle explain`, as a JSON tree), `Diagnostics`,
+Also exported: `catalog()` (every catalog slot with its type, derivation rule and inputs, as
+data — what `transtyle catalog --json` prints), `diffResolved` and `contrastRegressions` (the
+semantic diff), `explainToken` (the provenance walk behind `transtyle explain`, as a JSON
+tree), `Diagnostics`,
 and the colour module — `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
 `mix` — which is OKLCH-native and has no dependencies. `makeUnits(config)` builds the `ctx.units` helpers
 (`toPx`, `toRem`, `remBase`) exporters get, from the config's `units.remBase`.

@@ -34,6 +34,7 @@ npx transtyle build              # compile every configured target
 | `check`           | The whole pipeline without emitting: validation, contrast, coverage                   |
 | `explain <slot>`  | Why one token has the value it has, rule by rule, with provenance                     |
 | `diff [ref]`      | Semantic diff of the resolved graph against a git ref, including contrast regressions |
+| `catalog`         | Every catalog slot with its type and derivation rule; `--json` for tools              |
 
 `build` and `check` exit non-zero on error; `diff` uses `git diff`-style exit codes. Every
 command takes `--json` where a machine might be reading, and diagnostics carry stable

@@ -3,7 +3,8 @@
  * Acceptance check for the role-grid catalog revision
  * (docs/plan/catalog-revision.md T2). Compiles the Acme example directly
  * through @transtyle/core (no exporter needed) and asserts:
- *  (a) every documented grid/ladder/content slot exists in both modes;
+ *  (a) every slot the catalog says a rule fills exists in both modes, and
+ *      every slot the engine fills is in the catalog (catalog() ⇄ derive.js);
  *  (b) a frozen set of spot-check hex values, hand-verified against the
  *      Phase 0 Bootstrap fixture, match exactly — proving the promoted
  *      exporter conventions (tint/outline/on-tint) reproduce the shipped
@@ -23,38 +24,23 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compile } from '@transtyle/core';
-import { formatHex } from '@transtyle/core';
+import { formatHex, catalog } from '@transtyle/core';
 
 // A derivation-only stand-in for any exporter — permissive optionsSchema so it
 // accepts whatever options the example configs carry (this test exercises the
 // engine, not option validation; that's scripts/check-schemas.mjs's job).
 const loadExporter = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
 
-const REQUIRED_SLOTS = [
-  // role grid, spot-checked on primary (every role gets the same cell set)
-  'semantic.color.primary.solid', 'semantic.color.primary.solid-hover', 'semantic.color.primary.solid-active',
-  'semantic.color.primary.solid-selected', 'semantic.color.primary.tint', 'semantic.color.primary.tint-hover',
-  'semantic.color.primary.tint-active', 'semantic.color.primary.tint-selected', 'semantic.color.primary.outline',
-  'semantic.color.primary.outline-hover', 'semantic.color.primary.on-solid', 'semantic.color.primary.on-tint',
-  'semantic.color.primary.text', 'semantic.color.primary.text-hover', 'semantic.color.primary.text-active',
-  'semantic.color.primary.text-strong',
-  // elevation ladder
-  'semantic.color.elevation.0.surface', 'semantic.color.elevation.1.surface', 'semantic.color.elevation.2.surface',
-  'semantic.color.elevation.3.surface', 'semantic.color.elevation.4.surface', 'semantic.color.elevation.5.surface',
-  'semantic.color.elevation.1.shadow', 'semantic.color.elevation.2.shadow', 'semantic.color.elevation.3.shadow', 'semantic.color.elevation.4.shadow',
-  'semantic.color.scrim',
-  // content hierarchy
-  'semantic.color.text.strong', 'semantic.color.text.base', 'semantic.color.text.muted',
-  'semantic.color.text.subtle', 'semantic.color.text.disabled', 'semantic.color.text.inverse',
-  'semantic.color.link.base', 'semantic.color.link.hover', 'semantic.color.link.visited',
-  'semantic.color.border', 'semantic.color.ring',
-  // scales
-  'semantic.radius.none', 'semantic.radius.control', 'semantic.radius.field', 'semantic.radius.container',
-  'semantic.space.0', 'semantic.space.24', 'semantic.size.control.md', 'semantic.border-width.thin',
-  'semantic.breakpoint.xs', 'semantic.z.modal', 'semantic.type.size.md', 'semantic.type.weight.regular',
-  'semantic.type.leading.normal', 'semantic.type.tracking.normal', 'semantic.type.role.body.md',
-  'semantic.duration.normal', 'semantic.easing.standard',
-];
+// (a) is the catalog itself (core's catalog(), read off a probe compile of the
+// engine — see packages/core/src/catalog.js), not a hand-kept list: every slot
+// a rule fills must resolve on Acme in both modes, and every slot the engine
+// fills on Acme must be in the catalog, so a new rule in derive.js cannot land
+// without `transtyle catalog` knowing it. Authored-only slots (primary.solid,
+// border, radius.md, the fonts, tooltip.max-width) have no rule to
+// check; Acme authoring them is the examples' business.
+const CATALOG = catalog();
+const REQUIRED_SLOTS = CATALOG.slots.filter((s) => s.kind !== 'authored-only').map((s) => s.path);
+const CATALOG_PATHS = new Set(CATALOG.slots.map((s) => s.path));
 
 // Frozen spot values — hand-verified against examples/acme/expected/bootstrap/* this session.
 const FROZEN_HEX = {
@@ -100,6 +86,16 @@ async function main() {
     if (!map) { errors.push(`mode "${mode}" missing`); continue; }
     for (const slot of REQUIRED_SLOTS) {
       if (map.get(slot)?.value === undefined) errors.push(`${mode}: missing slot ${slot}`);
+    }
+    // The other direction: a slot DERIVE filled (derived or defaulted) that the
+    // catalog doesn't list. A custom archetyped role's grid is the project's
+    // own vocabulary, not the catalog's (Acme has none today).
+    const customRole = (path) => [...normalized.roleArchetypes.keys()].some((r) => path.startsWith(`semantic.color.${r}.`));
+    for (const [slot, entry] of map) {
+      const filled = ['derived', 'defaulted'].includes(entry.provenance?.kind);
+      if (filled && !CATALOG_PATHS.has(slot) && !customRole(slot)) {
+        errors.push(`${mode}: the engine fills ${slot} but catalog() does not list it — packages/core/src/catalog.js probes derive.js, so check what the probe authors`);
+      }
     }
   }
 
@@ -188,7 +184,7 @@ async function main() {
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log(`✔ check-grid: ${REQUIRED_SLOTS.length} catalog slots present in both modes; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes; ${BOUND.length} roles bound to a derived slot get theirs too, a late-derived binding raises TST1205 and a dangling one TST1105 alone; radius.none derives to 0 and an authored one wins`);
+  console.log(`✔ check-grid: all ${REQUIRED_SLOTS.length} rule-filled catalog slots present in both modes and nothing filled outside the catalog; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes; ${BOUND.length} roles bound to a derived slot get theirs too, a late-derived binding raises TST1205 and a dangling one TST1105 alone; radius.none derives to 0 and an authored one wins`);
 }
 
 main();

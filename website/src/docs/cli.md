@@ -33,7 +33,7 @@ The pipeline minus EMIT — same code path, guaranteed to agree with real builds
 
 ### `--json`
 
-`check` only. Prints the full diagnostics array and per-target coverage to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
+`check`, `diff` and `catalog`. For `check`, prints the full diagnostics array and per-target coverage to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
 
 ```bash
 npx transtyle check --json
@@ -90,6 +90,66 @@ That's the difference between `check` ("contrast is bad") and `diff` ("_this cha
 
 Exits `0` when the compiled themes are identical, `1` when there are changes (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling, including a `contrastRegressions` array. Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
 
+### `transtyle catalog [--json]`
+
+Lists every slot of the catalog — the vocabulary exporters bind to — with its DTCG type, the rule that fills it when you don't author it, that rule's inputs, and the optional anchor it needs. It reads no project (run it anywhere; `--cwd` is ignored): the catalog belongs to the language and the rule pack, not to a design system.
+
+<!-- measured: catalog.slots = 259 -->
+<!-- measured: catalog.semantic = 252 -->
+<!-- measured: catalog.component = 7 -->
+
+```bash
+npx transtyle catalog
+#
+# Transtyle catalog — IR spec v0-draft, rule pack standard@1
+# 259 slots: 252 semantic, 7 component (168 derived, 84 defaulted, 7 authored only)
+# ...
+# semantic · radius (8)
+#   semantic.radius.full   dimension  derived by radius-scale(full)  (needs semantic.radius.md)
+#   semantic.radius.md     dimension  author it
+```
+
+`--json` prints the same catalog for tools, one object on stdout. The output is deterministic — the same bytes on every run and machine — so it can be committed, diffed, or cached:
+
+```json
+{
+  "irSpec": "v0-draft",
+  "rulePack": "standard@1",
+  "counts": {
+    "slots": 259,
+    "semantic": 252,
+    "component": 7,
+    "derived": 168,
+    "defaulted": 84,
+    "authoredOnly": 7
+  },
+  "roles": ["primary", "secondary", "..."],
+  "cells": ["solid", "solid-hover", "..."],
+  "slots": [
+    {
+      "path": "semantic.color.primary.on-tint",
+      "tier": "semantic",
+      "group": "role",
+      "type": "color",
+      "kind": "derived",
+      "rule": "contrast-pick(subtle)",
+      "inputs": ["semantic.color.primary.tint"],
+      "requires": [],
+      "role": "primary",
+      "cell": "on-tint"
+    }
+  ]
+}
+```
+
+- `kind` is `derived` (a rule computes it from other slots), `defaulted` (a catalog default: a constant, or a projection of other defaults like `type.role.*`) or `authored-only` (no rule: `primary.solid`, `border`, `radius.md`, the fonts, `component.tooltip.max-width`). Authored always wins, whatever the kind.
+- `rule` and `inputs` are what [`transtyle explain`](#transtyle-explain-slot---mode-name) prints for an unauthored slot, with full paths; `rule` is `null` for an authored-only slot.
+- `requires` names the optional anchor without which the slot doesn't exist (the radius family and the component radii need `radius.md`). `semantic.color.primary.solid` is required by everything and never listed.
+- `role` and `cell` are set on role-grid slots only. A custom role that declares an [archetype](/docs/language/#elevation-content-and-the-rest) gets the same `cells` as a built-in one.
+- Slots are sorted by path, numeric segments as numbers.
+
+The same object is `catalog()` in `@transtyle/core`.
+
 ### `transtyle init [name]`
 
 Scaffolds `transtyle.config.json` + `tokens/brand.tokens.json` (with a `$schema` line for [editor autocomplete](/docs/configuration/#token-files-in-your-editor); a minimal example: one brand color, elevation levels 0–1, text, border, radius, fonts — each with a `$description: "TODO: ..."` placeholder) and a `css-variables` target so the first build works immediately. Refuses (exit 2) if a config already exists.
@@ -131,4 +191,4 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle import <source>`                         | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files           |
 | `transtyle preview`                                 | Local themed preview site across all targets                                                      |
 
-Programmatic use: `build`, `check`, `diff` and `explain` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only.
+Programmatic use: `build`, `check`, `diff`, `explain` and `catalog` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `catalog()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only.

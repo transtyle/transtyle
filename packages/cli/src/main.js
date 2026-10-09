@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * transtyle CLI (docs/specs/cli.md). Commands: build, check, explain, init, add.
+ * transtyle CLI (docs/specs/cli.md). Commands: build, check, explain, diff, catalog, init, add.
  * Human logs → stderr; exit codes: 0 ok, 1 diagnostics ≥ fail-on, 2 usage error.
  */
 
@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, diffResolved, contrastRegressions, explainToken, formatColor, formatHex } from '@transtyle/core';
+import { compile, catalog, diffResolved, contrastRegressions, explainToken, formatColor, formatHex } from '@transtyle/core';
 
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -78,12 +78,13 @@ Usage:
   transtyle check [target...]     run the pipeline without writing files
   transtyle explain <slot>        show a resolved slot's value, provenance, and rule inputs
   transtyle diff [ref]            semantic diff of the resolved graph vs a git ref (default: HEAD), with per-target impact
+  transtyle catalog               list every catalog slot: type, derivation rule, inputs (no project needed)
   transtyle init [name]           scaffold transtyle.config.json + tokens/tokens.json
   transtyle add <target>          add a target to transtyle.config.json
 Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
   --mode <name>                   mode to resolve for (explain only; default: the DS's default mode)
-  --json                          check/diff only: also print a machine-readable report to stdout
+  --json                          check/diff/catalog only: print a machine-readable report to stdout
 `;
 
 /** TRANSTYLE_DEBUG=1: print the stack of a crashed exporter (until `--verbose`, #5, exists). */
@@ -102,7 +103,7 @@ function printDiagnostic(d) {
   if (d.stack) console.error(d.stack.split('\n').map((l) => `    ${l}`).join('\n'));
   if (d.hint) console.error(`  ↳ ${d.hint}`);
 }
-const COMMANDS = ['build', 'check', 'explain', 'diff', 'init', 'add'];
+const COMMANDS = ['build', 'check', 'explain', 'diff', 'catalog', 'init', 'add'];
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -114,6 +115,7 @@ async function main() {
 
   if (args.command === 'explain') return cmdExplain(args);
   if (args.command === 'diff') return cmdDiff(args);
+  if (args.command === 'catalog') return cmdCatalog(args);
   if (args.command === 'init') return cmdInit(args);
   if (args.command === 'add') return cmdAdd(args);
   return cmdBuildOrCheck(args);
@@ -438,6 +440,44 @@ function printDiff(ref, diff, impact, a11y = []) {
     }
     if (regressed.length) {
       console.error(`\n  ${regressed.length} pair${regressed.length === 1 ? '' : 's'} passed before this change and fail${regressed.length === 1 ? 's' : ''} after it.`);
+    }
+  }
+}
+
+// ---------- catalog ----------
+
+/**
+ * The semantic contract as data (core's catalog(), docs/specs/cli.md). Needs
+ * no project: the catalog belongs to the IR spec and the rule pack, so it
+ * reads no config and ignores --cwd. Requested data, so stdout either way.
+ */
+function cmdCatalog(args) {
+  if (args.targets.length) {
+    console.error(`✖ transtyle catalog takes no arguments (got: ${args.targets.join(' ')})\n  Usage: transtyle catalog [--json]`);
+    process.exit(2);
+  }
+  const cat = catalog();
+  if (args.json) {
+    console.log(JSON.stringify(cat, null, 2));
+    return;
+  }
+  const { counts } = cat;
+  console.log(`Transtyle catalog — IR spec ${cat.irSpec}, rule pack ${cat.rulePack}`);
+  console.log(`${counts.slots} slots: ${counts.semantic} semantic, ${counts.component} component (${counts.derived} derived, ${counts.defaulted} defaulted, ${counts.authoredOnly} authored only)`);
+  const groups = new Map();
+  for (const s of cat.slots) {
+    const key = `${s.tier} · ${s.group}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(s);
+  }
+  for (const [key, slots] of groups) {
+    console.log(`\n${key} (${slots.length})`);
+    const width = Math.max(...slots.map((s) => s.path.length));
+    const typeWidth = Math.max(...slots.map((s) => s.type.length));
+    for (const s of slots) {
+      const how = s.kind === 'authored-only' ? 'author it' : `${s.kind} by ${s.rule}`;
+      const needs = s.requires.length ? `  (needs ${s.requires.join(', ')})` : '';
+      console.log(`  ${s.path.padEnd(width)}  ${s.type.padEnd(typeWidth)}  ${how}${needs}`);
     }
   }
 }

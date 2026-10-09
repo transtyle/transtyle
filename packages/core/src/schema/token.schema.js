@@ -6,11 +6,10 @@
  * website/public/schemas/tokens/v0.json. scripts/check-schemas.mjs proves the
  * published file is current and that every example's token files validate.
  *
- * The catalog is not hand-listed here. `catalogSlots()` asks the compiler: it
- * compiles a minimal in-memory design system (the few slots DERIVE cannot
- * invent) and reads back every slot it materializes, plus the slots that are
- * authored-only by definition (IR constants). A slot added to DERIVE or to the
- * IR therefore shows up in the schema on the next `npm run gen:schemas`.
+ * The catalog is not hand-listed here: `catalogSlots()` reads core's
+ * `catalog()` (catalog.js), a probe compile of the engine that also lists the
+ * authored-only anchors. A slot added to DERIVE therefore shows up in the
+ * schema on the next `npm run gen:schemas`.
  *
  * Shape: DTCG-structural (`$value`, `$type`, `$description`, `$deprecated`,
  * `$extensions`), with one object schema per catalog group. Groups where users
@@ -21,10 +20,8 @@
  * `$value`: a different slot from `.solid`) is flagged. A misspelled *role*
  * under `semantic.color` is indistinguishable from a custom role and cannot be.
  */
-import { COLOR_ROLES, GRID_CELLS, TEXT_RUNGS, COMPONENT_CATALOG, ROLE_ARCHETYPES } from '@transtyle/ir';
-import { Diagnostics } from '../diagnostics.js';
-import { normalize } from '../normalize.js';
-import { derive } from '../derive.js';
+import { ROLE_ARCHETYPES } from '@transtyle/ir';
+import { catalog } from '../catalog.js';
 
 /** The DTCG `$type` values the loader understands (load.js DTCG_TYPES). */
 const DTCG_TYPES = [
@@ -35,37 +32,9 @@ const DTCG_TYPES = [
 /** Groups under which users add their own tokens: never closed. */
 const OPEN_GROUPS = new Set(['semantic', 'semantic.color', 'semantic.font', 'component']);
 
-const MINIMAL_ANCHORS = {
-  semantic: {
-    color: {
-      primary: { solid: { $type: 'color', $value: '#0d6efd' } },
-      elevation: { 0: { surface: { $type: 'color', $value: '#ffffff' } } },
-    },
-    radius: { md: { $type: 'dimension', $value: '0.375rem' } },
-    font: {
-      sans: { $type: 'fontFamily', $value: ['sans-serif'] },
-      mono: { $type: 'fontFamily', $value: ['monospace'] },
-      display: { $type: 'fontFamily', $value: ['sans-serif'] },
-    },
-  },
-};
-
-/** Every slot path of the built-in catalog, sorted. */
+/** Every slot path of the built-in catalog, in code-unit order (the published file's order). */
 export function catalogSlots() {
-  const diagnostics = new Diagnostics();
-  const config = { modes: { 'color-scheme': { values: ['light'], default: 'light' } }, derivation: { rules: 'standard@1' } };
-  const normalized = normalize([{ file: 'catalog', tree: MINIMAL_ANCHORS }], config, diagnostics);
-  derive(normalized, config, diagnostics);
-  const slots = new Set(
-    [...normalized.modes[normalized.defaultMode].keys()].filter((k) => /^(semantic|component)\./.test(k)),
-  );
-  for (const role of COLOR_ROLES) for (const cell of GRID_CELLS) slots.add(`semantic.color.${role}.${cell}`);
-  for (const rung of TEXT_RUNGS) slots.add(`semantic.color.text.${rung}`);
-  slots.add('semantic.color.border');
-  for (const [group, members] of Object.entries(COMPONENT_CATALOG)) {
-    for (const member of Object.keys(members)) slots.add(`component.${group}.${member}`);
-  }
-  return [...slots].sort();
+  return catalog().slots.map((s) => s.path).sort();
 }
 
 /** Nested trie of slot paths: { children: Map, slot: boolean }. */
