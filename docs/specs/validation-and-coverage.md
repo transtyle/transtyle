@@ -101,10 +101,10 @@ A throw inside an exporter is a diagnostic, not a crash of the whole run (`packa
 
 | Code      | Severity | Meaning                                                                                                              | Remediation                                                                                                    |
 | --------- | -------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `TST3001` | error    | An exporter threw in `emit`; the message names the target instance. Its `report.json` lists no files and no coverage | An exporter bug: re-run with `TRANSTYLE_DEBUG=1` for the stack. The other targets are built as usual           |
+| `TST3001` | error    | An exporter threw in `emit`; the message names the target instance. Its `report.json` lists no files and no coverage | An exporter bug: re-run with `--verbose` for the stack. The other targets are built as usual                   |
 | `TST3002` | error    | An exporter could not be loaded; the message names the target instance                                               | Install the package in the project, or fix the target's `exporter` field. The other targets are built as usual |
 
-These errors do not stop later targets (the "never emit with errors present" guard counts pipeline errors only), and they go through `check.failOn` and exit 1 like every other error. The stack is attached to the diagnostic (`stack`, also in `report.json`) only with `TRANSTYLE_DEBUG=1`, so default output stays deterministic. `--verbose` ([issue #5](https://github.com/transtyle/transtyle/issues/5)) will replace the variable.
+These errors do not stop later targets (the "never emit with errors present" guard counts pipeline errors only), and they go through `check.failOn` and exit 1 like every other error. The stack is attached to the diagnostic (`stack`, also in `report.json`) only with `--verbose` (or `TRANSTYLE_DEBUG=1`, the same switch), so default output stays deterministic.
 
 ## Coverage report
 

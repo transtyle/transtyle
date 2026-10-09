@@ -27,6 +27,26 @@ npx transtyle build shadcn
 
 Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, diagnostics, file list). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
 
+### `--out <dir>`, `--dry-run`
+
+`build` only. `--out <dir>` writes every target to `<dir>/<instance name>` instead of its configured `output`, `report.json` included (a relative `<dir>` is relative to your shell, like `--cwd`). A Storybook target's imports of its sibling stylesheets follow the redirect. `--dry-run` runs the whole build and stops before writing: it prints the coverage and the files it **would** write, `report.json` and sizes included, and leaves the disk untouched. Both compose, and a dry run fails exactly like the real build would (exit 1 on a diagnostic at or above `failOn`), so it works as a CI gate.
+
+```bash
+npx transtyle build --dry-run --out /tmp/themes
+#
+# shadcn  42% native · 53% derived · 3% approximated · 3% dropped
+#   ↳ would write ../../tmp/themes/shadcn/globals.transtyle.css
+#   ↳ would write ../../tmp/themes/shadcn/report.json
+#
+# ✔ dry run complete, nothing written
+```
+
+### `--quiet`, `--verbose`, `NO_COLOR`
+
+`build` and `check`. `--quiet` prints only what explains a failure: errors, warnings when `check.failOn` is `warning`, and the `✖ failed` line. A successful run prints nothing on stderr, and what you asked for on stdout (`check --json`) is unchanged. `--verbose` adds, per target, the exporter, its options, the output directory, the row counts and each file's size, and prints the stack of a crashed exporter or a fatal error; `TRANSTYLE_DEBUG=1` is the same switch. The two together exit 2. Neither is accepted by the commands whose output is the answer (`explain`, `diff`, `catalog`, `bindings`).
+
+The CLI never colors its output, so `NO_COLOR` changes nothing there; it is honored by contract. The one place color is possible is the chip `init` prints on a terminal, which `NO_COLOR` turns off.
+
 ### `transtyle check [instance...]`
 
 The pipeline minus EMIT — same code path, guaranteed to agree with real builds. Runs schema validation, alias/cycle detection, mode validation, WCAG contrast checks, and coverage computation, writing nothing.

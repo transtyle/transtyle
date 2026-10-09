@@ -1168,8 +1168,104 @@ try {
   }
 }
 
+// ---------- #5: --out, --dry-run, --quiet, --verbose, NO_COLOR ----------
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-flags-'));
+  const outer = mkdtempSync(join(tmpdir(), 'transtyle-check-flags-out-'));
+  try {
+    run(['init', 'flags-ds', '--cwd', dir, '--targets', 'shadcn,storybook']);
+    const cp = join(dir, 'transtyle.config.json');
+    const cfg = JSON.parse(readFileSync(cp, 'utf8'));
+    cfg.targets.storybook = { ...cfg.targets.storybook, options: { previewTargets: ['shadcn'] } };
+    cfg.targets.shadcn.output = 'src/theme'; // a configured output --out must replace
+    writeFileSync(cp, JSON.stringify(cfg, null, 2));
+    const runIn = (args, env = {}) => {
+      const r = spawnSync('node', [cli, ...args, '--cwd', dir], { encoding: 'utf8', env: { ...process.env, TRANSTYLE_DEBUG: '', ...env } });
+      return { code: r.status ?? 1, out: (r.stdout ?? '') + (r.stderr ?? ''), stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
+    };
+    const ESC = String.fromCharCode(27);
+
+    // --dry-run: the build's output, minus the writing.
+    let r = runIn(['build', '--dry-run']);
+    expect('--dry-run: exit 0', r.code === 0, r.out);
+    expect('--dry-run: lists the files it would write, report.json included', r.out.includes('would write src/theme/globals.transtyle.css') && r.out.includes('would write dist/storybook/report.json'), r.out);
+    expect('--dry-run: says nothing was written', r.out.includes('dry run complete, nothing written'), r.out);
+    expect('--dry-run: writes nothing (no output directory, no staging leftovers)', !existsSync(join(dir, 'src')) && !existsSync(join(dir, 'dist')), r.out);
+    r = runIn(['build', '--dry-run', 'nope']);
+    expect('--dry-run: still fails like build on an unknown target (exit 1)', r.code === 1 && r.out.includes('TST1301'), `exit ${r.code}: ${r.out}`);
+
+    // --out: <dir>/<target name> for every target, siblings redirected too.
+    r = runIn(['build', '--out', join(outer, 'themes')]);
+    expect('--out: exit 0', r.code === 0, r.out);
+    expect('--out: every target lands in <dir>/<target name>, with its report.json',
+      existsSync(join(outer, 'themes/shadcn/globals.transtyle.css')) && existsSync(join(outer, 'themes/shadcn/report.json')) && existsSync(join(outer, 'themes/storybook/preview.transtyle.ts')), r.out);
+    expect('--out: nothing is written to the configured output', !existsSync(join(dir, 'src')) && !existsSync(join(dir, 'dist')), r.out);
+    const preview = readFileSync(join(outer, 'themes/storybook/preview.transtyle.ts'), 'utf8');
+    expect('--out: the Storybook import points at the redirected sibling', /import '\.\.\/shadcn\/globals\.transtyle\.css'/.test(preview), preview);
+    r = runIn(['build', '--out', 'rel-out', '--dry-run']);
+    expect('--out + --dry-run: lists the redirected paths (relative to the shell, not --cwd)', r.out.includes('rel-out') || r.out.includes('/rel-out'), r.out);
+    r = runIn(['build', '--out']);
+    expect('--out: a missing value exits 2', r.code === 2 && r.out.includes('--out needs a directory'), r.out);
+    r = runIn(['build', '--out', '--quiet']);
+    expect('--out: a following flag is not a value (exit 2)', r.code === 2, r.out);
+    for (const flag of ['--dry-run', '--out']) {
+      r = runIn(['check', flag, ...(flag === '--out' ? [join(outer, 'x')] : [])]);
+      expect(`${flag}: refused on check (exit 2)`, r.code === 2 && r.out.includes('applies to `transtyle build`'), r.out);
+    }
+
+    // --quiet / --verbose.
+    r = runIn(['build', '--quiet', '--out', join(outer, 'q')]);
+    expect('--quiet: a successful build prints nothing on stderr', r.code === 0 && r.stderr === '', JSON.stringify(r.stderr));
+    expect('--quiet: it still builds', existsSync(join(outer, 'q/shadcn/report.json')));
+    r = runIn(['check', '--quiet', '--json']);
+    let json; try { json = JSON.parse(r.stdout); } catch { json = null; }
+    expect('--quiet: check --json still prints the whole report on stdout', r.code === 0 && !!json && json.targets.length === 2 && r.stderr === '', r.out);
+    r = runIn(['build', '--quiet', '--verbose']);
+    expect('--quiet with --verbose is contradictory (exit 2)', r.code === 2, r.out);
+    r = runIn(['explain', 'primary.solid', '--quiet']);
+    expect('--quiet: refused on explain (exit 2)', r.code === 2 && r.out.includes('applies to'), r.out);
+
+    const bad = JSON.parse(readFileSync(cp, 'utf8'));
+    bad.check = { failOn: 'warning' };
+    bad.targets.boom = { exporter: './no-such-exporter.mjs', output: 'dist/boom' };
+    writeFileSync(cp, JSON.stringify(bad, null, 2));
+    r = runIn(['build', '--quiet']);
+    expect('--quiet: a failing build still prints its errors and the failure line', r.code === 1 && r.stderr.includes('TST3002') && r.stderr.includes('failed (fail-on: warning)'), r.out);
+    expect('--quiet: but not the coverage lines', !r.stderr.includes('% native'), r.out);
+    writeFileSync(cp, JSON.stringify(cfg, null, 2));
+
+    r = runIn(['build', '--verbose', '--out', join(outer, 'v')]);
+    expect('--verbose: shows the exporter, the output directory and file sizes', r.code === 0 && /exporter shadcn, options \{\}, output .*v\/shadcn/.test(r.stderr) && /globals\.transtyle\.css\s+\(\d+ bytes\)/.test(r.stderr), r.out);
+    r = runIn(['build', '--out', join(outer, 'v2')]);
+    expect('default output has no sizes', !/\(\d+ bytes\)/.test(r.stderr), r.out);
+
+    // TRANSTYLE_DEBUG=1 is --verbose: the stack of a crashed exporter comes with either.
+    writeFileSync(join(dir, 'boom.mjs'), 'export default { name: "boom", emit() { throw new TypeError("kaboom"); } };\n');
+    const boom = JSON.parse(readFileSync(cp, 'utf8'));
+    boom.targets = { boom: { exporter: './boom.mjs', output: 'dist/boom' } };
+    writeFileSync(cp, JSON.stringify(boom, null, 2));
+    r = runIn(['build', '--verbose']);
+    expect('--verbose prints the stack of a crashed exporter', /TypeError[\s\S]*boom\.mjs/.test(r.out) && r.code === 1, r.out);
+    r = runIn(['build']);
+    expect('the crash hint names --verbose', r.out.includes('--verbose'), r.out);
+
+    // NO_COLOR: the CLI never colors; the contract is pinned, with and without the variable.
+    for (const env of [{}, { NO_COLOR: '1' }]) {
+      const label = env.NO_COLOR ? 'with NO_COLOR' : 'without NO_COLOR';
+      for (const args of [['build', '--dry-run'], ['check'], ['catalog'], ['explain', 'primary.solid']]) {
+        writeFileSync(cp, JSON.stringify(cfg, null, 2));
+        const o = runIn(args, env);
+        expect(`no ANSI escape in \`${args.join(' ')}\` ${label}`, !o.out.includes(ESC), JSON.stringify(o.out.slice(0, 200)));
+      }
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(outer, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix golden path and error cases all pass');
+console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--out/--dry-run/--quiet/--verbose golden path and error cases all pass');

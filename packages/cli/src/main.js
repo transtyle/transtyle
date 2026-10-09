@@ -68,6 +68,14 @@ function parseArgs(argv) {
     else if (a === '--mode') args.mode = argv[++i];
     else if (a === '--target') args.target = argv[++i];
     else if (a === '--variable') args.variable = argv[++i];
+    else if (a === '--out') {
+      const v = argv[++i];
+      if (v === undefined || v === '' || v.startsWith('--')) { console.error('✖ --out needs a directory'); process.exit(2); }
+      args.out = path.resolve(v);
+    }
+    else if (a === '--dry-run') args.dryRun = true;
+    else if (a === '--quiet') args.quiet = true;
+    else if (a === '--verbose') args.verbose = true;
     else if (a === '--json') args.json = true;
     else if (a === '--matrix') args.matrix = true;
     else if (a === '--expand') args.expand = true;
@@ -90,6 +98,7 @@ const HELP = `transtyle — design system compiler
 
 Usage:
   transtyle build [target...]     compile configured targets (default: all)
+                                  [--out <dir>] [--dry-run]
   transtyle check [target...]     run the pipeline without writing files
   transtyle explain <slot>        show a resolved slot's value, provenance, and rule inputs
   transtyle explain --variable <name> --target <t>
@@ -109,6 +118,11 @@ Options:
   --expand                        bindings only: required, prints the expansion to stdout
   --from <source>                 migrate only: what to migrate from (style-dictionary)
   --write                         migrate only: apply the rewrite (default: print the diff, change nothing)
+  --out <dir>                     build only: write target <name> to <dir>/<name> instead of its configured output
+  --dry-run                       build only: run the whole build, list the files it would write, write nothing
+  --quiet                         build/check only: print only errors and the diagnostics that fail the run
+  --verbose                       build/check only: add exporter, output directory, file sizes; stack on a fatal error
+                                  (also TRANSTYLE_DEBUG=1). The CLI never colors its output; NO_COLOR is honored (init's color chip)
   --json                          check/diff/catalog/explain only: print a machine-readable report to stdout
   --matrix                        check only: print which targets read each catalog slot (with --json: a "matrix" key)
 init options (each skips its question; without a terminal, unset ones take the default):
@@ -121,8 +135,9 @@ init options (each skips its question; without a terminal, unset ones take the d
   --yes, -y                       ask nothing: take the default for every unset option
 `;
 
-/** TRANSTYLE_DEBUG=1: print the stack of a crashed exporter (until `--verbose`, #5, exists). */
-const DEBUG = !!process.env.TRANSTYLE_DEBUG && process.env.TRANSTYLE_DEBUG !== '0';
+/** TRANSTYLE_DEBUG=1 is `--verbose`: one switch for the stack of a crashed exporter and the extra detail. */
+let VERBOSE = !!process.env.TRANSTYLE_DEBUG && process.env.TRANSTYLE_DEBUG !== '0';
+let QUIET = false;
 
 const ICONS = { error: '✖', warning: '⚠', info: 'ℹ' };
 
@@ -167,6 +182,16 @@ async function main() {
     console.error(`✖ ${args.target !== undefined ? '--target' : '--variable'} is a \`transtyle explain\` option`);
     process.exit(2);
   }
+  const only = (flag, set, cmds) => {
+    if (set && !cmds.includes(args.command)) { console.error(`✖ ${flag} applies to ${cmds.map((c) => `\`transtyle ${c}\``).join(' and ')}`); process.exit(2); }
+  };
+  only('--out', args.out !== undefined, ['build']);
+  only('--dry-run', args.dryRun, ['build']);
+  only('--quiet', args.quiet, ['build', 'check']);
+  only('--verbose', args.verbose, ['build', 'check']);
+  if (args.quiet && args.verbose) { console.error('✖ --quiet and --verbose contradict each other'); process.exit(2); }
+  if (args.verbose) VERBOSE = true;
+  QUIET = !!args.quiet;
   if (args.command !== 'migrate' && (args.from !== undefined || args.write)) {
     console.error(`✖ ${args.from !== undefined ? '--from' : '--write'} is a \`transtyle migrate\` option`);
     process.exit(2);
@@ -190,15 +215,21 @@ async function cmdBuildOrCheck(args) {
   const recording = args.matrix ? recordingLoader(makeLoadExporter(args.cwd)) : null;
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter: recording?.loadExporter ?? makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: DEBUG });
+    result = await compile({ cwd: args.cwd, targets: args.targets, emit, outRoot: args.out, dryRun: args.dryRun, loadExporter: recording?.loadExporter ?? makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: VERBOSE });
   } catch (e) {
     console.error(`✖ ${e.message}`);
+    if (VERBOSE && e.stack) console.error(e.stack.split('\n').slice(1).join('\n'));
     process.exit(2);
   }
 
   const { diagnostics, results, config } = result;
+  const failOn = config.check?.failOn ?? 'error';
 
-  printDiagnostics(diagnostics);
+  // --quiet keeps what explains a failure: errors, and warnings when
+  // `check.failOn: warning` makes them failing. The suppressed-count line is progress.
+  if (QUIET) {
+    for (const d of diagnostics.items) if (d.severity === 'error' || (failOn === 'warning' && d.severity === 'warning')) printDiagnostic(d);
+  } else printDiagnostics(diagnostics);
 
   for (const r of results) {
     const counts = {};
@@ -206,8 +237,15 @@ async function cmdBuildOrCheck(args) {
     const total = r.coverage.length || 1;
     const pct = (k) => (counts[k] ? `${Math.round((counts[k] / total) * 100)}% ${k}` : null);
     const bar = ['native', 'derived', 'approximated', 'dropped', 'unsupported'].map(pct).filter(Boolean).join(' · ');
-    console.error(`\n${r.target}  ${bar}`);
-    if (emit) for (const f of r.files) console.error(`  ↳ ${f}`);
+    if (QUIET) continue;
+    console.error(`\n${r.target}  ${bar}${VERBOSE ? `  (${r.coverage.length} rows${Object.entries(counts).map(([k, n]) => `, ${n} ${k}`).join('')})` : ''}`);
+    if (VERBOSE && r.exporter) console.error(`  exporter ${r.exporter}, options ${JSON.stringify(config.targets?.[r.target]?.options ?? {})}, output ${r.outDir}`);
+    if (emit) {
+      const verb = args.dryRun ? 'would write ' : '';
+      for (const f of args.dryRun ? r.planned : r.files.map((p) => ({ path: p, bytes: r.planned.find((x) => x.path === p)?.bytes }))) {
+        console.error(`  ↳ ${verb}${f.path}${VERBOSE && f.bytes !== undefined ? `  (${f.bytes} bytes)` : ''}`);
+      }
+    }
   }
 
   // Human logs → stderr (above); requested data → stdout (docs/specs/cli.md
@@ -224,7 +262,6 @@ async function cmdBuildOrCheck(args) {
     console.log(renderMatrix(matrix));
   }
 
-  const failOn = config.check?.failOn ?? 'error';
   if (diagnostics.shouldFail(failOn)) {
     console.error(`\n✖ failed (fail-on: ${failOn})`);
     // exitCode, not process.exit(): `check --json` writes tens of KB to a pipe,
@@ -232,7 +269,7 @@ async function cmdBuildOrCheck(args) {
     process.exitCode = 1;
     return;
   }
-  console.error(emit ? '\n✔ build complete' : '\n✔ check passed');
+  if (!QUIET) console.error(args.dryRun ? '\n✔ dry run complete, nothing written' : emit ? '\n✔ build complete' : '\n✔ check passed');
 }
 
 // ---------- bindings ----------
@@ -305,7 +342,7 @@ async function cmdExplain(args) {
       skipExporters: !args.target,
       loadExporter: recording?.loadExporter ?? makeLoadExporter(args.cwd),
       knownExporters: Object.keys(OFFICIAL_EXPORTERS),
-      debug: DEBUG,
+      debug: VERBOSE,
     });
   } catch (e) {
     console.error(`✖ ${e.message}`);
@@ -767,7 +804,7 @@ async function cmdInit(args) {
   // just written. Its findings are reported, not fatal: the files are the user's now.
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd), knownExporters: known, debug: DEBUG });
+    result = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd), knownExporters: known, debug: VERBOSE });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exitCode = 1;
