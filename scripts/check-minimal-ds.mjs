@@ -354,6 +354,11 @@ for (const [fixture, shape, modes] of sweep) {
       //    target's own namespace such as PrimeNG's `{primary.color}` runtime
       //    reference). Those are skipped rather than guessed at.
       for (const c of emitted.coverage ?? []) {
+        // 4a. Tier: exporters bind to the semantic tier or above (ir.md). A row
+        //     naming `option.*` reads private vocabulary, whatever its class.
+        if (String(c.slot ?? '').startsWith('option.')) {
+          errors.push(`${at}: coverage row "${c.variable}" binds ${c.slot}, below the semantic tier — exporters read semantic or component slots, never option.*`);
+        }
         if (!['native', 'derived'].includes(c.class)) continue;
         const slot = String(c.slot ?? '');
         if (!/^(semantic|component|option)\.[\w.-]+$/.test(slot)) continue;

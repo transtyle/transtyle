@@ -17,13 +17,28 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { conformance, fixtureIR } from '@transtyle/plugin-kit';
+import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const failures = [];
 
 const OFFICIAL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css-variables', 'radix', 'primeng'];
 
+// Exporters bind to the semantic tier (ir.md): `option.*` is private vocabulary
+// users restructure freely, so no coverage row may name an option slot.
+// (`component.*` is a legitimate binding: that is the point of the tier.)
+const fixture = await fixtureIR();
+const fixtureCtx = { config: { name: 'tier', targets: {} }, targetConfig: { output: 'dist', options: {} }, formatColor, formatHslTriplet, formatHex, contrastRatio, mix, projectName: 'tier', siblings: [] };
+function optionBindings(plugin) {
+  return (plugin.emit(fixture, fixtureCtx).coverage ?? []).filter((c) => String(c.slot).startsWith('option.'));
+}
+
 async function checkPlugin(label, plugin, manifest) {
+  const bound = optionBindings(plugin);
+  if (bound.length) {
+    console.error(`✖ ${label}: tier violation — coverage rows bind below the semantic tier: ${bound.map((c) => `${c.variable} <- ${c.slot}`).join(', ')}`);
+    failures.push(`${label}:option-binding`);
+  }
   const { pass, checks } = await conformance(plugin, manifest ? { manifest } : {});
   if (pass) {
     console.log(`✔ ${label}: ${checks.length} checks pass`);
@@ -77,6 +92,15 @@ const thirdParty = {
   },
 };
 await checkPlugin('third-party (inline)', thirdParty, { kind: 'exporter', name: 'acme-custom', irSpec: 'v0-draft', pluginApi: '0', capabilities: ['build'] });
+
+// The tier gate has teeth too: a plugin binding a coverage row to `option.*` is caught.
+const optionBinder = { name: 'option-binder', emit: () => ({ files: [], coverage: [{ variable: '--x', slot: 'option.color.blue.500', class: 'native' }] }) };
+if (optionBindings(optionBinder).length !== 1) {
+  console.error('✖ negative test: a plugin binding a coverage row to option.* was NOT detected');
+  failures.push('negative-test-tier');
+} else {
+  console.log('✔ negative test: a plugin binding below the semantic tier (option.*) is correctly detected');
+}
 
 // A deliberately broken plugin must FAIL — proves the gate has teeth.
 const broken = { name: 'broken', emit: () => ({ files: [{ path: 'x', contents: 'y', kind: 'k' }], coverage: [{ variable: 'v', slot: 's', class: 'made-up-class' }] }) };

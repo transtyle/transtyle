@@ -20,7 +20,7 @@ already made once.
 | `check-determinism.mjs`       | Two builds of every example, byte-compared                                                            |
 | `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                  |
 | `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` golden paths and error cases                            |
-| `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a bound semantic source feeds it      |
+| `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a semantic alias into it is `TST1113` |
 | `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                           |
 | `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG slot is accounted for, with a note on every gap                   |
 | `check-minimal-ds.mjs`        | Eight exporters survive 1- and 3-token design systems in six mode shapes, and authored composites     |

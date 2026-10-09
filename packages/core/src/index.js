@@ -8,7 +8,7 @@ import { commitOutputs } from './emit.js';
 import { loadConfig, loadTokenTrees } from './load.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
-import { normalize, resolveDeferredAliases, reportModeCarryOver } from './normalize.js';
+import { normalize, resolveDeferredAliases, reportModeCarryOver, reportTierViolations } from './normalize.js';
 import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
@@ -56,6 +56,11 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // Authored aliases pointing at slots DERIVE materializes (e.g. a component
   // token aliasing `{semantic.radius.full}`) resolve here — see normalize.js.
   resolveDeferredAliases(normalized, diagnostics);
+
+  // TST1113: a semantic token aliasing a component token (wrong direction).
+  // Judged here because only now does every alias, deferred ones included,
+  // carry its final provenance.
+  reportTierViolations(normalized, diagnostics);
 
   // TST1205 (an alias DERIVE read before its target existed, so what it feeds
   // was skipped) is judged here, not in DERIVE: only now is it known whether
