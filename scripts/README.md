@@ -1,6 +1,6 @@
 # The checkers
 
-Twenty-six scripts, one job each — twenty-three chained by `npm run check:all` and
+Twenty-nine scripts, one job each — twenty-six chained by `npm run check:all` and
 run individually by CI, plus three that guard a release, a deploy, and the
 history itself.
 Every one exists because something real broke or could have: they are not a
@@ -17,9 +17,12 @@ already made once.
 | `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                                                                                                                                                                      |
 | `check-grid.mjs`              | Catalog completeness against `catalog()`, both ways; the frozen Phase 0 values; bound roles get grids                                                                                                                                      |
 | `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                                                                                                                                                          |
+| `check-rem-base.mjs`          | The config-level rem base (`units.remBase`): a custom base reaches ECharts and Storybook, the default is byte-identical, a bad base is `TST1010`                                                                                           |
 | `check-determinism.mjs`       | Two builds of every example and of the mode-dimensions fixture, byte-compared                                                                                                                                                              |
+| `check-atomic-emit.mjs`       | A failed build leaves every output directory byte-for-byte as it was, with no staging directory left behind                                                                                                                                |
 | `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                                                                                                                                                       |
 | `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` / `catalog` / `bind --suggest` golden paths and errors                                                                                                                                       |
+| `check-explain.mjs`           | `explainToken()` golden paths: authored, aliased and derived slots, plus the walk's edge cases                                                                                                                                             |
 | `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a semantic alias into it is `TST1113`                                                                                                                                      |
 | `check-tokens-studio.mjs`     | A Tokens Studio export (folder, single file, legacy) compiles byte-identical to its plain DTCG twin                                                                                                                                        |
 | `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                                                                                                                                                                |
