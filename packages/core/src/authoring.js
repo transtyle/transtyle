@@ -31,9 +31,9 @@ const sample = (items, n = 3) => (items.length > n ? `${items.slice(0, n).join('
 
 /**
  * TST1120 (info): an authored colour that a slot reaches is outside sRGB. The
- * targets that write hex or HSL clamp it, and Bootstrap and Storybook say so
- * nowhere else. The predicate is formatHex's own `clamped`, so this diagnostic
- * and the exporters' `approximated` rows always agree. Reported once per
+ * targets that write hex or HSL clamp it, and each reports the clamp as an
+ * `approximated` row. The predicate is formatHex's own `clamped`, so this
+ * diagnostic and the exporters' `approximated` rows always agree. Reported once per
  * authored source token and value; derived colours are out of scope (they are
  * not an authoring decision), and so are option tokens no slot reaches (#62).
  */

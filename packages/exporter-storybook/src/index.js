@@ -15,6 +15,7 @@
 import { droppedDimensions } from '@transtyle/ir';
 
 const S = 'semantic.color.';
+const GAMUT_NOTE = 'sRGB gamut clamp during oklch → hex';
 
 /** Per-exporter composition knowledge: main stylesheet + mode encoding. */
 const SIBLING_PROFILES = {
@@ -109,7 +110,16 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
       return;
     }
     const provKind = entry.provenance.kind;
-    const klass = cls ?? (provKind === 'derived' ? 'derived' : 'native');
+    let klass = cls ?? (provKind === 'derived' ? 'derived' : 'native');
+    // A colour clamped into sRGB in any mode is not the colour the token says.
+    const clamps = Object.values(normalized.modes).some((m) => {
+      const v = m.get(fullSlot)?.value;
+      return v && typeof v === 'object' && 'l' in v && ctx.formatHex(v).clamped;
+    });
+    if (clamps) {
+      klass = 'approximated';
+      note = note ? `${note}; ${GAMUT_NOTE}` : GAMUT_NOTE;
+    }
     coverage.push({ variable, slot: slot.startsWith('semantic') ? slot : S + slot, class: klass, ...(provKind && { provenance: provKind }), ...(note && { note }) });
   };
   const px = (radiusKey) => {

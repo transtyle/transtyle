@@ -13,6 +13,7 @@ import { droppedDimensions } from '@transtyle/ir';
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
 const PALETTE_SIZE = 8;
+const GAMUT_NOTE = 'sRGB gamut clamp during oklch → hex';
 
 export default {
   name: 'echarts',
@@ -21,14 +22,16 @@ export default {
     const files = [];
     const coverage = [];
     const themeNames = [];
+    const clampedAny = new Set(); // slots whose hex was clamped in any mode
 
     for (const mode of normalized.modeValues) {
       const map = normalized.modes[mode];
       const themeName = `${ctx.projectName}-${mode}`;
       themeNames.push(themeName);
-      const { theme, modeCoverage } = buildTheme(map, mode, ctx);
+      const { theme, modeCoverage, clampedSlots } = buildTheme(map, mode, ctx);
       // Coverage is identical across modes by construction; record once.
       if (coverage.length === 0) coverage.push(...modeCoverage);
+      for (const slot of clampedSlots) clampedAny.add(slot);
 
       const json = JSON.stringify(theme, null, 2) + '\n';
       files.push({ path: `theme.${themeName}.json`, contents: json, kind: 'theme' });
@@ -37,6 +40,15 @@ export default {
         contents: umdWrapper(themeName, theme, ctx),
         kind: 'script',
       });
+    }
+
+    // A clamp in any mode makes that variable's row approximated (the row is
+    // recorded once, from the first mode).
+    for (const row of coverage) {
+      if (clampedAny.has(row.slot) && row.class !== 'dropped') {
+        row.class = 'approximated';
+        row.note = row.note ? `${row.note}; ${GAMUT_NOTE}` : GAMUT_NOTE;
+      }
     }
 
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
@@ -52,13 +64,13 @@ export default {
 
 function buildTheme(map, mode, ctx) {
   const coverage = [];
-  let clampedAny = false;
+  const clampedSlots = new Set();
 
   const hex = (path) => {
     const value = map.get(path)?.value;
     if (!value) return undefined;
     const { text, clamped } = ctx.formatHex(value);
-    if (clamped) clampedAny = { path };
+    if (clamped) clampedSlots.add(path);
     return text;
   };
   const prov = (path) => map.get(path)?.provenance.kind;
@@ -116,13 +128,6 @@ function buildTheme(map, mode, ctx) {
     cov('tooltip.borderRadius', 'semantic.radius.md', 'approximated', `rem → px (base ${remBase(ctx)})`);
   }
 
-  if (clampedAny) {
-    coverage.push({
-      variable: '(gamut)', slot: clampedAny.path, class: 'approximated',
-      note: 'sRGB gamut clamp during oklch → hex',
-    });
-  }
-
   // Honest unsupported: themable ECharts surfaces the IR does not cover yet
   coverage.push({ variable: 'series-specific styles (candlestick, gauge, …)', slot: '—', class: 'unsupported', note: 'beyond catalog semantics; extend the emitted theme manually', meaning: 'chart.series-style' });
 
@@ -157,7 +162,7 @@ function buildTheme(map, mode, ctx) {
     timeAxis: axisCommon,
   };
 
-  return { theme, modeCoverage: coverage };
+  return { theme, modeCoverage: coverage, clampedSlots };
 }
 
 // The rem base is the config's `units.remBase` (default 16px), read through ctx.units.

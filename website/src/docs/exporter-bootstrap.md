@@ -64,7 +64,7 @@ Bootstrap generates `-bg-subtle` / `-border-subtle` / `-text-emphasis` per theme
 
 Bootstrap 5.3's `_variables.scss` has 952 top-level variables; 657 are component-scoped, and **every one of them is classified** against a checked-in surface inventory (`packages/exporter-bootstrap/surface-inventory.json`, drift-guarded in CI). To answer "which `$btn-*` variables does Transtyle drive, and via which path?" for any variable:
 
-- **`report.json`** carries one coverage row per variable — its source slot (`component.button.radius`, `semantic.space.2`, …), its class (`native`/`derived`/`approximated`), or why it isn't driven (`dropped` structure and derivation knobs, `unsupported` IR gaps like icon assets and state opacities, each with a note).
+- **`report.json`** carries one coverage row per variable — its source slot (`component.button.radius`, `semantic.space.2`, …), its class (`native`/`derived`/`approximated`), or why it isn't driven (`dropped` structure and derivation knobs, `unsupported` IR gaps like icon assets and state opacities, each with a note). A colour that does not fit sRGB is written clamped to hex, and its row is `approximated` with the note `sRGB gamut clamp during oklch → hex`.
 - **Sass path**: bound variables are emitted in the component section of `_variables.transtyle.scss`; everything else follows Bootstrap's own `!default` chains from the roots Transtyle drives.
 - **CSS path**: variables with a runtime `--bs-*` counterpart get selector-scoped overrides, and `.btn-<variant>` blocks carry state colors from the role grid.
 

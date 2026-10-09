@@ -157,8 +157,8 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 <!-- measured: primeng.surface.total = 2759 -->
 <!-- measured: primeng.surface.families = 98 -->
 <!-- measured: acme.bootstrap.native = 59 -->
-<!-- measured: acme.bootstrap.derived = 493 -->
-<!-- measured: acme.bootstrap.approximated = 35 -->
+<!-- measured: acme.bootstrap.derived = 489 -->
+<!-- measured: acme.bootstrap.approximated = 39 -->
 <!-- measured: acme.bootstrap.dropped = 71 -->
 <!-- measured: acme.bootstrap.unsupported = 56 -->
 <!-- measured: acme.primeng.driven = 89 -->
@@ -168,7 +168,7 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 |                                          | Bootstrap                                                               | PrimeNG                                                                                             |
 | ---------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                                                       |
-| Driven                                   | 59 native + 493 derived = 552 of 714 rows (77%), plus 35 `approximated` | 89 driven + 1566 inherited = 1655 (60%), 1104 left on Aura's default                                |
+| Driven                                   | 59 native + 489 derived = 548 of 714 rows (77%), plus 39 `approximated` | 89 driven + 1566 inherited = 1655 (60%), 1104 left on Aura's default                                |
 | Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | the family rows in `report.json`; slot by slot in [catalog signals](../findings/catalog-signals.md) |
 | Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                                                             |
 

@@ -82,6 +82,7 @@ export function resolveEmits(light, ctx) {
       slot,
       slots,
       cls,
+      gamutClamped = false,
       note = recipe.note;
     const provCls = (entry) =>
       ['authored', 'aliased'].includes(entry.provenance.kind) ? 'native' : 'derived';
@@ -127,7 +128,13 @@ export function resolveEmits(light, ctx) {
         recipe.part === 'alpha'
           ? (entry.value.alpha ?? 1)
           : recipe.part === 'opaque'
-            ? ctx.formatHex({ ...entry.value, alpha: 1 }).text
+            ? (() => {
+                const hex = ctx.formatHex({ ...entry.value, alpha: 1 });
+                if (hex.clamped) {
+                  gamutClamped = true;
+                }
+                return hex.text;
+              })()
             : recipe.part
               ? // A `semantic.type.role.*` composite: Bootstrap splits the role
                 // across separate $..-font-size / $..-font-weight variables, so
@@ -146,6 +153,10 @@ export function resolveEmits(light, ctx) {
       slots = [`semantic.${recipe.trans.duration}`, `semantic.${recipe.trans.easing}`];
       cls = 'approximated';
       note = note ?? `timing from the motion scale; property list kept from Bootstrap's default`;
+    }
+    if (gamutClamped) {
+      cls = 'approximated';
+      note = note ? `${note}; sRGB gamut clamp during oklch → hex` : 'sRGB gamut clamp during oklch → hex';
     }
     out.push({ v, recipe, value: String(value), cls, slot, slots, note });
   }
