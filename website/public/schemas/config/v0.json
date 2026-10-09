@@ -68,6 +68,111 @@
                 ]
               }
             }
+          },
+          {
+            "type": "object",
+            "required": [
+              "tokensStudio"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "tokensStudio": {
+                "type": "string",
+                "minLength": 1,
+                "description": "the export folder (holding $metadata.json) or a single-file export"
+              },
+              "themes": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "dimension",
+                          "map"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "dimension": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "map": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "fixed"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "fixed": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "dimension",
+                            "map"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "dimension": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "map": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "fixed"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "fixed": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "sets": {
+                "type": "object",
+                "additionalProperties": {
+                  "enum": [
+                    "option",
+                    "semantic",
+                    "component"
+                  ]
+                }
+              }
+            }
           }
         ]
       }

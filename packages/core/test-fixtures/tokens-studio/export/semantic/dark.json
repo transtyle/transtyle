@@ -1,0 +1,40 @@
+{
+  "color": {
+    "bg": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.gray.900}"
+      },
+      "subtle": {
+        "$type": "color",
+        "$value": "{color.gray.800}"
+      }
+    },
+    "fg": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.white}"
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "{color.gray.200}"
+      }
+    },
+    "line": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.gray.700}"
+      }
+    },
+    "action": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.blue.400}"
+      }
+    },
+    "backdrop": {
+      "$type": "color",
+      "$value": "rgba({color.black}, 0.7)"
+    }
+  }
+}

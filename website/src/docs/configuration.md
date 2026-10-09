@@ -104,7 +104,7 @@ Used in generated file headers and usage docs. Pick something stable; it's your 
 
 Think of the layers as **transparent sheets stacked on a lightbox**: each one can only add to or paint over what's below it, and you read the stack from the top. Later entries win.
 
-Each entry is a glob string (base layer) or `{ "files": glob | [globs], "mode": { dimension: mode } }` (mode-scoped layer, a pure DTCG file whose values apply to one mode). Globs support single `*` segments (`tokens/*.tokens.json`); matched files load in sorted order for determinism.
+Each entry is a glob string (base layer) or `{ "files": glob | [globs], "mode": { dimension: mode } }` (mode-scoped layer, a pure DTCG file whose values apply to one mode). Globs support single `*` segments (`tokens/*.tokens.json`); matched files load in sorted order for determinism. A third form, `{ "tokensStudio": … }`, loads a Tokens Studio export as it is ([below](#tokens-studio-exports)).
 
 Worked example. Three files, in this order:
 
@@ -159,6 +159,36 @@ A layer that redefines tokens from earlier layers on purpose (core system, then 
 | Mode value for a token with no default value   | `TST1107` warning, skipped                  |
 | Mode not declared in `modes`                   | `TST1109` error                             |
 | File matched by a glob and a mode-scoped entry | Loaded once, as the overlay (no diagnostic) |
+
+### Tokens Studio exports
+
+A folder synced by [Tokens Studio for Figma](https://docs.tokens.studio/) (the one holding `$metadata.json`), or a single-file export, loads without rewriting it:
+
+<!-- validates: config -->
+
+```json
+{
+  "tokens": [
+    {
+      "tokensStudio": "tokens/figma",
+      "themes": {
+        "Mode": { "dimension": "color-scheme", "map": { "Light": "light", "Dark": "dark" } }
+      },
+      "sets": { "core": "option", "semantic/*": "semantic" }
+    },
+    "tokens/transtyle.bindings.tokens.json"
+  ],
+  "modes": { "color-scheme": { "values": ["light", "dark"], "default": "light" } }
+}
+```
+
+- `themes`: one entry per theme group. A group is a mode dimension: `map` gives each of its themes a mode value. `{ "fixed": "<theme>" }` compiles a group with one theme only. When the export's themes have no group, `themes` is the mapping itself (`{ "dimension": …, "map": … }`); with no themes at all, every set loads in set order.
+- `sets`: the tier each set's tokens are placed under (set names, `*` for any characters, first match wins; default `option`). References are rewritten to match, so `{color.blue.600}` becomes `{option.color.blue.600}`. A set already written under `option` / `semantic` / `component` is kept as is.
+- Tokens Studio's types, unitless pixels, Figma weight names (`Semi Bold`), percentages, math (`{space.base} * 2`, `roundTo(…)`), `rgba({color.black}, 0.5)` and the legacy `value` / `type` format are all read. A color modifier is refused (`TST1007`): the plugin would output a different color.
+- The theme mapped to each default is the base, each other mode value a mode-scoped layer of what differs. What one override per dimension can't express is an error (`TST1008`), never a silently different theme.
+- `transtyle explain` names the set file and the path designers know a token by, per mode, and shows a math token's expression.
+
+The full rules are in [the configuration spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/configuration.md#tokens-studio-exports); the adoption recipe is in [You already have a design system](/docs/adopt-existing/#coming-from-tokens-studio).
 
 ## `modes`
 

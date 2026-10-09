@@ -1,0 +1,97 @@
+{
+  "semantic": {
+    "color": {
+      "primary": {
+        "solid": {
+          "$value": "{semantic.color.action.default}"
+        }
+      },
+      "danger": {
+        "solid": {
+          "$value": "{option.color.red.600}"
+        }
+      },
+      "text": {
+        "base": {
+          "$value": "{semantic.color.fg.default}"
+        },
+        "muted": {
+          "$value": "{semantic.color.fg.muted}"
+        }
+      },
+      "elevation": {
+        "0": {
+          "surface": {
+            "$value": "{semantic.color.bg.default}"
+          }
+        },
+        "1": {
+          "surface": {
+            "$value": "{semantic.color.bg.subtle}"
+          },
+          "shadow": {
+            "$value": "{option.shadow.md}"
+          }
+        }
+      },
+      "border": {
+        "$value": "{semantic.color.line.default}"
+      },
+      "scrim": {
+        "$value": "{semantic.color.backdrop}"
+      }
+    },
+    "radius": {
+      "md": {
+        "$value": "{option.radius.md}"
+      }
+    },
+    "space": {
+      "4": {
+        "$value": "{option.space.md}"
+      }
+    },
+    "font": {
+      "sans": {
+        "$value": "{option.font.family.sans}"
+      }
+    },
+    "type": {
+      "size": {
+        "md": {
+          "$value": "{option.font.size.base}"
+        }
+      },
+      "weight": {
+        "regular": {
+          "$value": "{option.font.weight.regular}"
+        },
+        "semibold": {
+          "$value": "{option.font.weight.semibold}"
+        }
+      },
+      "leading": {
+        "normal": {
+          "$value": "{option.font.line-height}"
+        }
+      },
+      "tracking": {
+        "tight": {
+          "$value": "{option.font.tracking.tight}"
+        }
+      },
+      "role": {
+        "body": {
+          "md": {
+            "$value": "{option.typography.body}"
+          }
+        }
+      }
+    },
+    "opacity": {
+      "disabled": {
+        "$value": "{option.opacity.disabled}"
+      }
+    }
+  }
+}

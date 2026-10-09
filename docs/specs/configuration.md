@@ -120,6 +120,40 @@ The `tokens` array is an **ordered list of layers** ([ADR-0009](../adr/0009-toke
 
 This is the **recommended layout for teams whose token files are generated or owned elsewhere**: every token file stays valid, tool-ingestible DTCG; transtyle-specific syntax is confined to this manifest. Inline `$extensions["transtyle.modes"]` remains fully supported (see the Acme example) — both forms produce the identical internal representation, and may be mixed. Precedence: later layers win; overriding an existing mode value warns (`TST1108`); a mode value for a token with no default-mode value is skipped with a warning (`TST1107`); an undeclared mode errors (`TST1109`). A file matched by a mode-scoped entry is never also loaded as a base layer, whatever the order of the entries, so `"tokens/*.tokens.json"` can cover the folder that holds the overlays ([ADR-0009, amended 2026-10-08](../adr/0009-token-layering.md#amendment-2026-10-08-an-overlay-claims-its-file)). **Override layers.** `override: true` marks a layer that redefines earlier layers on purpose (core, business unit, product): a redefinition from it raises no `TST1103`, an unmarked layer still does. A token an `override: true` layer defines that no earlier layer defined raises `TST1116` (once for the layer when it is the first one); `override: "extend"` may add tokens silently. On a mode-scoped layer, `override` suppresses `TST1108`. Normalized provenance of an overridden token carries `layer` (the winning file) and `overrides` (the files it shadowed); `explain` prints them. The object form requires `mode` or `override`. See [ADR-0009, amended 2026-10-09](../adr/0009-token-layering.md#amendment-2026-10-09-explicit-override-layers). Layer _order is semantic_ — treat the manifest's `tokens` array as carefully as an import order.
 
+### Tokens Studio exports
+
+A third layer form loads an export of [Tokens Studio for Figma](https://docs.tokens.studio/) as it is, without rewriting it to plain DTCG first ([ADR-0014](../adr/0014-tokens-studio-input.md), issue [#52](https://github.com/transtyle/transtyle/issues/52)):
+
+<!-- validates: config -->
+
+```jsonc
+{
+  "tokens": [
+    {
+      "tokensStudio": "tokens/figma", // the synced folder (holding $metadata.json), or a single-file export
+      "themes": {
+        "Mode": { "dimension": "color-scheme", "map": { "Light": "light", "Dark": "dark" } },
+        "Brand": { "fixed": "Acme" }, // a group compiled with one theme only
+      },
+      "sets": { "core": "option", "semantic/*": "semantic" }, // tier per set; default option
+    },
+    "tokens/transtyle.bindings.tokens.json",
+  ],
+  "modes": { "color-scheme": { "values": ["light", "dark"], "default": "light" } },
+}
+```
+
+- **Containers.** A folder (one `<set>.json` per set, `$metadata.json` with `tokenSetOrder`, optional `$themes.json`) or a single file whose top-level keys are the sets plus `$themes` and `$metadata`. The files are never modified.
+- **Themes.** Each theme group is one mode dimension: every theme of the group maps to a value of the dimension (`map`), or the group is compiled with one theme (`fixed`). Themes without a group form one implicit group, and `themes` is then that group's mapping itself (`{ "dimension": …, "map": … }`). An export without themes loads every set, in set order. A theme uses its `enabled` and `source` sets (`disabled` ones are left out), merged in `tokenSetOrder` with `source` sets first, later sets winning: the order Tokens Studio resolves them in. A later set redefining a token is the format's meaning, so it raises no `TST1103`.
+- **Lowering.** The themes mapped to every dimension's default are merged into one base layer; each other mode value gets a mode-scoped layer holding only the tokens whose value differs. The rest of the pipeline sees what the equivalent hand-written layout would give it. What that cannot express is refused (`TST1008`): a token only a non-default theme defines, a token whose type differs between themes, and, with two or more groups, a combination of non-default themes whose merged sets differ from applying each dimension's overrides on their own. A token a non-default theme leaves out keeps the default value, with a warning (`TST1009`).
+- **Tiers.** Each set is placed under the tier `sets` names (keys are set names, `*` matches anything, the first match wins; default `option`), and every reference is rewritten to the placed path. A set whose top-level groups already are `option` / `semantic` / `component` is loaded as is. A path two sets place under different tiers is `TST1008`. Catalog slots are bound in an ordinary bindings file after the layer, as for any adopted system: `semantic.color.primary.solid` → `{semantic.color.action.default}`.
+- **Dialect.** Tokens Studio types become DTCG types (`spacing`, `sizing`, `borderRadius`, `borderWidth`, `fontSizes`, `letterSpacing`, `paragraphSpacing`, `paragraphIndent` → `dimension`; `fontFamilies` → `fontFamily`; `fontWeights` → `fontWeight`; `lineHeights`, `opacity` → `number`; `boxShadow` → `shadow`), and their values the forms NORMALIZE reads: a unitless number is px (per part in a shorthand), `150%` line height is `1.5`, `AUTO` is `normal`, `50%` opacity is `0.5`, `-2%` letter spacing is `-0.02em`, a Figma style name is a weight (`Semi Bold` → `600`; an `Italic` in it is dropped with `TST1009`), a comma-separated family list is an array, and a shadow's `x` / `y` / `type` are `offsetX` / `offsetY` / `inset`. Other types (`text`, `textCase`, `composition`, `asset`…) are carried opaque with `TST1306`, as in any token file. The legacy format (`value` / `type` / `description`, references ending in `.value`) is read as DTCG with a warning per set file (`TST1005`).
+- **Math.** A value with math or with references inside a string (`{space.base} * 2`, `roundTo({size.md} / 3, 2)`, `rgba({color.black}, 0.5)`, `{space.2} {space.4}`) is evaluated per mode in NORMALIZE, after its references resolve for that mode: numbers, `+ - * /`, unary minus, parentheses, `roundTo`, `min`, `max`, `floor`, `ceil`, `round`, at most one unit per expression (`px` mixes with bare numbers), results rounded to 4 decimals. `rgba(<color or reference>, <alpha>)` sets a color's alpha. Anything else is `TST1006`. Only this layer form produces expressions: a plain DTCG string such as `calc(4px * 2)` is still carried as authored.
+- **Refused.** A color modifier (`$extensions["studio.tokens"].modify`: lighten, darken, mix, alpha) is `TST1007`: Tokens Studio outputs a different color than `$value`, and emitting the unmodified one would be wrong. Remove it and let derivation produce the state color, or author the result.
+- **Provenance.** Every token of the layer records `source` (`file`, `set`, the Tokens Studio `path`, `line`, `column`) and a math token its `expression`; `explain` prints both, per mode, also for the alias target under a bound catalog slot.
+
+Not covered: writing back to Tokens Studio ([#69](https://github.com/transtyle/transtyle/issues/69)), binding presets for Tokens Studio naming ([#63](https://github.com/transtyle/transtyle/issues/63)), the `$figma*` ids, applying color modifiers ([#182](https://github.com/transtyle/transtyle/issues/182)), and `composition` / `asset` tokens.
+
 ## Binding rules
 
 A binding is one alias from a catalog slot to a token of the design system's own vocabulary. For a regular vocabulary (a `brand.50…950` ramp per role, Material's `primary` / `on-primary` pairs) that is dozens of near-identical lines. The optional `bindings` array writes them as rules instead. It is data, like the rest of the manifest, and it adds nothing to the IR ([ADR-0012](../adr/0012-binding-rules.md)).

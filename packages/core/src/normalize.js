@@ -5,6 +5,7 @@
 
 import { collectTokens, collectRoleArchetypes, mergeTrees, aliasTarget, comboKey, expandModeMatrix, PROVENANCE, COLOR_ROLES } from '@transtyle/ir';
 import { parseValue } from './values.js';
+import { isExpression, expressionRefs, evaluateExpression, ExpressionError } from './expressions.js';
 
 /** Matches `semantic.color.<role>.solid` — the anchor cell an entire role grid
  *  (hover/active/tint/outline/on-colors, ~16 slots) fans out from. */
@@ -76,6 +77,21 @@ export function normalize(tokenTrees, config, diagnostics) {
   for (const layer of tokenTrees) {
     if (layer.modeScope) continue;
     for (const [p, pos] of layer.positions ?? []) sources.set(p, { file: layer.file, ...pos });
+  }
+  // Where a token of a Tokens Studio export came from (file, set, original
+  // path), for `explain`: one map for the base, one per mode an overlay sets.
+  // Last layer wins, as for values: a plain DTCG layer that redefines a token
+  // after the export clears its origin.
+  const origins = { base: new Map(), modes: new Map() };
+  for (const layer of tokenTrees) {
+    let target = origins.base;
+    if (layer.modeScope) {
+      const key = Object.entries(layer.modeScope).map(([d, v]) => `${d}=${v}`).join();
+      if (!origins.modes.has(key)) origins.modes.set(key, new Map());
+      target = origins.modes.get(key);
+    }
+    if (layer.origins) for (const [p, o] of layer.origins) target.set(p, o);
+    else if (target.size > 0) for (const p of collectTokens(layer.tree).keys()) target.delete(p);
   }
   //
   // Explicit override layers (`"override": true | "extend"`, ADR-0009 addendum):
@@ -199,6 +215,7 @@ export function normalize(tokenTrees, config, diagnostics) {
           if (role && (COLOR_ROLES.includes(role) || roleArchetypes.has(role))) autoDarkCarried = true;
         }
       }
+      const origin = (overriddenMode ? origins.modes.get(overriddenMode) : origins.base)?.get(tokenPath);
       map.set(tokenPath, {
         type: tok.type,
         rawValue: value,
@@ -215,6 +232,7 @@ export function normalize(tokenTrees, config, diagnostics) {
           mode: overriddenMode ?? key,
           ...(autoDarkCarried ? { rule: 'auto-dark-carry(constant)@standard@1' } : {}),
           ...(tok.layer ? { layer: tok.layer.file, overrides: tok.layer.overrides } : {}),
+          ...(origin ? { source: origin } : {}),
         },
       });
     }
@@ -428,6 +446,7 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     return CYCLE;
   }
   let raw = entry.rawValue;
+  if (isExpression(raw)) return resolveExpression(map, entry, tokenPath, stack, diagnostics);
   const target = aliasTarget(raw);
   if (target) {
     // Absent target: possibly derived later — defer rather than erroring.
@@ -468,6 +487,69 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     return undefined;
   }
   return entry;
+}
+
+/**
+ * A Tokens Studio expression (expressions.js): resolve every reference it makes
+ * for this mode, then evaluate it and parse the result by the token's type.
+ * A reference to a token that doesn't exist is a dangling alias (TST1105), one
+ * that only DERIVE fills can't feed math (TST1006), and a value outside the
+ * supported subset is TST1006 too. Provenance stays `authored` and records the
+ * expression, so `explain` shows `32px ← {option.space.base} * 2`.
+ */
+function resolveExpression(map, entry, tokenPath, stack, diagnostics) {
+  const evaluated = evaluateWith(entry.rawValue, entry.type, tokenPath, tokenPath, diagnostics, (ref) => {
+    if (!map.has(ref)) return undefined;
+    return resolveEntry(map, ref, [...stack, tokenPath], diagnostics);
+  });
+  if (evaluated === CYCLE) return CYCLE;
+  if (evaluated === DEFERRED) {
+    diagnostics.error('TST1006', `${tokenPath}: "${entry.rawValue.text}" reads a slot only derivation fills, so it cannot be evaluated while tokens load`, {
+      path: tokenPath,
+      hint: 'Reference an authored token in the expression.',
+    });
+    return undefined;
+  }
+  if (!evaluated) return undefined;
+  try {
+    entry.value = entry.type === 'color' ? evaluated.value : parseValue(entry.type, evaluated.value);
+  } catch (e) {
+    diagnostics.error('TST1106', `${tokenPath}: ${e.message} (from "${entry.rawValue.text}")`, { path: tokenPath, ...(e.hint ? { hint: e.hint } : {}) });
+    return undefined;
+  }
+  entry.provenance = { ...entry.provenance, expression: entry.rawValue.text };
+  return entry;
+}
+
+/**
+ * Resolve an expression's references through `lookup` (an entry, DEFERRED,
+ * CYCLE, or undefined for a dangling one) and evaluate it. Returns
+ * `{ value }`, DEFERRED, CYCLE, or undefined after reporting.
+ */
+function evaluateWith(expr, type, at, tokenPath, diagnostics, lookup) {
+  const values = new Map();
+  let deferred = false;
+  for (const ref of expressionRefs(expr.text)) {
+    const resolved = lookup(ref);
+    if (resolved === CYCLE) return CYCLE;
+    if (resolved === DEFERRED) { deferred = true; continue; }
+    if (!resolved || resolved.value === undefined) {
+      diagnostics.error('TST1105', `Dangling alias in ${at}: {${ref}} (in "${expr.text}")`, {
+        path: tokenPath,
+        hint: `Nothing resolves to "${ref}". Check the set that defines it is used by the theme, and the spelling.`,
+      });
+      return undefined;
+    }
+    values.set(ref, resolved.value);
+  }
+  if (deferred) return DEFERRED;
+  try {
+    return { value: evaluateExpression(expr.text, type, values) };
+  } catch (e) {
+    if (!(e instanceof ExpressionError)) throw e;
+    diagnostics.error('TST1006', `${at}: cannot evaluate "${expr.text}": ${e.message}`, { path: tokenPath, hint: e.hint });
+    return undefined;
+  }
 }
 
 /**
@@ -589,6 +671,13 @@ function resolveComposite(entry, tokenPath, diagnostics, lookup) {
     for (const [name, authored] of Object.entries(layer)) {
       const memberPath = `${at}.${name}`;
       let value = authored;
+      if (isExpression(authored)) {
+        const evaluated = evaluateWith(authored, spec.members[name], memberPath, tokenPath, diagnostics, lookup);
+        if (evaluated === DEFERRED) { pending = true; continue; }
+        if (evaluated === CYCLE) { cycle = true; continue; }
+        if (!evaluated) { failed = true; continue; }
+        value = evaluated.value;
+      }
       const target = aliasTarget(authored);
       if (target) {
         const resolved = lookup(target);
@@ -714,5 +803,8 @@ function resolvePending(map, tokenPath, stack, diagnostics) {
   return entry;
 }
 
-/** The override-layer keys of a provenance, kept when an authored entry becomes an alias. */
-const layerOf = (prov) => (prov.layer ? { layer: prov.layer, overrides: prov.overrides } : {});
+/** The override-layer and source keys of a provenance, kept when an authored entry becomes an alias. */
+const layerOf = (prov) => ({
+  ...(prov.layer ? { layer: prov.layer, overrides: prov.overrides } : {}),
+  ...(prov.source ? { source: prov.source } : {}),
+});

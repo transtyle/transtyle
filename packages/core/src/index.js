@@ -110,7 +110,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   }
 
   // LOAD + NORMALIZE + DERIVE (shared across targets)
-  const trees = await loadTokenTrees(cwd, config.tokens, diagnostics);
+  const trees = await loadTokenTrees(cwd, config.tokens, diagnostics, config);
   // `bindings` rules become one more base layer of plain aliases, after every
   // token file: an authored token or alias already there wins over a rule
   // (bindings.js), so this layer never overrides anything.

@@ -133,7 +133,8 @@ flowchart TB
 
 One source of truth in the middle, pluggable ends on either side — which is what makes
 ecosystem-to-ecosystem translation (Bootstrap → shadcn/ui) a composition of parts rather than a
-special feature. Importers are specced, not yet built; today the frontend is DTCG.
+special feature. Importers are specced, not yet built; today the frontend is DTCG, and a
+Tokens Studio export (folder or single file, themes as modes) loads as it is ([ADR-0014](docs/adr/0014-tokens-studio-input.md)).
 
 Four properties hold it up:
 

@@ -142,6 +142,8 @@ npx transtyle explain primary.solid --cwd examples/govuk
 #  └─ aliased → semantic.color.govuk.brand
 ```
 
+A token loaded from a [Tokens Studio export](/docs/configuration/#tokens-studio-exports) names the set file and its Figma path, per mode (`from export/semantic/dark.json:30:7 (Tokens Studio set "semantic/dark", color.action.default)`), and a math token its expression (`└─ authored  ← {option.space.base} * 4`). A catalog slot bound to one shows it one level in, under its alias.
+
 ### `transtyle explain --target <t>`, `--variable <name>`
 
 The other direction, for when a rendered page surprises you: "why is `$btn-border-radius` 9999px?". `--target` takes a target instance from your config (`bootstrap`, `shadcn-v3`); the CLI compiles that one target without writing anything, so no build is needed first.

@@ -10,7 +10,7 @@ This is the primary use case. Your design system exists — in Figma, in Sass va
 
 <div class="callout"><div class="callout-title">In Figma-token terms</div>
 
-If you use primitive → alias → component token layering (Tokens Studio, Figma variables collections): your primitives go in `option.*` unchanged, your alias layer becomes custom semantic tokens under _your_ names, and the binding file below is a second, tiny alias layer that only the build pipeline knows about. Your designers never see it.
+If you use primitive → alias → component token layering (Tokens Studio, Figma variables collections): your primitives go in `option.*` unchanged (a Tokens Studio export loads as it is, see [below](#coming-from-tokens-studio)), your alias layer becomes custom semantic tokens under _your_ names, and the binding file below is a second, tiny alias layer that only the build pipeline knows about. Your designers never see it.
 </div>
 
 ## 1. Dump your raw values into `option.*`, verbatim
@@ -134,6 +134,29 @@ Where a derived value contradicts your system, bind it — one alias, versioned,
 ```
 
 Now a build fails if someone deletes the binding and derivation silently takes over. Your migration is done when the report's authored/derived split matches your intent — not when it hits 100% authored. Most systems settle around 40–60% authored; the rest is coherent derivation that tracks your brand automatically. For which slots are worth a decision first, run `npx transtyle check --completeness complete`: it lists them in order ([completeness levels](/docs/derivation/#what-to-author-next-completeness-levels)), and `"require": ["completeness:recommended"]` makes a whole level policy.
+
+## Coming from Tokens Studio
+
+If your tokens live in [Tokens Studio for Figma](https://docs.tokens.studio/), skip steps 1 and 2: point Transtyle at the folder the plugin syncs to (or a single-file export) and keep editing in Figma. The export is read as it is, nothing in it is rewritten.
+
+1. **Add the export as a layer**, and say which tier each set belongs to. Primitives go to `option` (the default), your alias sets to `semantic`:
+
+   ```json
+   "tokens": [
+     {
+       "tokensStudio": "tokens/figma",
+       "themes": { "Mode": { "dimension": "color-scheme", "map": { "Light": "light", "Dark": "dark" } } },
+       "sets": { "core": "option", "semantic/*": "semantic" }
+     },
+     "tokens/transtyle.bindings.tokens.json"
+   ]
+   ```
+
+2. **Map each theme group to a mode dimension** declared under `modes`. A group you only ship one theme of (a brand) is `{ "fixed": "Acme" }`. Your sets and their order decide the values, exactly as in Tokens Studio.
+3. **Write the bindings file** (step 3 above) against the placed paths: a token Figma calls `color.action.default` in a `semantic` set is `{semantic.color.action.default}`.
+4. **Build.** `npx transtyle explain semantic.color.primary.solid` follows the binding to the set file and the Figma path it came from, in each mode (`--mode dark`).
+
+Math, references inside values, Figma weight names, unitless pixels and the legacy `value` / `type` format need nothing from you. A color modifier (hover states made with "darken" in the plugin) stops the build with `TST1007`: let derivation make the state colors, or author them. Each code is on [the diagnostics page](/docs/diagnostics/).
 
 ## The two mistakes to avoid
 
