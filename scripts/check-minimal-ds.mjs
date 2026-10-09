@@ -16,6 +16,21 @@
  * of those authors a complete token set — exactly the shape that hides this
  * class of bug.
  *
+ * **The one-token floor** (#23). The docs make `semantic.color.primary.solid`
+ * the only token whose absence is an error (`TST1201`), so a design system
+ * that authors nothing else is legal too — and Bootstrap threw on it. With no
+ * `text.base`, the engine leaves the whole content side empty (`text.*`,
+ * `neutral.text-strong`; `border` is never derived), and the exporter mixed `undefined` for its
+ * `$dark` pseudo-role, then fed it to `rgbTriplet()`, then wrote it as the last
+ * entry of a Sass map where the drop pattern couldn't see it. The three-token
+ * fixture authors `text.base`, so it could never get there. Both FIXTURES run
+ * through every invariant below; the one-token one has no extra scheme layers,
+ * because a mode-scoped value for a token the base doesn't define is skipped
+ * (`TST1107`) and there is nothing to author per mode anyway. Its Bootstrap
+ * Sass output is also compiled against the installed Bootstrap, the one place
+ * a text check can't reach: a theme map entry with no value keeps Bootstrap's
+ * own variable, and only Sass can say that still builds.
+ *
  * Asserts, for every registered exporter, across every mode SHAPE below:
  *   1. it compiles without throwing;
  *   2. no emitted file contains a leaked `undefined` / `null` / `NaN` value;
@@ -88,8 +103,10 @@
  */
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { compile } from '@transtyle/core';
+import { compileString } from 'sass';
 
 const EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -118,9 +135,14 @@ const MINIMAL_TOKENS = {
   },
 };
 
+/** The floor below the floor: the one token whose absence is an error. */
+const ONE_TOKEN = {
+  semantic: { color: { primary: { solid: { $type: 'color', $value: '#3b5bdb' } } } },
+};
+
 /**
- * Legal mode layouts a real config comes in. Each is the SAME 3-token design
- * system under a different `modes` block. `light-dark` is the original harness;
+ * Legal mode layouts a real config comes in. Each fixture compiles under every
+ * one of these `modes` blocks. `light-dark` is the original harness;
  * the rest are the shapes it never tried.
  */
 const MODE_SHAPES = {
@@ -170,12 +192,26 @@ const EXTRA_SCHEME_TOKENS = {
   },
 };
 
-const dir = mkdtempSync(join(tmpdir(), 'transtyle-minimal-'));
-mkdirSync(join(dir, 'tokens'));
-writeFileSync(join(dir, 'tokens', 'base.tokens.json'), JSON.stringify(MINIMAL_TOKENS, null, 2));
-for (const [value, tree] of Object.entries(EXTRA_SCHEME_TOKENS)) {
-  writeFileSync(join(dir, `${value}.tokens.json`), JSON.stringify(tree, null, 2));
-}
+/** Each fixture is a token set plus the mode-scoped layers it can author. */
+const FIXTURES = {
+  'three-token': { tokens: MINIMAL_TOKENS, extraScheme: EXTRA_SCHEME_TOKENS },
+  'one-token': { tokens: ONE_TOKEN, extraScheme: {} },
+};
+
+const root = mkdtempSync(join(tmpdir(), 'transtyle-minimal-'));
+let dir;
+/** Lay a fixture out in its own directory; every later step reads `dir`. */
+const useFixture = (name) => {
+  const { tokens, extraScheme } = FIXTURES[name];
+  dir = join(root, name);
+  mkdirSync(join(dir, 'tokens'), { recursive: true });
+  writeFileSync(join(dir, 'tokens', 'base.tokens.json'), JSON.stringify(tokens, null, 2));
+  for (const [value, tree] of Object.entries(extraScheme)) {
+    writeFileSync(join(dir, `${value}.tokens.json`), JSON.stringify(tree, null, 2));
+  }
+  return extraScheme;
+};
+let extraScheme = {};
 
 /** Non-default `color-scheme` values this shape has, that we have authored
  *  token data for — i.e. genuinely different from the default and worth a
@@ -183,7 +219,7 @@ for (const [value, tree] of Object.entries(EXTRA_SCHEME_TOKENS)) {
 const extraSchemeValues = (modes) => {
   const cs = modes['color-scheme'];
   if (!cs) return [];
-  return cs.values.filter((v) => v !== cs.default && v in EXTRA_SCHEME_TOKENS);
+  return cs.values.filter((v) => v !== cs.default && v in extraScheme);
 };
 
 const writeConfig = (modes, autoDark = false) =>
@@ -219,13 +255,16 @@ const LEAK_INSIDE = /\bNaN\b|\[object Object\]/;
 const leaks = (line) => LEAK.test(line) || LEAK_INSIDE.test(line);
 
 let files = 0;
-for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
+// Fixtures × mode shapes, flattened so each fixture is laid out once.
+const sweep = Object.keys(FIXTURES).flatMap((fixture) => Object.entries(MODE_SHAPES).map(([shape, modes]) => [fixture, shape, modes]));
+for (const [fixture, shape, modes] of sweep) {
+  if (dir !== join(root, fixture)) extraScheme = useFixture(fixture);
   const extraValues = extraSchemeValues(modes);
   for (const autoDark of [false, true]) {
     writeConfig(modes, autoDark);
     for (const [name, pkg] of Object.entries(EXPORTERS)) {
       const loadExporter = async () => (await import(pkg)).default;
-      const at = `${name} (${shape}, autoDark=${autoDark})`;
+      const at = `${name} (${fixture}, ${shape}, autoDark=${autoDark})`;
       let result;
       try {
         result = await compile({ cwd: dir, targets: [name], emit: false, loadExporter });
@@ -280,6 +319,16 @@ for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
           errors.push(`${at}: coverage row "${c.variable}" claims class ${c.class} from ${slot}, which does not resolve — absence is not coverage`);
         }
       }
+      // 4b. A variable Bootstrap drops for want of a value is reported under its
+      //     own name — `$border-color`, `--bs-dark-rgb`, a map entry as
+      //     `$theme-colors-text.dark` — never as the whole line it sat on.
+      if (name === 'bootstrap') {
+        for (const c of emitted.coverage ?? []) {
+          if (c.class === 'dropped' && /provides no value/.test(c.note ?? '') && !/^(\$|--)[\w-]+(\.[\w-]+)?$/.test(c.variable)) {
+            errors.push(`${at}: dropped row is not named by its variable: "${c.variable}"`);
+          }
+        }
+      }
 
       // 5. Every authored extra scheme value's anchor actually reached its OWN
       //    combo map, distinct from light AND from every other authored value.
@@ -330,6 +379,39 @@ for (const [shape, modes] of Object.entries(MODE_SHAPES)) {
   }
 }
 
+// The one-token Bootstrap Sass output against real Bootstrap, in the order
+// usage.md gives. A theme map entry this design system has no value for keeps
+// Bootstrap's own variable (`"dark": $dark-text-emphasis`); leaving the key out
+// instead would drop `--bs-dark-text-emphasis` and its siblings from the
+// compiled CSS while `.alert-dark` and `.bg-dark-subtle` still read them, and a
+// text check can't tell that from a valid file.
+extraScheme = useFixture('one-token');
+writeConfig(MODE_SHAPES['light-dark']);
+try {
+  const bs = await compile({
+    cwd: dir,
+    targets: ['bootstrap'],
+    emit: false,
+    loadExporter: async () => (await import(EXPORTERS.bootstrap)).default,
+  });
+  const scssDir = join(dir, 'scss');
+  mkdirSync(scssDir, { recursive: true });
+  for (const f of bs.results.find((r) => r.target === 'bootstrap')?.emitted ?? []) {
+    if (f.path.endsWith('.scss')) writeFileSync(join(scssDir, f.path), f.contents);
+  }
+  const css = compileString(
+    ['variables.transtyle', 'bootstrap/scss/functions', 'bootstrap/scss/variables', 'bootstrap/scss/variables-dark', 'maps.transtyle', 'bootstrap/scss/bootstrap']
+      .map((m) => `@import "${m}";`)
+      .join('\n'),
+    { loadPaths: [scssDir, join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules')], logger: { warn: () => {} } },
+  ).css;
+  for (const want of ['--bs-dark-text-emphasis:', '--bs-dark-bg-subtle:', '--bs-dark-border-subtle:']) {
+    if (!css.includes(want)) errors.push(`bootstrap (one-token, Sass): the compiled CSS has no ${want} — a theme map lost its "dark" entry`);
+  }
+} catch (e) {
+  errors.push(`bootstrap (one-token, Sass): the Sass path does not compile against Bootstrap — ${e.message.split('\n')[0]}`);
+}
+
 // Negative-space case: the polarity axis MUST be the first dimension, or dark
 // mode silently never reaches an exporter (the values land in their combos, but
 // no `modes.dark` alias is created for a non-primary dimension). This must be an
@@ -346,7 +428,7 @@ if (!df.diagnostics.errors.some((d) => d.code === 'TST1112')) {
   errors.push('color-scheme declared after another dimension must raise TST1112 as an ERROR (dark mode would silently never ship, so the build must stop), but it did not');
 }
 
-rmSync(dir, { recursive: true, force: true });
+rmSync(root, { recursive: true, force: true });
 
 // Binding-layer case: TST1204 must judge the RESOLVED value, not the slot's own
 // text. A design system adopted the way the docs recommend binds catalog slots
@@ -572,9 +654,9 @@ rmSync(compDir, { recursive: true, force: true });
 if (errors.length) {
   console.error(`✘ minimal-ds check: ${errors.length} problem(s)`);
   for (const e of errors) console.error('  - ' + e);
-  console.error('\n  A design system may author only a brand color, a surface, and a text color,');
+  console.error('\n  A design system may author only a brand color (or that plus a surface and a text color),');
   console.error('  in any legal mode layout. Exporters must read absent slots and absent modes');
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; the 1-token Bootstrap Sass path builds against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member`);

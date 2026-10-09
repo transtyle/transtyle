@@ -68,36 +68,51 @@ export default {
     // minimal design system has none, and `$border-color: undefined;` is not a
     // stylesheet. Dropping the declaration is right: Bootstrap's own default
     // then applies, which is exactly what "we have nothing to say about this"
-    // should mean. Each dropped line becomes a coverage row, so it is visible
-    // rather than merely absent. Guarded repo-wide by check:minimal-ds.
+    // should mean. Each dropped declaration becomes a coverage row, so it is
+    // visible rather than merely absent. Guarded repo-wide by check:minimal-ds.
+    const drop = (name, note) => {
+      // Reconcile with the row the resolution pass already wrote (AL5 sweep):
+      // pushing a second row left `$border-color` reported as BOTH `native`
+      // and `dropped` in the same report. The declaration is the ground
+      // truth — if it isn't in the file, no earlier claim about it survives.
+      const existing = r.coverage.filter((c) => c.variable === name);
+      if (existing.length) {
+        for (const c of existing) {
+          c.class = 'dropped';
+          c.slot = '—';
+          c.note = note;
+        }
+      } else {
+        r.coverage.push({ variable: name, slot: '—', class: 'dropped', note });
+      }
+    };
+    // A line can hold several declarations (`--bs-dark: …;  --bs-dark-rgb: …;`)
+    // and end with a comment: only the undefined declarations go, each under
+    // its own name, and the comment goes with the last of them (#23).
     const dropUndefined = (contents, file) =>
       contents
         .split('\n')
-        .filter((l) => {
-          if (!/:\s*undefined\s*[;,]/.test(l)) return true;
-          const name = /^\s*(--?[\w-]+|\$[\w-]+)/.exec(l)?.[1] ?? l.trim();
-          const note = `not emitted in ${file}: this design system provides no value for it, so Bootstrap's own default stands`;
-          // Reconcile with the row the resolution pass already wrote (AL5 sweep):
-          // pushing a second row left `$border-color` reported as BOTH `native`
-          // and `dropped` in the same report. The declaration is the ground
-          // truth — if it isn't in the file, no earlier claim about it survives.
-          const existing = r.coverage.filter((c) => c.variable === name);
-          if (existing.length) {
-            for (const c of existing) {
-              c.class = 'dropped';
-              c.slot = '—';
-              c.note = note;
-            }
-          } else {
-            r.coverage.push({ variable: name, slot: '—', class: 'dropped', note });
-          }
-          return false;
+        .flatMap((l) => {
+          if (!/:\s*undefined\s*;/.test(l)) return [l];
+          const indent = /^\s*/.exec(l)[0];
+          const comment = /\s+(\/\/.*|\/\*.*\*\/)$/.exec(l);
+          const body = comment ? l.slice(0, comment.index) : l;
+          const kept = body
+            .trim()
+            .split(/(?<=;)\s+/)
+            .filter((decl) => {
+              const m = /^(--?[\w-]+|\$[\w-]+)\s*:\s*undefined\s*;$/.exec(decl);
+              if (!m) return true;
+              drop(m[1], `not emitted in ${file}: this design system provides no value for it, so Bootstrap's own default stands`);
+              return false;
+            });
+          return kept.length ? [indent + kept.join('  ') + (comment ? comment[0] : '')] : [];
         })
         .join('\n');
 
     const files = [
       { path: '_variables.transtyle.scss', contents: dropUndefined(renderVariables(r, ctx), '_variables.transtyle.scss'), kind: 'stylesheet' },
-      { path: '_maps.transtyle.scss', contents: dropUndefined(renderMaps(r, ctx), '_maps.transtyle.scss'), kind: 'stylesheet' },
+      { path: '_maps.transtyle.scss', contents: renderMaps(r, ctx, drop), kind: 'stylesheet' },
       { path: 'bootstrap-theme.css', contents: dropUndefined(renderCss(r, ctx), 'bootstrap-theme.css'), kind: 'stylesheet' },
       { path: 'usage.md', contents: renderUsage(ctx, r.coverage), kind: 'doc' },
     ];
@@ -121,12 +136,15 @@ function resolve(light, dark, ctx) {
   const perMode = (map) => {
     if (!map) return null;
     const surface = val(map, 'elevation.1.surface');
+    // The pseudo-roles' private mixes read cells a minimal design system can
+    // leave empty (`neutral.text-strong` needs `text.base`, #23): no input, no mix.
+    const mix = (a, b, t) => (a && b ? ctx.mix(a, b, t) : undefined);
     const role = (name) => {
       if (name === 'light') {
         return {
           base: val(map, 'neutral.tint'),
           text: val(map, 'neutral.on-tint'),
-          bgSubtle: ctx.mix(val(map, 'neutral.tint'), surface, 0.6),
+          bgSubtle: mix(val(map, 'neutral.tint'), surface, 0.6),
           borderSubtle: val(map, 'neutral.outline'),
         };
       }
@@ -134,8 +152,8 @@ function resolve(light, dark, ctx) {
         return {
           base: val(map, 'neutral.text-strong'),
           text: val(map, 'neutral.text-strong'),
-          bgSubtle: ctx.mix(val(map, 'neutral.text-strong'), surface, 0.85),
-          borderSubtle: ctx.mix(val(map, 'neutral.text-strong'), surface, 0.55),
+          bgSubtle: mix(val(map, 'neutral.text-strong'), surface, 0.85),
+          borderSubtle: mix(val(map, 'neutral.text-strong'), surface, 0.55),
         };
       }
       return {
@@ -349,6 +367,7 @@ function resolve(light, dark, ctx) {
 
 const fontList = (value) => value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ');
 const rgbTriplet = (hex) => {
+  if (hex === undefined) return undefined; // absent color: the declaration is dropped with it
   const n = parseInt(hex.slice(1), 16);
   return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
 };
@@ -477,12 +496,23 @@ function renderVariables(r, ctx) {
 
 // ---------- _maps.transtyle.scss ----------
 
-function renderMaps(r, ctx) {
+function renderMaps(r, ctx, drop) {
   const { hx } = r;
-  const mapBlock = (name, pick, mode) => {
+  // A map entry this design system has no value for keeps Bootstrap's own
+  // variable rather than leaving the key out: these maps replace Bootstrap's
+  // whole map, and a missing "dark" key would take `--bs-dark-text-emphasis`
+  // and its siblings out of the CSS that `.alert-dark` and `.bg-dark-subtle`
+  // still read (#23).
+  const mapBlock = (name, pick, mode, bsSuffix) => {
     const entries = [...ROLES, 'light', 'dark'].map((role) => {
       const v = hx(pick(r[mode].roles[role]));
-      return `  "${role}": ${v}`;
+      if (v !== undefined) return `  "${role}": ${v}`;
+      const fallback = `$${role}-${bsSuffix}${mode === 'dark' ? '-dark' : ''}`;
+      drop(
+        `$${name}.${role}`,
+        `this design system provides no value for it, so _maps.transtyle.scss keeps Bootstrap's own ${fallback}`,
+      );
+      return `  "${role}": ${fallback}`;
     });
     return `$${name}: (\n${entries.join(',\n')}\n);`;
   };
@@ -495,13 +525,13 @@ function renderMaps(r, ctx) {
     '// mechanism that makes role.on-tint → -text-emphasis NATIVE (F9).',
     '',
     '// <role>.on-tint (on-brand walk, F1/F19)',
-    mapBlock('theme-colors-text', (x) => x.text, 'light'),
+    mapBlock('theme-colors-text', (x) => x.text, 'light', 'text-emphasis'),
     '',
     '// <role>.tint (mix toward surface — cartesian OKLab, F21)',
-    mapBlock('theme-colors-bg-subtle', (x) => x.bgSubtle, 'light'),
+    mapBlock('theme-colors-bg-subtle', (x) => x.bgSubtle, 'light', 'bg-subtle'),
     '',
     '// <role>.outline (F10, now a first-class grid cell)',
-    mapBlock('theme-colors-border-subtle', (x) => x.borderSubtle, 'light'),
+    mapBlock('theme-colors-border-subtle', (x) => x.borderSubtle, 'light', 'border-subtle'),
   ];
   if (r.dark) {
     lines.push(
@@ -509,11 +539,11 @@ function renderMaps(r, ctx) {
       '// ------------------------------------------------- dark mode (data-bs-theme="dark")',
       '',
     );
-    lines.push(mapBlock('theme-colors-text-dark', (x) => x.text, 'dark'));
+    lines.push(mapBlock('theme-colors-text-dark', (x) => x.text, 'dark', 'text-emphasis'));
     lines.push('');
-    lines.push(mapBlock('theme-colors-bg-subtle-dark', (x) => x.bgSubtle, 'dark'));
+    lines.push(mapBlock('theme-colors-bg-subtle-dark', (x) => x.bgSubtle, 'dark', 'bg-subtle'));
     lines.push('');
-    lines.push(mapBlock('theme-colors-border-subtle-dark', (x) => x.borderSubtle, 'dark'));
+    lines.push(mapBlock('theme-colors-border-subtle-dark', (x) => x.borderSubtle, 'dark', 'border-subtle'));
   }
   lines.push('');
   return lines.join('\n');
