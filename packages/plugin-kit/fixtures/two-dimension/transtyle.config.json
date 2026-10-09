@@ -1,0 +1,9 @@
+{
+  "name": "two-dimension",
+  "tokens": ["tokens/*.tokens.json"],
+  "modes": {
+    "color-scheme": { "values": ["light", "dark"], "default": "light" },
+    "density": { "values": ["comfortable", "compact"], "default": "comfortable" }
+  },
+  "derivation": { "rules": "standard@1" }
+}

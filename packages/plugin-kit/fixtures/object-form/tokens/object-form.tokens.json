@@ -1,0 +1,52 @@
+{
+  "semantic": {
+    "color": {
+      "primary": { "solid": { "$type": "color", "$value": "#3b5bdb" } },
+      "elevation": {
+        "0": {
+          "surface": {
+            "$type": "color",
+            "$value": "#ffffff",
+            "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "#101114" } } }
+          }
+        }
+      },
+      "text": {
+        "base": {
+          "$type": "color",
+          "$value": "#212529",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "#f8f9fa" } } }
+        }
+      }
+    },
+    "radius": { "md": { "$type": "dimension", "$value": { "value": 0.375, "unit": "rem" } } },
+    "space": {
+      "4": {
+        "$value": { "value": 16, "unit": "px" },
+        "$extensions": { "transtyle.modes": { "density": { "compact": { "value": 12, "unit": "px" } } } }
+      },
+      "$type": "dimension",
+      "px": { "$value": { "value": 1e-7, "unit": "rem" } }
+    },
+    "border": { "$type": "dimension", "radius-alias": { "$value": "{semantic.radius.md}" } },
+    "duration": { "fast": { "$type": "duration", "$value": { "value": 120, "unit": "ms" } } },
+    "easing": { "standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0, 1] } },
+    "type": {
+      "weight": { "semibold": { "$type": "fontWeight", "$value": "semi-bold" } },
+      "role": {
+        "body": {
+          "md": {
+            "$type": "typography",
+            "$value": {
+              "fontFamily": "Inter",
+              "fontSize": { "value": 1, "unit": "rem" },
+              "fontWeight": "light",
+              "lineHeight": 1.5,
+              "letterSpacing": { "value": 0.5, "unit": "px" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

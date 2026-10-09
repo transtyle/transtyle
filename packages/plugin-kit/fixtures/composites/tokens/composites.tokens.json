@@ -1,0 +1,98 @@
+{
+  "option": { "color": { "$type": "color", "ink": { "$value": "#1a1a2e" } } },
+  "semantic": {
+    "color": {
+      "primary": { "solid": { "$type": "color", "$value": "#3b5bdb" } },
+      "elevation": {
+        "0": {
+          "surface": {
+            "$type": "color",
+            "$value": "#ffffff",
+            "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "#101114" } } }
+          }
+        },
+        "1": {
+          "shadow": {
+            "$type": "shadow",
+            "$value": {
+              "color": "#00000033",
+              "offsetX": "0px",
+              "offsetY": "2px",
+              "blur": "8px",
+              "spread": "0px"
+            },
+            "$extensions": {
+              "transtyle.modes": {
+                "color-scheme": {
+                  "dark": {
+                    "color": "#00000099",
+                    "offsetX": "0px",
+                    "offsetY": "2px",
+                    "blur": "8px",
+                    "spread": "0px"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "2": {
+          "shadow": {
+            "$type": "shadow",
+            "$value": [
+              {
+                "color": "{semantic.color.scrim}",
+                "offsetX": "0px",
+                "offsetY": "1px",
+                "blur": "2px",
+                "spread": "0px"
+              },
+              {
+                "color": "{option.color.ink}",
+                "offsetX": "0px",
+                "offsetY": "4px",
+                "blur": "12px",
+                "spread": "-2px",
+                "inset": true
+              }
+            ]
+          }
+        },
+        "3": { "shadow": { "$type": "shadow", "$value": "{semantic.color.elevation.1.shadow}" } }
+      },
+      "text": {
+        "base": {
+          "$type": "color",
+          "$value": "#212529",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "#f8f9fa" } } }
+        }
+      }
+    },
+    "border": {
+      "focus": {
+        "$type": "border",
+        "$value": { "color": "{semantic.color.primary.solid}", "width": "2px", "style": "solid" }
+      }
+    },
+    "motion": {
+      "fade": {
+        "$type": "transition",
+        "$value": {
+          "duration": "{semantic.duration.fast}",
+          "delay": "0ms",
+          "timingFunction": [0.4, 0, 0.2, 1]
+        }
+      }
+    },
+    "type": {
+      "role": {
+        "body": {
+          "md": {
+            "$type": "typography",
+            "$value": { "fontSize": "{semantic.type.size.lg}", "fontWeight": 500, "lineHeight": 1.5 }
+          }
+        }
+      }
+    }
+  }
+}

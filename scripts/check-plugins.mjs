@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 /**
  * Plugin conformance gate (ROADMAP P1). Runs @transtyle/plugin-kit's
- * `conformance()` against every official exporter and asserts each passes every
+ * `conformance()` against every official exporter, over every fixture the kit
+ * ships (#96: one-token, three-token, two-dimension, single-mode, component
+ * tier, custom role, composites, object form), and asserts each passes every
  * check — so the plugin contract is enforced executably, not just described in
  * plugins.md. Also runs it against a tiny inline "third-party" plugin the kit
  * has never seen, proving the suite works on an arbitrary plugin object and not
- * only on the built-ins.
+ * only on the built-ins, and against deliberately broken plugins, one per
+ * check that has to prove it has teeth.
  *
  * Run: node scripts/check-plugins.mjs (also: npm run check:plugins; in check:all).
  *
@@ -16,7 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { conformance, fixtureIR } from '@transtyle/plugin-kit';
+import { conformance, fixtureIR, FIXTURES } from '@transtyle/plugin-kit';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -27,10 +30,12 @@ const OFFICIAL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css
 // Exporters bind to the semantic tier (ir.md): `option.*` is private vocabulary
 // users restructure freely, so no coverage row may name an option slot.
 // (`component.*` is a legitimate binding: that is the point of the tier.)
-const fixture = await fixtureIR();
+// Checked on every fixture: a sparse one is where a fallback to `option.*` would show.
+const fixtureIRs = await Promise.all(FIXTURES.map((f) => fixtureIR(f.name)));
 const fixtureCtx = { config: { name: 'tier', targets: {} }, targetConfig: { output: 'dist', options: {} }, formatColor, formatHslTriplet, formatHex, contrastRatio, mix, projectName: 'tier', siblings: [] };
 function optionBindings(plugin) {
-  return (plugin.emit(fixture, fixtureCtx).coverage ?? []).filter((c) => String(c.slot).startsWith('option.'));
+  const rows = fixtureIRs.flatMap((ir) => plugin.emit(ir, fixtureCtx).coverage ?? []);
+  return rows.filter((c) => String(c.slot).startsWith('option.'));
 }
 
 async function checkPlugin(label, plugin, manifest) {
@@ -41,11 +46,12 @@ async function checkPlugin(label, plugin, manifest) {
   }
   const { pass, checks } = await conformance(plugin, manifest ? { manifest } : {});
   if (pass) {
-    console.log(`✔ ${label}: ${checks.length} checks pass`);
+    const fixtures = new Set(checks.map((c) => c.fixture).filter(Boolean));
+    console.log(`✔ ${label}: ${checks.length} checks pass over ${fixtures.size} fixtures`);
   } else {
     for (const c of checks.filter((c) => !c.pass)) {
-      console.error(`✖ ${label}: ${c.name} — ${c.detail} [${c.spec}]`);
-      failures.push(`${label}:${c.name}`);
+      console.error(`✖ ${label}: ${c.fixture ? `${c.fixture}: ` : ''}${c.name} — ${c.detail} [${c.spec}]`);
+      failures.push(`${label}:${c.fixture ?? ''}:${c.name}`);
     }
   }
 }
@@ -85,9 +91,11 @@ const thirdParty = {
     const light = ir.modes[ir.defaultMode];
     const primary = light.get('semantic.color.primary.solid');
     const line = primary ? `--acme-primary: ${ctx.formatHex(primary.value).text};` : '';
+    // One stylesheet for the default mode: every dimension is said to be dropped.
+    const modes = (ir.dimensionNames ?? []).map((dim) => ({ variable: `(mode:${dim})`, slot: '—', class: 'dropped', note: 'acme.css holds the default mode only' }));
     return {
       files: [{ path: 'acme.css', contents: `:root { ${line} }\n`, kind: 'stylesheet' }],
-      coverage: [{ variable: '--acme-primary', slot: 'semantic.color.primary.solid', class: 'native' }],
+      coverage: [{ variable: '--acme-primary', slot: 'semantic.color.primary.solid', class: 'native' }, ...modes],
       // The optional diagnostics channel, exercised by a plugin the kit doesn't know.
       diagnostics: [{ severity: 'info', code: 'ACME0001', message: 'acme.css writes hex only', hint: 'Nothing to do.' }],
     };
@@ -97,36 +105,54 @@ await checkPlugin('third-party (inline)', thirdParty, { kind: 'exporter', name: 
 
 // The tier gate has teeth too: a plugin binding a coverage row to `option.*` is caught.
 const optionBinder = { name: 'option-binder', emit: () => ({ files: [], coverage: [{ variable: '--x', slot: 'option.color.blue.500', class: 'native' }] }) };
-if (optionBindings(optionBinder).length !== 1) {
+if (!optionBindings(optionBinder).length) {
   console.error('✖ negative test: a plugin binding a coverage row to option.* was NOT detected');
   failures.push('negative-test-tier');
 } else {
   console.log('✔ negative test: a plugin binding below the semantic tier (option.*) is correctly detected');
 }
 
-// A deliberately broken plugin must FAIL — proves the gate has teeth.
-const broken = { name: 'broken', emit: () => ({ files: [{ path: 'x', contents: 'y', kind: 'k' }], coverage: [{ variable: 'v', slot: 's', class: 'made-up-class' }] }) };
-const brokenResult = await conformance(broken);
-if (brokenResult.pass) {
-  console.error('✖ negative test: a plugin with an invalid coverage class was NOT rejected');
-  failures.push('negative-test');
-} else {
-  console.log('✔ negative test: a broken plugin (bad coverage class) is correctly rejected');
-}
-
+// Deliberately broken plugins must FAIL, each on the check it breaks — proves
+// the gate has teeth. Each starts from the inline third-party plugin, so the
+// named check is the only thing wrong with it.
+const mustFail = async (label, plugin, check, fixtures) => {
+  const { checks } = await conformance(plugin, fixtures ? { fixtures } : {});
+  if (checks.some((c) => c.name === check && !c.pass)) {
+    console.log(`✔ negative test: ${label} fails ${check}`);
+  } else {
+    console.error(`✖ negative test: ${label} was NOT caught by ${check}`);
+    failures.push(`negative-test:${check}`);
+  }
+};
+const withFiles = (contents) => ({ ...thirdParty, emit: (ir, ctx) => ({ ...thirdParty.emit(ir, ctx), files: [{ path: 'acme.css', contents, kind: 'stylesheet' }] }) });
+await mustFail('a plugin with an invalid coverage class', { name: 'broken', emit: () => ({ files: [{ path: 'x', contents: 'y', kind: 'k' }], coverage: [{ variable: 'v', slot: 's', class: 'made-up-class' }] }) }, 'coverage-classes-valid', 'canonical');
 // An exporter cannot raise an error from emit (a throw is TST3001): a
-// diagnostic with severity "error" breaks the contract and must be rejected.
-const loud = { name: 'loud', emit: () => ({ files: [], coverage: [], diagnostics: [{ severity: 'error', code: 'X0001', message: 'stop' }] }) };
-const loudResult = await conformance(loud);
-if (loudResult.pass || !loudResult.checks.some((c) => c.name === 'emit-diagnostics-valid' && !c.pass)) {
-  console.error('✖ negative test: a plugin returning an error-severity diagnostic was NOT rejected');
-  failures.push('negative-test-diagnostics');
-} else {
-  console.log('✔ negative test: a plugin returning an error-severity diagnostic is correctly rejected');
-}
+// diagnostic with severity "error" breaks the contract.
+await mustFail('a plugin returning an error-severity diagnostic', { name: 'loud', emit: () => ({ files: [], coverage: [], diagnostics: [{ severity: 'error', code: 'X0001', message: 'stop' }] }) }, 'emit-diagnostics-valid', 'canonical');
+await mustFail('a plugin writing `[object Object]` into a value', withFiles(':root { --acme-radius: [object Object]; }\n'), 'no-leaked-values', 'canonical');
+await mustFail('a plugin writing `undefined` after a colon', withFiles(':root { --acme-radius: undefined; }\n'), 'no-leaked-values', 'canonical');
+await mustFail('a plugin emitting an empty file', withFiles('\n'), 'files-non-empty', 'canonical');
+await mustFail(
+  'a plugin claiming `native` for a slot the one-token system never resolves',
+  { ...thirdParty, emit: (ir, ctx) => { const out = thirdParty.emit(ir, ctx); return { ...out, coverage: [...out.coverage, { variable: '--acme-border', slot: 'semantic.color.border', class: 'native' }] }; } },
+  'coverage-honest',
+  'one-token',
+);
+await mustFail(
+  'a plugin ignoring `density` without a `(mode:density)` row',
+  { ...thirdParty, emit: (ir, ctx) => { const out = thirdParty.emit(ir, ctx); return { ...out, coverage: out.coverage.filter((c) => c.class !== 'dropped') }; } },
+  'mode-dimensions-accounted',
+  'two-dimension',
+);
+await mustFail(
+  'a plugin reading the authored value instead of the canonical one',
+  { ...thirdParty, emit: (ir, ctx) => { const raw = ir.modes[ir.defaultMode].get('semantic.radius.md')?.rawValue; return { ...thirdParty.emit(ir, ctx), files: [{ path: 'acme.css', contents: `/* radius.md as authored: ${JSON.stringify(raw)} */\n`, kind: 'stylesheet' }] }; } },
+  'structured-values-as-strings',
+  'object-form',
+);
 
 if (failures.length) {
   console.error(`\n✖ check-plugins: ${failures.length} conformance failure(s)`);
   process.exit(1);
 }
-console.log(`\n✔ check-plugins: all ${OFFICIAL.length} official exporters + an inline third-party plugin pass conformance`);
+console.log(`\n✔ check-plugins: all ${OFFICIAL.length} official exporters + an inline third-party plugin pass conformance on ${FIXTURES.length} fixtures`);

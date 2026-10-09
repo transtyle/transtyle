@@ -1,0 +1,6 @@
+{
+  "name": "custom-role",
+  "tokens": ["tokens/*.tokens.json"],
+  "modes": { "color-scheme": { "values": ["light", "dark"], "default": "light" } },
+  "derivation": { "rules": "standard@1" }
+}

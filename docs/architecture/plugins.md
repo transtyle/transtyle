@@ -55,7 +55,7 @@ type ExporterDiagnostic = { severity: 'info' | 'warning'; code: string; message:
 
 Why one hook and not a `resolve`/`emit` split with core-evaluated JSON mapping tables (which earlier drafts of this document specified): eight exporters were written against the real interface and none needed the split. Mapping tables still exist — they're just **the exporter's own data structure**, declared in its source and applied by its own `emit`, which keeps the mapping and the emitting honest about each other. Coverage is returned by the exporter for the same reason: only the exporter knows whether a given mapping was lossless.
 
-Constraints, enforced executably by the conformance kit rather than by convention: exporters receive an IR they must **not mutate**; they return file _descriptions_ and never touch the filesystem; they have no access to other targets' resolutions (only the `ctx.siblings` manifest of names and paths); and `emit` must be **deterministic** — the kit double-runs it and diffs.
+Constraints, enforced executably by the conformance kit rather than by convention: exporters receive an IR they must **not mutate**; they return file _descriptions_ and never touch the filesystem; they have no access to other targets' resolutions (only the `ctx.siblings` manifest of names and paths); and `emit` must be **deterministic** — the kit double-runs it and diffs. Every file it returns has content, and **no JavaScript value in output**: no line carries `undefined`, `null` or `NaN` where a value belongs, or `NaN` / `[object Object]` anywhere. A slot with no value is a coverage row, never a stringified absence.
 
 `ctx` carries the project config, this instance's `targetConfig` (with `options`), the color helpers (`formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`, `mix`), `projectName`, `siblings`, and `units` (`remBase`, `toPx(dimension)`, `toRem(dimension)`: unit conversion at the config's `units.remBase`, returning `undefined` for anything that is not a `px` or `rem` dimension).
 
@@ -67,22 +67,41 @@ Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the _
 
 ## The plugin-kit and conformance
 
-`@transtyle/plugin-kit` (shipped, P1) exports `conformance(plugin, { manifest? })`. It runs the plugin against a canonical fixture design system bundled with the kit — a brand color, both `color-scheme` modes, elevation, text, border, radius, a duration and an easing (the last three authored in DTCG structured form, so a plugin is always tested on the CSS strings core hands it), fonts — and asserts the contract above:
+`@transtyle/plugin-kit` (shipped, P1) exports `conformance(plugin, { manifest?, fixtures? })`. It runs the plugin against nine fixture design systems bundled with the kit (`fixtures/<name>/`, plain DTCG projects compiled by the real loader), so a plugin is tested on the shapes real projects come in, not one complete system:
 
-| Check                    | Asserts                                                                              |
-| ------------------------ | ------------------------------------------------------------------------------------ |
-| `interface-shape`        | default export is `{ name: string, emit: function }`                                 |
-| `emit-runs`              | `emit` completes against a real resolved IR                                          |
-| `emit-returns-files`     | `files` are `{ path, contents, kind }`                                               |
-| `emit-returns-coverage`  | `coverage` items are `{ variable, slot, class }`                                     |
-| `coverage-classes-valid` | every class is one of the five                                                       |
-| `emit-diagnostics-valid` | `diagnostics`, if returned, are `{ severity: info\|warning, code, message, hint? }`  |
-| `deterministic`          | two `emit` runs produce byte-identical files and diagnostics                         |
-| `ir-immutable`           | `emit` did not mutate the IR it was given                                            |
-| `manifest-valid`         | the `transtyle` manifest has `kind`, `name`, `irSpec`, `pluginApi`, `capabilities[]` |
-| `options-schema-shape`   | `optionsSchema`, if present, is a JSON-Schema object                                 |
+| Fixture          | Exercises                                                                                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canonical`      | a brand color, both `color-scheme` modes, elevation, text, border, fonts; radius, a duration and an easing in DTCG structured form                       |
+| `one-token`      | only `semantic.color.primary.solid`, the one token the engine cannot invent                                                                              |
+| `three-token`    | brand, page background and text, with dark values; no radius, spacing or fonts                                                                           |
+| `two-dimension`  | `color-scheme` × `density`, with `space.4` authored differently under `density: compact`                                                                 |
+| `single-mode`    | `color-scheme` with `light` only                                                                                                                         |
+| `component-tier` | authored `component.control.radius`, `component.button.radius` (an alias to a derived slot), `component.button.padding-x`, `component.tooltip.max-width` |
+| `custom-role`    | a custom role joining the grid through `$extensions.transtyle.role`                                                                                      |
+| `composites`     | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                                                             |
+| `object-form`    | dimension, duration, cubicBezier, fontWeight and typography members in DTCG structured form, compared with the same system authored as CSS strings       |
 
-Each check cites the spec line it enforces, so a failure points at the rule rather than at the kit. **The conformance suite is the real plugin spec** — prose drifts, executable fixtures don't. `npm run check:plugins` runs it over all eight official exporters in CI; passing is what "official" means, and community plugins can advertise it.
+Every fixture runs by default; `fixtures: 'canonical'` (or an array of names) narrows it. The kit asserts the contract above:
+
+| Check                          | Asserts                                                                                                               |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `interface-shape`              | default export is `{ name: string, emit: function }`                                                                  |
+| `manifest-valid`               | the `transtyle` manifest has `kind`, `name`, `irSpec`, `pluginApi`, `capabilities[]`                                  |
+| `options-schema-shape`         | `optionsSchema`, if present, is a JSON-Schema object                                                                  |
+| `emit-runs`                    | `emit` completes against a real resolved IR                                                                           |
+| `emit-returns-files`           | `files` are `{ path, contents, kind }`                                                                                |
+| `emit-returns-coverage`        | `coverage` items are `{ variable, slot, class }`                                                                      |
+| `coverage-classes-valid`       | every class is one of the five                                                                                        |
+| `emit-diagnostics-valid`       | `diagnostics`, if returned, are `{ severity: info\|warning, code, message, hint? }`                                   |
+| `deterministic`                | two `emit` runs produce byte-identical files and diagnostics                                                          |
+| `ir-immutable`                 | `emit` did not mutate the IR it was given                                                                             |
+| `files-non-empty`              | every file has content                                                                                                |
+| `no-leaked-values`             | no JavaScript value in output (the constraint above)                                                                  |
+| `coverage-honest`              | no `native`/`derived` row names a slot that does not resolve (absence is not coverage)                                |
+| `mode-dimensions-accounted`    | on `two-dimension`: the compact `density` value reaches a file, or a `(mode:density)` row says `dropped`              |
+| `structured-values-as-strings` | on `object-form`: the files are byte-identical to the string-form twin's ([ir.md](ir.md#values-and-canonicalization)) |
+
+The first three run once per plugin, the rest once per fixture, and each result names its fixture. Each check cites the spec line it enforces, so a failure points at the rule rather than at the kit. **The conformance suite is the real plugin spec** — prose drifts, executable fixtures don't. `npm run check:plugins` runs it over all nine official exporters in CI, with a deliberately broken plugin per check proving that check fails; passing is what "official" means, and community plugins can advertise it. Whether an authored token with no binding on a target may stay silent is still open ([#51](https://github.com/transtyle/transtyle/issues/51)), so `component-tier` and `custom-role` assert the checks above and nothing about which tokens reach the output.
 
 Its value is not theoretical: on its first run the kit caught `exporter-primeng` emitting `field` where the contract requires `variable` — a divergence that had also been silently producing `report.json` files violating the published report schema.
 
