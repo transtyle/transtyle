@@ -33,16 +33,20 @@ jobs:
       - run: npm run check:demos
       - run: npm run check:brand
       - run: npm run check:figures
+      - run: npm run check:matrix
       - run: npm run check:catalog-signals
       - run: npm run check:doc-numbers
       - run: npm run check:format
       - run: npm run check:color
       - run: npm run check:plugins
       - run: npm run check:grid
+      - run: npm run check:rem-base
       - run: npm run check:fixtures
       - run: npm run check:determinism
+      - run: npm run check:atomic-emit
       - run: npm run check:schemas
       - run: npm run check:cli
+      - run: npm run check:explain
       - run: npm run check:component-tier
       - run: npm run check:tokens-studio
       - run: npm run check:manifests
