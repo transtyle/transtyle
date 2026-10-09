@@ -110,9 +110,9 @@ function buildTheme(map, mode, ctx) {
 
   // radius: rem → px numeric (unit conversion = approximated)
   const radiusEntry = map.get('semantic.radius.md');
-  const radiusPx = radiusEntry ? remToPx(radiusEntry.value) : undefined;
+  const radiusPx = radiusEntry ? toPx(radiusEntry.value, ctx) : undefined;
   if (radiusPx !== undefined) {
-    cov('tooltip.borderRadius', 'semantic.radius.md', 'approximated', 'rem → px (base 16)');
+    cov('tooltip.borderRadius', 'semantic.radius.md', 'approximated', `rem → px (base ${remBase(ctx)})`);
   }
 
   if (clampedAny) {
@@ -159,12 +159,13 @@ function buildTheme(map, mode, ctx) {
   return { theme, modeCoverage: coverage };
 }
 
-function remToPx(value) {
-  const rem = /^([\d.]+)rem$/.exec(value);
-  if (rem) return Math.round(parseFloat(rem[1]) * 16);
-  const px = /^([\d.]+)px$/.exec(value);
-  if (px) return Math.round(parseFloat(px[1]));
-  return undefined;
+// The rem base is the config's `units.remBase` (default 16px), read through ctx.units.
+const remBase = (ctx) => ctx.units?.remBase ?? 16;
+
+function toPx(value, ctx) {
+  // A ctx without `units` (an older core, a hand-built test context) keeps the 16px base.
+  const px = ctx.units ? ctx.units.toPx(value) : /^([\d.]+)(px|rem)$/.test(value) ? parseFloat(value) * (value.endsWith('rem') ? 16 : 1) : undefined;
+  return px === undefined ? undefined : Math.round(px);
 }
 
 // ---------- artifacts ----------

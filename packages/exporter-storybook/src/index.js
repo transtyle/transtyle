@@ -58,7 +58,8 @@ export default {
   emit(normalized, ctx) {
     const modes = normalized.modeValues.filter((m) => normalized.modes[m]);
     const native = normalized.defaultMode;
-    const remBase = ctx.targetConfig.options?.remBase ?? 16;
+    // The target's own option overrides the config-level `units.remBase` (default 16).
+    const remBase = ctx.targetConfig.options?.remBase ?? ctx.units?.remBase ?? 16;
     const coverage = [];
 
     const variants = modes.map((mode) => buildThemeVars(normalized, mode, ctx, remBase, coverage));

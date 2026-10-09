@@ -13,10 +13,12 @@ import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
 import { nearestName } from './nearest.js';
+import { makeUnits } from './units.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 
 export { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 export { Diagnostics } from './diagnostics.js';
+export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';
 export { explainToken } from './explain.js';
 
@@ -104,6 +106,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     }
   }
 
+  const units = makeUnits(config);
   const targetNames = skipExporters ? [] : targets?.length ? targets : Object.keys(config.targets ?? {});
   const results = [];
   // Exporter crashes (TST3001/TST3002) are recorded per target and must not
@@ -172,7 +175,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
 
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
     const ctx = {
-      config, targetConfig, formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
+      config, targetConfig, units, formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
       projectName: config.name ?? 'design-system',
       // Sibling-target manifest (docs/specs/exporters/storybook.md#composition):
       // name, exporter, and output dir of every configured target — never their

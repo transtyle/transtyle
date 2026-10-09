@@ -35,6 +35,10 @@ Every key below is accepted by the shipped schema — this block validates clean
     "require": ["semantic.color.primary"], // must be authored, not derived
   },
 
+  "units": {
+    "remBase": "16px", // what one rem is worth for exporters that convert units; default 16px
+  },
+
   "targets": {
     "bootstrap": { "output": "dist/bootstrap" },
     "shadcn": { "output": "dist/shadcn", "options": { "era": "tailwind-v4" } },
@@ -52,6 +56,8 @@ Every key below is accepted by the shipped schema — this block validates clean
   },
 }
 ```
+
+`units.remBase` is a string with a `px` unit and a positive value (`"16px"`, `"10px"`, `"14.5px"`); anything else (`"abc"`, `"0px"`, `"100%"`, a bare number) is a `TST1010` error. Exporters that convert `rem` to pixels (ECharts, Storybook) read it through `ctx.units`, and their `approximated` coverage note names the base used. Storybook's `options.remBase` (a number) stays as a per-target override. Leaving the key out is the same as `"16px"`: output is byte-identical to a config that never had it.
 
 Two keys an earlier draft of this page showed are **specced, and rejected today** — a config carrying either fails to load with `TST1010: unknown property`:
 
