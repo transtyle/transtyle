@@ -49,7 +49,7 @@ const REQUIRED_SLOTS = [
   'semantic.color.link.base', 'semantic.color.link.hover', 'semantic.color.link.visited',
   'semantic.color.border', 'semantic.color.ring',
   // scales
-  'semantic.radius.control', 'semantic.radius.field', 'semantic.radius.container',
+  'semantic.radius.none', 'semantic.radius.control', 'semantic.radius.field', 'semantic.radius.container',
   'semantic.space.0', 'semantic.space.24', 'semantic.size.control.md', 'semantic.border-width.thin',
   'semantic.breakpoint.xs', 'semantic.z.modal', 'semantic.type.size.md', 'semantic.type.weight.regular',
   'semantic.type.leading.normal', 'semantic.type.tracking.normal', 'semantic.type.role.body.md',
@@ -67,7 +67,7 @@ const FROZEN_HEX = {
 
 // (d) A two-mode design system with only the engine's required anchor, a
 // surface and text.base authored, plus the role bindings under test.
-async function compileBound(roles) {
+async function compileBound(roles, semantic = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-grid-alias-'));
   try {
     mkdirSync(join(dir, 'tokens'));
@@ -77,7 +77,7 @@ async function compileBound(roles) {
       text: { base: { $type: 'color', $value: '#212529' } },
       ...roles,
     };
-    writeFileSync(join(dir, 'tokens', 'base.tokens.json'), JSON.stringify({ semantic: { color } }, null, 2));
+    writeFileSync(join(dir, 'tokens', 'base.tokens.json'), JSON.stringify({ semantic: { color, ...semantic } }, null, 2));
     writeFileSync(
       join(dir, 'transtyle.config.json'),
       JSON.stringify({ name: 'grid-alias', tokens: ['tokens/*.tokens.json'], modes: { 'color-scheme': { values: ['light', 'dark'], default: 'light' } }, targets: {} }, null, 2),
@@ -168,12 +168,26 @@ async function main() {
     errors.push(`secondary → a missing slot: expected TST1105 and no TST1205, got ${codes.join(', ')}`);
   }
 
+  // (e) The F8 radius ramp starts at none = 0, in radius.md's unit
+  // (docs/architecture/derivation.md); an authored radius.none still wins.
+  const radiusMd = light.get('semantic.radius.md')?.value;
+  const radiusUnit = /^[\d.]+([a-z%]+)$/.exec(String(radiusMd))?.[1];
+  const none = light.get('semantic.radius.none');
+  if (none?.value !== `0${radiusUnit}` || none.provenance?.rule !== 'radius-scale(0)@standard@1') {
+    errors.push(`radius.none: expected 0${radiusUnit} from radius-scale(0) (radius.md is ${radiusMd}), got ${none?.value} from ${none?.provenance?.rule}`);
+  }
+  const authoredNone = await compileBound({}, { radius: { md: { $type: 'dimension', $value: '6px' }, none: { $type: 'dimension', $value: '1px' } } });
+  for (const mode of ['light', 'dark']) {
+    const got = authoredNone.normalized.modes[mode]?.get('semantic.radius.none')?.value;
+    if (got !== '1px') errors.push(`radius.none (${mode}): an authored 1px must win over the ramp, got ${got}`);
+  }
+
   if (errors.length) {
     console.error(`✖ check-grid failed — ${errors.length} issue(s):\n`);
     for (const e of errors) console.error('  - ' + e);
     process.exit(1);
   }
-  console.log(`✔ check-grid: ${REQUIRED_SLOTS.length} catalog slots present in both modes; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes; ${BOUND.length} roles bound to a derived slot get theirs too, a late-derived binding raises TST1205 and a dangling one TST1105 alone`);
+  console.log(`✔ check-grid: ${REQUIRED_SLOTS.length} catalog slots present in both modes; ${Object.keys(FROZEN_HEX).length} frozen values match the Phase 0 fixture exactly; the crt-amber role archetype derives its full grid in both modes; ${BOUND.length} roles bound to a derived slot get theirs too, a late-derived binding raises TST1205 and a dangling one TST1105 alone; radius.none derives to 0 and an authored one wins`);
 }
 
 main();

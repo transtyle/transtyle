@@ -25,9 +25,9 @@ npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, boo
 
 What to study:
 
-<!-- measured: acme.engine = 231 -->
+<!-- measured: acme.engine = 232 -->
 
-- **Derivation in action.** The other 231 slots per mode are the engine's: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
+- **Derivation in action.** The other 232 slots per mode are the engine's: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
 - **One brand color drives everything.** Change `option.color.blue.600`, rebuild, and watch the accent tint, on-colors, and all five chart colors follow coherently.
 - **Both mode-authoring forms.** Acme uses inline `$extensions` for dark values — the compact form for hand-edited files.
 - **Target instances.** Its config builds the same design system for both shadcn eras side by side — plus [per-mode ECharts themes](/docs/exporter-echarts/) whose `color[]` palette shares its first five colors with shadcn's `--chart-*`: one brand, one data-viz palette, everywhere.
