@@ -136,8 +136,9 @@ function resolve(light, dark, ctx) {
   const perMode = (map) => {
     if (!map) return null;
     const surface = val(map, 'elevation.1.surface');
-    // The pseudo-roles' private mixes read cells a minimal design system can
-    // leave empty (`neutral.text-strong` needs `text.base`, #23): no input, no mix.
+    // The pseudo-roles' private mixes read cells a design system can leave
+    // empty (#23: `neutral.text-strong` when `text.base` is bound to a role
+    // cell and the content ladder isn't derived): no input, no mix.
     const mix = (a, b, t) => (a && b ? ctx.mix(a, b, t) : undefined);
     const role = (name) => {
       if (name === 'light') {

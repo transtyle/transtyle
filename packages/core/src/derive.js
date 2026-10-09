@@ -45,15 +45,6 @@ export function derive(normalized, config, diagnostics) {
     // both see the root cause and stay silent when there is one.
     const primary = get(map, `${S}primary.solid`);
     if (!primary) return { underived };
-    const textBase = get(map, `${S}text.base`);
-    // `text.base` is read here, before the role grids: an alias to a role cell
-    // (`{semantic.color.neutral.solid}`) can't be settled yet, and reordering
-    // wouldn't help since the roles read text.base too (text-strong, the on-tint
-    // fallbacks). It still resolves after DERIVE; TST1205 says what was lost.
-    if (!textBase && map.get(`${S}text.base`)?.pendingAlias) {
-      underived.push({ mode, path: `${S}text.base` });
-    }
-
     // Custom archetyped roles (T7, docs/architecture/ir.md §archetypes) join the
     // grid loop below exactly like a built-in role: resolveRoleSolid()'s fallback
     // branch requires their `.solid` authored, same as `primary`.
@@ -86,6 +77,31 @@ export function derive(normalized, config, diagnostics) {
       );
     }
     const surface = (n) => elev[n];
+
+    // --- Body text (#116): authored, or a contrast pick against this mode's page ---
+    // Read after the elevation ladder, so the default is picked against this
+    // mode's final canvas (authored or `default-canvas`), and before the role
+    // grids, which read it (text-strong, the on-tint fallbacks). The two
+    // candidates are the two default canvases, so with both defaults in play a
+    // mode gets the other polarity's page color: a pick between catalog
+    // constants, `defaulted`, like the canvas itself. An authored alias to a
+    // role cell (`{semantic.color.neutral.solid}`) can't be settled yet:
+    // resolve() leaves it pending rather than default it, it still resolves
+    // after DERIVE, and TST1205 says what was lost. A canvas that is itself
+    // still a pending alias gives nothing to pick against: no default then.
+    const textBase = elev[0]
+      ? rc(
+          ctx,
+          `${S}text.base`,
+          () => ({ ...contrastPick(elev[0], [NEARBLACK, WHITE]).color }),
+          'default-text',
+          ['elevation.0.surface'],
+          PROVENANCE.DEFAULTED,
+        )
+      : get(map, `${S}text.base`);
+    if (!textBase && map.get(`${S}text.base`)?.pendingAlias) {
+      underived.push({ mode, path: `${S}text.base` });
+    }
 
     const scrim = rc(
       ctx,

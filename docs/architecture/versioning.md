@@ -36,7 +36,7 @@ The vision pitched `transtyle build bootstrap 5.3.8` — patch-level targeting. 
 
 - _Bootstrap 6 releases_ → exporter major or minor (new profile), no core change.
 - _New semantic slot added to catalog_ (e.g. `color.link`) → IR spec minor; exporters opt in when ready; coverage reports "slot unmapped by this exporter version" in the meantime.
-- _Standard derivation rule-pack changes a formula_ → new rule-pack version (`standard@2`); users upgrade explicitly in config; `transtyle diff` shows the resulting token changes ([derivation.md](derivation.md)).
+- _Standard derivation rule-pack changes a formula_ → new rule-pack version (`standard@2`); users upgrade explicitly in config; `transtyle diff` shows the resulting token changes ([derivation.md](derivation.md)). Until the catalog freeze is armed (the first non-prerelease version), [ADR-0010](../adr/0010-pre-release-breaking-changes.md) lets `standard@1` change in place instead, with regenerated fixtures and a worklog note: the `default-text` rule (2026-10-09) landed that way.
 - _Exporter `emit` output format improves_ (same inputs, different file contents) → exporter minor at least, and release notes must say "regenerated output will differ" — byte-determinism is promised per version set, not across upgrades.
 
 ## Reproducibility

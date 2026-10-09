@@ -32,7 +32,7 @@ npx transtyle init          # scaffolds transtyle.config.json + tokens/brand.tok
 
 The scaffold authors the honest minimum — **six real decisions**, each marked `TODO` with a description of what it is:
 
-| You author       | Catalog slot          | Why it can't be derived                |
+| You author       | Catalog slot          | Why you author it                      |
 | ---------------- | --------------------- | -------------------------------------- |
 | Your brand color | `primary.solid`       | The one non-negotiable input           |
 | Page background  | `elevation.0.surface` | Anchors the whole surface ladder       |
@@ -40,6 +40,8 @@ The scaffold authors the honest minimum — **six real decisions**, each marked 
 | Body text color  | `text.base`           | Anchors the content hierarchy          |
 | Muted text color | `text.muted`          | Second rung of that hierarchy          |
 | Default border   | `border`              | The neutral hairline everything shares |
+
+Only the brand color is required. Leave the page background out and it defaults to white, or near-black in dark mode; leave the body text out and it defaults to whichever of near-black and white contrasts more with the page. Both are honest defaults, marked `defaulted` in `report.json`, and the five other decisions are what make the neutrals yours. (Card background and muted text derive from the page and the text too; the scaffold asks for them because they are part of your look.)
 
 In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
 
