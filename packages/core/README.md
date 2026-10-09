@@ -50,7 +50,10 @@ and the colour module — `parseColor` (any CSS color syntax a stylesheet holds,
 bare plugin: the manifest's `irSpec` must be this core's IR spec, its `pluginApi` a semver range
 accepting one of `PLUGIN_API_VERSIONS` (`TST1309` otherwise).
 
-**Zero external dependencies**, deliberately.
+**Zero external dependencies**, deliberately. The one opt-in exception: `check.contrast.standard: "apca"` loads the
+`apca-w3` package, an optional peer dependency you install yourself (`npm install --save-dev apca-w3`), because
+APCA's licence doesn't allow a copy of it here. `loadContrast(config, cwd)` gives the same contrast measure
+`compile()` uses, and `compile()` returns it as `contrast` for `contrastRegressions`.
 
 ## Documentation
 

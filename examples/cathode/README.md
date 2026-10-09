@@ -49,6 +49,7 @@ Things to observe in the output:
 - Everything the DS didn't author (secondary, subtle tints, hover states, the chart palette) derives green-anchored: the data-viz palette starts at phosphor and rotates from there. Open `dist/echarts/theme.cathode-terminal-dark.json` — phosphor-green series on tube-black, a dashboard from 1983.
 - `--radius: 0rem` makes shadcn's `--radius-sm: calc(var(--radius) - 4px)` negative; browsers treat negative radii as invalid and render 0 — the correct brutalist result, by accident of CSS. A future `check` rule could warn here.
 - Amusing: `success` derives to hue 150 — nearly phosphor green. On a CRT, everything is success.
+- **Contrast depends on the standard.** The config checks WCAG 2.1 AA, and `npx transtyle check` is clean. Set `check.contrast.standard` to `"apca"` (after `npm install --save-dev apca-w3`) and two warnings appear: the dark muted text, `#50a252` on `#040904`, is 6.3:1 but Lc -43, under APCA's Lc 60 for secondary text (Lc -42.7 on `elevation.1`). The on-colors change instead of warning, because derivation follows the standard: `success.on-solid` on `#319751` flips from near-black (5.3:1, Lc 39.6) to white (Lc -69.7). The example stays on WCAG, the standard most audits still ask for; see [WCAG 2.1 or APCA](https://transtyle.github.io/transtyle/docs/configuration/#wcag-21-or-apca).
 
 ## Honest limitations this example exposes
 

@@ -16,3 +16,4 @@ Format: [MADR](https://adr.github.io/madr/)-lite — Status / Context / Decision
 | [0010](0010-pre-release-breaking-changes.md) | Pre-release breaking changes allowed; freeze re-arms at first publication       | accepted |
 | [0011](0011-v0-freeze-readiness.md)          | IR spec v0 freeze-ready; plugin API freeze deferred to the conformance kit (P1) | proposed |
 | [0012](0012-binding-rules.md)                | Binding rules: the config declares data that expands into plain aliases at LOAD | accepted |
+| [0013](0013-apca-optional-peer.md)           | APCA comes from the `apca-w3` package, an optional peer dependency of core      | accepted |

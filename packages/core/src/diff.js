@@ -10,7 +10,8 @@
  * graph rather than the source.
  */
 
-import { CONTRAST_PAIRS, contrastThreshold, pairRatio } from './checks.js';
+import { contrastPairs, pairContrast } from './checks.js';
+import { wcagContrast, checkStandard } from './contrast.js';
 
 /** Canonical, stable string form of a resolved value, for equality only. */
 function canon(value) {
@@ -64,32 +65,50 @@ export function diffResolved(before, after) {
  *
  * `check` tells you the contrast is bad *now*; this tells you **this change made
  * it bad** — which is the question a reviewer has, and the one a passing-CI
- * baseline can regress on silently. Uses the same pairs and threshold as
+ * baseline can regress on silently. Uses the same pairs and contrast standard as
  * `runChecks`, so the two can never disagree about what "passing" means.
+ *
+ * `contrast` is the `contrast` a compile returns (the after side's standard).
+ * Without it the config's WCAG level is used; an `apca` config needs it, since
+ * only compile() loads the APCA package.
  *
  * Severities, worst first:
  *   `regressed` — passed the standard before, fails now (the headline case)
- *   `worsened`  — already failing, and the ratio dropped further
+ *   `worsened`  — already failing, and the contrast dropped further (by more
+ *                 than 0.05 of a ratio, or 1 Lc)
  *
  * A pair that improves, or that fails identically on both sides, is not reported.
+ * Values are ratios under WCAG and signed Lc under APCA (`unit` says which);
+ * comparisons use their magnitude.
  *
- * @returns {Array<{ mode, fg, bg, before: number, after: number, status, threshold }>}
+ * @returns {Array<{ mode, fg, bg, before: number, after: number, status, threshold, unit, standard }>}
  */
-export function contrastRegressions(before, after, config) {
-  const threshold = contrastThreshold(config);
+export function contrastRegressions(before, after, config, contrast) {
+  if (!contrast) {
+    if (checkStandard(config) === 'apca') {
+      throw new Error('contrastRegressions: pass the `contrast` that compile() returned (APCA is loaded by compile)');
+    }
+    contrast = wcagContrast(checkStandard(config));
+  }
+  const { standard, unit } = contrast;
   const out = [];
+  const pairs = contrastPairs(after);
   for (const mode of Object.keys(after.modes)) {
     const bMap = before.modes[mode];
     const aMap = after.modes[mode];
     if (!bMap || !aMap) continue; // mode added or removed — not a regression
-    for (const [fg, bg] of CONTRAST_PAIRS) {
-      const b = pairRatio(bMap, fg, bg);
-      const a = pairRatio(aMap, fg, bg);
+    for (const [fg, bg, use] of pairs) {
+      const b = pairContrast(bMap, fg, bg, contrast);
+      const a = pairContrast(aMap, fg, bg, contrast);
       if (b === null || a === null) continue;
-      if (b >= threshold && a < threshold) {
-        out.push({ mode, fg, bg, before: b, after: a, status: 'regressed', threshold });
-      } else if (b < threshold && a < threshold && a < b - 0.05) {
-        out.push({ mode, fg, bg, before: b, after: a, status: 'worsened', threshold });
+      const threshold = contrast.threshold(use);
+      const sb = contrast.score(b);
+      const sa = contrast.score(a);
+      const row = { mode, fg, bg, before: b, after: a, threshold, unit, standard };
+      if (sb >= threshold && sa < threshold) {
+        out.push({ ...row, status: 'regressed' });
+      } else if (sb < threshold && sa < threshold && sa < sb - contrast.tolerance) {
+        out.push({ ...row, status: 'worsened' });
       }
     }
   }

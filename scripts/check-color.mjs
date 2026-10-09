@@ -10,6 +10,7 @@
  * Run: node scripts/check-color.mjs (also: npm run check:color; in check:all).
  */
 import { parseColor, formatHex, contrastRatio, mix, DTCG_COLOR_SPACES } from '../packages/core/src/color.js';
+import { loadContrast, wcagContrast } from '../packages/core/src/contrast.js';
 
 let failures = 0;
 const eq = (label, got, want) => {
@@ -175,6 +176,31 @@ near('contrast white/white', contrastRatio(parseColor('#fff'), parseColor('#fff'
 near('contrast is order-independent',
   contrastRatio(parseColor('#333'), parseColor('#fff')) - contrastRatio(parseColor('#fff'), parseColor('#333')), 0, 1e-9);
 
+// --- contrast: APCA reference values (BL-15, ADR-0013) ---
+// The eight vectors of apca-w3 0.1.9's own test suite (test/index.js), text
+// first: Transtyle measures through the package, from the hex it emits, and
+// must reproduce them to the last digit.
+const { check: apca } = await loadContrast({ check: { contrast: { standard: 'apca' } } }, process.cwd());
+for (const [text, bg, want] of [
+  ['#888', '#fff', 63.056469930209424],
+  ['#fff', '#888', -68.54146436644962],
+  ['#000', '#aaa', 58.146262578561334],
+  ['#aaa', '#000', -56.24113336839742],
+  ['#123', '#def', 91.66830811481631],
+  ['#def', '#123', -93.06770049484275],
+  ['#123', '#444', 8.32326136957393],
+  ['#444', '#123', -7.526878460278154],
+])
+  eq(`APCA Lc ${text} on ${bg}`, apca.measure(parseColor(text), parseColor(bg)), want);
+eq('APCA algorithm is named with its base version', apca.algorithm, 'APCA 0.0.98G-4g (apca-w3 0.1.9)');
+eq('APCA body text needs Lc 75', apca.threshold('body'), 75);
+eq('APCA content text needs Lc 60', apca.threshold('content'), 60);
+// Printed values are rounded toward zero, so just under a threshold never reads as it.
+eq('APCA prints Lc -59.96 as -59.9', apca.format(-59.96), 'Lc -59.9');
+eq('APCA keeps the polarity sign', apca.format(63.056), 'Lc 63');
+eq('WCAG prints 4.47 as 4.4:1', wcagContrast('wcag21-aa').format(4.47), '4.4:1');
+eq('WCAG AAA needs 7:1 for every use', wcagContrast('wcag21-aaa').threshold('content'), 7);
+
 // --- mix endpoints ---
 eq('mix t=0 is a', formatHex(mix(parseColor('#ff0000'), parseColor('#0000ff'), 0)).text, '#ff0000');
 eq('mix t=1 is b', formatHex(mix(parseColor('#ff0000'), parseColor('#0000ff'), 1)).text, '#0000ff');
@@ -183,4 +209,4 @@ if (failures) {
   console.error(`\n✖ check-color: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('✔ check-color: all syntaxes and the fourteen DTCG color spaces parse to reference values; srgb objects match their hex bit for bit; hex-vs-components rule, alpha, round-trip fidelity, contrast and mix endpoints correct');
+console.log('✔ check-color: all syntaxes and the fourteen DTCG color spaces parse to reference values; srgb objects match their hex bit for bit; hex-vs-components rule, alpha, round-trip fidelity, WCAG and APCA contrast (apca-w3 reference vectors) and mix endpoints correct');

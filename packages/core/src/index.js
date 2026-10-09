@@ -13,6 +13,7 @@ import { normalize, resolveDeferredAliases, reportModeCarryOver, reportTierViola
 import { reportDeprecatedReach, withMetadata, withDeprecatedSection } from './metadata.js';
 import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
+import { loadContrast, checkStandard, APCA_PACKAGE } from './contrast.js';
 import { Diagnostics } from './diagnostics.js';
 import { fillLocations } from './locations.js';
 import { nearestName } from './nearest.js';
@@ -28,6 +29,7 @@ export { parseColor, formatColor, formatHslTriplet, formatHex, contrastRatio, mi
 export { Diagnostics } from './diagnostics.js';
 export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';
+export { loadContrast, loadApca, CONTRAST_STANDARDS, APCA_LEVELS, APCA_BASE_ALGORITHM } from './contrast.js';
 export { explainToken, explainVariable, slotConsumers, coverageSlots } from './explain.js';
 export { deprecationsReached } from './metadata.js';
 export { catalog } from './catalog.js';
@@ -69,8 +71,16 @@ export { SYNONYMS_VERSION } from './synonyms.js';
  * it has none), checked against this core's IR spec and plugin API (TST1309,
  * TST1310). A bare plugin means the caller doesn't know the manifest, and
  * nothing is checked.
+ *
+ * `apcaLoader` (optional) is an async function returning `{ lib, version }`,
+ * `lib` being the `apca-w3` module: for an integration that bundles it rather
+ * than resolving it from the project. Without it, compile() imports `apca-w3`
+ * itself when the config selects APCA.
+ *
+ * The result's `contrast` is the check standard's measure (contrast.js); pass
+ * it to `contrastRegressions` so `diff` measures with the same standard.
  */
-export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false, outRoot, dryRun = false }) {
+export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false, outRoot, dryRun = false, apcaLoader }) {
   const diagnostics = new Diagnostics();
   const { config } = await loadConfig(cwd);
 
@@ -81,7 +91,22 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     diagnostics.error('TST1010', `transtyle.config.json: ${p === '(root)' ? '' : p + ' '}${message}`);
   }
   if (diagnostics.errors.length > 0) {
-    return { config, diagnostics, results: [], normalized: null, bindings: null };
+    return { config, diagnostics, results: [], normalized: null, bindings: null, contrast: null };
+  }
+
+  // The contrast standard (contrast.js): WCAG 2.1 is built in; APCA comes from
+  // the `apca-w3` package the project installs (ADR-0013). A config asking for
+  // APCA without it is an error: checking under another standard than the one
+  // asked for would report a pass nobody measured.
+  let contrast;
+  try {
+    contrast = await loadContrast(config, cwd, { importer: apcaLoader });
+  } catch (e) {
+    const which = checkStandard(config) === 'apca' ? 'check.contrast.standard' : 'derivation.contrast';
+    diagnostics.error('TST1013', `${which} is "apca", but the ${APCA_PACKAGE} package could not be loaded (${e.message})`, {
+      hint: `APCA is an optional peer dependency: npm install --save-dev ${APCA_PACKAGE} in this project, or set ${which} back to a WCAG value.`,
+    });
+    return { config, diagnostics, results: [], normalized: null, bindings: null, contrast: null };
   }
 
   // LOAD + NORMALIZE + DERIVE (shared across targets)
@@ -94,7 +119,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     trees.push({ file: 'transtyle.config.json (bindings)', tree: bindings.tree, modeScope: undefined, bindingRules: bindings.rules });
   }
   const normalized = normalize(trees, config, diagnostics);
-  const { underived } = derive(normalized, config, diagnostics);
+  const { underived } = derive(normalized, config, diagnostics, contrast.derive);
   // Authored aliases pointing at slots DERIVE materializes (e.g. a component
   // token aliasing `{semantic.radius.full}`) resolve here — see normalize.js.
   resolveDeferredAliases(normalized, diagnostics);
@@ -144,7 +169,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     );
   }
 
-  runChecks(normalized, config, diagnostics);
+  runChecks(normalized, config, diagnostics, contrast.check);
 
   // derivation.require: listed slots must be authored (or aliased: a binding is
   // a choice too), not derived, defaulted or absent. Color roles require their
@@ -362,7 +387,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     }
   }
 
-  return { config, diagnostics, results, normalized, bindings };
+  return { config, diagnostics, results, normalized, bindings, contrast: contrast.check };
 }
 
 /**

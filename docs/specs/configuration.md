@@ -58,7 +58,7 @@ Every key below is accepted by the shipped schema — this block validates clean
     "failOn": "error", // error | warning | approximation
     "completeness": "recommended", // minimal | recommended | complete: the level the authored n/m line reports on
     "suppress": [{ "code": "TST1305", "path": "scratch", "reason": "why this is fine" }], // see below
-    "contrast": { "standard": "wcag21-aa" }, // future: apca
+    "contrast": { "standard": "wcag21-aa" }, // wcag21-aa | wcag21-aaa | apca (needs the apca-w3 peer package)
     "hygiene": { "unusedOption": "info", "duplicateOption": "info" }, // each: info | warning | off
   },
 }

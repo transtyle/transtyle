@@ -30,7 +30,7 @@ A third guard covers what neither of those can see: **`npm run check:doc-numbers
 
 ## Principles that constrain changes
 
-- **Compiler packages stay zero-dependency.** The website workspace may have dependencies; `packages/*` may not. A PR adding a dependency to core needs an ADR-level justification.
+- **Compiler packages stay zero-dependency.** The website workspace may have dependencies; `packages/*` may not. A PR adding a dependency to core needs an ADR-level justification. The one exception is opt-in: `apca-w3`, an optional peer of core that nothing installs unless a project selects APCA ([ADR-0013](docs/adr/0013-apca-optional-peer.md)).
 - **Determinism is non-negotiable.** No timestamps, randomness, or network in the build path.
 - **Authored always wins.** No derivation rule may overwrite an authored token.
 - **Diagnostics have stable codes.** New codes are appended, never renumbered; every code is documented in `website/src/docs/diagnostics.md`.

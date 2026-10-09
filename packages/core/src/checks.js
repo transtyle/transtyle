@@ -1,6 +1,7 @@
 /** Built-in accessibility/consistency checks (docs/specs/validation-and-coverage.md). */
 
-import { contrastRatio } from './color.js';
+import { COLOR_ROLES } from '@transtyle/ir';
+import { wcagContrast, checkStandard } from './contrast.js';
 import { aliasRoot, checkOutOfGamut, checkPartialScales } from './authoring.js';
 
 const S = 'semantic.color.';
@@ -128,40 +129,54 @@ function checkDistinguishability(normalized, diagnostics) {
 }
 
 /**
- * The foreground/background pairs the compiler contrast-checks. Shared with
- * `transtyle diff`'s contrast-regression flag (diff.js) so "which pairs count"
- * has exactly one definition — a pair added here is checked in both places.
+ * The foreground/background pairs the compiler contrast-checks, each with its
+ * use: `body` (running text) or `content` (secondary text, labels, the text on
+ * a role's fill). WCAG 2.1 holds every use to one minimum; APCA sets one per use
+ * (contrast.js). Shared with `transtyle diff`'s contrast-regression flag
+ * (diff.js) so "which pairs count" has exactly one definition — a pair added
+ * here is checked in both places.
  */
 export const CONTRAST_PAIRS = [
-  ['text.base', 'elevation.0.surface'],
-  ['text.base', 'elevation.1.surface'],
-  ['text.muted', 'elevation.0.surface'],
-  ['text.muted', 'elevation.1.surface'],
+  ['text.base', 'elevation.0.surface', 'body'],
+  ['text.base', 'elevation.1.surface', 'body'],
+  ['text.muted', 'elevation.0.surface', 'content'],
+  ['text.muted', 'elevation.1.surface', 'content'],
 ];
 
-/** Minimum ratio for the configured standard (normal text). */
-export function contrastThreshold(config) {
-  return config?.check?.contrast?.standard === 'wcag21-aaa' ? 7 : 4.5;
+/**
+ * Every pair checked for this design system: the surface pairs, then each color
+ * role's on-colors (built-in roles and archetyped custom ones), measured on
+ * resolved values, so an authored on-color is checked like a derived one.
+ */
+export function contrastPairs(normalized) {
+  const roles = [...COLOR_ROLES, ...(normalized?.roleArchetypes?.keys() ?? [])];
+  return [
+    ...CONTRAST_PAIRS,
+    ...roles.flatMap((r) => [
+      [`${r}.on-solid`, `${r}.solid`, 'content'],
+      [`${r}.on-tint`, `${r}.tint`, 'content'],
+    ]),
+  ];
 }
 
-/** The pair's ratio in one resolved mode map, or null if either slot is absent. */
-export function pairRatio(map, fg, bg) {
+/** The pair's contrast (ratio or Lc) in one resolved mode map, or null if either slot is absent. */
+export function pairContrast(map, fg, bg, contrast) {
   const f = map.get(S + fg)?.value;
   const b = map.get(S + bg)?.value;
-  if (!f || !b) return null;
-  return contrastRatio(f, b);
+  if (!isColor(f) || !isColor(b)) return null;
+  return contrast.measure(f, b);
 }
 
-export function runChecks(normalized, config, diagnostics) {
+export function runChecks(normalized, config, diagnostics, contrast = wcagContrast(checkStandard(config))) {
   checkHygiene(normalized, config, diagnostics);
-  const min = contrastThreshold(config);
-  const standard = config?.check?.contrast?.standard ?? 'wcag21-aa';
+  const { standard } = contrast;
+  const pairs = contrastPairs(normalized);
   for (const mode of normalized.modeValues) {
     const map = normalized.modes[mode];
-    for (const [fg, bg] of CONTRAST_PAIRS) {
-      const ratio = pairRatio(map, fg, bg);
-      if (ratio === null) continue;
-      if (ratio < min) {
+    for (const [fg, bg, use] of pairs) {
+      const value = pairContrast(map, fg, bg, contrast);
+      if (value === null) continue;
+      if (contrast.score(value) < contrast.threshold(use)) {
         // AL5: on a design system with no dark-mode values authored, the
         // light values simply carry over — so a light-on-light pair is
         // flagged in dark mode and the warning looks like a mystery about
@@ -183,15 +198,18 @@ export function runChecks(normalized, config, diagnostics) {
                   JSON.stringify(map.get(`${S}${p}`)?.value) ===
                   JSON.stringify(defaultMap?.get(`${S}${p}`)?.value),
               );
+        // An on-color DERIVE picked: no candidate reached the threshold on
+        // this fill, so the fill (or an authored on-color) is the fix.
+        const derivedOnColor = /\.on-(solid|tint)$/.test(fg) && map.get(`${S}${fg}`)?.provenance?.kind === 'derived';
+        const hint = carried.length
+          ? `${carried.join(' and ')} ${carried.length > 1 ? 'are' : 'is'} unchanged from ${normalized.defaultMode} mode — nothing authors a ${mode} value, so ${carried.length > 1 ? 'they' : 'it'} carried over. Author the ${mode} value.`
+          : derivedOnColor
+            ? `${fg} is derived, and no candidate reaches ${contrast.formatThreshold(use)} on this ${bg}. Author ${fg}, or move ${bg}'s lightness.`
+            : undefined;
         diagnostics.warn(
           'TST2101',
-          `${fg} vs ${bg} is ${Math.floor(ratio * 10) / 10}:1 in ${mode} mode (< ${min}:1 ${standard})`,
-          carried.length
-            ? {
-                path: `${S}${fg}`,
-                hint: `${carried.join(' and ')} ${carried.length > 1 ? 'are' : 'is'} unchanged from ${normalized.defaultMode} mode — nothing authors a ${mode} value, so ${carried.length > 1 ? 'they' : 'it'} carried over. Author the ${mode} value.`,
-              }
-            : { path: `${S}${fg}` },
+          `${fg} vs ${bg} is ${contrast.format(value)} in ${mode} mode (< ${contrast.formatThreshold(use)} ${standard})`,
+          hint ? { path: `${S}${fg}`, hint } : { path: `${S}${fg}` },
         );
       }
     }

@@ -136,6 +136,13 @@
         "autoDark": {
           "type": "boolean"
         },
+        "contrast": {
+          "type": "string",
+          "enum": [
+            "wcag21",
+            "apca"
+          ]
+        },
         "require": {
           "type": "array",
           "items": {
@@ -241,7 +248,8 @@
               "type": "string",
               "enum": [
                 "wcag21-aa",
-                "wcag21-aaa"
+                "wcag21-aaa",
+                "apca"
               ]
             }
           }

@@ -83,16 +83,16 @@ on-colors      on-solid         on-tint         —                —
 strong         —                —               —                text-strong
 ```
 
-| Grid cell                                          | Meaning                                                  | If unauthored, derived by                                                                  |
-| -------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `<role>.solid`                                     | The role's principal value                               | per-role rule below                                                                        |
-| `<role>.solid-hover` / `-active` / `-selected`     | Interaction states on the solid fill                     | lightness deltas from `solid`, direction flips in dark mode; `-selected` aliases `-active` |
-| `<role>.tint` / `-hover` / `-active` / `-selected` | Tinted background wash                                   | mix toward `elevation.1.surface` (92% / 88% / 84%)                                         |
-| `<role>.outline` / `-hover`                        | Border-only wash, one step below `solid`                 | mix toward `elevation.1.surface` (70% / 55%)                                               |
-| `<role>.on-solid`                                  | Readable foreground on `solid`                           | contrast-pick white/near-black, AA-checked, warning if impossible                          |
-| `<role>.on-tint`                                   | Readable foreground on `tint`                            | on-brand walk from `solid-active` until AA clears                                          |
-| `<role>.text` / `-hover` / `-active`               | A role-colored, AA-safe text/link color against the page | on-brand walk against `elevation.0.surface`                                                |
-| `<role>.text-strong`                               | Max-contrast counterpart                                 | contrast-anchor(text)                                                                      |
+| Grid cell                                          | Meaning                                                  | If unauthored, derived by                                                                      |
+| -------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `<role>.solid`                                     | The role's principal value                               | per-role rule below                                                                            |
+| `<role>.solid-hover` / `-active` / `-selected`     | Interaction states on the solid fill                     | lightness deltas from `solid`, direction flips in dark mode; `-selected` aliases `-active`     |
+| `<role>.tint` / `-hover` / `-active` / `-selected` | Tinted background wash                                   | mix toward `elevation.1.surface` (92% / 88% / 84%)                                             |
+| `<role>.outline` / `-hover`                        | Border-only wash, one step below `solid`                 | mix toward `elevation.1.surface` (70% / 55%)                                                   |
+| `<role>.on-solid`                                  | Readable foreground on `solid`                           | contrast-pick white/near-black, checked against `check.contrast.standard`, warning if it fails |
+| `<role>.on-tint`                                   | Readable foreground on `tint`                            | on-brand walk from `solid-active` until AA clears                                              |
+| `<role>.text` / `-hover` / `-active`               | A role-colored, AA-safe text/link color against the page | on-brand walk against `elevation.0.surface`                                                    |
+| `<role>.text-strong`                               | Max-contrast counterpart                                 | contrast-anchor(text)                                                                          |
 
 | Role                                      | Meaning                | `solid` derivation when unauthored                      | e.g. (from a blue brand)                                                                                                                                                                                                          |
 | ----------------------------------------- | ---------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
