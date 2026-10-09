@@ -161,6 +161,81 @@ try {
   }
 }
 
+// ---------- #91: TST2102 / TST2103, colors that can't be told apart ----------
+// The Miniflux shape (four distinct tokens that all hold #efefef in dark) warns
+// once, naming the four roles; two roles bound to one token (Cathode's
+// crt-amber) are a stated intent and stay quiet; an authored categorical
+// entry a hair from its neighbor warns; the clean scaffold is the control.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-91-'));
+  const tp = join(dir, 'tokens/brand.tokens.json');
+  const cp = join(dir, 'transtyle.config.json');
+  const diagnostics = () => {
+    const r = run(['check', '--cwd', dir, '--json']);
+    try { return JSON.parse(r.stdout).diagnostics; } catch { return [{ code: `unparseable: ${r.out}`, message: '' }]; }
+  };
+  const codes = () => diagnostics().map((d) => d.code);
+  try {
+    run(['init', 'tst2102-ds', '--cwd', dir]);
+    const scaffold = readFileSync(tp, 'utf8');
+    const config = readFileSync(cp, 'utf8');
+    let c = codes();
+    expect('TST2102/3 control: the clean scaffold reports neither', !c.includes('TST2102') && !c.includes('TST2103'), c.join(', '));
+
+    const withTree = (edit) => {
+      const tree = JSON.parse(scaffold);
+      edit(tree);
+      writeFileSync(tp, JSON.stringify(tree, null, 2));
+    };
+    const alerts = { error: 'danger', success: 'success', warning: 'warning', info: 'info' };
+    const bindStatus = (tree) => {
+      tree.option.color.alert = { $type: 'color', error: { $value: 'oklch(0.55 0.2 25)' }, success: { $value: 'oklch(0.6 0.15 150)' }, warning: { $value: 'oklch(0.8 0.15 85)' }, info: { $value: 'oklch(0.6 0.12 230)' } };
+      for (const [token, role] of Object.entries(alerts)) tree.semantic.color[role] = { solid: { $value: `{option.color.alert.${token}}` } };
+    };
+
+    // Miniflux: distinct tokens, all the same color in dark only.
+    withTree(bindStatus);
+    writeFileSync(join(dir, 'tokens/dark.tokens.json'), JSON.stringify({
+      option: { color: { alert: { $type: 'color', error: { $value: '#efefef' }, success: { $value: '#efefef' }, warning: { $value: '#efefef' }, info: { $value: '#efefef' } } } },
+    }));
+    const cfg = JSON.parse(config);
+    cfg.tokens = ['tokens/brand.tokens.json', { files: 'tokens/dark.tokens.json', mode: { 'color-scheme': 'dark' } }];
+    writeFileSync(cp, JSON.stringify(cfg));
+    let d = diagnostics().filter((x) => x.code === 'TST2103');
+    expect('TST2103 Miniflux shape: exactly one warning', d.length === 1, JSON.stringify(d));
+    expect('TST2103 Miniflux shape: names all four roles, in dark mode', d.length === 1 && ['success', 'warning', 'danger', 'info'].every((r) => d[0].message.includes(r)) && d[0].message.includes('dark') && d[0].message.includes('same color'), d[0]?.message);
+    expect('TST2103 Miniflux shape: the hint says the source is where to fix it', d.length === 1 && /authored or bound/.test(d[0].hint ?? ''), d[0]?.hint);
+
+    // Cathode: two roles bound to one token, identical on purpose.
+    rmSync(join(dir, 'tokens/dark.tokens.json'));
+    writeFileSync(cp, config);
+    withTree((tree) => {
+      bindStatus(tree);
+      tree.semantic.color.warning = { solid: { $value: '{option.color.alert.warning}' } };
+      tree.semantic.color['crt-amber'] = { solid: { $value: '{option.color.alert.warning}' }, $extensions: { 'transtyle.role': { archetype: 'status' } } };
+    });
+    c = codes();
+    expect('TST2103 shared alias: two roles bound to one token do not warn', !c.includes('TST2103'), c.join(', '));
+    withTree((tree) => {
+      bindStatus(tree);
+      tree.option.color.alert.copy = { $value: 'oklch(0.8 0.15 85)' };
+      tree.semantic.color['crt-amber'] = { solid: { $value: '{option.color.alert.copy}' }, $extensions: { 'transtyle.role': { archetype: 'status' } } };
+    });
+    c = codes();
+    expect('TST2103 equal colors in two tokens (not one shared alias) do warn', c.includes('TST2103'), c.join(', '));
+
+    // Authored categorical entry a hair from its neighbor.
+    withTree((tree) => {
+      tree.semantic.palette = { categorical: { $type: 'color', 1: { $value: 'oklch(0.6 0.15 255)' }, 2: { $value: 'oklch(0.61 0.15 257)' } } };
+    });
+    d = diagnostics().filter((x) => x.code === 'TST2102');
+    expect('TST2102 authored palette: one warning per mode naming both entries', d.length === 2 && d.every((x) => x.message.includes('palette.categorical.1') && x.message.includes('palette.categorical.2')) && d.some((x) => x.message.includes('light')) && d.some((x) => x.message.includes('dark')),
+      JSON.stringify(d));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- #26: explain an authored composite ----------
 {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-explain-'));
