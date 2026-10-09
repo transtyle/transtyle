@@ -41,6 +41,21 @@ npx transtyle check --json
 #   "targets": [ { "target": "shadcn", "coverage": [ ... ] }, ... ] }
 ```
 
+### `--matrix`
+
+`check` only. Prints, for every catalog slot, which targets read it: the answer to "if I author this slot, which libraries change?". The compiler records each slot an exporter reads while it emits, so the table holds for any exporter, third-party ones included, and needs nothing from them. Each reader is classed from its coverage rows: `native`, `derived` or `approximated` when a row names the slot, `input` when the exporter reads it to compute a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface). Slots are grouped by catalog section; the table goes to **stdout**.
+
+```bash
+npx transtyle check --matrix
+#
+# semantic.color.elevation
+#   0.surface   10/10  shadcn (native), shadcn-v3 (native), echarts (native), daisyui (native), …
+#   1.shadow     2/10  css-variables (native), mantine (native)
+#   3.surface    5/10  shadcn (derived), shadcn-v3 (derived), echarts (derived), css-variables (native), primeng (input)
+```
+
+With `--json`, the table is not printed and the JSON report gains a `matrix` key: `{ "targets": [...], "slots": { "<slot>": { "<target>": { "class": "native", "variables": ["--card"] } } } }`, one entry per catalog slot (an empty object when nothing reads it), sorted. The [slot matrix](/docs/slot-matrix/) page is the same table for Acme and every official exporter, regenerated on every change.
+
 ### `--cwd <dir>`
 
 Run against a project directory from anywhere: `transtyle build --cwd examples/cathode`.

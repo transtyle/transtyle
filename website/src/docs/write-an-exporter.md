@@ -192,6 +192,7 @@ Three things worth pointing at:
 - **`ctx.units` converts dimensions.** `ctx.units.toPx("0.5rem")` and `toRem("8px")` use the config's `units.remBase`, return `undefined` for anything that is not a `px` or `rem` dimension, and `ctx.units.remBase` is the base itself, for your coverage note. Don't hard-code 16.
 - **A missing slot is data, not a crash.** If the IR has no `accent.solid`, record `unsupported` and carry on. Never throw because a design system didn't author something.
 - **The dropped rows are the point.** A terminal can't express radius or type. Saying so, in the report, is the difference between a translation and a guess.
+- **Read only what you use.** `transtyle check --matrix` records every slot an exporter looks up in the mode maps (`get`, `has`, or an entry opened while iterating) and lists your target as a reader of each. Looking a slot up "just in case" makes your target show up as depending on it. Listing the keys to filter them, as css-variables does, is not a read.
 
 ## 4. Prove it
 

@@ -1,6 +1,6 @@
 # The checkers
 
-Twenty-three scripts, one job each — twenty chained by `npm run check:all` and
+Twenty-four scripts, one job each — twenty-one chained by `npm run check:all` and
 run individually by CI, plus three that guard a release, a deploy, and the
 history itself.
 Every one exists because something real broke or could have: they are not a
@@ -27,6 +27,7 @@ already made once.
 | `check-demo-parity.mjs`       | Every example's demo for a given target is the same application                                       |
 | `check-demos.mjs`             | The published demo grid: described, documented with its port, linked from its exporter page, deployed |
 | `gen-figures.mjs --check`     | The blog's figures still match a fresh compile of the examples they were painted from                 |
+| `gen-matrix.mjs --check`      | The docs' slot × target matrix still matches what each exporter reads                                 |
 | `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, keywords, `files`, `bin`  |
 | `check-brand.mjs`             | The logo everywhere: assets current, every surface still carrying it, the site drawing the same glyph |
 | `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex              |
@@ -59,7 +60,7 @@ against a synthetic positive before the scan, because a scanner whose regexes
 quietly stopped matching reports "clean" forever and reads exactly like a repo
 with nothing to find.
 
-Seven scripts here render rather than check:
+Eight scripts here render rather than check:
 
 - `gen-schemas.mjs` and `gen-brand.mjs` render what `check-schemas.mjs` and
   `check-brand.mjs` then prove are current — the published JSON schemas, and
@@ -69,6 +70,11 @@ Seven scripts here render rather than check:
   is why it appears in the table above too: `--check` re-renders in memory and
   fails on any byte of drift, the same bargain `gen-brand.mjs` makes. A picture
   of output nobody compiled is the thing the coverage report exists to prevent.
+- `gen-matrix.mjs` renders the docs' slot matrix (`website/src/docs/slot-matrix.md`): which
+  targets read each catalog slot, from Acme compiled with every exporter while the compiler records
+  the slots each one reads (`packages/cli/src/matrix.js`, the code behind `transtyle check --matrix`).
+  Its `--check` regenerates the page in memory and fails on any difference, so a hand edit or an
+  exporter that starts reading a new slot both turn it red until the page is regenerated.
 - `gen-social-card.mjs` renders the card a launch post carries, with every value
   on it read from a fresh compile of `examples/acme` rather than drawn by hand.
   Its output is gitignored (`brand/social/`) and has no checker, which is the

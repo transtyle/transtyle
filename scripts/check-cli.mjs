@@ -538,8 +538,44 @@ try {
   }
 }
 
+// ---------- check --matrix: which targets read each slot (#95) ----------
+{
+  const acme = join(root, 'examples/acme');
+  const parse = (out) => { try { return JSON.parse(out); } catch { return null; } };
+  const readers = (m, slot) => Object.keys(m?.slots?.[slot] ?? {}).sort().join(', ');
+
+  let r = run(['check', '--matrix', '--cwd', acme]);
+  expect('check --matrix: exit 0 on Acme', r.code === 0, `exit ${r.code}: ${r.out.slice(-400)}`);
+  const line = r.stdout.split('\n').find((l) => l.trim().startsWith('categorical.1 ')) ?? '';
+  expect('check --matrix: prints the palette section to stdout', r.stdout.includes('\nsemantic.palette\n'), r.stdout.slice(0, 400));
+  expect('check --matrix: categorical.1 is read by 4 instances, daisyUI not among them',
+    /\b4\/\d+\b/.test(line) && ['shadcn', 'echarts', 'css-variables'].every((t) => line.includes(t)) && !line.includes('daisyui'), line);
+
+  r = run(['check', '--matrix', '--json', '--cwd', acme]);
+  const json = parse(r.stdout);
+  const m = json?.matrix;
+  expect('check --matrix --json: one JSON object, report keys kept, matrix added',
+    !!json && Array.isArray(json.diagnostics) && Array.isArray(json.targets) && Array.isArray(m?.targets), r.stdout.slice(0, 400));
+  expect('check --matrix --json: palette.categorical.1 → shadcn, shadcn-v3, echarts, css-variables',
+    readers(m, 'semantic.palette.categorical.1') === 'css-variables, echarts, shadcn, shadcn-v3', readers(m, 'semantic.palette.categorical.1'));
+  expect('check --matrix --json: elevation.3.surface → shadcn, shadcn-v3, echarts, css-variables, primeng',
+    readers(m, 'semantic.color.elevation.3.surface') === 'css-variables, echarts, primeng, shadcn, shadcn-v3', readers(m, 'semantic.color.elevation.3.surface'));
+  expect('check --matrix --json: a named reader carries its class and variables',
+    m?.slots?.['semantic.color.elevation.0.surface']?.shadcn?.class === 'native' && m.slots['semantic.color.elevation.0.surface'].shadcn.variables.includes('--background'),
+    JSON.stringify(m?.slots?.['semantic.color.elevation.0.surface']?.shadcn));
+  expect('check --matrix --json: catalog slots only (no option.*), every slot listed',
+    !!m && !Object.keys(m.slots).some((k) => k.startsWith('option.')) && Object.keys(m.slots).length > 200, `${Object.keys(m?.slots ?? {}).length} slots`);
+
+  const plain = parse(run(['check', '--json', '--cwd', acme]).stdout);
+  expect('check --matrix: recording reads changes no coverage row',
+    !!plain && JSON.stringify(plain.targets) === JSON.stringify(json?.targets));
+
+  r = run(['build', '--matrix', '--cwd', acme]);
+  expect('build --matrix: refused as a usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init/add/build/explain/diff golden path and error cases all pass');
+console.log('\n✔ check-cli: init/add/build/explain/diff/check --matrix golden path and error cases all pass');
