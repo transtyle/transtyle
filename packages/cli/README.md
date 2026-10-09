@@ -37,6 +37,7 @@ npx transtyle build              # compile every configured target
 | `explain --variable <name> --target <t>` | From a target variable (`$btn-border-radius`) back to the slot it reads, then why it has that value; `explain <slot> --target <t>` lists the variables a slot feeds |
 | `diff [ref]`                             | Semantic diff of the resolved graph against a git ref, including contrast regressions                                                                               |
 | `catalog`                                | Every catalog slot with its type and derivation rule; `--json` for tools                                                                                            |
+| `bind --suggest`                         | Draft bindings from your own token names and colors, each with its reason                                                                                           |
 
 `build` and `check` exit non-zero on error; `diff` uses `git diff`-style exit codes. Every
 command takes `--json` where a machine might be reading, and diagnostics carry stable

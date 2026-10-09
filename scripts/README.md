@@ -19,7 +19,7 @@ already made once.
 | `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                     |
 | `check-determinism.mjs`       | Two builds of every example, byte-compared                                                            |
 | `check-schemas.mjs`           | Published JSON schemas match their source objects; every config and report validates                  |
-| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` / `catalog` golden paths and error cases                |
+| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` / `catalog` / `bind --suggest` golden paths and errors  |
 | `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a semantic alias into it is `TST1113` |
 | `check-bootstrap-surface.mjs` | Bootstrap's checked-in surface inventory against the real `_variables.scss`                           |
 | `check-coverage-bar.mjs`      | Every inventoried Bootstrap/PrimeNG/Mantine slot is accounted for, with a note on every gap           |

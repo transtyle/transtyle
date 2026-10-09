@@ -146,6 +146,26 @@ npx transtyle explain component.button.radius --target bootstrap
 
 Prints the config's [`bindings`](/docs/configuration/#binding-rules) pattern rules as the plain alias token file they expand to, on stdout, so you can freeze them: `npx transtyle bindings --expand > tokens/transtyle.bindings.tokens.json`, then delete the `bindings` key and list the file in `tokens`. On stderr it says, per rule, how many slots it skipped and why (already authored, bound by an earlier rule, target missing). It exits 2 without `--expand` or when the config has no rules, and 1 when a rule is malformed (`TST1117`) or a required one misses its target (`TST1118`).
 
+### `transtyle bind --suggest`
+
+Drafts the bindings of an existing design system: for every catalog slot nothing binds yet, the project token that fills it, read from your own token names and colors ([adopting an existing system](/docs/adopt-existing/), step 3). Deterministic, offline, byte-identical on every run: a versioned name table (`synonyms@1`) plus color measurements, no model.
+
+```bash
+npx transtyle bind --suggest --cwd examples/cathode   # with its bindings file left out of the config
+# Proposed (9):
+#   semantic.color.border               ← semantic.color.crt.scanline  medium  low chroma, 1.6 | 1.4:1 on the page; next: option.color.paper.rule
+#   semantic.color.primary.solid        ← semantic.color.crt.ink       low     chroma 0.24 in dark; next: semantic.color.crt.meltdown
+#   semantic.color.text.base            ← semantic.color.crt.ink       high    name "ink" → text.base; 14.6 | 13.5:1 on the page; …
+#   semantic.color.warning.solid        ← semantic.color.crt.amber     medium  hue 5° | 5° off the warning anchor (85), …
+#   ...
+```
+
+- **What it proposes**: the role `.solid`s but `neutral`, the text rungs, `elevation.0/1.surface`, `border`, `ring`, `link.*`, `font.sans/mono/display`. Candidates are your own `semantic.*` tokens; an `option.*` token only on name evidence, at `low`. A slot already authored or aliased (by a file or a `bindings` rule) is left alone.
+- **How**: a name is read by structure, not similarity: a family word (text, link, focus, surface, border) decides before a role word, so `text-primary` is a text rung, not the brand, and `focus-text` is no text slot. A value is checked against the slot's shape in every mode (the page is low chroma at the end of the lightness range, a border sits 1.2–3:1 off it, body text reads at 4.5:1), or against what derivation would give the slot; a status color is matched on hue against its role's anchor.
+- **Confidence**: `high` when name and value agree, `medium` for one of them, `low` for `primary` on value alone (one mode decides it) or an `option.*` token. Two candidates nothing separates are **contested**: listed on stderr and in the file's `$description`, never written as an alias.
+- **Output**: stdout is a token file, each alias carrying its reason in `$description`; redirect it to a file, review it, then add it to `tokens`. `--rules` prints the same proposals as `{ "bindings": [...] }` [rules](/docs/configuration/#binding-rules) for the config, generalized with `{role}`, `{rung}` or `{level}` where your names are regular and checked to expand to exactly the same aliases. `--json` prints the whole report (every slot `bound`, `proposed`, `contested` or `none`, with its ranked candidates). The table above goes to stderr.
+- It writes nothing. It exits 2 without `--suggest`, with an argument, or with both `--rules` and `--json`; 1 when the config or a token file can't be loaded. A missing `primary.solid` is no error here: that's usually why you're binding.
+
 ### `transtyle diff [ref]`
 
 Semantic diff of the **resolved** token graph against a git ref (default `HEAD`), plus per-target impact. It compiles both the working tree and the project at the ref and compares resolved values per mode — so a token rename that changes no resolved value reports nothing, while one authored change shows its full derived cascade.
@@ -312,4 +332,4 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle import <source>`                    | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
 | `transtyle preview`                            | Local themed preview site across all targets                                            |
 
-Programmatic use: `build`, `check`, `diff`, `explain`, `catalog` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `migrateStyleDictionary()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).
+Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `suggestBindings()`, `migrateStyleDictionary()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).

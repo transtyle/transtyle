@@ -113,6 +113,8 @@ One small file of aliases connects [the Transtyle language](/docs/language/) to 
 
 Don't translate everything on day one. Bind what you're sure of; the coverage report will show you what derivation guessed for the rest.
 
+**Start from a suggestion.** `npx transtyle bind --suggest > tokens/bindings.suggested.tokens.json` drafts this file from your own names and colors: for each slot nothing binds yet, the token that fills it, with a confidence (`high` when the name and the value agree) and the reason in its `$description`. It reads a name by its structure, not by similarity (`text-secondary` is a text rung, not the secondary role), and a slot it can't settle stays out of the file, listed as contested. It's a draft: read every line, delete what you disagree with, then add the file to `tokens`. `--rules` prints the same proposals as [`bindings` rules](/docs/configuration/#binding-rules) for the config ([CLI reference](/docs/cli/#transtyle-bind---suggest)).
+
 A binding can also point at another catalog slot when two meanings share a colour in your system: `"secondary": { "solid": { "$value": "{semantic.color.info.solid}" } }` makes secondary the info blue and still derives secondary's own grid (hover, tint, on-colours), whatever the order of the roles. The one limit is a slot derived after the role grids: bound to `ring`, `link.*` or `palette.categorical.*`, a role keeps the colour but gets no grid, and `TST1205` [says so](/docs/diagnostics/).
 
 ## 4. Build, and read the report
