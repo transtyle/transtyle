@@ -139,6 +139,17 @@ The pattern the [Cathode example](/docs/examples/#cathode--the-hostile-example) 
 ]
 ```
 
+Enterprise layering (core system, business-unit overlay, product overlay) redefines tokens in every layer on purpose. Mark those layers `"override": true` so the redefinitions are not reported as accidental duplicates (`TST1103`):
+
+```json
+"tokens": [
+  "tokens/core.tokens.json",
+  { "files": "tokens/product.tokens.json", "override": true }
+]
+```
+
+An override layer that defines a token nothing earlier defined gets a `TST1116` warning (a typo is the usual cause); `"override": "extend"` allows new tokens too. `transtyle explain <slot>` prints `overrides tokens/core.tokens.json` for a token an override layer replaced. An unmarked duplicate still warns.
+
 Your design system thinks in its own language (`crt.ink`, `brand.flame`, whatever is true for you); the catalog binding is knowledge _about_ your system, versioned separately. Regenerating the source files from design tooling loses nothing.
 
 ## Authoring rules of thumb
@@ -146,4 +157,4 @@ Your design system thinks in its own language (`crt.ink`, `brand.flame`, whateve
 - **Author meaning, not mechanics.** Give Transtyle `primary` and your neutrals; let [derivation](/docs/derivation/) produce hover states, on-colors, and tints — then override the few you disagree with, in tokens, where the override is visible and versioned.
 - **Author dark values for your neutrals** (background, surface, text, border). Auto-dark derivation exists but is off by default, deliberately.
 - **Prefer OKLCH.** It's the internal canonical space; authoring in it means no conversion surprises, and lightness/chroma read meaningfully.
-- **A token defined twice across files warns** (`TST1103`). Don't rely on merge order for values — that's how token repos rot; use explicit layering instead.
+- **A token defined twice across files warns** (`TST1103`). Don't rely on merge order for values — that's how token repos rot; use explicit layering instead: a layer that redefines tokens on purpose is marked `"override": true` in the [`tokens` manifest](/docs/configuration/#override-layers), and then warns about nothing.

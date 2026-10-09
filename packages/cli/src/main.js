@@ -249,13 +249,18 @@ function printMembers(entry, indent) {
 function printExplain(entry, inputs, depth) {
   const indent = '  '.repeat(depth);
   const prov = entry.provenance;
+  const overrides = () => {
+    if (prov.overrides?.length) console.log(`${indent}    overrides ${prov.overrides.join(', ')}  (from ${prov.layer})`);
+  };
   if (prov.kind === 'authored') {
     console.log(`${indent} └─ authored`);
+    overrides();
     printMembers(entry, indent);
     return;
   }
   if (prov.kind === 'aliased') {
     console.log(`${indent} └─ aliased → ${prov.target}`);
+    overrides();
     return;
   }
   // derived or defaulted

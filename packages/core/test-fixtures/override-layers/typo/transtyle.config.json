@@ -1,0 +1,27 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "override-layers-fixture",
+  "tokens": [
+    "../tokens/base.tokens.json",
+    {
+      "files": "../tokens/extra.tokens.json",
+      "override": true
+    }
+  ],
+  "modes": {
+    "color-scheme": {
+      "values": [
+        "light"
+      ],
+      "default": "light"
+    }
+  },
+  "derivation": {
+    "rules": "standard@1",
+    "autoDark": false,
+    "require": [
+      "semantic.color.primary"
+    ]
+  },
+  "targets": {}
+}
