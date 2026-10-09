@@ -1,0 +1,38 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "bindings-fixture",
+  "tokens": [
+    "../bindings-rules/tokens/option.tokens.json",
+    "../bindings-rules/tokens/semantic.tokens.json",
+    "tokens/bindings.tokens.json"
+  ],
+  "modes": {
+    "color-scheme": {
+      "values": [
+        "light"
+      ],
+      "default": "light"
+    }
+  },
+  "derivation": {
+    "rules": "standard@1",
+    "autoDark": false,
+    "require": [
+      "semantic.color.primary"
+    ]
+  },
+  "targets": {
+    "css-variables": {
+      "output": "dist/css-variables"
+    },
+    "bootstrap": {
+      "output": "dist/bootstrap"
+    },
+    "shadcn": {
+      "output": "dist/shadcn",
+      "options": {
+        "era": "tailwind-v4"
+      }
+    }
+  }
+}

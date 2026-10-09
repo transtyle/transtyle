@@ -152,6 +152,8 @@ An override layer that defines a token nothing earlier defined gets a `TST1116` 
 
 Your design system thinks in its own language (`crt.ink`, `brand.flame`, whatever is true for you); the catalog binding is knowledge _about_ your system, versioned separately. Regenerating the source files from design tooling loses nothing.
 
+When the vocabulary is regular, the bindings layer can be a few [`bindings` rules](/docs/configuration/#binding-rules) in the manifest instead of a file of near-identical aliases: `{ "slot": "semantic.color.{role}.solid", "from": "{option.color.{role}.600}" }` binds that cell for every role. A binding written in a token file always wins over a rule.
+
 ## Authoring rules of thumb
 
 - **Author meaning, not mechanics.** Give Transtyle `primary` and your neutrals; let [derivation](/docs/derivation/) produce hover states, on-colors, and tints — then override the few you disagree with, in tokens, where the override is visible and versioned.

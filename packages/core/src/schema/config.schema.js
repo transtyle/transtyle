@@ -58,6 +58,19 @@ const target = {
   },
 };
 
+const bindingRule = {
+  type: 'object',
+  required: ['slot', 'from'],
+  additionalProperties: false,
+  properties: {
+    slot: { type: 'string' },
+    from: { type: 'string' },
+    roles: { type: 'array', minItems: 1, items: { type: 'string' } },
+    required: { type: 'boolean' },
+    description: { type: 'string' },
+  },
+};
+
 export const configSchema = {
   type: 'object',
   required: ['tokens'],
@@ -67,6 +80,7 @@ export const configSchema = {
     name: { type: 'string' },
     tokens: { type: 'array', minItems: 1, items: tokenLayer },
     modes: { type: 'object', additionalProperties: modeDimension },
+    bindings: { type: 'array', items: bindingRule },
     derivation: {
       type: 'object',
       additionalProperties: false,

@@ -125,7 +125,7 @@ Open `report.json` (or read the `· derived` comments in the output). Every vari
 
 ## 5. Tighten as trust grows
 
-Where a derived value contradicts your system, bind it — one alias, versioned, visible. When bindings stabilize, encode policy:
+Where a derived value contradicts your system, bind it — one alias, versioned, visible. When your vocabulary is regular (a ramp per role), one [`bindings` rule](/docs/configuration/#binding-rules) binds the whole grid instead of one alias per cell. When bindings stabilize, encode policy:
 
 ```json
 "derivation": { "require": ["semantic.color.primary", "semantic.color.danger"] }

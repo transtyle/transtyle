@@ -119,6 +119,9 @@ export function normalize(tokenTrees, config, diagnostics) {
       tok.layer = { file: winner, overrides: shadowed };
     }
   }
+  // Slots produced by a `bindings` rule (bindings.js) -> the rule's label,
+  // carried on the alias's provenance so `explain` can name the rule.
+  const bindingRules = new Map(tokenTrees.flatMap((t) => (t.bindingRules ? [...t.bindingRules] : [])));
   const roleArchetypes = collectRoleArchetypes(merged, diagnostics);
 
   for (const layer of tokenTrees.filter((t) => t.modeScope)) {
@@ -177,6 +180,7 @@ export function normalize(tokenTrees, config, diagnostics) {
       map.set(tokenPath, {
         type: tok.type,
         rawValue: value,
+        ...(bindingRules.has(tokenPath) ? { bindingRule: bindingRules.get(tokenPath) } : {}),
         provenance: {
           kind: autoDarkCarried ? PROVENANCE.DERIVED : PROVENANCE.AUTHORED,
           mode: overriddenMode ?? key,
@@ -402,7 +406,7 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     }
     entry.type = entry.type ?? resolved.type;
     entry.value = resolved.value;
-    entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance) };
+    entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance), ...(entry.bindingRule ? { rule: entry.bindingRule } : {}) };
     return entry;
   }
   if (COMPOSITES[entry.type]) {
@@ -614,7 +618,7 @@ export function resolveIfReady(map, tokenPath, stack = []) {
   if (resolved?.value === undefined) return entry;
   entry.type = entry.type ?? resolved.type;
   entry.value = resolved.value;
-  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance) };
+  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance), ...(entry.bindingRule ? { rule: entry.bindingRule } : {}) };
   delete entry.pendingAlias;
   return entry;
 }
@@ -653,7 +657,7 @@ function resolvePending(map, tokenPath, stack, diagnostics) {
   }
   entry.type = entry.type ?? resolved.type;
   entry.value = resolved.value;
-  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance) };
+  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance), ...(entry.bindingRule ? { rule: entry.bindingRule } : {}) };
   return entry;
 }
 

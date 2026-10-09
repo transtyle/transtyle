@@ -77,6 +77,12 @@ npx transtyle explain primary.on-tint
 
 An unknown slot exits 2 and lists the 5 closest catalog names instead of a bare error.
 
+A slot produced by a [`bindings` rule](/docs/configuration/#binding-rules) names it: `└─ aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)`.
+
+### `transtyle bindings --expand`
+
+Prints the config's [`bindings`](/docs/configuration/#binding-rules) pattern rules as the plain alias token file they expand to, on stdout, so you can freeze them: `npx transtyle bindings --expand > tokens/transtyle.bindings.tokens.json`, then delete the `bindings` key and list the file in `tokens`. On stderr it says, per rule, how many slots it skipped and why (already authored, bound by an earlier rule, target missing). It exits 2 without `--expand` or when the config has no rules, and 1 when a rule is malformed (`TST1117`) or a required one misses its target (`TST1118`).
+
 ### `transtyle diff [ref]`
 
 Semantic diff of the **resolved** token graph against a git ref (default `HEAD`), plus per-target impact. It compiles both the working tree and the project at the ref and compares resolved values per mode — so a token rename that changes no resolved value reports nothing, while one authored change shows its full derived cascade.

@@ -8,6 +8,7 @@ import { commitOutputs } from './emit.js';
 import { loadConfig, loadTokenTrees } from './load.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
+import { expandBindings } from './bindings.js';
 import { normalize, resolveDeferredAliases, reportModeCarryOver, reportTierViolations } from './normalize.js';
 import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
@@ -23,6 +24,7 @@ export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';
 export { explainToken } from './explain.js';
 export { catalog } from './catalog.js';
+export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
 
 /**
  * Run the pipeline. `emit: false` = `transtyle check` (pipeline minus EMIT —
@@ -50,11 +52,18 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     diagnostics.error('TST1010', `transtyle.config.json: ${p === '(root)' ? '' : p + ' '}${message}`);
   }
   if (diagnostics.errors.length > 0) {
-    return { config, diagnostics, results: [], normalized: null };
+    return { config, diagnostics, results: [], normalized: null, bindings: null };
   }
 
   // LOAD + NORMALIZE + DERIVE (shared across targets)
   const trees = await loadTokenTrees(cwd, config.tokens, diagnostics);
+  // `bindings` rules become one more base layer of plain aliases, after every
+  // token file: an authored token or alias already there wins over a rule
+  // (bindings.js), so this layer never overrides anything.
+  const bindings = expandBindings(trees, config, diagnostics);
+  if (bindings && bindings.aliases.length > 0) {
+    trees.push({ file: 'transtyle.config.json (bindings)', tree: bindings.tree, modeScope: undefined, bindingRules: bindings.rules });
+  }
   const normalized = normalize(trees, config, diagnostics);
   const { underived } = derive(normalized, config, diagnostics);
   // Authored aliases pointing at slots DERIVE materializes (e.g. a component
@@ -251,7 +260,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     }
   }
 
-  return { config, diagnostics, results, normalized };
+  return { config, diagnostics, results, normalized, bindings };
 }
 
 function buildReport(target, targetConfig, coverage, diagnostics, files) {

@@ -131,7 +131,7 @@ Rules: the mode matrix is the cross-product of dimensions, resolved per-dimensio
 
 ## Provenance (attached to every resolved value)
 
-`authored` | `aliased(target)` | `derived(rule, inputs[])` | `defaulted`, each also carrying the mode it resolved in. Not part of user files — attached during compilation, consumed by `explain`, coverage, and `diff`. **Specced:** the `(file, line)` on `authored`. LOAD knows which file a tree came from and nothing carries it further, so today a diagnostic or an `explain` trace names the token path rather than its location.
+`authored` | `aliased(target[, rule])` | `derived(rule, inputs[])` | `defaulted`, each also carrying the mode it resolved in. Not part of user files — attached during compilation, consumed by `explain`, coverage, and `diff`. `rule` on `aliased` is set only for an alias a config `bindings` rule produced (`bindings[<n>]: <slot pattern>`); a hand-written alias has none. **Specced:** the `(file, line)` on `authored`. LOAD knows which file a tree came from and nothing carries it further, so today a diagnostic or an `explain` trace names the token path rather than its location.
 
 ## Stability policy
 
