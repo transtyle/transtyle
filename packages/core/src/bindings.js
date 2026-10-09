@@ -34,6 +34,7 @@ const sample = (list) => list.slice(0, 3).join(', ') + (list.length > 3 ? `, …
 /**
  * @param trees the loaded token trees (`loadTokenTrees()`)
  * @param config the validated config
+ * @param labels optional, one per rule: how diagnostics name it (default `bindings[i]`)
  * @returns null when the config has no `bindings`; otherwise
  *   `{ tree, rules, aliases, skipped }`: `tree` is the DTCG tree of alias tokens
  *   to append as one more base layer, `rules` maps each produced slot to the
@@ -41,7 +42,7 @@ const sample = (list) => list.slice(0, 3).join(', ') + (list.length > 3 ? `, …
  *   `{ slot, from, rule }` in creation order, `skipped` lists
  *   `{ slot, rule, reason }` with reason `authored` | `rule` | `missing-target`.
  */
-export function expandBindings(trees, config, diagnostics) {
+export function expandBindings(trees, config, diagnostics, labels) {
   const rules = config.bindings;
   if (!rules?.length) return null;
 
@@ -61,7 +62,9 @@ export function expandBindings(trees, config, diagnostics) {
   const skipped = [];
 
   rules.forEach((rule, index) => {
-    const label = `bindings[${index}]: ${rule.slot}`;
+    // `labels` (an `extends` chain) names each rule by its index in the file
+    // it is written in, and that file when it is a base.
+    const label = `${labels?.[index] ?? `bindings[${index}]`}: ${rule.slot}`;
     const bad = (message, hint) => diagnostics.error('TST1117', `${label}: ${message}`, hint ? { hint } : undefined);
 
     // ----- validate the rule's shape -----

@@ -91,23 +91,27 @@ export async function cmdMigrate(args) {
     console.error(`✖ transtyle migrate takes no arguments (got: ${args.targets.join(' ')})\n  Usage: transtyle migrate --from style-dictionary [--write]`);
     process.exit(2);
   }
+  // Every token file the build reads, a base's included when the config
+  // `extends` one; names are relative to the config's directory.
   let files;
+  let dir;
   try {
-    const { config } = await loadConfig(args.cwd);
-    files = await expandTokenFiles(args.cwd, config.tokens);
+    const { config, projectDir } = await loadConfig(args.cwd, { configFile: args.configFile });
+    dir = projectDir;
+    files = await expandTokenFiles(dir, config.tokens);
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
   }
   if (files.length === 0) {
-    console.error(`✖ The config's "tokens" matched no files in ${args.cwd}`);
+    console.error(`✖ The config's "tokens" matched no files in ${dir}`);
     process.exit(2);
   }
 
   const plans = [];
   let broken = 0;
   for (const file of files) {
-    const rel = path.relative(args.cwd, file);
+    const rel = path.relative(dir, file);
     let text;
     let tree;
     try {

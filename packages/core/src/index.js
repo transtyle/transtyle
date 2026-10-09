@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { commitOutputs } from './emit.js';
 import { MANIFEST_FILE, readManifests, renderManifest, reportDrift, staleFiles } from './manifest.js';
-import { loadConfig, loadTokenTrees } from './load.js';
+import { loadConfigChain, mergeConfigChain, loadTokenTrees, DEFAULT_CONFIG_FILE } from './load.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
 import { expandBindings } from './bindings.js';
@@ -39,7 +39,7 @@ export { catalog, isCatalogSlot } from './catalog.js';
 export { adoption } from './adoption.js';
 export { buildReport, REPORT_SCHEMA_ID } from './report.js';
 export { MANIFEST_FILE, hashContents } from './manifest.js';
-export { loadConfig, expandTokenFiles } from './load.js';
+export { loadConfig, expandTokenFiles, loadConfigChain, mergeConfigChain, DEFAULT_CONFIG_FILE } from './load.js';
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
 export { consumption } from './reads.js';
 export { completenessStatus, completenessLevels, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL } from './completeness.js';
@@ -92,19 +92,36 @@ export { SYNONYMS_VERSION } from './synonyms.js';
  * removed outside transtyle (src/manifest.js). Off by default: only
  * `transtyle build` and `check` ask for it, so `explain`, `diff` and other API
  * callers never report on whatever output happens to sit next to the project.
+ *
+ * `configFile` (the CLI's `--config`) picks the config, resolved against
+ * `cwd`; it defaults to `transtyle.config.json`. Its directory is the project
+ * directory: outputs and file names are relative to it. The config may
+ * `extends` a base (docs/specs/configuration.md#inheritance-extends);
+ * `configChain` in the result lists the files, root base first, relative to
+ * the project directory. `redirect` is for `transtyle diff` (loadConfigChain).
  */
-export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false, outRoot, dryRun = false, apcaLoader, drift = false }) {
+export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false, outRoot, dryRun = false, apcaLoader, drift = false }) {
   const diagnostics = new Diagnostics();
-  const { config } = await loadConfig(cwd);
+  const { chain, projectDir } = await loadConfigChain(cwd, { configFile, redirect });
+  const configChain = chain.map((f) => f.name);
+  const leafName = configChain[configChain.length - 1];
 
   // Config schema validation (audit A8): a typo'd or mis-typed config key is an
   // error, not a silently-ignored field. Fail before touching tokens — a broken
-  // config shape would only produce misleading downstream diagnostics.
-  for (const { path: p, message } of validate(config, configSchema)) {
-    diagnostics.error('TST1010', `transtyle.config.json: ${p === '(root)' ? '' : p + ' '}${message}`);
+  // config shape would only produce misleading downstream diagnostics. Each file
+  // of an `extends` chain is validated on its own, before the merge, so the
+  // message names the file the bad key is in.
+  for (const file of chain) {
+    for (const { path: p, message } of validate(file.config, configSchema)) {
+      diagnostics.error('TST1010', `${file.name}: ${p === '(root)' ? '' : p + ' '}${message}`);
+    }
   }
   if (diagnostics.errors.length > 0) {
-    return { config, diagnostics, results: [], normalized: null, bindings: null, contrast: null };
+    return { config: chain[chain.length - 1].config, configChain, projectDir, diagnostics, results: [], normalized: null, bindings: null, contrast: null };
+  }
+  const { config, origins } = mergeConfigChain(chain, projectDir);
+  if (!config.tokens?.length) {
+    throw new Error(`Config error: "tokens" must list at least one glob${chain.length > 1 ? ` in ${leafName} or a config it extends (${[...configChain].reverse().join(' → ')})` : '.'}`);
   }
 
   // The contrast standard (contrast.js): WCAG 2.1 is built in; APCA comes from
@@ -113,23 +130,23 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // asked for would report a pass nobody measured.
   let contrast;
   try {
-    contrast = await loadContrast(config, cwd, { importer: apcaLoader });
+    contrast = await loadContrast(config, projectDir, { importer: apcaLoader });
   } catch (e) {
     const which = checkStandard(config) === 'apca' ? 'check.contrast.standard' : 'derivation.contrast';
     diagnostics.error('TST1013', `${which} is "apca", but the ${APCA_PACKAGE} package could not be loaded (${e.message})`, {
       hint: `APCA is an optional peer dependency: npm install --save-dev ${APCA_PACKAGE} in this project, or set ${which} back to a WCAG value.`,
     });
-    return { config, diagnostics, results: [], normalized: null, bindings: null, contrast: null };
+    return { config, configChain, projectDir, diagnostics, results: [], normalized: null, bindings: null, contrast: null };
   }
 
   // LOAD + NORMALIZE + DERIVE (shared across targets)
-  const trees = await loadTokenTrees(cwd, config.tokens, diagnostics, config);
+  const trees = await loadTokenTrees(projectDir, config.tokens, diagnostics, config, chain.length > 1 ? origins.tokens : []);
   // `bindings` rules become one more base layer of plain aliases, after every
   // token file: an authored token or alias already there wins over a rule
   // (bindings.js), so this layer never overrides anything.
-  const bindings = expandBindings(trees, config, diagnostics);
+  const bindings = expandBindings(trees, config, diagnostics, chain.length > 1 ? ruleLabels(origins.bindings, leafName, 'bindings') : undefined);
   if (bindings && bindings.aliases.length > 0) {
-    trees.push({ file: 'transtyle.config.json (bindings)', tree: bindings.tree, modeScope: undefined, bindingRules: bindings.rules });
+    trees.push({ file: `${leafName} (bindings)`, tree: bindings.tree, modeScope: undefined, bindingRules: bindings.rules });
   }
   const normalized = normalize(trees, config, diagnostics);
   const { underived } = derive(normalized, config, diagnostics, contrast.derive);
@@ -222,8 +239,8 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // sees its output as it was before overwriting it. Drift is reported here,
   // before `check.suppress` is applied (after the loop), so it can be silenced,
   // and it is reported even when an error stops the build below.
-  const manifests = drift || emit ? await readManifests(cwd, config, targetNames, outRoot) : new Map();
-  if (drift) await reportDrift(manifests, cwd, diagnostics);
+  const manifests = drift || emit ? await readManifests(projectDir, config, targetNames, outRoot) : new Map();
+  if (drift) await reportDrift(manifests, projectDir, diagnostics);
 
   const results = [];
   // Exporter crashes (TST3001/TST3002) and incompatible exporters (TST1309) are
@@ -262,7 +279,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       const known = knownExporters.includes(name);
       diagnostics.error(
         'TST1301',
-        `Target "${name}" is not configured in transtyle.config.json`,
+        `Target "${name}" is not configured in ${leafName}${chain.length > 1 ? ' or a config it extends' : ''}`,
         {
           hint: near
             ? `Did you mean "${near}"? Configured targets: ${configured.join(', ') || '(none)'}`
@@ -283,7 +300,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     try {
       loaded = await loadExporter(targetConfig.exporter ?? name);
     } catch (e) {
-      crash('TST3002', name, 'load', e, 'Install the exporter package in this project, or fix its `exporter` field in transtyle.config.json. Re-run with --verbose (or TRANSTYLE_DEBUG=1) for the stack.');
+      crash('TST3002', name, 'load', e, `Install the exporter package in this project, or fix its \`exporter\` field in ${leafName}. Re-run with --verbose (or TRANSTYLE_DEBUG=1) for the stack.`);
       results.push({ target: name, files: [], stale: [], coverage: [], emitted: [], reads: [] });
       continue;
     }
@@ -313,7 +330,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     if (pipelineErrors() > 0) break; // don't emit with invalid options
 
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
-    const rel = (p) => path.relative(cwd, p).split(path.sep).join('/') || '.';
+    const rel = (p) => path.relative(projectDir, p).split(path.sep).join('/') || '.';
     const outputOf = (n, t) => (outRoot ? rel(path.resolve(outRoot, n)) : t.output ?? `dist/${n}`);
     const ctx = {
       config, units,
@@ -371,7 +388,10 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       coverage = coverage.filter((c) => !(c.class === 'dropped' && [...narrowed].some((d) => c.variable === `(mode:${d})`)));
     }
 
-    const outDir = outRoot ? path.resolve(outRoot, name) : path.resolve(cwd, targetConfig.output ?? `dist/${name}`);
+    // Outputs resolve against the project directory, wherever the target was
+    // declared: a target a base declares is built by each product into its
+    // own folder (docs/specs/configuration.md#paths-in-a-chain).
+    const outDir = outRoot ? path.resolve(outRoot, name) : path.resolve(projectDir, targetConfig.output ?? `dist/${name}`);
     const written = [];
     const planned = [];
     let stale = [];
@@ -382,8 +402,8 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       // once every exporter has had its say; they are swapped in with the
       // files, so a manifest never describes files that did not land.
       const staged = files.map((f) => ({ path: f.path, contents: f.contents }));
-      for (const f of files) written.push(path.relative(cwd, path.join(outDir, f.path)));
-      stale = await staleFiles(manifests.get(name), files, cwd);
+      for (const f of files) written.push(path.relative(projectDir, path.join(outDir, f.path)));
+      stale = await staleFiles(manifests.get(name), files, projectDir);
       plans.push({ outDir, files: staged, name, targetConfig, coverage, view, reads, written, planned });
     }
     // `emitted` carries the file *specs* (path + contents) even when emit is
@@ -398,7 +418,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // run, exporters included: an exporter's own diagnostic (shadcn's TST2104)
   // can be suppressed like any other, and every target's report agrees.
   fillLocations(diagnostics.items, normalized.sources);
-  diagnostics.applySuppressions(config.check?.suppress);
+  diagnostics.applySuppressions(config.check?.suppress, chain.length > 1 ? ruleLabels(origins.suppress, leafName, 'check.suppress') : undefined);
 
   // Build manifest + machine-readable report per target
   // (docs/specs/validation-and-coverage.md). Built here rather than in the
@@ -408,14 +428,14 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   for (const plan of plans) {
     const { name, targetConfig, coverage, view, reads, written, planned } = plan;
     const report = buildReport({
-      target: name, options: targetConfig.options, coverage, reads, normalized: view,
+      target: name, config: configChain, options: targetConfig.options, coverage, reads, normalized: view,
       diagnostics: diagnostics.items, suppressed: diagnostics.suppressed, files: [...written],
     });
     const manifest = renderManifest(name, plan.files);
     plan.files.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
-    written.push(path.relative(cwd, path.join(plan.outDir, 'report.json')));
+    written.push(path.relative(projectDir, path.join(plan.outDir, 'report.json')));
     plan.files.push({ path: MANIFEST_FILE, contents: manifest });
-    written.push(path.relative(cwd, path.join(plan.outDir, MANIFEST_FILE)));
+    written.push(path.relative(projectDir, path.join(plan.outDir, MANIFEST_FILE)));
     plan.files.forEach((f, i) => planned.push({ path: written[i], bytes: Buffer.byteLength(f.contents, 'utf8') }));
   }
 
@@ -430,7 +450,16 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     }
   }
 
-  return { config, diagnostics, results, normalized, bindings, contrast: contrast.check };
+  return { config, configChain, projectDir, diagnostics, results, normalized, bindings, contrast: contrast.check };
+}
+
+/**
+ * Labels for the merged `bindings` / `check.suppress` entries of an `extends`
+ * chain: the index in the file the entry is written in, and that file when it
+ * is not the project's own config (`bindings[0] in ../base/transtyle.config.json`).
+ */
+function ruleLabels(origins, leafName, key) {
+  return origins.map(({ file, index }) => `${key}[${index}]${file === leafName ? '' : ` in ${file}`}`);
 }
 
 /**

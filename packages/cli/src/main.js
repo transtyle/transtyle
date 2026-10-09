@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca } from '@transtyle/core';
+import { compile, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca, loadConfigChain, DEFAULT_CONFIG_FILE } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
@@ -92,10 +92,15 @@ function withManifest(plugin, entry, specifier) {
 }
 
 function parseArgs(argv) {
-  const args = { command: undefined, targets: [], cwd: process.cwd() };
+  const args = { command: undefined, targets: [], cwd: process.cwd(), configFile: DEFAULT_CONFIG_FILE };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--cwd') args.cwd = path.resolve(argv[++i] ?? '.');
+    else if (a === '--config') {
+      const v = argv[++i];
+      if (v === undefined || v.startsWith('--')) { console.error('Flag --config needs a value'); process.exit(2); }
+      args.configFile = v;
+    }
     else if (a === '--mode') args.mode = argv[++i];
     else if (a === '--target') args.target = argv[++i];
     else if (a === '--variable') args.variable = argv[++i];
@@ -132,8 +137,15 @@ function parseArgs(argv) {
     else if (!args.command) args.command = a;
     else args.targets.push(a);
   }
+  // `--cwd` says where to look, `--config` which file to use there; the
+  // config's own directory is the project (outputs, exporters, `init`, `add`).
+  args.configPath = path.resolve(args.cwd, args.configFile);
+  args.project = path.dirname(args.configPath);
   return args;
 }
+
+/** What every compile() call of the CLI shares: which config, and the exporter loader. */
+const project = (args) => ({ cwd: args.cwd, configFile: args.configFile, loadExporter: makeLoadExporter(args.project) });
 
 const HELP = `transtyle — design system compiler
 
@@ -154,6 +166,8 @@ Usage:
                                   rewrite Style Dictionary v3 token files (value/type) to DTCG ($value/$type); a diff unless --write
 Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
+  --config <file>                 config file to use, relative to --cwd (default: transtyle.config.json);
+                                  its directory is the project directory
   --mode <name>                   mode to resolve for (explain only; default: the DS's default mode)
   --target <t>                    explain only: a target instance; lists the variables consuming the slot
   --variable <name>               explain only (with --target): the target variable to look up
@@ -295,7 +309,7 @@ async function cmdBuildOrCheck(args) {
   try {
     // `drift`: build and check compare the output with the manifest its last
     // build wrote (TST1312); explain, diff and init never do.
-    result = await compile({ cwd: args.cwd, targets: args.targets, emit, outRoot: args.out, dryRun: args.dryRun, drift: true, loadExporter: makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: VERBOSE });
+    result = await compile({ ...project(args), targets: args.targets, emit, outRoot: args.out, dryRun: args.dryRun, drift: true, knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: VERBOSE });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     if (VERBOSE && e.stack) console.error(e.stack.split('\n').slice(1).join('\n'));
@@ -354,6 +368,7 @@ async function cmdBuildOrCheck(args) {
   const matrix = args.matrix && result.normalized ? consumption(result) : null;
   if (!emit && args.json) {
     console.log(JSON.stringify({
+      config: result.configChain,
       // The standard every TST2101 above was measured against (null when the
       // config failed to load, so nothing was measured).
       contrast: result.contrast ? { standard: result.contrast.standard, algorithm: result.contrast.algorithm } : null,
@@ -414,10 +429,10 @@ function renderCompleteness({ level, authored, total, todo }) {
  * them. What was skipped and why goes to stderr, one line per rule.
  */
 async function cmdBindings(args) {
-  if (!args.expand) { console.error('Usage: transtyle bindings --expand [--cwd <dir>]'); process.exit(2); }
+  if (!args.expand) { console.error('Usage: transtyle bindings --expand [--cwd <dir>] [--config <file>]'); process.exit(2); }
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: [], emit: false, skipExporters: true, loadExporter: makeLoadExporter(args.cwd) });
+    result = await compile({ ...project(args), targets: [], emit: false, skipExporters: true });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
@@ -427,7 +442,7 @@ async function cmdBindings(args) {
   // Only the errors that make the expansion itself wrong stop it; the rest of
   // the design system may still be incomplete while its bindings are being written.
   if (diagnostics.errors.some((d) => ['TST1010', 'TST1117', 'TST1118'].includes(d.code))) { process.exitCode = 1; return; }
-  if (!bindings) { console.error('✖ transtyle.config.json has no "bindings" rules to expand.'); process.exit(2); }
+  if (!bindings) { console.error(`✖ ${result.configChain.at(-1)} has no "bindings" rules to expand${result.configChain.length > 1 ? ', nor does any config it extends' : ''}.`); process.exit(2); }
 
   const byRule = new Map();
   for (const s of bindings.skipped) {
@@ -460,7 +475,7 @@ async function cmdBind(args) {
   if (args.rules && args.json) { console.error(`✖ --rules and --json are two different outputs; pick one\n  ${usage}`); process.exit(2); }
   let result;
   try {
-    result = await suggestBindings({ cwd: args.cwd });
+    result = await suggestBindings({ cwd: args.cwd, configFile: args.configFile });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
@@ -525,10 +540,11 @@ async function cmdExplain(args) {
   try {
     result = await compile({
       cwd: args.cwd,
+      configFile: args.configFile,
       targets: args.target ? [args.target] : [],
       emit: false,
       skipExporters: !args.target,
-      loadExporter: makeLoadExporter(args.cwd),
+      loadExporter: makeLoadExporter(args.project),
       knownExporters: Object.keys(OFFICIAL_EXPORTERS),
       debug: VERBOSE,
     });
@@ -536,7 +552,10 @@ async function cmdExplain(args) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
   }
-  const { normalized, diagnostics } = result;
+  const { normalized, diagnostics, configChain } = result;
+  // Which files the value came through, when there is more than one. stderr,
+  // so stdout stays the explanation alone.
+  if (configChain.length > 1) console.error(`config: ${[...configChain].reverse().join(' ← ')}`);
   printDiagnostics(diagnostics);
   if (!normalized) { process.exitCode = 1; return; }
   if (args.target && !result.results.some((r) => r.target === args.target)) {
@@ -791,13 +810,13 @@ async function cmdDiff(args) {
   // "after" = the working tree as it is now.
   let after;
   try {
-    after = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd) });
+    after = await compile({ ...project(args), targets: [], emit: false });
   } catch (e) { console.error(`✖ ${e.message}`); process.exit(2); }
 
   // "before" = the project at `ref`, materialized into a temp dir via git archive.
   let repoRoot;
   try {
-    repoRoot = execSync('git rev-parse --show-toplevel', { cwd: args.cwd, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    repoRoot = execSync('git rev-parse --show-toplevel', { cwd: args.project, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
   } catch { console.error('✖ transtyle diff requires a git repository'); process.exit(2); }
   try {
     execSync(`git rev-parse --verify --quiet ${ref}^{commit}`, { cwd: repoRoot, stdio: 'ignore' });
@@ -806,26 +825,45 @@ async function cmdDiff(args) {
   // The project's path relative to the repo root, straight from git — avoids the
   // macOS /var → /private/var symlink mismatch that path.relative(toplevel, cwd)
   // would produce (toplevel is realpath'd, cwd may be the symlink).
-  const prefix = execSync('git rev-parse --show-prefix', { cwd: args.cwd, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().replace(/\/$/, '');
+  const prefix = execSync('git rev-parse --show-prefix', { cwd: args.project, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().replace(/\/$/, '');
+  // Only the project's directory is snapshotted, unless the build reads files
+  // outside it: a base config it `extends`, or a token glob that climbs out
+  // ("../design-system/tokens/*.json"). Then the whole repository is, so a
+  // change made only in the base shows up in the product's diff.
+  const leavesProject = after.configChain.some((f) => f.startsWith('../'))
+    || (after.config.tokens ?? []).some((t) => [].concat(typeof t === 'string' ? t : t.files).some((g) => g.startsWith('../')));
   const tmp = mkdtempSync(path.join(tmpdir(), 'transtyle-diff-'));
+  const beforeProject = path.join(tmp, prefix);
+  const configName = path.basename(args.configPath);
+  // A base outside the repository has no state at `ref`: it is read where it
+  // is now, and said so.
+  const outside = new Set();
+  const redirect = (p) => {
+    const rel = path.relative(tmp, p);
+    if (!rel.startsWith('..') && !path.isAbsolute(rel)) return p;
+    // Named relative to the project, as the chain names it (the snapshot's
+    // project directory stands for the real one).
+    outside.add(path.relative(beforeProject, p).split(path.sep).join('/'));
+    return path.resolve(repoRoot, rel);
+  };
   let before;
   try {
-    execSync(`git archive ${ref} ${prefix} | tar -x -C "${tmp}"`, { cwd: repoRoot, stdio: ['ignore', 'ignore', 'pipe'] });
-    const beforeCwd = path.join(tmp, prefix);
-    if (!existsSync(path.join(beforeCwd, 'transtyle.config.json'))) {
+    execSync(`git archive ${ref}${leavesProject ? '' : ` ${prefix}`} | tar -x -C "${tmp}"`, { cwd: repoRoot, stdio: ['ignore', 'ignore', 'pipe'] });
+    if (!existsSync(path.join(beforeProject, configName))) {
       console.error(`ℹ No transtyle project at ${ref} — nothing to diff against.`);
       rmSync(tmp, { recursive: true, force: true });
       process.exit(0);
     }
     // The checkout has no node_modules: resolve apca-w3 (when the config at
     // that ref selects APCA) from the project, like the exporters.
-    before = await compile({ cwd: beforeCwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd), apcaLoader: () => loadApca(args.cwd) });
+    before = await compile({ cwd: beforeProject, configFile: configName, redirect, targets: [], emit: false, loadExporter: makeLoadExporter(args.project), apcaLoader: () => loadApca(args.project) });
   } catch (e) {
     rmSync(tmp, { recursive: true, force: true });
     console.error(`✖ Could not resolve the project at ${ref}: ${e.message}`);
     process.exit(2);
   }
   rmSync(tmp, { recursive: true, force: true });
+  for (const f of outside) console.error(`ℹ ${f} is outside the git repository: compared as it is now, not as it was at ${ref}.`);
 
   const diff = diffResolved(before.normalized, after.normalized);
   const impact = diffTargets(before.results, after.results);
@@ -991,9 +1029,11 @@ function cmdCatalog(args) {
  */
 async function cmdInit(args) {
   const known = Object.keys(OFFICIAL_EXPORTERS);
-  const configPath = path.join(args.cwd, 'transtyle.config.json');
+  // `--config <file>` writes that file, with `tokens/` next to it.
+  const { configPath, project: dir } = args;
+  const configName = path.basename(configPath);
   if (existsSync(configPath)) {
-    console.error(`✖ transtyle.config.json already exists at ${configPath}`);
+    console.error(`✖ ${configName} already exists at ${configPath}`);
     process.exit(2);
   }
   const { given, errors } = validateFlags(args.init ?? {}, known);
@@ -1015,25 +1055,25 @@ async function cmdInit(args) {
     }
   }
 
-  const name = args.targets[0] ?? path.basename(args.cwd) ?? 'design-system';
-  const files = scaffold({ name, ...answers });
-  const taken = files.filter((f) => existsSync(path.join(args.cwd, f.path))).map((f) => f.path);
+  const name = args.targets[0] ?? path.basename(dir) ?? 'design-system';
+  const files = scaffold({ name, ...answers }).map((f) => (f.path === DEFAULT_CONFIG_FILE ? { ...f, path: configName } : f));
+  const taken = files.filter((f) => existsSync(path.join(dir, f.path))).map((f) => f.path);
   if (taken.length) {
-    console.error(`✖ ${taken.join(', ')} already exist${taken.length === 1 ? 's' : ''} in ${args.cwd}; nothing was written.`);
+    console.error(`✖ ${taken.join(', ')} already exist${taken.length === 1 ? 's' : ''} in ${dir}; nothing was written.`);
     process.exit(2);
   }
   for (const f of files) {
-    mkdirSync(path.dirname(path.join(args.cwd, f.path)), { recursive: true });
-    writeFileSync(path.join(args.cwd, f.path), f.contents);
+    mkdirSync(path.dirname(path.join(dir, f.path)), { recursive: true });
+    writeFileSync(path.join(dir, f.path), f.contents);
   }
-  console.error(`✔ created ${files.map((f) => f.path).join(', ')} in ${args.cwd}`);
+  console.error(`✔ created ${files.map((f) => f.path).join(', ')} in ${dir}`);
   console.error(`  preset ${answers.preset}, layout ${answers.layout}, schemes ${answers.schemes.join(' + ')}, targets ${answers.targets.join(', ')}\n`);
 
   // The closing check: the same pipeline as `transtyle check`, on what was
   // just written. Its findings are reported, not fatal: the files are the user's now.
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd), knownExporters: known, debug: VERBOSE });
+    result = await compile({ ...project(args), targets: [], emit: false, knownExporters: known, debug: VERBOSE });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exitCode = 1;
@@ -1072,17 +1112,31 @@ async function cmdAdd(args) {
     console.error(`✖ Unknown target: ${target}\nValid targets: ${Object.keys(OFFICIAL_EXPORTERS).join(', ')}`);
     process.exit(2);
   }
-  const configPath = path.join(args.cwd, 'transtyle.config.json');
+  const { configPath } = args;
+  const configName = path.basename(configPath);
   if (!existsSync(configPath)) {
-    console.error(`✖ No transtyle.config.json in ${args.cwd} — run "transtyle init" first`);
+    console.error(`✖ No ${configName} in ${args.project} — run "transtyle init" first`);
     process.exit(2);
   }
-  const config = JSON.parse(readFileSync(configPath, 'utf8'));
+  // The target goes into this file only (read-modify-write of the raw JSON):
+  // the chain is never flattened into it, and a base it extends is never
+  // touched. A target a base already declares is refused, naming the base.
+  let chain;
+  try {
+    ({ chain } = await loadConfigChain(args.cwd, { configFile: args.configFile }));
+  } catch (e) {
+    console.error(`✖ ${e.message}`);
+    process.exit(2);
+  }
+  const config = chain[chain.length - 1].config;
+  const declaredIn = chain.findLast((f) => f.config?.targets?.[target] !== undefined);
+  if (declaredIn) {
+    console.error(declaredIn === chain[chain.length - 1]
+      ? `✖ Target "${target}" is already configured`
+      : `✖ Target "${target}" is already configured: inherited from ${declaredIn.name}`);
+    process.exit(2);
+  }
   config.targets ??= {};
-  if (config.targets[target]) {
-    console.error(`✖ Target "${target}" is already configured`);
-    process.exit(2);
-  }
   config.targets[target] = targetEntry(target);
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
   console.error(`✔ added target "${target}" → dist/${target}\n\nBuild it: npx transtyle build ${target}`);

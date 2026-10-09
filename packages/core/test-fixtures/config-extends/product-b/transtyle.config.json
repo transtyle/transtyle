@@ -1,0 +1,30 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "extends": "../base/transtyle.config.json",
+  "name": "product-b",
+  "tokens": [
+    "tokens/campaign.tokens.json"
+  ],
+  "targets": {
+    "css-variables": {
+      "output": "dist/css-variables"
+    },
+    "bootstrap": {
+      "output": "dist/bootstrap",
+      "modes": {
+        "color-scheme": [
+          "light"
+        ]
+      }
+    }
+  },
+  "check": {
+    "suppress": [
+      {
+        "code": "TST1204",
+        "path": "semantic.color.danger.solid",
+        "reason": "The campaign red is the same in both color schemes."
+      }
+    ]
+  }
+}

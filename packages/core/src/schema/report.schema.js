@@ -89,6 +89,10 @@ export const reportSchema = {
   properties: {
     $schema: { type: 'string' },
     target: { type: 'string' },
+    // The config files the build read, in merge order (root base first, the
+    // project's own config last), relative to the project directory. One entry
+    // without `extends` (docs/specs/configuration.md#inheritance-extends).
+    config: { type: 'array', minItems: 1, items: { type: 'string' } },
     options: { type: 'object' },
     generatedBy: { type: 'string' },
     coverage: {

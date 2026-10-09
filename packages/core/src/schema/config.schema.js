@@ -130,12 +130,19 @@ const bindingRule = {
   },
 };
 
+// `tokens` is not `required`: a config that `extends` a base may add none of
+// its own. compile() requires at least one layer after the merge, with a
+// message that names the chain (docs/specs/configuration.md#inheritance-extends).
 export const configSchema = {
   type: 'object',
-  required: ['tokens'],
   additionalProperties: false,
   properties: {
     $schema: { type: 'string' },
+    extends: {
+      type: 'string',
+      minLength: 1,
+      description: 'A base config this one inherits from: a file path relative to this file ("../design-system/transtyle.config.json").',
+    },
     name: { type: 'string' },
     tokens: { type: 'array', minItems: 1, items: tokenLayer },
     modes: { type: 'object', properties: { brand: brandDimension }, additionalProperties: modeDimension },

@@ -42,8 +42,10 @@ export class Diagnostics {
    * without `path` matches every diagnostic of its code, the only way to match
    * one that is not about a token. A rule that silenced nothing gets TST1012
    * (info, appended last), so a stale entry is visible instead of rotting.
+   * `labels` (optional, one per rule) is how TST1012 names an entry; an
+   * `extends` chain passes the file each entry is written in.
    */
-  applySuppressions(rules = []) {
+  applySuppressions(rules = [], labels) {
     if (rules.length === 0) return;
     const silenced = rules.map(() => 0);
     const sawError = rules.map(() => false);
@@ -70,8 +72,8 @@ export class Diagnostics {
       this.info(
         'TST1012',
         sawError[i]
-          ? `check.suppress[${i}] (${what}) matches an error, and errors cannot be suppressed`
-          : `check.suppress[${i}] (${what}) matched no diagnostic`,
+          ? `${labels?.[i] ?? `check.suppress[${i}]`} (${what}) matches an error, and errors cannot be suppressed`
+          : `${labels?.[i] ?? `check.suppress[${i}]`} (${what}) matched no diagnostic`,
         {
           hint: sawError[i]
             ? 'Fix the error; remove the entry if it was meant for a warning.'

@@ -205,6 +205,55 @@ A rule iterates only the placeholders its `slot` uses (two placeholders are the 
 
 A malformed rule (unknown placeholder, `from` not a single alias, `roles` without `{role}` or naming an unknown role, a `from` placeholder the `slot` lacks) is `TST1117`.
 
+## Inheritance (`extends`)
+
+One repository often holds several design systems, or several products that share one design system and build different targets from it. Each needs its own config, and copying the shared part into every one of them produces the drift Transtyle exists to remove. A config can therefore inherit from a base ([ADR-0016](../adr/0016-config-inheritance.md)):
+
+<!-- validates: config -->
+
+```jsonc
+// apps/marketing/transtyle.config.json
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "extends": "../../design-system/transtyle.config.json", // tokens, modes, bindings, derivation, units, check
+  "name": "marketing-site",
+  "tokens": [{ "files": "tokens/campaign.tokens.json", "override": "extend" }], // optional: this product's own layer
+  "targets": {
+    "bootstrap": { "output": "dist/bootstrap", "modes": { "color-scheme": ["light"] } },
+  },
+}
+```
+
+- `extends` is one file path, relative to the file that declares it (`./` or `../`), or absolute. A base may extend another; the chain is followed to its root. A package name (`@acme/ds/transtyle.config.json`) is not accepted yet ([issue #55](https://github.com/transtyle/transtyle/issues/55)); a bare name is refused so that it can be added without changing what an existing config means.
+- `--config <file>` selects a config other than `transtyle.config.json` on every command ([cli.md](cli.md)). The selected file is the _leaf_ of the chain, and its directory is the **project directory**.
+- A missing or unparseable base, an `extends` that is not a path, and a cycle each stop the run before anything is compiled, with the chain in the message (`transtyle.config.json → ../base/transtyle.config.json → transtyle.config.json`), exit code 2, like a missing config.
+- Each file is validated against the schema on its own, before the merge, so a `TST1010` names the file the bad key is in (`✖ TST1010 ../base/transtyle.config.json: unknown property "unitz"`). `tokens` is not required in a file; at least one token layer is required once the chain is merged.
+
+### Merge rules
+
+Files merge from the root base down to the leaf. In every rule the nearer file (the product) wins:
+
+| Key                   | Rule                                                                                                                                                                                                                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tokens`              | Concatenated, the base's layers first: later layers win, so the product's own layers come last. Redefining a base token needs an [override layer](#token-layering) (`override: true`), like any later layer; otherwise it is `TST1103`.                                            |
+| `bindings`            | Concatenated, the product's rules first: between rules the first wins, so a product rule beats a base rule for the same slot. A base rule also binds tokens the product's layers add. Diagnostics name a base rule with its file (`bindings[0] in ../base/transtyle.config.json`). |
+| `modes`               | By dimension: a dimension the product declares replaces the base's whole `{ values, default }`.                                                                                                                                                                                    |
+| `derivation`, `units` | By key: `rules`, `autoDark`, `require`, `remBase` each replace the base's value. `require` is replaced, not concatenated.                                                                                                                                                          |
+| `check`               | By key: `failOn` replaces; `contrast` and `hygiene` merge by key; `suppress` is concatenated, the product's entries first, and `TST1012` names a base entry with its file.                                                                                                         |
+| `targets`             | By instance name: an instance the product declares replaces the base's whole object, `options` and `modes` included. An inherited instance can't be removed.                                                                                                                       |
+| `name`                | The nearest file that sets one.                                                                                                                                                                                                                                                    |
+| `$schema`, `extends`  | Never inherited.                                                                                                                                                                                                                                                                   |
+
+No key is deep-merged beyond what the table says: `options` holds arrays (`previewTargets`) where a deep merge would surprise. A shared base usually holds tokens, modes, bindings, derivation, units and check, and leaves `targets` to the products.
+
+### Paths in a chain
+
+- **Token globs**, the `files` of mode-scoped and override layers included, resolve against the directory of the file that declares them. File names in diagnostics, source locations and `explain` are relative to the project directory (`../design-system/tokens/base.tokens.json`), the same on every machine. `TST1001` quotes the glob as it is written and names the file it is in.
+- **Target outputs** resolve against the project directory, whichever file declares the target: a target in a base is built by each product into its own folder, never into a folder they share.
+- **Exporters** are resolved from the project directory first, as before.
+
+`report.json` and the `check --json` object list the files of the chain as `config`, in merge order, relative to the project directory (`["../base/transtyle.config.json", "transtyle.config.json"]`; one entry without `extends`). `explain` prints `config: transtyle.config.json ← ../base/transtyle.config.json` on stderr when the chain has more than one file. `transtyle diff` snapshots what the chain reads at the ref, the whole repository when that is outside the project directory, so a change made only in the base shows up in the product's diff; a base outside the repository is compared as it is now, and the diff says so. `add` writes into the leaf only and refuses a target a base already declares; `init --config <file>` writes that file with `tokens/` next to it.
+
 ## Token file conventions
 
 Standard DTCG plus:

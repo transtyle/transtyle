@@ -6,7 +6,7 @@ order: 5
 
 # Configuration reference
 
-One file: `transtyle.config.json`, in your project root. It's the **only** Transtyle-specific file in a project — everything else is standard DTCG. Config is data: no `transtyle.config.ts`, by design (introspectability, portability, determinism).
+One file: `transtyle.config.json`, in your project root (or another name you pass with [`--config`](/docs/cli/#--config-file); several products can share a base through [`extends`](#extends--several-products-one-design-system)). It's the **only** Transtyle-specific file in a project — everything else is standard DTCG. Config is data: no `transtyle.config.ts`, by design (introspectability, portability, determinism).
 
 The `$schema` line at the top is a real, published [JSON Schema](/schemas/config/v0.json) — editors that honor it give you autocomplete and inline validation as you type. The `transtyle.dev` URL below is the schema's permanent identifier, not a download link: that domain is not registered yet, so an editor that fetches it literally will come up empty. The identical file is served from this site at the link above, and the compiler fetches neither — it validates against its own bundled copy. The compiler validates the same schema at load time: an **unknown or mistyped key is an error** (`TST1010`), never silently ignored, and each target's `options` are checked against the selected exporter's own schema (`TST1011`) — so a wrong `era` or a stray option fails the build with the exact path, rather than being dropped without warning.
 
@@ -263,7 +263,7 @@ Note that `require` is a **policy** knob, not the engine's own floor. `semantic.
 
 ## `targets` — instances, not just names
 
-Each key is a **target instance**. The optional `exporter` field selects the plugin (defaults to the key), which is how one exporter runs twice with different options — e.g. shadcn in both Tailwind eras. `output` is the emit directory (relative to the config). `options` are exporter-specific; see each exporter's page.
+Each key is a **target instance**. The optional `exporter` field selects the plugin (defaults to the key), which is how one exporter runs twice with different options — e.g. shadcn in both Tailwind eras. `output` is the emit directory (relative to the config, or to the product's config when a base declares the target: see [`extends`](#extends--several-products-one-design-system)). `options` are exporter-specific; see each exporter's page.
 
 `transtyle build` builds all instances; `transtyle build shadcn-v3` selects by instance name.
 
@@ -310,3 +310,39 @@ The two standards disagree on real colors. On [Cathode](/docs/examples/)'s green
 ```json
 { "check": { "contrast": { "standard": "apca" } } }
 ```
+
+## `extends` — several products, one design system
+
+A repository with several products that share one design system, or with several design systems, needs one config per product. Put what they share in a base config, and have each product extend it:
+
+```text
+design-system/
+  transtyle.config.json      tokens, modes, bindings, derivation, units, check
+  tokens/
+apps/marketing/
+  transtyle.config.json      "extends": "../../design-system/transtyle.config.json" + its targets
+apps/admin/
+  transtyle.config.json      "extends": "../../design-system/transtyle.config.json" + other targets
+```
+
+<!-- validates: config -->
+
+```json
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "extends": "../../design-system/transtyle.config.json",
+  "name": "marketing-site",
+  "targets": {
+    "bootstrap": { "output": "dist/bootstrap", "modes": { "color-scheme": ["light"] } }
+  }
+}
+```
+
+`npx transtyle build --cwd apps/marketing` (or `--config apps/marketing/transtyle.config.json` from the root) builds the marketing site's Bootstrap theme from the shared tokens, into `apps/marketing/dist/bootstrap`.
+
+- **`extends`** is a file path relative to the config that declares it, starting with `./` or `../`. A base may extend another. Package names (`@acme/ds/…`) are not supported yet.
+- **The nearer file wins.** `tokens` are concatenated, the base's layers first, so a product's own layer comes last; to redefine a base token, mark that layer [`override: true`](#override-layers), as for any later layer. `bindings` and `check.suppress` are concatenated with the product's entries first (the first match wins in both). `modes` merge by dimension, `targets` by instance name (a redefined dimension or instance replaces the base's whole entry), and `derivation`, `units` and `check` by key. `name` comes from the nearest file that sets one; `$schema` is not inherited. The full table is in the [configuration spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/configuration.md#merge-rules).
+- **Paths.** Token globs resolve against the file that declares them; target outputs against the product's config, wherever the target is declared, so two products never write into the same folder. Messages name files relative to the product (`../../design-system/tokens/base.tokens.json:12:7`).
+- **Errors name the file.** An unknown key in the base is `TST1010` with the base's path. A missing base or a cycle stops the run (exit 2) and prints the chain.
+- **Where it shows.** `report.json` and `check --json` list the files read as `config`, base first; `explain` prints the chain on stderr. `transtyle diff` in a product also reports a change made only in the base. `transtyle add` writes into the product's config only, and refuses a target the base already declares.
+- **Keep targets in the products.** A product can't remove a target it inherits, so a base that declares targets builds them in every product.

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "extends": "../base/transtyle.config.json",
+  "name": "product-a",
+  "targets": {
+    "css-variables": { "output": "dist/css-variables" },
+    "shadcn": { "output": "dist/shadcn" }
+  }
+}
