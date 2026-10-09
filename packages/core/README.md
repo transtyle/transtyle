@@ -33,7 +33,8 @@ Six phases, in order: **load** (DTCG token files) → **normalize** (one canonic
 **report**. Nothing is random and nothing depends on the clock or the filesystem order, so
 two builds of the same input are byte-identical — there is a check in CI that proves it.
 
-Also exported: `diffResolved` and `contrastRegressions` (the semantic diff), `Diagnostics`,
+Also exported: `diffResolved` and `contrastRegressions` (the semantic diff), `explainToken`
+(the provenance walk behind `transtyle explain`, as a JSON tree), `Diagnostics`,
 and the colour module — `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
 `mix` — which is OKLCH-native and has no dependencies.
 

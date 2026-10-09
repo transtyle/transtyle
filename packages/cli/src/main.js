@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, diffResolved, contrastRegressions, formatColor, formatHex } from '@transtyle/core';
+import { compile, diffResolved, contrastRegressions, explainToken, formatColor, formatHex } from '@transtyle/core';
 
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -173,36 +173,19 @@ async function cmdExplain(args) {
   const { normalized, diagnostics } = result;
   for (const d of diagnostics.items) printDiagnostic(d);
 
-  const useMode = args.mode ?? normalized.defaultMode;
-  const map = normalized.modes[useMode];
-  if (!map) {
-    console.error(`✖ Unknown mode "${useMode}" (available: ${normalized.modeValues.join(', ')})`);
+  let tree;
+  try {
+    tree = explainToken(normalized, slotArg, { mode: args.mode });
+  } catch (e) {
+    if (e.code === 'unknown-mode') console.error(`✖ ${e.message}`);
+    else if (e.code === 'unknown-slot') {
+      console.error(`✖ ${e.message}\n\nClosest matches:\n${e.closest.map((k) => `  ${k}`).join('\n')}`);
+    } else throw e;
     process.exit(2);
   }
 
-  // A resolved provenance.inputs entry may be a bare relative path
-  // ("primary.solid", "radius.md") or a fully-qualified one — try both
-  // conventional prefixes before giving up.
-  const resolvePath = (raw) => {
-    for (const candidate of [raw, `semantic.${raw}`, `semantic.color.${raw}`]) {
-      if (map.has(candidate)) return candidate;
-    }
-    return null;
-  };
-
-  const fullPath = resolvePath(slotArg);
-  if (!fullPath) {
-    const bare = slotArg.replace(/^semantic\.(color\.)?/, '');
-    const closest = [...map.keys()]
-      .map((k) => [k, levenshtein(bare, k.replace(/^semantic\.(color\.)?/, ''))])
-      .sort((a, b) => a[1] - b[1])
-      .slice(0, 5)
-      .map(([k]) => k);
-    console.error(`✖ Unknown slot: ${slotArg}\n\nClosest matches:\n${closest.map((k) => `  ${k}`).join('\n')}`);
-    process.exit(2);
-  }
-
-  printExplain(map, fullPath, resolvePath, 0, new Set([fullPath]));
+  console.log(`${tree.slot} = ${formatEntryValue(tree.entry)}`);
+  printExplain(tree.entry, tree.inputs, 0);
 }
 
 function formatEntryValue(entry) {
@@ -255,11 +238,9 @@ function printMembers(entry, indent) {
   });
 }
 
-function printExplain(map, slotPath, resolvePath, depth, seen) {
-  const entry = map.get(slotPath);
+/** Print one node of an `explainToken()` tree: its provenance line, then its rule inputs. */
+function printExplain(entry, inputs, depth) {
   const indent = '  '.repeat(depth);
-  if (depth === 0) console.log(`${slotPath} = ${formatEntryValue(entry)}`);
-
   const prov = entry.provenance;
   if (prov.kind === 'authored') {
     console.log(`${indent} └─ authored`);
@@ -272,36 +253,16 @@ function printExplain(map, slotPath, resolvePath, depth, seen) {
   }
   // derived or defaulted
   console.log(`${indent} └─ ${prov.kind} by rule ${prov.rule ?? '(catalog default)'}`);
-  if (!prov.inputs?.length || depth >= 6) return;
-  for (const rawInput of prov.inputs) {
-    const inputPath = resolvePath(rawInput) ?? rawInput;
-    const inputEntry = map.get(inputPath);
-    if (!inputEntry) {
-      console.log(`${indent}    inputs: ${rawInput} (unresolved)`);
-      continue;
-    }
-    if (seen.has(inputPath)) {
-      console.log(`${indent}    inputs: ${inputPath} = ${formatEntryValue(inputEntry)} (see above)`);
-      continue;
-    }
-    seen.add(inputPath);
-    console.log(`${indent}    inputs: ${inputPath} = ${formatEntryValue(inputEntry)}`);
-    printExplain(map, inputPath, resolvePath, depth + 2, seen);
-  }
-}
-
-/** Levenshtein edit distance — used only for "did you mean" suggestions. */
-function levenshtein(a, b) {
-  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
-  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      dp[i][j] = a[i - 1] === b[j - 1]
-        ? dp[i - 1][j - 1]
-        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+  for (const input of inputs) {
+    if (input.unresolved) {
+      console.log(`${indent}    inputs: ${input.path} (unresolved)`);
+    } else if (input.seen) {
+      console.log(`${indent}    inputs: ${input.path} = ${formatEntryValue(input.entry)} (see above)`);
+    } else {
+      console.log(`${indent}    inputs: ${input.path} = ${formatEntryValue(input.entry)}`);
+      printExplain(input.entry, input.inputs, depth + 2);
     }
   }
-  return dp[a.length][b.length];
 }
 
 // ---------- diff ----------

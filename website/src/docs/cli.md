@@ -131,4 +131,4 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle import <source>`                         | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files           |
 | `transtyle preview`                                 | Local themed preview site across all targets                                                      |
 
-Programmatic use: every command wraps `@transtyle/core`'s public `compile()` — the CLI contains no logic a build-tool integration can't reach.
+Programmatic use: `build`, `check`, `diff` and `explain` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only.
