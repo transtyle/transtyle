@@ -1609,6 +1609,120 @@ try {
   }
 }
 
+// ---------- #30: $description and $deprecated reach the outputs ----------
+// The scaffold, with a described radius, a hostile description on the brand
+// colour (a `*/` and a second line must not escape the comment in CSS or
+// Sass), a slot bound to a deprecated option token, a deprecated group with
+// one token opted out, a deprecated slot of its own, and a deprecated option
+// nothing binds (silent). Then the same project with malformed metadata.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-30-'));
+  const tp = join(dir, 'tokens/brand.tokens.json');
+  const cp = join(dir, 'transtyle.config.json');
+  const json = (r) => { try { return JSON.parse(r.stdout); } catch { return { diagnostics: [] }; } };
+  try {
+    run(['init', 'meta-ds', '--cwd', dir]);
+    run(['add', 'shadcn', '--cwd', dir]);
+    run(['add', 'daisyui', '--cwd', dir]);
+    run(['add', 'bootstrap', '--cwd', dir]);
+    const scaffold = readFileSync(tp, 'utf8');
+    const t = JSON.parse(scaffold);
+    t.semantic.radius.md.$description = 'Corner radius for interactive controls only.';
+    t.semantic.color.primary.solid.$description = 'Brand blue */ .evil-escape { color: red } /* tail\nsecond-line-escape';
+    t.option.color.legacy = { $value: 'oklch(0.55 0.2 25)', $deprecated: 'Use option.color.brand.500 instead.' };
+    t.option.color.old = { $deprecated: true, a: { $value: 'oklch(0.6 0.15 200)' }, b: { $value: 'oklch(0.75 0.15 85)', $deprecated: false } };
+    t.option.color.unused = { $value: 'oklch(0.5 0.1 100)', $deprecated: 'Nothing binds me.' };
+    t.semantic.color.danger = { solid: { $value: '{option.color.legacy}' } };
+    t.semantic.color.info = { solid: { $value: '{option.color.old.a}' } };
+    t.semantic.color.warning = { solid: { $value: '{option.color.old.b}' } };
+    t.semantic.color.secondary = { solid: { $value: '{option.color.brand.500}', $deprecated: 'Use primary.' } };
+    writeFileSync(tp, JSON.stringify(t, null, 2));
+
+    let r = run(['build', '--cwd', dir]);
+    expect('#30 build: exit 0 (deprecations warn, failOn stays "error")', r.code === 0, r.out);
+    const css = readFileSync(join(dir, 'dist/css-variables/variables.transtyle.css'), 'utf8');
+    expect('#30 css-variables: description on its own comment line above --radius-md',
+      /\/\* Corner radius for interactive controls only\. \*\/\n\s*--radius-md:/.test(css), css.slice(0, 2000));
+    expect('#30 css-variables: own deprecation above --color-secondary-solid',
+      /\/\* Deprecated: Use primary\. \*\/\n\s*--color-secondary-solid:/.test(css));
+    const outside = (text, re) => text.replace(re, '');
+    for (const [file, re] of [
+      ['dist/css-variables/variables.transtyle.css', /\/\*[\s\S]*?\*\//g],
+      ['dist/shadcn/globals.transtyle.css', /\/\*[\s\S]*?\*\//g],
+      ['dist/daisyui/daisyui.transtyle.css', /\/\*[\s\S]*?\*\//g],
+      ['dist/bootstrap/_variables.transtyle.scss', /\/\/[^\n]*|\/\*[\s\S]*?\*\//g],
+    ]) {
+      const text = readFileSync(join(dir, file), 'utf8');
+      expect(`#30 ${file}: the brand description is written`, text.includes('Brand blue'));
+      const code = outside(text, re);
+      expect(`#30 ${file}: "*/" and the second line stay inside the comment`,
+        !code.includes('evil-escape') && !text.includes('second-line-escape'), code.split('\n').filter((l) => /evil|second-line/.test(l)).join(' | '));
+    }
+    try {
+      const { compileString } = await import('sass');
+      const scss = readFileSync(join(dir, 'dist/bootstrap/_variables.transtyle.scss'), 'utf8');
+      const out = compileString(`${scss}\n.probe { color: $primary; }`, { logger: { warn: () => {} } }).css;
+      expect('#30 bootstrap Sass: compiles with the hostile description, nothing leaks into CSS', !out.includes('evil-escape') && out.includes('.probe'));
+    } catch (e) {
+      expect('#30 bootstrap Sass: compiles with the hostile description', false, e.message.split('\n')[0]);
+    }
+
+    const report = JSON.parse(readFileSync(join(dir, 'dist/css-variables/report.json'), 'utf8'));
+    const item = (v) => report.coverage.items.find((i) => i.variable === v) ?? {};
+    expect('#30 report.json: item carries the slot description', item('--radius-md').description === 'Corner radius for interactive controls only.');
+    expect('#30 report.json: item reached through a deprecated token carries reason and token',
+      item('--color-danger-solid').deprecated === 'Use option.color.brand.500 instead.' && item('--color-danger-solid').deprecatedBy === 'option.color.legacy',
+      JSON.stringify(item('--color-danger-solid')));
+    expect('#30 report.json: group deprecation is `true`', item('--color-info-solid').deprecated === true && item('--color-info-solid').deprecatedBy === 'option.color.old.a');
+    expect('#30 report.json: `$deprecated: false` opts out of the group', !('deprecated' in item('--color-warning-solid')));
+    expect('#30 report.json: plain items gain no metadata keys', !('description' in item('--space-4')) && !('deprecated' in item('--space-4')));
+
+    for (const target of ['css-variables', 'shadcn', 'bootstrap']) {
+      const usage = readFileSync(join(dir, `dist/${target}/usage.md`), 'utf8');
+      expect(`#30 ${target} usage.md: lists the deprecated token feeding it`,
+        usage.includes('## Deprecated tokens') && usage.includes('`option.color.legacy`') && usage.includes('Use option.color.brand.500 instead.'), usage.slice(-800));
+      expect(`#30 ${target} usage.md: a deprecated token nothing binds is not listed`, !usage.includes('option.color.unused'));
+    }
+
+    r = run(['check', '--cwd', dir, '--json']);
+    const w = json(r).diagnostics.filter((d) => d.code === 'TST1122');
+    const at = (p) => w.filter((d) => d.path === p);
+    expect('#30 TST1122: a slot bound to a deprecated token warns once, reason as hint',
+      at('semantic.color.danger.solid').length === 1 && at('semantic.color.danger.solid')[0].severity === 'warning'
+        && at('semantic.color.danger.solid')[0].hint.includes('Use option.color.brand.500 instead.'), JSON.stringify(w));
+    expect('#30 TST1122: a token in a deprecated group is deprecated', at('semantic.color.info.solid').length === 1);
+    expect('#30 TST1122: `$deprecated: false` in that group is not', at('semantic.color.warning.solid').length === 0);
+    expect('#30 TST1122: a deprecated slot of its own warns', at('semantic.color.secondary.solid').some((d) => d.message.includes('is deprecated')));
+    expect('#30 TST1122: a deprecated option nothing binds is silent', !w.some((d) => d.message.includes('option.color.unused')));
+    expect('#30 TST1122: derived slots are not reported again', !w.some((d) => /solid-hover|tint/.test(d.path)));
+
+    r = run(['explain', 'radius.md', '--cwd', dir]);
+    expect('#30 explain: prints the description under the value line',
+      /semantic\.radius\.md = .*\n  description: Corner radius for interactive controls only\./.test(r.out), r.out);
+    r = run(['explain', 'danger.solid', '--cwd', dir]);
+    expect('#30 explain: names a deprecated token down the alias chain', r.out.includes('via deprecated option.color.legacy: Use option.color.brand.500 instead.'), r.out);
+
+    const config = JSON.parse(readFileSync(cp, 'utf8'));
+    writeFileSync(cp, JSON.stringify({ ...config, check: { ...config.check, failOn: 'warning' } }, null, 2));
+    r = run(['check', '--cwd', dir]);
+    expect('#30 failOn "warning": a deprecated binding fails the build (exit 1)', r.code === 1, `exit ${r.code}`);
+    writeFileSync(cp, JSON.stringify(config, null, 2));
+
+    // Malformed metadata: TST1311, the field ignored, the build still clean.
+    const bad = JSON.parse(scaffold);
+    bad.semantic.radius.md.$description = 42;
+    bad.semantic.radius.md.$deprecated = 1;
+    writeFileSync(tp, JSON.stringify(bad, null, 2));
+    r = run(['check', '--cwd', dir, '--json']);
+    const m = json(r).diagnostics.filter((d) => d.code === 'TST1311');
+    expect('#30 TST1311: a non-string $description and a numeric $deprecated each warn, with a location',
+      m.length === 2 && m.every((d) => d.severity === 'warning' && d.path === 'semantic.radius.md' && d.line > 0), JSON.stringify(m));
+    expect('#30 TST1311: the malformed fields are ignored (no TST1122)', !json(r).diagnostics.some((d) => d.code === 'TST1122'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);

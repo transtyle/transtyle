@@ -28,7 +28,7 @@
  *    private exporter fallback table.
  */
 
-import { droppedDimensions } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, lineComment } from '@transtyle/ir';
 import { componentVariables, componentCssBlocks, buttonVariantBlocks } from './components.js';
 
 const S = 'semantic.color.';
@@ -60,6 +60,9 @@ export default {
     const light = normalized.modes.light ?? normalized.modes[normalized.defaultMode];
     const dark = normalized.modes.dark;
     const r = resolve(light, dark, ctx);
+    // A catalog slot's own $description / $deprecated (#30), as Sass `//`
+    // lines for the declarations that map exactly one slot.
+    r.notes = (slot) => entryNotes(light.get(slot)).map(lineComment);
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
     r.coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
@@ -421,6 +424,9 @@ function renderVariables(r, ctx) {
     ['light', 'light'],
     ['dark', 'dark'],
   ]) {
+    // The theme colors map one role anchor each; `light` and `dark` are
+    // pseudo-roles mixed from neutral cells, so they carry no token's notes.
+    if (ROLES.includes(name) && L.roles[name].base) lines.push(...r.notes(`semantic.color.${name}.solid`));
     lines.push(`$${sassVar}: ${hx(L.roles[name].base)};`);
   }
   lines.push('');

@@ -217,6 +217,22 @@ export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new 
         }
       }
     }
+    // TST1311 (#30): token and group metadata of the wrong type. It is ignored
+    // (the token still compiles), but a typo'd `"$deprecated": "yes"` is fine
+    // while `"$deprecated": 1` silently deprecating nothing is not.
+    const what = path_.length ? path_.join('.') : '(root)';
+    if ('$description' in node && typeof node.$description !== 'string') {
+      diagnostics.warn('TST1311', `${what}: $description must be a string, got ${jsonType(node.$description)} — ignored`, {
+        ...where(path_),
+        hint: 'Write the description as a string, or remove the key.',
+      });
+    }
+    if ('$deprecated' in node && typeof node.$deprecated !== 'boolean' && typeof node.$deprecated !== 'string') {
+      diagnostics.warn('TST1311', `${what}: $deprecated must be true, false or a string, got ${jsonType(node.$deprecated)} — ignored`, {
+        ...where(path_),
+        hint: 'Use true, or a string saying why and what to use instead (DTCG 2025.10). false opts a token out of its group\'s deprecation.',
+      });
+    }
     const hasValue = '$value' in node;
     const childKeys = Object.keys(node).filter((k) => !k.startsWith('$'));
     if (!hasValue && childKeys.length === 0 && localType !== undefined) {
@@ -236,3 +252,6 @@ export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new 
   };
   walk(tree, []);
 }
+
+/** A JSON value's kind for a message: "null", "an array", "a number"… */
+const jsonType = (v) => (v === null ? 'null' : Array.isArray(v) ? 'an array' : typeof v === 'object' ? 'an object' : `a ${typeof v}`);

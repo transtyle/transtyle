@@ -133,6 +133,10 @@ Rules: the mode matrix is the cross-product of dimensions, resolved per-dimensio
 
 `authored` | `aliased(target[, rule])` | `derived(rule, inputs[])` | `defaulted`, each also carrying the mode it resolved in. Not part of user files — attached during compilation, consumed by `explain`, coverage, and `diff`. `rule` on `aliased` is set only for an alias a config `bindings` rule produced (`bindings[<n>]: <slot pattern>`); a hand-written alias has none. **Specced:** the `(file, line)` on `authored`. LOAD knows which file a tree came from and nothing carries it further, so today a diagnostic or an `explain` trace names the token path rather than its location.
 
+## Entry metadata: description and deprecation
+
+Next to its value and provenance, an entry carries the token's DTCG metadata when the token has it: `description` (its own `$description`) and `deprecated` (`true`, or the `$deprecated` reason string, inherited from the nearest group that sets it; `$deprecated: false` opts out). Both are per token and identical in every mode; derived and defaulted slots have neither, and an aliased slot keeps its own rather than its target's. Exporters may write them as comments (`entryNotes()` in `@transtyle/ir`); core adds them to `report.json` items, lists deprecated tokens feeding a target in its `usage.md`, and reports a catalog slot that reaches a deprecated token (`TST1122`). See [validation-and-coverage.md](../specs/validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Stability policy
 
 The IR schema carries `"$schema": ".../ir/v0"`. Within a major spec version: new optional slots and types may appear (minor); nothing is removed or re-typed. Exporters declare the IR spec they support in their manifest — **specced:** core reading it and refusing mismatches with a clear diagnostic rather than corrupting output.

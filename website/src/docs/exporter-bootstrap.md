@@ -57,6 +57,8 @@ Bootstrap generates `-bg-subtle` / `-border-subtle` / `-text-emphasis` per theme
 | `$grid-breakpoints`, `$display-font-sizes`                | the catalog _has_ these concepts                                                   | `unsupported` anyway — the ladders disagree (only `md`/768px matches on breakpoints), and rebinding would move behavior, not theme it                                              |
 | `$box-shadow-inset`, `$container-max-widths`              | —                                                                                  | `unsupported`, reported honestly — no IR counterpart                                                                                                                               |
 
+The six theme colours (`$primary…$danger`) carry their `.solid` slot's [`$description` and `$deprecated`](/docs/authoring-tokens/#describing-and-deprecating-tokens) as `//` lines above the declaration in `_variables.transtyle.scss`.
+
 ## Component theming
 
 <!-- measured: bootstrap.surface.total = 952 -->

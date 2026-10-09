@@ -8,7 +8,7 @@
  * (docs/language.md "false friends").
  */
 
-import { droppedDimensions } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, blockComment } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 
@@ -77,6 +77,9 @@ export default {
           const cls = m.cls === 'approximated' ? 'approximated' : (provKind === 'derived' ? 'derived' : m.cls);
           coverage.push({ variable: m.css, slot: m.slot, class: cls, provenance: provKind, ...(m.note && { note: m.note }) });
         }
+        // The slot's own $description / $deprecated (#30), in the light
+        // theme only: the dark theme re-declares the same variables.
+        if (mode === 'light') for (const note of entryNotes(entry)) lines.push(`  ${blockComment(note)}`);
         lines.push(`  ${m.css}: ${ctx.formatColor(entry.value)}; /* ${m.slot.replace('semantic.', '')} */`);
       }
       // Custom archetyped roles (T7): daisyUI has an open color set — any
@@ -88,6 +91,7 @@ export default {
         if (mode === 'light') {
           coverage.push({ variable: `--color-${name}`, slot: `${S}${name}.solid`, class: 'native', note: 'custom role archetype (open role set)' });
         }
+        if (mode === 'light') for (const note of entryNotes(solid)) lines.push(`  ${blockComment(note)}`);
         lines.push(`  --color-${name}: ${ctx.formatColor(solid.value)}; /* ${name}.solid */`);
         if (onSolid?.value) {
           if (mode === 'light') coverage.push({ variable: `--color-${name}-content`, slot: `${S}${name}.on-solid`, class: 'native' });

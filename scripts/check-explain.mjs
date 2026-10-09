@@ -9,7 +9,7 @@
  * Run: node scripts/check-explain.mjs (also: npm run check:explain).
  */
 import assert from 'node:assert/strict';
-import { compile, explainToken, explainVariable, slotConsumers, coverageSlots } from '@transtyle/core';
+import { compile, explainToken, explainVariable, slotConsumers, coverageSlots, deprecationsReached } from '@transtyle/core';
 
 const loadExporter = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
 const entry = (provenance, value = 1) => ({ type: 'number', value, provenance });
@@ -166,4 +166,20 @@ assert.throws(() => explainVariable(cov, 't', '$radiu'), (e) => e.code === 'unkn
 assert.throws(() => explainToken(n, 'a', { mode: 'sepia' }), (e) => e.code === 'unknown-mode' && e.available.join() === 'light,dark' && /Unknown mode "sepia"/.test(e.message));
 assert.throws(() => explainToken(n, 'l9'), (e) => e.code === 'unknown-slot' && e.closest.length === 5 && e.closest.includes('l0') && e.slot === 'l9');
 
-console.log('✔ check-explain: explainToken tree, coverage lookups, edge cases and errors all pass');
+// ---------- deprecationsReached (#30, behind TST1122 and `explain`) ----------
+const dep = new Map([
+  ['semantic.s', { type: 'color', value: 1, deprecated: 'own', provenance: { kind: 'aliased', target: 'semantic.t' } }],
+  ['semantic.t', { type: 'color', value: 1, provenance: { kind: 'aliased', target: 'option.o' } }],
+  ['option.o', { type: 'color', value: 1, deprecated: true, provenance: { kind: 'authored' } }],
+  ['semantic.shadow', { type: 'shadow', value: {}, provenance: { kind: 'authored', members: { color: 'option.o', blur: 'option.ok' } } }],
+  ['option.ok', { type: 'dimension', value: '1px', provenance: { kind: 'authored' } }],
+  ['semantic.loop', { type: 'color', value: 1, provenance: { kind: 'aliased', target: 'semantic.loop' } }],
+  ['semantic.hover', { type: 'color', value: 1, provenance: { kind: 'derived', inputs: ['option.o'] } }],
+]);
+assert.deepEqual(deprecationsReached(dep, 'semantic.s'), [{ token: 'semantic.s', reason: 'own' }, { token: 'option.o', reason: undefined }], 'the slot, then each alias hop');
+assert.deepEqual(deprecationsReached(dep, 'semantic.shadow'), [{ token: 'option.o', reason: undefined }], 'composite members are followed');
+assert.deepEqual(deprecationsReached(dep, 'semantic.loop'), [], 'a cycle ends the walk');
+assert.deepEqual(deprecationsReached(dep, 'semantic.hover'), [], 'derived inputs are not followed');
+assert.deepEqual(deprecationsReached(dep, 'nope'), []);
+
+console.log('✔ check-explain: explainToken tree, coverage lookups, edge cases and errors, and deprecationsReached all pass');

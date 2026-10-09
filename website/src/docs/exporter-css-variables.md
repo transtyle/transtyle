@@ -41,6 +41,17 @@ Composite values expand: a typography role (`type.role.body.md`) becomes four lo
 
 `:root` carries the light map, `[data-color-scheme="dark"]` the dark map — mode _names_, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) still emits this way. Only color slots vary by mode; scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
 
+## Descriptions and deprecations
+
+A token's [`$description`](/docs/authoring-tokens/#describing-and-deprecating-tokens) is written on its own comment line above the variable in `:root`, and a `$deprecated` token gets a `Deprecated: <reason>` line; the dark and extra-dimension blocks don't repeat them. GOV.UK's binding file describes each slot it binds, so its output reads:
+
+```css
+/* GOV.UK's govuk-functional-colour("brand") — #1d70b8. */
+--color-primary-solid: oklch(0.535 0.136 249.9); /* aliased · color */
+```
+
+Only the first line of a description is written, and a `*/` in it is broken up so it can't end the comment early.
+
 ## Coverage
 
 <!-- measured: acme.css-variables.decls = 467 -->

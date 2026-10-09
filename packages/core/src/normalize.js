@@ -202,6 +202,13 @@ export function normalize(tokenTrees, config, diagnostics) {
       map.set(tokenPath, {
         type: tok.type,
         rawValue: value,
+        // Token metadata (#30) is per token, not per mode: it comes from the
+        // merged base layers (last definition wins, with its value), and a
+        // mode-scoped layer only ever contributes values. The entry object is
+        // mutated in place when its alias resolves, so these survive the
+        // provenance rewrite below.
+        ...(tok.description !== undefined ? { description: tok.description } : {}),
+        ...(tok.deprecated ? { deprecated: tok.deprecated } : {}),
         ...(bindingRules.has(tokenPath) ? { bindingRule: bindingRules.get(tokenPath) } : {}),
         provenance: {
           kind: autoDarkCarried ? PROVENANCE.DERIVED : PROVENANCE.AUTHORED,

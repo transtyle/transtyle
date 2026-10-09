@@ -22,6 +22,10 @@ Strip the `semantic.` prefix, dots become dashes. Color-role grid cells and the 
 - An authored DTCG `border` renders as the `border` shorthand `<width> <style> <color>`, and a `transition` as `<duration> <timingFunction> <delay>` (a DTCG four-number `cubicBezier` becomes `cubic-bezier(…)`). A `border` whose `style` is a strokeStyle object (dash array + line cap) has no shorthand form and emits nothing.
 - A `shadow` or `border` composite varies by mode like a color, wherever it sits in the tree: it carries a color member.
 
+## Token metadata
+
+The slot's own `description` (first line) and `deprecated` (`Deprecated: <reason>`) are written as `/* … */` lines above its first declaration in `:root`, never in the dark or extra-dimension blocks; `*/` in the text becomes `* /`. The helper is kept inline rather than imported from `@transtyle/ir`'s `entryNotes()`, so this reference implementation stays dependency-free. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Mode handling
 
 Mode polarity rule applies: `:root` always carries the **light** map, `[data-color-scheme="dark"]` the dark map (mode names, never the default flag — a dark-native DS like Cathode still emits this way). Only `semantic.color.*` slots (including the elevation ladder, which lives under `color.` internally) and `shadow`/`border` composites vary by mode and are duplicated across both blocks; every other catalog area is mode-invariant and appears once in `:root`. Override the dark selector via `options.darkSelector`; prefix every variable via `options.prefix`.

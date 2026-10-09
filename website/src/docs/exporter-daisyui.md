@@ -51,6 +51,8 @@ daisyUI's `secondary` and `accent` are **true brand roles** — so this exporter
 
 Because daisyUI wants every role authored-or-derived, coverage skews `derived` on minimal systems (Acme: 65% derived) — the report shows exactly which roles you might want to author. Both [examples](/docs/examples/) ship daisyUI targets.
 
+A slot's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describing-and-deprecating-tokens) are written as comment lines above its variable in the light theme block.
+
 ## Custom roles (role archetypes)
 
 daisyUI's color set is **open** — any `--color-<name>` custom property is a real Tailwind utility color — so a custom role declaring `$extensions.transtyle.role` (docs/architecture/ir.md's [role archetypes](/docs/language/#color-roles-the-role-grid)) gets `--color-<name>` + `--color-<name>-content` emitted alongside the built-ins, `native`. Cathode's `crt-amber` role (archetype `status`) demonstrates this: it's authored once, with no other bindings, purely to show the open-role-set path — contrast Bootstrap/shadcn, whose closed sets can't take it at all.

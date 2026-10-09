@@ -1,6 +1,6 @@
 # Carbon — a real design system, adopted
 
-[IBM's Carbon Design System](https://carbondesignsystem.com/elements/color/tokens/) compiled through Transtyle via the [adoption playbook](../../website/src/docs/adopt-existing.md): its published core color tokens live verbatim in `option.*`, its own token vocabulary (`carbon.link-primary`, `carbon.support-error`, `carbon.focus`, …) is expressed as custom semantic tokens with real mode variation, and one small `transtyle.bindings.tokens.json` file maps catalog slots onto that vocabulary.
+[IBM's Carbon Design System](https://carbondesignsystem.com/elements/color/tokens/) compiled through Transtyle via the [adoption playbook](../../website/src/docs/adopt-existing.md): its published core color tokens live verbatim in `option.*`, its own token vocabulary (`carbon.link-primary`, `carbon.support-error`, `carbon.focus`, …) is expressed as custom semantic tokens with real mode variation, and one small `transtyle.bindings.tokens.json` file maps catalog slots onto that vocabulary. The bindings that need explaining carry a `$description` (which Carbon token, and why that one); it ships as a comment above the variable in the CSS-variables, shadcn, daisyUI and Bootstrap output, and as `description` in every `report.json`.
 
 This is the second half of the **T11 "real-DS run"** (`docs/plan/catalog-revision.md`), alongside [GOV.UK](../govuk/) — two real, independently-designed systems compiled against the same catalog, on purpose: one government, one enterprise-software; one with no dark theme, one with a real one.
 

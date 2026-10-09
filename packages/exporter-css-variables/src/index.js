@@ -65,9 +65,15 @@ export default {
       const rendered = renderEntry(entry, ctx);
       if (!rendered) continue;
 
+      // The token's own $description / $deprecated (#30), on comment lines
+      // above its first declaration in the default block only: the dark and
+      // extra-dimension blocks re-declare the same variable.
+      const notes = noteLines(entry);
+
       if (isColor) {
-        for (const [suffix, value] of rendered) {
+        for (const [i, [suffix, value]] of rendered.entries()) {
           const name = varName(slot, prefix) + suffix;
+          if (i === 0) colorLines.light.push(...notes);
           colorLines.light.push(cssLine(name, value, entry));
           coverage.push({ variable: name, slot, class: 'native', provenance: entry.provenance.kind });
         }
@@ -79,8 +85,9 @@ export default {
           }
         }
       } else {
-        for (const [suffix, value] of rendered) {
+        for (const [i, [suffix, value]] of rendered.entries()) {
           const name = varName(slot, prefix) + suffix;
+          if (i === 0) invariantLines.push(...notes);
           invariantLines.push(cssLine(name, value, entry));
           coverage.push({ variable: name, slot, class: 'native', provenance: entry.provenance.kind });
         }
@@ -204,6 +211,22 @@ const fontList = (value) => value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f))
 
 const cssLine = (name, value, entry) =>
   `  ${name}: ${value}; /* ${entry.provenance.kind !== 'authored' ? entry.provenance.kind + ' · ' : ''}${entry.type} */`;
+
+/**
+ * Comment lines for a token's metadata (#30): the first line of its
+ * `description`, then `Deprecated: <reason>` when the token itself is
+ * deprecated. `*\/` in the text is broken up so it cannot close the comment
+ * and leave the rest of the sentence as CSS. Kept inline (the same rules as
+ * `entryNotes()` in @transtyle/ir) so this reference exporter stays
+ * dependency-free: reading `entry.description` is all a plugin needs.
+ */
+function noteLines(entry) {
+  const first = (s) => String(s).split(/\r\n|\r|\n/).map((l) => l.trim()).find((l) => l !== '') ?? '';
+  const notes = [];
+  if (typeof entry.description === 'string' && first(entry.description)) notes.push(first(entry.description));
+  if (entry.deprecated) notes.push(typeof entry.deprecated === 'string' && first(entry.deprecated) ? `Deprecated: ${first(entry.deprecated)}` : 'Deprecated.');
+  return notes.map((n) => `  /* ${n.replace(/\*\//g, '* /')} */`);
+}
 
 // ---------- usage ----------
 

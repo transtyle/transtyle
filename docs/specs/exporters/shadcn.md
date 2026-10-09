@@ -35,6 +35,10 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 
 `components.json` with `cssVariables: false` (utility-class theming) is not supported: without variables there is no theme _artifact_ — theming means rewriting component files, which violates the generated-output-only principle. The exporter documents this as a limitation rather than emitting something misleading. Non-Tailwind consumers who want shadcn-convention variables are served by the `:root`/`.dark` blocks directly (self-contained) or, properly, by the `css-variables` exporter.
 
+## Token metadata
+
+The slot's own `description` and `deprecated` (`entryNotes()` from `@transtyle/ir`) are written as `/* … */` lines above its `:root` declaration in both eras; the `.dark` block doesn't repeat them. A variable mapped from the same slot as another (`--primary` and `--sidebar-primary`) carries the same lines. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Notes
 
 Both era profiles are implemented in the walking skeleton (`@transtyle/exporter-shadcn`), selected via target `options.era` using [target instances](../configuration.md#target-instances). In the tailwind-v3 profile, OKLCH → HSL conversion may clamp out-of-sRGB-gamut colors; clamped variables are classified `approximated` with a gamut note.

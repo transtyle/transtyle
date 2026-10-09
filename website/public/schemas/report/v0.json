@@ -95,6 +95,20 @@
                 "type": "string",
                 "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*)*$",
                 "description": "dot-separated kebab-case segments, e.g. \"icon.size\""
+              },
+              "description": {
+                "type": "string"
+              },
+              "deprecated": {
+                "type": [
+                  "boolean",
+                  "string"
+                ],
+                "description": "true, or the reason given in $deprecated"
+              },
+              "deprecatedBy": {
+                "type": "string",
+                "description": "path of the deprecated token the value comes through (may be the slot itself)"
               }
             }
           }

@@ -1,8 +1,8 @@
 # Validation, diagnostics, and coverage
 
-<!-- measured: codes = 46 -->
+<!-- measured: codes = 48 -->
 
-> **Status (re-verified 2026-10-09):** the diagnostics collector, the 46 shipped
+> **Status (re-verified 2026-10-09):** the diagnostics collector, the 48 shipped
 > `TST` codes, DTCG structural validation, contrast checking, the coverage
 > classes, `report.json`, `check --json`, per-diagnostic source locations,
 > config suppressions (`check.suppress`) and the exporter compatibility check
@@ -22,7 +22,7 @@ Every pipeline stage emits diagnostics into one collector; a run reports everyth
 
 A diagnostic about something authored in a token file carries `path` (the dotted token or group path), `file` (relative to the project, as printed), and `line` and `column` (both 1-based; the column is the key's opening quote). LOAD scans each token file's text once (`packages/core/src/locate.js`, zero-dependency) and keeps the position of every key; NORMALIZE records which file each key came from while it merges the base layers, last layer winning, so a token defined twice (`TST1103`) points at the later definition. A mode-scoped layer's diagnostics (`TST1107`, `TST1108`) point into that layer's own file. In the terminal the location sits after the code, `✖ TST1105 tokens/brand.tokens.json:17:9 Dangling alias …`. `check --json` and `report.json` carry the four fields as they are.
 
-What each code points at: `TST1002` the file and, when the parser reports a position, the line it stopped at; `TST1103`, `TST1105`, `TST1106`, `TST1107`, `TST1108`, `TST1302`, `TST1304`, `TST1305`, `TST1306`, `TST1307` and `TST1104` (its first token) the offending token or group; `TST1202`, `TST1203`, `TST1204`, `TST1205`, `TST1201`, `TST2101`, `TST2102` and `TST2103` carry a `path` too, and a location only when that path is authored (a role's `.solid`, a bound token). A value that is derived (an `on-solid` contrast ratio, a missing `primary.solid`) is in no file, so it has no `file`/`line`/`column` and prints as it always did. Config-level codes (`TST1010`, `TST1011`, `TST1301`) have no location: the config file is not scanned yet.
+What each code points at: `TST1002` the file and, when the parser reports a position, the line it stopped at; `TST1103`, `TST1105`, `TST1106`, `TST1107`, `TST1108`, `TST1302`, `TST1304`, `TST1305`, `TST1306`, `TST1307`, `TST1310` and `TST1104` (its first token) the offending token or group; `TST1122`, `TST1202`, `TST1203`, `TST1204`, `TST1205`, `TST1201`, `TST2101`, `TST2102` and `TST2103` carry a `path` too, and a location only when that path is authored (a role's `.solid`, a bound token). A value that is derived (an `on-solid` contrast ratio, a missing `primary.solid`) is in no file, so it has no `file`/`line`/`column` and prints as it always did. Config-level codes (`TST1010`, `TST1011`, `TST1301`) have no location: the config file is not scanned yet.
 
 ### Suppressions
 
@@ -80,6 +80,21 @@ Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — ca
 | `TST1306` | warning  | A token's `$value` has an unrecognized `$type`                                                                                                                                     | Use one of the DTCG types the IR understands, or accept that this token is carried opaque (no parsing, no derivation eligibility)                |
 | `TST1113` | error    | A `semantic.*` token aliases a `component.*` token — the alias points the wrong way up the tiers (direct edge only; a chain reports the token that points into the component tier) | Alias the component token's own source instead, or move the token under `component.`                                                             |
 | `TST1307` | error    | A token file looks like Style Dictionary v3 (`value`/`type` without `$`), so it has no DTCG tokens                                                                                 | Convert it to DTCG (`$value`/`$type`/`$description`, references without `.value`); `transtyle migrate --from style-dictionary` does this for you |
+| `TST1311` | warning  | A token's or group's `$description` isn't a string, or its `$deprecated` isn't `true`, `false` or a string                                                                         | Fix the value; the field is ignored and the token still compiles (see [Token metadata](#token-metadata-description-and-deprecated))              |
+
+## Token metadata: `$description` and `$deprecated`
+
+DTCG's `$description` and `$deprecated` ([format 2025.10](https://www.designtokens.org/tr/2025.10/format/), §5.2.4 and §6.3.1) are carried from the token files to every output that can hold them (issue #30):
+
+- **IR.** `collectTokens` (`@transtyle/ir`) puts `description` (the token's own string; a group's description stays on the group, the format gives it no inheritance) and `deprecated` (`true` or the reason string) on each token, inheriting `$deprecated` from the nearest group that sets it; `$deprecated: false` on a token or nested group opts out. NORMALIZE copies both onto every mode's entry, and they survive the alias rewrite. Metadata is per token, not per mode: it comes from the merged base layers (last definition wins, with its value) and a mode-scoped layer never sets it. Derived and defaulted slots have none, and an aliased slot keeps its own description rather than its target's: a binding file's description (GOV.UK's `govuk-functional-colour("brand")`) is about the slot.
+- **`TST1122` (warning)**, after the deferred aliases resolve: a catalog slot (`semantic.*`, `component.*`) whose value reaches a deprecated token, through itself, any hop of its alias chain or a composite member's alias, in any mode combo. Once per (slot, deprecated token); the hint is the `$deprecated` reason when there is one. Derived inputs are not followed (a derived hover reports nothing of its own; its anchor does), and a deprecated `option.*` token nothing reaches is silent.
+- **`TST1311` (warning)** at LOAD, in the table above: a malformed value is reported and ignored instead of being dropped silently.
+- **`report.json`.** Core adds `description`, and `deprecated` with `deprecatedBy` (the token), to each coverage item whose `slot` is a slot path, from the target's default mode. Exporters never set them.
+- **`usage.md`.** Core appends a "Deprecated tokens" section to every target's `usage.md` (third-party exporters included) listing each emitted variable still fed by a deprecated token: variable, slot, token, reason. Absent when there is none.
+- **Emitted files.** Exporters whose files take comments write the slot's own description and deprecation on comment lines above the declaration, once, in the default mode's block: css-variables (every slot), shadcn and daisyUI (every mapped slot), Bootstrap Sass (the six theme colours). Only the first line of a multi-line text is written, and a `*/` is broken up so it cannot end a CSS comment early. `entryNotes()`, `blockComment()` and `lineComment()` in `@transtyle/ir` are the shared helpers; css-variables keeps its own copy to stay dependency-free. The other exporters (Storybook, ECharts, Radix, Mantine, Chakra, PrimeNG, MUI) emit generated option objects rather than per-slot declarations and write no comments; they get the report fields and the `usage.md` section from core.
+- **`explain`** prints `description:` and `deprecated:` under the value line (and under each input it walks), and `via deprecated <token>` for a deprecated token further down the alias chain.
+
+Not covered yet: `transtyle diff` compares values and provenance only, so a change of description or deprecation shows in a target's changed lines but not as a slot change; the TypeScript and JSON targets (Chakra, Mantine, PrimeNG, Storybook, ECharts) and Radix write no descriptions.
 
 ## Per-target mode subsets
 
