@@ -12,6 +12,7 @@ import { pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
 import { compile, catalog, diffResolved, contrastRegressions, explainToken, formatColor, formatHex } from '@transtyle/core';
+import { recordingLoader, consumption, renderMatrix } from './matrix.js';
 
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -63,6 +64,7 @@ function parseArgs(argv) {
     if (a === '--cwd') args.cwd = path.resolve(argv[++i] ?? '.');
     else if (a === '--mode') args.mode = argv[++i];
     else if (a === '--json') args.json = true;
+    else if (a === '--matrix') args.matrix = true;
     else if (a === '--help' || a === '-h') args.help = true;
     else if (a.startsWith('--')) { console.error(`Unknown flag: ${a}`); process.exit(2); }
     else if (!args.command) args.command = a;
@@ -85,6 +87,7 @@ Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
   --mode <name>                   mode to resolve for (explain only; default: the DS's default mode)
   --json                          check/diff/catalog only: print a machine-readable report to stdout
+  --matrix                        check only: print which targets read each catalog slot (with --json: a "matrix" key)
 `;
 
 /** TRANSTYLE_DEBUG=1: print the stack of a crashed exporter (until `--verbose`, #5, exists). */
@@ -125,9 +128,12 @@ async function main() {
 
 async function cmdBuildOrCheck(args) {
   const emit = args.command === 'build';
+  if (emit && args.matrix) { console.error('✖ --matrix is a `transtyle check` option'); process.exit(2); }
+  // --matrix records the slots each exporter reads during emit (src/matrix.js).
+  const recording = args.matrix ? recordingLoader(makeLoadExporter(args.cwd)) : null;
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter: makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: DEBUG });
+    result = await compile({ cwd: args.cwd, targets: args.targets, emit, loadExporter: recording?.loadExporter ?? makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: DEBUG });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
@@ -149,11 +155,15 @@ async function cmdBuildOrCheck(args) {
 
   // Human logs → stderr (above); requested data → stdout (docs/specs/cli.md
   // "Behavioral contracts"). `check --json` is the only current consumer.
+  const matrix = recording && result.normalized ? consumption(result, recording.readSets) : null;
   if (!emit && args.json) {
     console.log(JSON.stringify({
       diagnostics: diagnostics.items,
       targets: results.map((r) => ({ target: r.target, coverage: r.coverage })),
+      ...(matrix ? { matrix } : {}),
     }, null, 2));
+  } else if (matrix) {
+    console.log(renderMatrix(matrix));
   }
 
   const failOn = config.check?.failOn ?? 'error';

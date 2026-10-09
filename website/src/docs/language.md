@@ -102,6 +102,8 @@ strong         —                —               —                text-stro
 | `success` / `warning` / `danger` / `info` | Status colors          | fixed hue anchors (150/85/25/230), brand-matched chroma | <span class="sw" style="--c:oklch(0.6 0.14 150)"></span><span class="sw" style="--c:oklch(0.76 0.14 85)"></span><span class="sw" style="--c:oklch(0.55 0.19 25)"></span><span class="sw" style="--c:oklch(0.58 0.15 230)"></span> |
 | `neutral`                                 | The gray family        | brand-hued near-gray                                    | <span class="sw" style="--c:oklch(0.55 0.012 255)"></span>                                                                                                                                                                        |
 
+Which targets read each cell of the grid, role by role: [slot matrix](/docs/slot-matrix/#color-primary).
+
 ## Elevation, content, and the rest
 
 Surfaces are an **elevation ladder**, not four separate named slots — each level projects a surface color, and levels 1–4 pair with a shadow:
@@ -125,6 +127,8 @@ Surfaces are an **elevation ladder**, not four separate named slots — each lev
 | `font.display`                                                                                                                                           | Display face                                                                                                                                                                                                                                                                                                                                                                            | optional: when authored, `type.role.display.*` use it instead of `font.sans`                                                         |
 | `space.*`, `size.control.*`, `border-width.*`, `opacity.disabled`, `breakpoint.*`, `z.*`, `type.*` (+ composite `type.role.*`), `duration.*`, `easing.*` | Scales every target can share                                                                                                                                                                                                                                                                                                                                                           | catalog-default constants unless you author them                                                                                     |
 
+Which targets read each of these slots: [slot matrix](/docs/slot-matrix/#color-elevation).
+
 Anything else you define under `semantic.*` is a **custom semantic token** — legal, carried, mode-aware, and the recommended home for your own vocabulary ([adoption guide](/docs/adopt-existing/), step 2). A custom role can also declare an _archetype_ (`brand`/`status`/`neutral`) via `$extensions.transtyle.role` to get the full grid derived like a built-in — <span class="badge live">compiled</span>. Roles with an open set (daisyUI, css-variables) emit it; closed-set targets (Bootstrap, shadcn, ECharts, Storybook, Radix) don't have a slot for it and skip it. [Cathode's `crt-amber`](/docs/examples/#cathode--the-hostile-example) demonstrates it end to end.
 
 ## The component tier
@@ -140,6 +144,8 @@ It is deliberately tiny, and stays tiny by rule (below):
 | `component.button.radius`            | button shape                  | `component:control.radius`     |
 | `component.button.padding-x` / `-y`  | button padding                | `component:control.padding-*`  |
 | `component.tooltip.max-width`        | how wide a tooltip may grow   | _nothing — authored only_      |
+
+Which targets read each component slot: [slot matrix](/docs/slot-matrix/#component-button).
 
 The `component:` prefix makes the tier **layered**, and that layering carries an authoring intent no flat vocabulary can express:
 
