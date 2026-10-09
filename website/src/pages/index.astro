@@ -90,7 +90,7 @@ npx transtyle build`;
 ---
 <Base title="Transtyle — the design system compiler" current="home">
   <main id="main">
-    <section class="hero">
+    <section class="hero d-container">
       <p class="eyebrow">Design System Compiler</p>
       <h1>One design system.<br /><span class="grad">Every ecosystem.</span></h1>
       <p class="sub">
@@ -133,9 +133,10 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       </p>
     </section>
 
+    <div class="d-container">
     <section class="band" aria-labelledby="h-pipeline">
       <h2 id="h-pipeline">A compiler, not a converter</h2>
-      <p class="band-sub">The architecture of Babel and LLVM, applied to design systems: pluggable frontends and backends around one intermediate representation. N sources and M targets cost N+M mappings, not N×M converters.</p>
+      <p class="band-sub d-lead">The architecture of Babel and LLVM, applied to design systems: pluggable frontends and backends around one intermediate representation. N sources and M targets cost N+M mappings, not N×M converters.</p>
       <div class="pipeline">
         <div class="pipe-col">
           <h3>You write<span class="pipe-tag">token files · importers</span></h3>
@@ -168,7 +169,8 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band alt" aria-labelledby="h-derive">
       <h2 id="h-derive">Author three tokens — or every single one.</h2>
-      <p class="band-sub">Three is not a marketing number: a brand color, a page background and a text color is a legal design system, and CI compiles exactly that one against all eight exporters on every commit. It is the floor, not the ceiling. The derivation engine fills every slot you didn't author — hover states, on-colors, tints, dark-mode wiring, a data-viz palette — with deterministic, versioned rules. But every one of those slots is a real, addressable token: <a href={withBase('/docs/language/')}>the catalog</a> exposes the full role grids, elevation ladder, and scales, so you can pin any value — down to a single dark-mode hover state — and derivation yields to you. Authored always wins; every value knows its origin.</p>
+      <p class="band-sub d-lead">Three is not a marketing number: a brand color, a page background and a text color is a legal design system, and CI compiles exactly that one against all eight exporters on every commit. It is the floor, not the ceiling.</p>
+      <p class="band-read">The derivation engine fills every slot you didn't author — hover states, on-colors, tints, dark-mode wiring, a data-viz palette — with deterministic, versioned rules. But every one of those slots is a real, addressable token: <a href={withBase('/docs/language/')}>the catalog</a> exposes the full role grids, elevation ladder, and scales, so you can pin any value — down to a single dark-mode hover state — and derivation yields to you. Authored always wins; every value knows its origin.</p>
       <div class="transform">
         <div class="t-side">
           <p class="t-label">You write <span class="prov authored">authored</span></p>
@@ -187,7 +189,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band" aria-labelledby="h-showcase">
       <h2 id="h-showcase">Same tokens. Native everywhere.</h2>
-      <p class="band-sub">This is the whole product in one picture: one token definition on the left, and what each ecosystem's components look like wearing it. Not screenshots — these previews are styled with the actual compiled Acme values.</p>
+      <p class="band-sub d-lead">This is the whole product in one picture: one token definition on the left, and what each ecosystem's components look like wearing it. Not screenshots — these previews are styled with the actual compiled Acme values.</p>
       <div class="showcase">
         <div class="show-src">
           <p class="t-label mono">tokens/semantic.tokens.json</p>
@@ -231,7 +233,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band alt" aria-labelledby="h-gallery">
       <h2 id="h-gallery">Don't take our word for it — {demoCount} of them are running</h2>
-      <p class="band-sub">
+      <p class="band-sub d-lead">
         Four design systems, each compiled to all {TARGETS.length} targets and deployed. Within a
         target the page is byte-identical, so everything that changes between these columns came out
         of the compiler. The swatches below are read from a live compile at build time.
@@ -245,7 +247,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
               <i style={`background:${themes[example.id].light.text}`}></i>
               <i style={`background:${themes[example.id].light.border}`}></i>
             </span>
-            <span class="gname">{example.title}</span>
+            <span class="gname"><span class="d-dimension">{example.title}</span></span>
             <span class="gkicker">{example.kicker}</span>
           </a>
         ))}
@@ -257,7 +259,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band" aria-labelledby="h-language">
       <h2 id="h-language">One meaning, every dialect</h2>
-      <p class="band-sub">Frameworks disagree on names, not needs. The catalog slot is the <em>meaning</em>; each exporter speaks its target's dialect natively. Your <code>danger</code>, everywhere:</p>
+      <p class="band-sub d-lead">Frameworks disagree on names, not needs. The catalog slot is the <em>meaning</em>; each exporter speaks its target's dialect natively. Your <code>danger</code>, everywhere:</p>
       <div class="xlate">
         <div class="x-src"><span class="sw" style="--c:oklch(0.55 0.19 25)"></span><code>danger.solid</code></div>
         <div class="x-arrow" aria-hidden="true">→</div>
@@ -274,7 +276,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band alt" aria-labelledby="h-honest">
       <h2 id="h-honest">Honest about lossiness</h2>
-      <p class="band-sub">Translation between ecosystems is lossy. Transtyle doesn't hide it — it measures it. Every build classifies every variable, so trust is a number, not a vibe.</p>
+      <p class="band-sub d-lead">Translation between ecosystems is lossy. Transtyle doesn't hide it — it measures it. Every build classifies every variable, so trust is a number, not a vibe.</p>
       <div class="coverage">
         <div class="cov-bar">
           <span class="seg native" style={`width:${covPct('native')}%`}></span><span class="seg derived" style={`width:${covPct('derived')}%`}></span><span class="seg approx" style={`width:${covPct('approximated')}%`}></span><span class="seg other" style={`width:${covOtherPct}%`}></span>
@@ -291,7 +293,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band" aria-labelledby="h-plugins">
       <h2 id="h-plugins">Every exporter is a plugin</h2>
-      <p class="band-sub">
+      <p class="band-sub d-lead">
         The core knows nothing about Bootstrap. All eight official exporters use the same public plugin
         API — resolve the catalog, emit native files, report coverage honestly. The
         <a href={withBase('/docs/exporter-css-variables/')}>css-variables exporter</a> is the reference
@@ -301,7 +303,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band alt" aria-labelledby="h-agents">
       <h2 id="h-agents">Built for humans <em>and</em> agents</h2>
-      <p class="band-sub">
+      <p class="band-sub d-lead">
         Deterministic builds, config-as-data, stable diagnostic codes, and a JSON report per build make
         Transtyle operable by AI agents end-to-end — while the compiler itself stays rule-based and auditable.
         Agents write config; the compiler compiles it.
@@ -314,17 +316,17 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
 
     <section class="band final" aria-labelledby="h-start">
       <h2 id="h-start">Start compiling</h2>
-      <p class="band-sub">On npm as an alpha — <code>@transtyle/cli@alpha</code>. Prefer to look before you install? The <a href={withBase('/docs/examples/')}>four examples</a> in the repository compile end to end, two of them real systems nobody here designed (GOV.UK, Carbon).</p>
+      <p class="band-sub d-lead">On npm as an alpha — <code>@transtyle/cli@alpha</code>. Prefer to look before you install? The <a href={withBase('/docs/examples/')}>four examples</a> in the repository compile end to end, two of them real systems nobody here designed (GOV.UK, Carbon).</p>
       <div class="start"><Code code={startCommands} lang="bash" {...shiki} /></div>
       <div class="cta center">
         <Button variant="ghost" href={withBase('/docs/getting-started/')}>Getting started guide</Button>
         <Button variant="quiet" href={withBase('/docs/adopt-existing/')}>I already have a design system</Button>
       </div>
     </section>
+    </div>
   </main>
 
   <style>
-    main { max-width: 68rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
     .hero { text-align: center; padding: 4.5rem 0 3rem; }
     .eyebrow {
       display: inline-block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
@@ -336,7 +338,7 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .grad { color: var(--primary); }
     .sub { max-width: 46rem; margin: 0 auto 1.6rem; font-size: 1.1rem; color: var(--text-muted); }
     .sub strong { color: var(--text); }
-    .cta { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+    .cta { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
     .hero-post { font-size: 0.9rem; color: var(--text-muted); margin: 1rem auto 0; max-width: 40rem; }
     /* The status line sits between the CTAs and the terminal on purpose: the
        hero makes eight promises, and the reader should learn what they are
@@ -349,11 +351,11 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       font-family: var(--mono);
     }
     .hero-status code { font-size: 0.85em; }
-    .cta.center { margin-top: 1.4rem; }
+    .cta.center { margin-top: var(--space-6); }
 
     .terminal {
       max-width: 42rem; margin: 2.6rem auto 0; border-radius: var(--radius-md); overflow: hidden;
-      box-shadow: var(--shadow); border: 1px solid var(--border); text-align: left;
+      border: 1px solid var(--border); text-align: left;
     }
     .term-bar { display: flex; align-items: center; gap: 6px; padding: 0.6rem 0.9rem; background: var(--bg-soft); border-bottom: 1px solid var(--border-soft); }
     .term-bar span { width: 11px; height: 11px; border-radius: 50%; background: var(--border); }
@@ -368,57 +370,58 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .strip { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; justify-content: center; margin-top: 2.4rem; font-size: 0.85rem; color: var(--text-muted); }
     .strip span::before { content: '✓ '; color: var(--ok); }
 
-    .band { padding: 3.5rem 0; border-top: 1px solid var(--border-soft); text-align: center; }
-    .band h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 0.6rem; }
-    .band-sub { max-width: 46rem; margin: 0 auto 2rem; color: var(--text-muted); }
-    .band-foot { max-width: 46rem; margin: 1.6rem auto 0; color: var(--text-muted); font-size: 0.9rem; }
+    .band { padding: var(--space-14) 0; border-top: var(--stroke-hairline) solid var(--color-line); }
+    .band h2 { margin: 0 0 var(--space-3); }
+    .band-sub { margin: 0 0 var(--space-8); }
+    /* Long text on the brand: left-aligned, 32em at most, 1.7 line height, in the reading colour. */
+    .band-read { max-width: calc(var(--layout-measure) * 1em); margin: 0 0 var(--space-8); line-height: var(--font-line-height-reading); color: var(--color-fg-reading); }
+    .band-foot { max-width: 58ch; margin: var(--space-6) 0 0; color: var(--color-muted); font: var(--type-small); }
+    .band .cta { justify-content: flex-start; }
 
-    .pipeline { display: flex; align-items: stretch; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-    .pipe-col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.1rem 1.3rem; min-width: 13rem; box-shadow: var(--shadow); }
-    .pipe-col h3 { margin: 0 0 0.7rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
-    .pipe-arrow { align-self: center; color: var(--text-muted); font-size: 1.4rem; }
-    .chip { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.35rem 0.7rem; margin: 0.4rem 0; font-size: 0.88rem; font-weight: 500; }
-    .chip.soon { color: var(--text-muted); border-style: dashed; }
-    .chip.soon::after { content: ' · specced'; font-size: 0.72rem; }
-    .pipe-col.ir { background: var(--primary-soft); border-color: var(--primary); }
-    .ir-chip { border: none; font-family: var(--mono); font-size: 0.82rem; }
-    .pipe-note { font-size: 0.8rem; color: var(--text-muted); margin: 0.7rem 0 0; max-width: 13rem; }
+    .pipeline { display: flex; align-items: stretch; gap: var(--space-4); flex-wrap: wrap; }
+    .pipe-col { background: var(--color-panel); border: var(--stroke-hairline) solid var(--color-line); padding: var(--space-4) var(--space-5); min-width: 13rem; }
+    .pipe-col h3 { margin: 0 0 var(--space-3); font: var(--type-eyebrow); letter-spacing: var(--type-eyebrow-letter-spacing); color: var(--color-muted); }
+    .pipe-arrow { align-self: center; color: var(--color-muted); font-size: var(--font-size-xl); }
+    .chip { border: var(--stroke-hairline) solid var(--color-line); padding: var(--space-2) var(--space-3); margin: var(--space-2) 0; font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+    .chip.soon { color: var(--color-muted); border-style: dashed; }
+    .chip.soon::after { content: ' · specced'; font-size: var(--font-size-xs); }
+    .pipe-col.ir { background: var(--color-tint); border-color: var(--color-primary); }
+    .ir-chip { border: none; font-family: var(--font-family-mono); font-size: var(--font-size-sm); }
+    .pipe-note { font-size: var(--font-size-sm); color: var(--color-muted); margin: var(--space-3) 0 0; max-width: 13rem; }
 
     /* The write→get pair is a *transformation*, not a comparison, so it reads as
        two code surfaces joined by an arrow rather than two framed panels. No
        card chrome: the label sits on the page as an eyebrow, and the code block
-       is the only object — a hairline ring (inset shadow, so it can't add to the
-       box size) instead of a border, and no drop shadow. */
-    .transform { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; text-align: left; }
+       is the only object. */
+    .transform { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--space-4); align-items: center; }
     .t-side { min-width: 0; }
     .t-label {
-      display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.5rem;
-      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted);
+      display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2);
+      font: var(--type-eyebrow); letter-spacing: var(--type-eyebrow-letter-spacing); text-transform: uppercase; color: var(--color-muted);
     }
-    .t-label.mono { font-family: var(--mono); letter-spacing: 0; }
-    .t-arrow { display: grid; place-items: center; color: var(--text-muted); opacity: 0.6; }
+    .t-label .prov { text-transform: none; letter-spacing: var(--font-letter-spacing-none); }
+    .t-label.mono { font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); text-transform: none; }
+    .t-arrow { display: grid; place-items: center; color: var(--color-muted); opacity: 0.6; }
     @media (max-width: 860px) {
       .transform { grid-template-columns: minmax(0, 1fr); }
-      .t-arrow { transform: rotate(90deg); padding: 0.2rem 0; }
+      .t-arrow { transform: rotate(90deg); padding: var(--space-1) 0; }
     }
-    /* Shiki's own background rule is !important and wins here by design — it
+    /* Code blocks take the package's `pre` (size, line height, padding, overflow);
+       Shiki's own background rule is !important and wins here by design — it
        keeps homepage code identical to the docs pages. Radius, clipping, and
        the ring live on `.code-wrap` (global.css) — one rounded box, not two. */
-    .transform pre, .show-src pre {
-      margin: 0; padding: 1rem 1.2rem; font-size: 0.8rem; line-height: 1.65;
-      overflow-x: auto;
-    }
+    .transform pre, .show-src pre { margin: 0; }
 
-    .pipe-tag { display: block; font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 500; text-transform: none; margin-top: 0.15rem; font-family: var(--mono); }
+    .pipe-tag { display: block; font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); color: var(--color-muted); text-transform: none; margin-top: var(--space-1); }
 
     /* ---- showcase: one token file → four native-looking previews ---- */
     /* Wide enough for the token snippet's longest line, so the common case is
        "it fits" rather than "it scrolls". */
-    .showcase { display: grid; grid-template-columns: minmax(18rem, 1.25fr) 2fr; gap: 1.2rem; text-align: left; align-items: start; }
+    .showcase { display: grid; grid-template-columns: minmax(18rem, 1.25fr) 2fr; gap: var(--space-5); align-items: start; }
     @media (max-width: 860px) { .showcase { grid-template-columns: minmax(0, 1fr); } }
-    .show-targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); gap: 0.9rem; }
-    .tframe { margin: 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
-    .tframe figcaption { font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 0.45rem 0.9rem; border-bottom: 1px solid var(--border-soft); background: var(--bg-soft); }
+    .show-targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); gap: var(--space-4); }
+    .tframe { margin: 0; border: var(--stroke-hairline) solid var(--color-line); background: var(--color-panel); overflow: hidden; }
+    .tframe figcaption { font: var(--type-eyebrow); letter-spacing: var(--type-eyebrow-letter-spacing); text-transform: uppercase; color: var(--color-muted); padding: var(--space-2) var(--space-4); border-bottom: var(--stroke-hairline) solid var(--color-line); }
     /* The preview body is the target's own surface (compiled page colour), set
        as --p-* on the element; the frame and caption stay the site's. */
     .tframe .t-ui { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; padding: 0.95rem; min-height: 5.4rem; background: var(--p-page); color: var(--p-text); }
@@ -440,39 +443,42 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     .t-ui.chart { align-items: flex-end; gap: 0.45rem; height: 5.4rem; padding-bottom: 0.7rem; }
     .t-ui.chart i { flex: 1; height: var(--h); background: var(--c); border-radius: 3px 3px 0 0; }
 
-    .xlate { display: flex; align-items: center; justify-content: center; gap: 1.4rem; flex-wrap: wrap; }
-    .x-src { display: flex; align-items: center; gap: 0.3rem; font-size: 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.8rem 1.2rem; background: var(--surface); box-shadow: var(--shadow); }
-    .x-arrow { color: var(--text-muted); font-size: 1.5rem; }
-    .x-out { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; text-align: left; }
-    .x-out li { display: flex; align-items: baseline; gap: 0.8rem; justify-content: space-between; border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 0.3rem 0.8rem; background: var(--surface); }
-    .x-out em { font-style: normal; font-size: 0.78rem; color: var(--text-muted); }
+    .xlate { display: flex; align-items: center; gap: var(--space-6); flex-wrap: wrap; }
+    .x-src { display: flex; align-items: center; gap: var(--space-1); border: var(--stroke-hairline) solid var(--color-line); padding: var(--space-3) var(--space-5); background: var(--color-panel); }
+    .x-arrow { color: var(--color-muted); font-size: var(--font-size-xl); }
+    .x-out { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+    .x-out li { display: flex; align-items: baseline; gap: var(--space-3); justify-content: space-between; border: var(--stroke-hairline) solid var(--color-line); padding: var(--space-1) var(--space-3); background: var(--color-panel); }
+    .x-out em { font-style: normal; font-size: var(--font-size-sm); color: var(--color-muted); }
 
-    .coverage { max-width: 44rem; margin: 0 auto; }
-    .cov-bar { display: flex; height: 2.4rem; border-radius: var(--radius-md); overflow: hidden; font-size: 0.8rem; font-weight: 650; color: var(--color-on-primary); }
+    .coverage { max-width: 44rem; }
+    .cov-bar { display: flex; height: 2.4rem; overflow: hidden; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-on-primary); }
     .seg { display: grid; place-items: center; }
     .seg.native, .dot.native { background: var(--cov-native); }
     .seg.derived, .dot.derived { background: var(--cov-derived); }
     .seg.approx, .dot.approx { background: var(--cov-approx); }
-    .seg.other, .dot.other { background: color-mix(in oklch, var(--text-muted) 45%, transparent); }
-    .cov-counts { text-align: center; margin: 0.8rem 0 0; font-size: 0.85rem; color: var(--text-muted); }
-    .cov-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; justify-content: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); }
-    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; }
+    .seg.other, .dot.other { background: color-mix(in oklch, var(--color-muted) 45%, transparent); }
+    .cov-counts { margin: var(--space-3) 0 0; font-size: var(--font-size-md); color: var(--color-muted); }
+    .cov-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); margin-top: var(--space-4); font-size: var(--font-size-md); color: var(--color-muted); }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: var(--radius-sm); margin-right: var(--space-2); }
 
-    .band.alt { background: transparent; }
     /* Shiki paints the code block itself (its background rule carries
-       !important), so this is only a centring container — giving it a
+       !important), so this is only a width container — giving it a
        terminal background too would double up behind the highlighted block. */
-    .band.final .start { max-width: 42rem; margin: 0 auto; text-align: left; }
+    .band.final .start { max-width: 42rem; }
     /* Radius/clipping/ring come from `.code-wrap` (global.css) now, not a border here. */
-    .band.final .start pre { padding: 1.1rem 1.3rem; font-size: 0.85rem; overflow-x: auto; margin: 0; }
-    /* The demo-gallery strip: four design systems as four real palettes. */
-    .gallery-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.8rem; margin: 1.6rem 0 0; }
-    .gcard { display: block; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.85rem 1rem; background: var(--surface); box-shadow: var(--shadow); color: var(--text); }
-    .gcard:hover { text-decoration: none; border-color: var(--primary); transform: translateY(-2px); }
-    .gcard { transition: border-color 0.14s, transform 0.14s; }
-    .gswatch { display: flex; gap: 3px; margin-bottom: 0.6rem; }
-    .gswatch i { flex: 1; height: 1.5rem; border-radius: 4px; border: 1px solid color-mix(in oklch, var(--text) 12%, transparent); }
-    .gname { display: block; font-weight: 700; }
-    .gkicker { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; }
+    .band.final .start pre { margin: 0; }
+    /* The demo-gallery strip: four design systems as four real palettes. The card
+       is the package's ProjectCard look: square, a hairline, the title under the
+       dimension line, and the lift on hover, all on the motion tokens. */
+    .gallery-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: var(--space-3); margin: var(--space-6) 0 0; }
+    .gcard {
+      display: block; border: var(--stroke-hairline) solid var(--color-line); padding: var(--space-4); background: var(--color-panel); color: var(--color-fg);
+      transition: border-color var(--motion-duration-dimension) var(--motion-easing-precise), transform var(--motion-duration-dimension) var(--motion-easing-precise);
+    }
+    .gcard:hover { text-decoration: none; color: var(--color-fg); border-color: var(--color-primary); transform: translateY(-2px); }
+    .gswatch { display: flex; gap: var(--space-1); margin-bottom: var(--space-3); }
+    .gswatch i { flex: 1; height: 1.5rem; border-radius: var(--radius-sm); border: var(--stroke-hairline) solid var(--color-line); }
+    .gname { display: block; font: var(--type-heading); letter-spacing: var(--type-heading-letter-spacing); text-transform: uppercase; }
+    .gkicker { display: block; margin-top: var(--space-1); font: var(--type-eyebrow); letter-spacing: var(--type-eyebrow-letter-spacing); text-transform: uppercase; color: var(--color-muted); }
   </style>
 </Base>

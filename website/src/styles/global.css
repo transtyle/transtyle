@@ -37,15 +37,9 @@
   --ok: var(--color-success);
   --warn: var(--color-warning);
   --mono: var(--font-family-mono);
-  --shadow: none;
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
 /* Body type, links and the focus ring are the layout's (brand base). */
 /* The page is stacked as a flex column here, not by the package: Base.astro
    wraps @deramond.dev/astro's BaseLayout (a bare <body>) to fit the alpha bar
@@ -62,13 +56,15 @@ html { scroll-behavior: smooth; }
    row.) */
 body { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
 body > :is(main, .post-layout) { flex: 1 0 auto; width: 100%; min-width: 0; }
+/* The package's `.d-skip` look (that class is scoped to its own layouts, so it
+   can't be used by name here). */
 .skip-link {
-  position: absolute; left: 0.5rem; top: -3rem; z-index: 100;
-  background: var(--surface); color: var(--text); border: 1px solid var(--border);
-  padding: 0.5rem 1rem; border-radius: var(--radius-md); font-weight: 600; box-shadow: var(--shadow);
-  transition: top 0.15s;
+  position: absolute; left: var(--space-4); top: -100px; z-index: 100;
+  background: var(--color-primary); color: var(--color-on-primary);
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-md);
+  font: var(--type-button); text-transform: uppercase; letter-spacing: var(--font-letter-spacing-button);
 }
-.skip-link:focus { top: 0.5rem; text-decoration: none; }
+.skip-link:focus { top: var(--space-4); color: var(--color-on-primary); text-decoration: none; }
 
 h1, h2, h3 { text-wrap: balance; }
 
@@ -121,11 +117,11 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* ---------- docs components (usable from markdown as raw HTML) ---------- */
 .sw {
-  display: inline-block; width: 0.95em; height: 0.95em; border-radius: 4px;
-  background: var(--c); border: 1px solid oklch(0.5 0 0 / 0.25);
+  display: inline-block; width: 0.95em; height: 0.95em; border-radius: var(--radius-sm);
+  background: var(--c); border: var(--stroke-hairline) solid var(--color-line);
   vertical-align: -0.12em; margin-right: 0.3em;
 }
-.pal { display: flex; height: 2.3rem; border-radius: var(--radius-md); overflow: hidden; margin: 0.8rem 0; box-shadow: var(--shadow); }
+.pal { display: flex; height: 2.3rem; border-radius: var(--radius-md); overflow: hidden; margin: 0.8rem 0; }
 .pal span { flex: 1; background: var(--c); position: relative; }
 .pal span::after {
   content: attr(data-l); position: absolute; inset: auto 0 2px 0; text-align: center;
@@ -161,10 +157,10 @@ h1, h2, h3 { text-wrap: balance; }
 }
 .flow .fnode {
   border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-md);
-  padding: 0.35rem 0.7rem; white-space: nowrap; box-shadow: var(--shadow);
+  padding: 0.35rem 0.7rem; white-space: nowrap;
 }
 .flow .fnode.hi { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-strong); font-weight: 600; }
-.flow .fnode.dim { border-style: dashed; color: var(--text-muted); box-shadow: none; }
+.flow .fnode.dim { border-style: dashed; color: var(--text-muted); }
 .flow .farr { color: var(--text-muted); }
 .flow .fgroup { display: flex; flex-direction: column; gap: 0.35rem; }
 
@@ -173,7 +169,7 @@ h1, h2, h3 { text-wrap: balance; }
 .tiers .tier {
   display: grid; grid-template-columns: 7.5rem 1fr; gap: 0.2rem 1rem; align-items: baseline;
   border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-md);
-  padding: 0.7rem 1rem; box-shadow: var(--shadow);
+  padding: 0.7rem 1rem;
 }
 .tiers .tier.public { border-color: var(--primary); background: var(--primary-soft); }
 .tiers .tier-name { font-family: var(--mono); font-weight: 700; font-size: 0.85rem; }
@@ -185,7 +181,7 @@ h1, h2, h3 { text-wrap: balance; }
 .paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.9rem; margin: 1.3rem 0; }
 .paths a {
   display: block; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;
-  background: var(--surface); color: var(--text); box-shadow: var(--shadow);
+  background: var(--surface); color: var(--text);
 }
 .paths a:hover { text-decoration: none; border-color: var(--primary); }
 .paths .path-kicker { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-muted); font-weight: 700; }
@@ -196,7 +192,7 @@ h1, h2, h3 { text-wrap: balance; }
 .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: 0.7rem; margin: 1.1rem 0; }
 .swatches .swatch {
   border: 1px solid var(--border-soft); border-radius: var(--radius-md); overflow: hidden;
-  background: var(--surface); box-shadow: var(--shadow);
+  background: var(--surface);
 }
 .swatches .swatch i { display: block; height: 2.6rem; background: var(--c); }
 .swatches .swatch b { display: block; font-size: 0.8rem; font-weight: 650; padding: 0.4rem 0.65rem 0.05rem; font-family: var(--mono); }
@@ -207,7 +203,7 @@ h1, h2, h3 { text-wrap: balance; }
 .schema .s-col {
   flex: 1; min-width: 11rem; display: flex; flex-direction: column; gap: 0.25rem;
   border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.9rem 1.1rem;
-  background: var(--surface); box-shadow: var(--shadow);
+  background: var(--surface);
 }
 .schema .s-col.hi { border-color: var(--primary); background: var(--primary-soft); }
 .schema .s-kicker { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-muted); font-weight: 700; }
@@ -240,7 +236,7 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* .jcalls — judgment-call cards: what the source didn't say, and what was chosen. */
 .jcalls { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0.9rem; margin: 1.3rem 0; }
-.jcalls .jcall { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.9rem 1.1rem; background: var(--surface); box-shadow: var(--shadow); }
+.jcalls .jcall { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.9rem 1.1rem; background: var(--surface); }
 .jcalls .jcall.clean { border-left: 3px solid var(--cov-native); }
 .jcalls .jcall.chose { border-left: 3px solid var(--cov-approx); }
 .jcalls .jcall.derived { border-left: 3px solid var(--cov-derived); }
