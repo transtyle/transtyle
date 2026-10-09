@@ -50,6 +50,11 @@ export function derive(normalized, config, diagnostics) {
     // branch requires their `.solid` authored, same as `primary`.
     const roles = [...COLOR_ROLES, ...normalized.roleArchetypes.keys()];
 
+    // --- Neutral swap (#29): a light pair that reaches the other polarity unwritten ---
+    // Runs first, so the ladder below, `default-text`, the content ladder and
+    // every role grid build on the swapped pair exactly as on authored values.
+    swapNeutrals(normalized, combo, ctx);
+
     // --- Elevation ladder (E1): surfaces 0-5, shadows 1-4; scrim stays its own veil (F2) ---
     const elev = [];
     elev[0] = rc(
@@ -572,11 +577,105 @@ export function derive(normalized, config, diagnostics) {
     const otherTextBase = get(normalized.modes[otherCombo], `${S}text.base`);
     if (!otherTextBase) continue;
     const ctx = { map, isDark: here === 'dark', mode: combo, diagnostics };
-    rc(ctx, `${S}text.inverse`, () => ({ ...otherTextBase }), 'cross-mode(text.base)', [
-      'text.base',
-    ]);
+    rc(
+      ctx,
+      `${S}text.inverse`,
+      () => ({ ...otherTextBase }),
+      'cross-mode(text.base)',
+      ['text.base'],
+      PROVENANCE.DERIVED,
+      otherCombo,
+    );
   }
   return { underived };
+}
+
+/**
+ * `swap-neutrals` (#29): in a `color-scheme` value of the other polarity than
+ * the default one (dark under a light default, or light under a dark default),
+ * when the design system authors no page (`elevation.0.surface`) and its body
+ * text (`text.base`) has no value of its own for that scheme, the scheme gets
+ * the default mode's pair swapped: the page takes the default text color, the
+ * text takes the default page. Without it, the text carried over from the
+ * default mode sits on the other polarity's default canvas, dark on dark (or
+ * light on light), at about 1:1.
+ *
+ * A swap, not a lightness mirror: Bootstrap, shadcn and Carbon set their dark
+ * page to exactly their light text color, and Radix and Material 3 come close
+ * (worklog 2026-10-09-swap-neutrals). It keeps the text's hue and chroma, and
+ * the contrast ratio is symmetric, so the swapped pair has the default pair's
+ * exact ratio: it passes whenever the default mode passes.
+ *
+ * "No value of its own" is TST1204's carry-over test: no per-mode value on the
+ * slot itself, and the resolved color equal to the default mode's. A text.base
+ * bound to a token that carries its own dark value (Carbon, Cathode) is not a
+ * carry-over and is never touched; neither is an authored page, whatever its
+ * modes (the scope chosen on #29: the scaffold's modeless neutrals are
+ * `transtyle init`'s to fix, #99). The default text must also make a page of
+ * this scheme's polarity, by the pick `default-text` uses (white reads better
+ * on it than near-black, for a dark scheme): a light text on the white default
+ * page would swap into a light "dark" page, so it is left alone, and TST2101
+ * says what is wrong in the default mode.
+ *
+ * Both slots are `derived`, rule `swap-neutrals`, with the two default-mode
+ * anchors as inputs (`inputMode` names the combo they are read from, so
+ * `explain` follows them there). TST1206 says it happened, once per scheme
+ * value: it replaces a value the user wrote, if only for the other mode.
+ */
+function swapNeutrals(normalized, combo, ctx) {
+  const dim = normalized.modeDimension;
+  if (dim !== 'color-scheme') return;
+  const values = normalized.comboDims?.[combo];
+  const here = values?.[dim] ?? combo;
+  const scheme = normalized.defaultMode;
+  const defaultIsDark = scheme === 'dark';
+  if (here === scheme || ctx.isDark === defaultIsDark) return;
+
+  const { map } = ctx;
+  const pagePath = `${S}elevation.0.surface`;
+  const textPath = `${S}text.base`;
+  if (map.has(pagePath)) return;
+  const text = resolveIfReady(map, textPath);
+  if (text?.value === undefined || text.provenance?.mode === `${dim}=${here}`) return;
+  const baseCombo =
+    values && normalized.dimensionNames
+      ? comboKey(normalized.dimensionNames, { ...values, [dim]: scheme })
+      : scheme;
+  const baseText = normalized.modes[baseCombo] && resolveIfReady(normalized.modes[baseCombo], textPath)?.value;
+  if (!baseText || JSON.stringify(baseText) !== JSON.stringify(text.value)) return;
+  // The default text must make a page of this scheme's polarity: the same
+  // pick `default-text` makes, white on a dark page, near-black on a light one.
+  if (contrastPick(baseText, [NEARBLACK, WHITE]).color !== (ctx.isDark ? WHITE : NEARBLACK)) return;
+  // The default mode's page: unauthored there too (a token is in every combo
+  // or in none), so it is the default canvas of that mode's polarity.
+  const basePage = defaultIsDark ? DARK_CANVAS : WHITE;
+
+  const provenance = (inputs) => ({
+    kind: PROVENANCE.DERIVED,
+    rule: 'swap-neutrals@standard@1',
+    inputs,
+    inputMode: baseCombo,
+    mode: combo,
+  });
+  map.set(pagePath, {
+    type: 'color',
+    value: { ...baseText, alpha: 1 },
+    provenance: provenance(['text.base', 'elevation.0.surface']),
+  });
+  map.set(textPath, {
+    type: 'color',
+    value: { ...basePage },
+    provenance: provenance(['elevation.0.surface', 'text.base']),
+  });
+  const ratio = Math.floor(contrastRatio(baseText, ctx.isDark ? DARK_CANVAS : WHITE) * 10) / 10;
+  ctx.diagnostics.info(
+    'TST1206',
+    `text.base has no value for ${dim}=${here} and elevation.0.surface is not authored — the ${here} page and text are the ${scheme} pair swapped (rule swap-neutrals)`,
+    {
+      path: textPath,
+      hint: `Without the swap, the ${scheme} text would sit on the default ${here} page at ${ratio}:1. Author elevation.0.surface and text.base for ${dim}=${here} to choose them yourself.`,
+    },
+  );
 }
 
 /**
@@ -809,7 +908,7 @@ const r3 = (n) => Math.round(n * 1000) / 1000;
 const trimNum = (n) => String(Math.round(n * 1000) / 1000);
 
 /** Resolve-or-fill: returns the existing (authored/aliased) value, or computes, stores, and returns it. */
-function resolve(ctx, path, type, compute, rule, inputs, kind = PROVENANCE.DERIVED) {
+function resolve(ctx, path, type, compute, rule, inputs, kind = PROVENANCE.DERIVED, inputMode) {
   const existing = resolveIfReady(ctx.map, path);
   if (existing?.value !== undefined) return existing.value;
   // An authored alias waiting on a slot DERIVE fills later (normalize.js
@@ -823,11 +922,13 @@ function resolve(ctx, path, type, compute, rule, inputs, kind = PROVENANCE.DERIV
   ctx.map.set(path, {
     type,
     value,
-    provenance: { kind, rule: `${rule}@standard@1`, inputs, mode: ctx.mode },
+    // `inputMode`: the combo a cross-mode rule reads its inputs from
+    // (`text.inverse`), so `explain` follows them there, not into this mode.
+    provenance: { kind, rule: `${rule}@standard@1`, inputs, ...(inputMode ? { inputMode } : {}), mode: ctx.mode },
   });
   return value;
 }
-const rc = (ctx, path, compute, rule, inputs, kind) =>
-  resolve(ctx, path, 'color', compute, rule, inputs, kind);
+const rc = (ctx, path, compute, rule, inputs, kind, inputMode) =>
+  resolve(ctx, path, 'color', compute, rule, inputs, kind, inputMode);
 const rd = (ctx, path, compute, rule, inputs, kind) =>
   resolve(ctx, path, 'dimension', compute, rule, inputs, kind);

@@ -38,6 +38,18 @@
  * pending alias, and the fixture must really reach Bootstrap's `$dark` drop
  * path, or it proves nothing.
  *
+ * **The neutral swap** (#29). A design system that authors its body text with
+ * no dark value and no page got its light text on the default dark canvas,
+ * at 1:1. DERIVE now swaps the light pair into the other polarity
+ * (`swap-neutrals`). The `light-text` fixture (brand + `text.base`) holds
+ * invariant 9 in every combo of every shape: the dark combos of a light
+ * default get the swapped pair, `derived`, read from the light combo (and
+ * `explain` follows it there), with the content side and no failing contrast
+ * pair; every other combo keeps the carried text on the default canvas. A
+ * separate block covers the swap's edges: the dark-native direction, and four
+ * shapes it must leave alone (a dark value on the slot or on its alias
+ * target, an authored page, a light text on the white default page).
+ *
  * All FIXTURES run through every invariant below; the one-token and late-text
  * ones have no extra scheme layers, because a mode-scoped value for a token
  * the base doesn't define is skipped (`TST1107`) and there is nothing to author
@@ -139,7 +151,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, cpSync, readFileSync } f
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compile } from '@transtyle/core';
+import { compile, explainToken } from '@transtyle/core';
+import { comboKey } from '@transtyle/ir';
 import { LEAK, LEAK_INSIDE } from '@transtyle/plugin-kit';
 import { compileString } from 'sass';
 
@@ -192,6 +205,21 @@ const LATE_TEXT = {
     color: {
       ...ONE_TOKEN.semantic.color,
       text: { base: { $type: 'color', $value: '{semantic.color.neutral.solid}' } },
+    },
+  },
+};
+
+/**
+ * The brand plus a body text with no dark value, and no page: issue #29's
+ * black-on-black case. The text carried over from light used to sit on the
+ * default dark canvas at 1:1 (`TST2101`); `swap-neutrals` now gives the dark
+ * mode the light pair swapped, page and text.
+ */
+const LIGHT_TEXT = {
+  semantic: {
+    color: {
+      ...ONE_TOKEN.semantic.color,
+      text: { base: { $type: 'color', $value: '#212529' } },
     },
   },
 };
@@ -267,6 +295,11 @@ const FIXTURES = {
   },
   'one-token': { tokens: ONE_TOKEN, extraScheme: {}, anchors: ['semantic.color.primary.solid'] },
   'late-text': { tokens: LATE_TEXT, extraScheme: {}, anchors: ['semantic.color.primary.solid'] },
+  'light-text': {
+    tokens: LIGHT_TEXT,
+    extraScheme: {},
+    anchors: ['semantic.color.primary.solid', 'semantic.color.text.base'],
+  },
 };
 
 const root = mkdtempSync(join(tmpdir(), 'transtyle-minimal-'));
@@ -311,6 +344,10 @@ const writeConfig = (modes, autoDark = false) =>
       2,
     ),
   );
+
+/** `combo` with some dimensions moved to other values (the key of that combo). */
+const comboOf = (n, combo, values) =>
+  n.dimensionNames && n.comboDims?.[combo] ? comboKey(n.dimensionNames, { ...n.comboDims[combo], ...values }) : Object.values(values)[0];
 
 const errors = [];
 // `undefined`/`null`/`NaN` on the value side of a declaration, and the two
@@ -424,6 +461,55 @@ for (const [fixture, shape, modes] of sweep) {
             errors.push(`${at} [${combo}]: neutral.text-strong is derived, so the late-text fixture no longer reaches the absent-slot path it exists for`);
           }
         }
+      }
+
+      // 9. The neutral swap (#29). In the light-text system, every combo whose
+      //    color-scheme is dark under a light default gets the light pair
+      //    swapped (`swap-neutrals`, `derived`, both inputs read from the
+      //    light combo, which `explain` must follow), the content side derives
+      //    from it, TST1206 says so and no contrast pair fails. Every other
+      //    combo (light, `dim`, density-only, dark-only) keeps the carried
+      //    text on the default canvas, untouched.
+      if (fixture === 'light-text') {
+        const n = result.normalized;
+        const cs = modes['color-scheme'];
+        let swaps = 0;
+        for (const combo of combos) {
+          const m = n.modes[combo];
+          const page = m.get(CANVAS);
+          const text = m.get('semantic.color.text.base');
+          const scheme = n.comboDims?.[combo]?.['color-scheme'];
+          if (cs?.default === 'light' && scheme === 'dark') {
+            swaps++;
+            const base = comboOf(n, combo, { 'color-scheme': 'light' });
+            const lightText = n.modes[base].get('semantic.color.text.base')?.value;
+            for (const [slot, entry, want, inputs] of [
+              ['elevation.0.surface', page, lightText, 'text.base,elevation.0.surface'],
+              ['text.base', text, n.modes[base].get(CANVAS)?.value, 'elevation.0.surface,text.base'],
+            ]) {
+              const p = entry?.provenance ?? {};
+              if (p.kind !== 'derived' || p.rule !== 'swap-neutrals@standard@1' || p.inputs?.join() !== inputs || p.inputMode !== base) {
+                errors.push(`${at} [${combo}]: ${slot} is not derived by swap-neutrals from the ${base} pair (${JSON.stringify(p)})`);
+              } else if (JSON.stringify({ ...entry.value, alpha: 1 }) !== JSON.stringify({ ...want, alpha: 1 })) {
+                errors.push(`${at} [${combo}]: swapped ${slot} is ${JSON.stringify(entry.value)}, expected the ${base} ${slot === 'text.base' ? 'page' : 'text'} ${JSON.stringify(want)}`);
+              }
+            }
+            const why = explainToken(n, 'text.base', { mode: combo });
+            if (why.inputs.map((i) => `${i.path}@${i.mode}`).join() !== `${CANVAS}@${base},semantic.color.text.base@${base}`) {
+              errors.push(`${at} [${combo}]: explain does not follow swap-neutrals' inputs into ${base} (${why.inputs.map((i) => `${i.path}@${i.mode}`).join()})`);
+            }
+            for (const slot of ['text.muted', 'text.subtle', 'text.disabled', 'text.inverse', 'elevation.1.surface', 'primary.text-strong']) {
+              if (m.get(`semantic.color.${slot}`)?.value === undefined) errors.push(`${at} [${combo}]: ${slot} is not derived from the swapped pair`);
+            }
+          } else {
+            if (page?.provenance?.rule !== 'default-canvas@standard@1') errors.push(`${at} [${combo}]: the page is ${page?.provenance?.rule ?? page?.provenance?.kind}, expected the untouched default canvas`);
+            if (text?.provenance?.kind !== 'authored') errors.push(`${at} [${combo}]: text.base is "${text?.provenance?.kind}", expected the authored value carried over`);
+          }
+        }
+        const notes = result.diagnostics.items.filter((d) => d.code === 'TST1206');
+        if (notes.length !== (swaps ? 1 : 0)) errors.push(`${at}: ${notes.length} TST1206 note(s) for ${swaps} swapped combo(s), expected ${swaps ? 'one' : 'none'}`);
+        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101');
+        if (shape !== 'dark-only' && failing.length) errors.push(`${at}: the swapped pair fails a contrast check — ${failing.map((d) => d.message).join('; ')}`);
       }
 
       // 4. Coverage honesty. Only rows whose `slot` is a single, complete IR path
@@ -563,6 +649,47 @@ if (!df.diagnostics.errors.some((d) => d.code === 'TST1112')) {
 }
 
 rmSync(root, { recursive: true, force: true });
+
+// The neutral swap's edges (#29), each a light/dark design system with no page
+// unless said otherwise. The swap runs in both directions, and it never
+// touches a value the design system wrote for that scheme, on the slot or on
+// its alias target, an authored page, or a text color that would swap into
+// the wrong polarity.
+const swapDir = mkdtempSync(join(tmpdir(), 'transtyle-swap-'));
+const swapCase = async (color, { modes = MODE_SHAPES['light-dark'], dark } = {}) => {
+  rmSync(swapDir, { recursive: true, force: true });
+  mkdirSync(join(swapDir, 'tokens'), { recursive: true });
+  writeFileSync(join(swapDir, 'tokens', 'base.tokens.json'), JSON.stringify({ semantic: { color: { primary: ONE_TOKEN.semantic.color.primary, ...color } }, ...(dark ? { option: dark } : {}) }));
+  writeFileSync(join(swapDir, 'transtyle.config.json'), JSON.stringify({ name: 'swap', tokens: ['tokens/*.tokens.json'], modes, derivation: { rules: 'standard@1' }, targets: {} }));
+  const r = await compile({ cwd: swapDir, targets: [], emit: false, loadExporter: loadNoop });
+  const rule = (mode, slot) => r.normalized.modes[mode].get(`semantic.color.${slot}`)?.provenance?.rule ?? r.normalized.modes[mode].get(`semantic.color.${slot}`)?.provenance?.kind;
+  return { r, rule, notes: r.diagnostics.items.filter((d) => d.code === 'TST1206').length, contrast: r.diagnostics.items.filter((d) => d.code === 'TST2101').length };
+};
+const textOf = (value, darkValue) => ({
+  text: { base: { $type: 'color', $value: value, ...(darkValue ? { $extensions: { 'transtyle.modes': { 'color-scheme': { dark: darkValue } } } } : {}) } },
+});
+{
+  // Dark-native: a light text on a dark default gets a light mode, the swap the other way.
+  const native = await swapCase(textOf('#f1f3f5'), { modes: { 'color-scheme': { values: ['light', 'dark'], default: 'dark' } } });
+  const lightPage = native.r.normalized.modes.light.get(CANVAS)?.value;
+  if (native.rule('light', 'text.base') !== 'swap-neutrals@standard@1' || !(lightPage?.l > 0.9) || native.contrast) {
+    errors.push(`neutral swap (dark default): the light mode is not the dark pair swapped (text.base ${native.rule('light', 'text.base')}, page l=${lightPage?.l}, ${native.contrast} TST2101)`);
+  }
+  for (const [why, c] of [
+    ['a text.base with its own dark value', await swapCase(textOf('#212529', '#f8f9fa'))],
+    ['a text.base bound to a token with a dark value', await swapCase(
+      { text: { base: { $value: '{option.ink}' } } },
+      { dark: { ink: { $type: 'color', $value: '#212529', $extensions: { 'transtyle.modes': { 'color-scheme': { dark: '#f8f9fa' } } } } } },
+    )],
+    ['an authored page (the scaffold shape, left to init)', await swapCase({ ...textOf('#212529'), elevation: { 0: { surface: { $type: 'color', $value: '#ffffff' } } } })],
+    ['a light text on the white default page (wrong polarity)', await swapCase(textOf('#f8f9fa'))],
+  ]) {
+    if (c.rule('dark', 'text.base') === 'swap-neutrals@standard@1' || c.rule('dark', 'elevation.0.surface') === 'swap-neutrals@standard@1' || c.notes) {
+      errors.push(`neutral swap: ${why} was swapped in dark mode — it must be left as written`);
+    }
+  }
+}
+rmSync(swapDir, { recursive: true, force: true });
 
 // Per-target mode subsets (issue #89, `targets.<t>.modes`). Acme (color-scheme
 // light/dark x density comfortable/compact) with one target narrowed at a time:
@@ -1010,4 +1137,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106; per-target mode subsets drop the excluded values with no \`dropped\` row and a bad subset is TST1308 (nothing emitted)`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text, a 2-token (text, no page) and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; a light text with no page is swapped into the other polarity, and only there; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106; per-target mode subsets drop the excluded values with no \`dropped\` row and a bad subset is TST1308 (nothing emitted)`);

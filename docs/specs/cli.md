@@ -83,7 +83,7 @@ semantic.color.primary.on-tint = oklch(0.48 0.162 255)  [#005bb6]
              └─ authored
 ```
 
-An alias is followed to its target, one level in, without repeating the value (it is the same): `component.button.radius` shows `aliased → semantic.radius.full`, then how `semantic.radius.full` is derived from the authored `semantic.radius.md`. Aliases don't count toward the depth limit of three levels of rule inputs.
+An alias is followed to its target, one level in, without repeating the value (it is the same): `component.button.radius` shows `aliased → semantic.radius.full`, then how `semantic.radius.full` is derived from the authored `semantic.radius.md`. Aliases don't count toward the depth limit of three levels of rule inputs. A rule that reads another mode records it (`provenance.inputMode`: `text.inverse` reads the other color scheme's `text.base`, `swap-neutrals` the default mode's page and text), and `explain` walks its inputs in that mode and names it after the path, `inputs: semantic.color.text.base (light) = …`; `explainToken()` gives those inputs a `mode`.
 
 An unknown slot exits 2 and lists the 5 closest catalog names (Levenshtein distance) instead of a bare error — e.g. asking for the pre-revision `primary.subtle` surfaces `primary.tint`, `primary.outline`, `primary.on-tint`. Per-token file:line provenance and the WCAG candidate list shown in the original mockup above remain specced.
 
