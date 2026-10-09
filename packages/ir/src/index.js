@@ -63,7 +63,7 @@ export const INVERSE_SLOTS = ['surface', 'text'];
 
 /**
  * Catalog slots renamed in place before the first stable release (ADR-0010):
- * an authored token at the old path is an error (TST1122) naming the new one,
+ * an authored token at the old path is an error (TST1125) naming the new one,
  * never a silent custom token.
  */
 export const RENAMED_SLOTS = {

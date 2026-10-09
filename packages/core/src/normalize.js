@@ -143,12 +143,12 @@ export function normalize(tokenTrees, config, diagnostics) {
     );
   }
   const raw = collectTokens(merged);
-  // TST1122: a catalog slot renamed in place (ADR-0010, proposal 0005). The old
+  // TST1125: a catalog slot renamed in place (ADR-0010, proposal 0005). The old
   // path would otherwise compile as a custom token nothing reads, and the
   // design system's border would silently fall back to a derived one.
   for (const [oldPath, newPath] of Object.entries(RENAMED_SLOTS)) {
     if (!raw.has(oldPath)) continue;
-    diagnostics.error('TST1122', `${oldPath} was renamed to ${newPath}: the old path is no longer a catalog slot`, {
+    diagnostics.error('TST1125', `${oldPath} was renamed to ${newPath}: the old path is no longer a catalog slot`, {
       path: oldPath,
       ...(sources.get(oldPath) ?? {}),
       hint: `Move the token to ${newPath} (in JSON, turn the leaf into a group: { "base": { "$value": … } }) and update every {${oldPath}} reference.`,

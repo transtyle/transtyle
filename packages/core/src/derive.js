@@ -11,7 +11,7 @@
  */
 
 import { COLOR_ROLES, PROVENANCE, comboKey, COMPONENT_CATALOG } from '@transtyle/ir';
-import { mix, clampChromaToGamut } from './color.js';
+import { mix, clampChromaToGamut, contrastRatio } from './color.js';
 import { wcagContrast } from './contrast.js';
 import { resolveIfReady } from './normalize.js';
 
@@ -915,7 +915,9 @@ function towardSurface(contrast, text, surface, start, target, against) {
  * The border ladder's contrast walk (proposal 0005, `border.strong`): the smallest step from
  * `from` toward `toward` (mix in 0.01 increments, cartesian OKLab) that reaches
  * `target`:1 against every color in `backgrounds`. `toward` itself when no
- * step does — the strongest the ladder can get.
+ * step does — the strongest the ladder can get. Always the WCAG 2.x ratio,
+ * whatever `check.contrast.standard` says: 3:1 is SC 1.4.11's non-text
+ * threshold (a component boundary), which APCA's text-size lookup doesn't model.
  */
 function contrastWalk(contrast, from, toward, backgrounds, target) {
   for (let i = 0; i <= 100; i++) {
