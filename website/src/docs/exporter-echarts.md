@@ -23,6 +23,8 @@ ECharts' most important themable value is `color: [...]` — series colors that 
 
 The same palette feeds shadcn's `--chart-1…5` (the first five colors, frozen by contract) — one brand, one data-viz palette, everywhere. This is the single-source-of-truth promise applied exactly where hand-maintained themes always drift. Authored palettes win as always: author `semantic.palette.categorical.*` tokens to pin your own.
 
+Pin your own and the compiler checks them: two entries closer than ΔE<sub>OK</sub> 0.05 in a mode raise [`TST2102`](/docs/diagnostics/), because series that close can't be told apart on a chart. The derived palette never does (its closest pair is 0.082).
+
 ## Artifacts
 
 One theme per `color-scheme` mode — ECharts has no runtime mode concept, so theme-per-init is the native pattern:

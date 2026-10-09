@@ -67,7 +67,7 @@ current model docs before assigning it anything rather than guessing.
 | [BL-15](#bl-15) | APCA as an alternate contrast standard                    | Compiler  | Med   | M      | idea                 | Opus          |
 | [BL-16](#bl-16) | Per-demo Open Graph cards                                 | Reach     | Low   | S      | idea                 | Sonnet        |
 | [BL-17](#bl-17) | Real screenshots as gallery thumbnails                    | Site      | Low   | M      | idea                 | Opus          |
-| [BL-18](#bl-18) | Palette perceptual-distance warning                       | Compiler  | Low   | S      | ready                | Sonnet        |
+| [BL-18](#bl-18) | Palette perceptual-distance warning                       | Compiler  | Low   | S      | done                 | Sonnet        |
 | [BL-19](#bl-19) | The four deferred catalog promotions                      | Catalog   | —     | —      | watch                | Opus          |
 | [BL-20](#bl-20) | Reconcile the three ID namespaces                         | Repo      | Low   | S      | done                 | —             |
 | [BL-21](#bl-21) | Compare view: a whole row at once                         | Site      | Med   | M      | done                 | Opus          |
@@ -370,13 +370,15 @@ to redistribute, so the one thing a screenshot would genuinely add is the real t
 
 ### BL-18
 
-**Palette perceptual-distance warning** · Compiler · Low · S · ready · Sonnet
+**Palette perceptual-distance warning** · Compiler · Low · S · done · Sonnet
 
 **What.** Warn when two colours in a derived categorical chart palette are too close to distinguish.
 Flagged "pending" in the ECharts exporter spec.
 
 **Why.** The chart palette is derived from one brand colour on most systems, so nobody authored it
 and nobody eyeballed it. A palette that looks fine in the demo can collapse on a real dataset.
+
+**Done.** `TST2102` (categorical palette) and `TST2103` (the status roles) warn when colors fall under ΔE<sub>OK</sub> 0.05, per mode, one warning per cluster. See the [worklog](worklog/2026-10-09-bl-18-distinguishability.md).
 
 ### BL-19
 
