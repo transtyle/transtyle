@@ -139,6 +139,15 @@ A row can say what it is missing in an optional **`meaning`** field: a key of do
 
 **Absence is not coverage.** A row classed `native` or `derived` names a slot that has a value. When a design system leaves a slot out, the exporter skips it, or reports it `dropped` or `unsupported`; it never claims it, and never crashes for want of it. A mode dimension the target cannot express is one `dropped` row named `(mode:<dimension>)`, never silence. The plugin kit checks both on every plugin (`coverage-honest`, `mode-dimensions-accounted`).
 
+### Structured fields: `slots` and `via`
+
+A row is `{ variable, slot, class, provenance?, note? }`, and `slot` is a label for humans: an IR path, or prose (`via driven roots`, `semantic.duration.fast + easing.standard`, `semantic.color.primary.*`). Tools that need the mapping itself (`transtyle explain --target` / `--variable`, [cli.md](cli.md#explain---target---variable--from-a-slot-to-target-variables-and-back); the slot matrix of `check --matrix`) read two optional fields instead ([issue #98](https://github.com/transtyle/transtyle/issues/98)):
+
+- `slots: string[]`: the fully qualified IR paths the variable reads, when `slot` doesn't say it exactly. Bootstrap's `$form-label-font-size` is labelled `semantic.type.role.label.md (fontSize)` and carries `slots: ["semantic.type.role.label.md"]`; `$btn-transition` carries both its duration and its easing. Absent, a `slot` that is an IR path counts as `[slot]`, so an exporter whose labels are exact paths needs nothing. An empty `slots` reads nothing.
+- `via: string[]`: the target variables this one follows, each the `variable` of another row of the same target. Bootstrap fills it for its chained rows (the `$` references Bootstrap's own `!default` chain records in `surface-inventory.json`: `$form-select-border-radius` → `$input-border-radius`) and for the ones aliasing a global custom property (the Sass variable `_root.scss` sets it from: `var(--bs-border-radius-sm)` → `$border-radius-sm`).
+
+`@transtyle/core` exports the rule as `coverageSlots(row, normalized)`. `@transtyle/plugin-kit`'s conformance suite checks that both fields are string arrays when present and that every `slots` entry is a path of the IR the exporter was given (`coverage-slots-exist`). One variable per row reads best: PrimeNG's brace rows (`components.button.root.{borderRadius,paddingX,paddingY}`) were split into one row per preset path for this, and so was its `semantic.typography.*` row.
+
 ### Coverage percentages are not comparable across targets
 
 A target's coverage percentage measures how much of _its_ surface we drive. It does **not** rank targets against each other, because the ceiling is set by the target's theming architecture, not by how much work we've done. Re-measured 2026-08-29 on the two component-heavy targets, against `examples/acme` (every count below is re-derived on each `check:doc-numbers` run, and the parts are guarded rather than the totals — a sum can be right while both its halves are wrong):

@@ -36,7 +36,8 @@ two builds of the same input are byte-identical — there is a check in CI that 
 Also exported: `catalog()` (every catalog slot with its type, derivation rule and inputs, as
 data — what `transtyle catalog --json` prints), `diffResolved` and `contrastRegressions` (the
 semantic diff), `explainToken` (the provenance walk behind `transtyle explain`, as a JSON
-tree), `Diagnostics`,
+tree), `explainVariable` and `slotConsumers` (from a target variable to the slots it reads, and
+back, over a compile's coverage rows), `coverageSlots` (what one coverage row reads), `Diagnostics`,
 and the colour module — `parseColor` (any CSS color syntax a stylesheet holds, to OKLCH), `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
 `mix` — which is OKLCH-native and has no dependencies. `makeUnits(config)` builds the `ctx.units` helpers
 (`toPx`, `toRem`, `remBase`) exporters get, from the config's `units.remBase`.

@@ -80,6 +80,8 @@ export default {
         for (const c of existing) {
           c.class = 'dropped';
           c.slot = '—';
+          delete c.slots;
+          delete c.via;
           c.note = note;
         }
       } else {

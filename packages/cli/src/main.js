@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, diffResolved, contrastRegressions, explainToken, formatColor, formatHex } from '@transtyle/core';
+import { compile, catalog, diffResolved, contrastRegressions, explainToken, explainVariable, slotConsumers, formatColor, formatHex } from '@transtyle/core';
 import { recordingLoader, consumption, renderMatrix } from './matrix.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
 
@@ -65,6 +65,8 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--cwd') args.cwd = path.resolve(argv[++i] ?? '.');
     else if (a === '--mode') args.mode = argv[++i];
+    else if (a === '--target') args.target = argv[++i];
+    else if (a === '--variable') args.variable = argv[++i];
     else if (a === '--json') args.json = true;
     else if (a === '--matrix') args.matrix = true;
     else if (a === '--expand') args.expand = true;
@@ -87,6 +89,8 @@ Usage:
   transtyle build [target...]     compile configured targets (default: all)
   transtyle check [target...]     run the pipeline without writing files
   transtyle explain <slot>        show a resolved slot's value, provenance, and rule inputs
+  transtyle explain --variable <name> --target <t>
+                                  from a target variable to the slot(s) it reads, then their provenance
   transtyle bindings --expand     print the config's bindings rules expanded into a plain alias token file
   transtyle diff [ref]            semantic diff of the resolved graph vs a git ref (default: HEAD), with per-target impact
   transtyle catalog               list every catalog slot: type, derivation rule, inputs (no project needed)
@@ -95,8 +99,10 @@ Usage:
 Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
   --mode <name>                   mode to resolve for (explain only; default: the DS's default mode)
+  --target <t>                    explain only: a target instance; lists the variables consuming the slot
+  --variable <name>               explain only (with --target): the target variable to look up
   --expand                        bindings only: required, prints the expansion to stdout
-  --json                          check/diff/catalog only: print a machine-readable report to stdout
+  --json                          check/diff/catalog/explain only: print a machine-readable report to stdout
   --matrix                        check only: print which targets read each catalog slot (with --json: a "matrix" key)
 init options (each skips its question; without a terminal, unset ones take the default):
   --brand <color>                 brand color, any CSS color (default: oklch(0.55 0.18 255))
@@ -150,6 +156,10 @@ async function main() {
     process.exit(2);
   }
 
+  if (args.command !== 'explain' && (args.target !== undefined || args.variable !== undefined)) {
+    console.error(`✖ ${args.target !== undefined ? '--target' : '--variable'} is a \`transtyle explain\` option`);
+    process.exit(2);
+  }
   if (args.command === 'explain') return cmdExplain(args);
   if (args.command === 'bindings') return cmdBindings(args);
   if (args.command === 'diff') return cmdDiff(args);
@@ -253,33 +263,148 @@ async function cmdBindings(args) {
 
 // ---------- explain ----------
 
-async function cmdExplain(args) {
-  const slotArg = args.targets[0];
-  if (!slotArg) { console.error('Usage: transtyle explain <slot> [--mode <name>]'); process.exit(2); }
+const EXPLAIN_USAGE = 'Usage: transtyle explain <slot> [--target <t>] [--mode <name>] [--json]\n       transtyle explain --variable <name> --target <t> [--mode <name>] [--json]';
 
+/**
+ * `explain`: a slot's provenance tree (explainToken), and with `--target` the
+ * target side of it (issue #98): which of the target's variables consume the
+ * slot, or, with `--variable` (or a bare name that is not a slot), from a
+ * variable to the slots it reads (explainVariable). The target is compiled
+ * without writing (`emit: false`); its reads are recorded the way
+ * `check --matrix` records them, so a slot the target reads but no coverage
+ * row names still says so.
+ */
+async function cmdExplain(args) {
+  const [arg, extra] = args.targets;
+  const usage = (msg) => { console.error(`${msg ? `✖ ${msg}\n` : ''}${EXPLAIN_USAGE}`); process.exit(2); };
+  if (extra !== undefined) usage(`one slot at a time (got ${args.targets.join(', ')})`);
+  if (args.variable !== undefined && arg !== undefined) usage('give a slot or --variable, not both');
+  if (args.variable !== undefined && !args.target) usage('--variable needs --target <t>');
+  if ((args.target !== undefined && !args.target) || args.variable === '') usage();
+  if (!arg && args.variable === undefined) usage();
+
+  const recording = args.target ? recordingLoader(makeLoadExporter(args.cwd)) : null;
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: [], emit: false, skipExporters: true, loadExporter: makeLoadExporter(args.cwd) });
+    result = await compile({
+      cwd: args.cwd,
+      targets: args.target ? [args.target] : [],
+      emit: false,
+      skipExporters: !args.target,
+      loadExporter: recording?.loadExporter ?? makeLoadExporter(args.cwd),
+      knownExporters: Object.keys(OFFICIAL_EXPORTERS),
+      debug: DEBUG,
+    });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     process.exit(2);
   }
   const { normalized, diagnostics } = result;
   printDiagnostics(diagnostics);
-
-  let tree;
-  try {
-    tree = explainToken(normalized, slotArg, { mode: args.mode });
-  } catch (e) {
-    if (e.code === 'unknown-mode') console.error(`✖ ${e.message}`);
-    else if (e.code === 'unknown-slot') {
-      console.error(`✖ ${e.message}\n\nClosest matches:\n${e.closest.map((k) => `  ${k}`).join('\n')}`);
-    } else throw e;
+  if (!normalized) { process.exitCode = 1; return; }
+  if (args.target && !result.results.some((r) => r.target === args.target)) {
+    // TST1301 above says why (typo or not configured) and names the configured targets.
+    console.error(`✖ Cannot explain against target "${args.target}": it did not compile`);
     process.exit(2);
   }
 
+  if (args.mode !== undefined && !normalized.modes[args.mode]) {
+    console.error(`✖ Unknown mode "${args.mode}" (available: ${normalized.modeValues.join(', ')})`);
+    process.exit(2);
+  }
+
+  const explainSlot = (slot) => {
+    try {
+      return explainToken(normalized, slot, { mode: args.mode });
+    } catch (e) {
+      if (e.code === 'unknown-mode') { console.error(`✖ ${e.message}`); process.exit(2); }
+      if (e.code === 'unknown-slot') return e;
+      throw e;
+    }
+  };
+  const lookupVariable = (name) => {
+    try {
+      return explainVariable(result, args.target, name);
+    } catch (e) {
+      if (e.code === 'unknown-variable') return e;
+      throw e;
+    }
+  };
+
+  // A slot argument is a slot first; a bare name that is not one is tried as
+  // a variable of the target, so `semantic.primary.50` (PrimeNG) and
+  // `primary.solid` (the catalog) never collide: the catalog wins.
+  if (args.variable === undefined) {
+    const tree = explainSlot(arg);
+    if (!(tree instanceof Error)) return printSlotExplain(tree, args, result, recording);
+    const asVariable = args.target ? lookupVariable(arg) : null;
+    if (!asVariable || asVariable instanceof Error) {
+      console.error(`✖ ${tree.message}\n\nClosest matches:\n${tree.closest.map((k) => `  ${k}`).join('\n')}`);
+      if (asVariable) console.error(`\nClosest ${args.target} variables:\n${asVariable.closest.map((k) => `  ${k}`).join('\n')}`);
+      process.exit(2);
+    }
+    return printVariableExplain(asVariable, args, explainSlot, normalized);
+  }
+
+  const found = lookupVariable(args.variable);
+  if (found instanceof Error) {
+    console.error(`✖ ${found.message}\n\nClosest matches:\n${found.closest.map((k) => `  ${k}`).join('\n')}`);
+    process.exit(2);
+  }
+  return printVariableExplain(found, args, explainSlot, normalized);
+}
+
+/** `explain <slot>`, with the consuming variables of `--target` when given. */
+function printSlotExplain(tree, args, result, recording) {
+  let target;
+  if (args.target) {
+    const i = result.results.findIndex((r) => r.target === args.target);
+    const { rows } = slotConsumers(result, args.target, tree.slot);
+    target = { name: args.target, read: !!recording.readSets[i]?.has(tree.slot), consumers: rows };
+  }
+  if (args.json) {
+    console.log(JSON.stringify({ ...tree, ...(target ? { target } : {}) }, null, 2));
+    return;
+  }
   console.log(`${tree.slot} = ${formatEntryValue(tree.entry)}`);
   printExplain(tree.entry, tree.inputs, 0);
+  if (!target) return;
+  console.log('');
+  if (!target.consumers.length) {
+    console.log(`consumed by ${target.name}: ${target.read ? 'read as an input, no coverage row names it' : 'not read'}`);
+    return;
+  }
+  console.log(`consumed by ${target.name}:`);
+  const width = Math.max(...target.consumers.map((c) => c.variable.length));
+  for (const c of target.consumers) {
+    console.log(`  ${c.variable.padEnd(width)}  ${c.class}${c.through.length ? `  via ${c.through.join(' → ')}` : ''}`);
+  }
+}
+
+/** `explain --variable`: the variable's rows (and the rows it follows), then each slot's tree. */
+function printVariableExplain(found, args, explainSlot, normalized) {
+  const trees = found.slots.map((slot) => explainSlot(slot)).filter((t) => !(t instanceof Error));
+  if (args.json) {
+    console.log(JSON.stringify({ ...found, mode: args.mode ?? normalized.defaultMode, trees }, null, 2));
+    return;
+  }
+  const printRow = (node, indent) => {
+    if (node.missing) { console.log(`${indent}${node.variable}  (no coverage row names it)`); return; }
+    if (node.seen) { console.log(`${indent}${node.variable}  (see above)`); return; }
+    const reads = node.slots.length ? `  → ${node.slots.join(', ')}` : '';
+    const via = node.via?.length ? `  via ${node.via.map((v) => v.variable).filter((v, i, a) => a.indexOf(v) === i).join(', ')}` : '';
+    console.log(`${indent}${node.variable}  ${node.class}${reads}${via}`);
+    if (!node.slots.length && !node.via?.length) console.log(`${indent}  ${node.note ?? node.slot}`);
+    if (node.truncated) console.log(`${indent}  … (chain cut after the hop limit)`);
+    for (const v of node.via ?? []) printRow(v, `${indent}  `);
+  };
+  console.log(`${found.target}:`);
+  for (const row of found.rows) printRow(row, '  ');
+  for (const tree of trees) {
+    console.log('');
+    console.log(`${tree.slot} = ${formatEntryValue(tree.entry)}`);
+    printExplain(tree.entry, tree.inputs, 0);
+  }
 }
 
 // Round a contrast ratio down to one decimal so a pair just under a threshold
@@ -354,6 +479,12 @@ function printExplain(entry, inputs, depth) {
   if (prov.kind === 'aliased') {
     console.log(`${indent} └─ aliased → ${prov.target}${prov.rule ? `  (from rule ${prov.rule})` : ''}`);
     overrides();
+    // The alias target (explainToken's one input here) holds the same value:
+    // only its own provenance is shown, one level in.
+    const [target] = inputs;
+    if (target?.unresolved) console.log(`${indent}     (unresolved)`);
+    else if (target?.seen) console.log(`${indent}     (see above)`);
+    else if (target) printExplain(target.entry, target.inputs, depth + 2);
     return;
   }
   // derived or defaulted

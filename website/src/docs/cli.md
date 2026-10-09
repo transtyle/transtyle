@@ -64,7 +64,7 @@ Run against a project directory from anywhere: `transtyle build --cwd examples/c
 
 ### `transtyle explain <slot> [--mode <name>]`
 
-Prints a slot's resolved value, provenance, and — for derived/defaulted values — the rule that computed it and every input, recursively indented. Accepts the slot with or without the `semantic.`/`semantic.color.` prefix.
+Prints a slot's resolved value, provenance, and — for derived/defaulted values — the rule that computed it and every input, recursively indented. An alias is followed to its target, so the chain always ends at what was authored. Accepts the slot with or without the `semantic.`/`semantic.color.` prefix.
 
 ```bash
 npx transtyle explain primary.on-tint
@@ -75,11 +75,52 @@ npx transtyle explain primary.on-tint
 #      └─ derived by rule mix-toward-surface(0.92)@standard@1
 #         inputs: semantic.color.primary.solid = oklch(0.55 0.18 255)  [#026fd7]
 #          └─ aliased → option.color.blue.600
+#              └─ authored
+#         inputs: semantic.color.elevation.1.surface = oklch(0.985 0.003 255)  [#f9fafc]
+#          └─ aliased → option.color.gray.50
+#              └─ authored
 ```
 
-An unknown slot exits 2 and lists the 5 closest catalog names instead of a bare error.
+An unknown slot exits 2 and lists the 5 closest catalog names instead of a bare error. `--json` prints the same tree as data (what `explainToken()` returns).
 
 A slot produced by a [`bindings` rule](/docs/configuration/#binding-rules) names it: `└─ aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)`.
+
+### `transtyle explain --target <t>`, `--variable <name>`
+
+The other direction, for when a rendered page surprises you: "why is `$btn-border-radius` 9999px?". `--target` takes a target instance from your config (`bootstrap`, `shadcn-v3`); the CLI compiles that one target without writing anything, so no build is needed first.
+
+```bash
+npx transtyle explain --variable '$form-select-border-radius' --target bootstrap
+#
+# bootstrap:
+#   $form-select-border-radius  derived  via $input-border-radius
+#     $input-border-radius  derived  → component.control.radius
+#
+# component.control.radius = 0.5rem
+#  └─ derived by rule alias(radius.control)@standard@1
+#     inputs: semantic.radius.control = 0.5rem
+#      └─ derived by rule alias(radius.md)@standard@1
+#         inputs: semantic.radius.md = 0.5rem
+#          └─ authored
+
+npx transtyle explain component.button.radius --target bootstrap
+#
+# component.button.radius = 9999px
+#  └─ aliased → semantic.radius.full
+#      └─ derived by rule radius-scale(full)@standard@1
+#         inputs: semantic.radius.md = 0.5rem
+#          └─ authored
+#
+# consumed by bootstrap:
+#   $btn-border-radius             native
+#   $navbar-toggler-border-radius  derived  via $btn-border-radius
+```
+
+- `--variable` finds the variable in the target's [coverage report](/docs/concepts/#5-provenance-and-coverage), follows the variables it is chained to (Bootstrap's own `!default` chain, a `var(--bs-*)` alias), and explains each slot it reaches. Bootstrap names work with or without `$`; a nested preset path works too (`--variable components.button.root.borderRadius --target primeng`). An unknown name exits 2 with the 5 nearest names of that target.
+- A variable that reads no slot (dropped, unsupported, computed privately by the exporter) prints its class and the reason, and exits 0. A chain that reaches a variable the target doesn't drive ends with `(no coverage row names it)`: the target leaves that variable at the framework's default, or covers it only in a summary row.
+- `explain <slot> --target <t>` lists the target's variables that consume the slot, directly or through a chain. When none names it, it says whether the target still reads the slot as an input to some other value, or doesn't read it at all.
+- Without `--variable`, a name that is not a catalog slot is looked up as a variable of the target; a catalog slot always wins.
+- `--mode` applies to the provenance trees, and `--json` prints everything as data on stdout.
 
 ### `transtyle bindings --expand`
 
@@ -225,11 +266,10 @@ The full code table lives in [Weird things & diagnostics](/docs/diagnostics/#dia
 
 These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the same principles when they land:
 
-| Command                                             | What it will do                                                                                   |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `transtyle add <exporter>` (community plugins)      | Install + register third-party exporter packages, printing their manifest first                   |
-| `transtyle explain <token> --target <t>` (new flag) | Also show which target variable the value maps to and why (today's `explain` stops at provenance) |
-| `transtyle import <source>`                         | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files           |
-| `transtyle preview`                                 | Local themed preview site across all targets                                                      |
+| Command                                        | What it will do                                                                         |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `transtyle add <exporter>` (community plugins) | Install + register third-party exporter packages, printing their manifest first         |
+| `transtyle import <source>`                    | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
+| `transtyle preview`                            | Local themed preview site across all targets                                            |
 
-Programmatic use: `build`, `check`, `diff`, `explain` and `catalog` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `catalog()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).
+Programmatic use: `build`, `check`, `diff`, `explain` and `catalog` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).

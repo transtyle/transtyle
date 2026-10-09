@@ -94,7 +94,7 @@ Eight targets build with **zero diagnostics** — no contrast failures against W
 
 <div class="covmatrix" data-example="govuk">
   <div class="cm-row"><span class="cm-name">css-variables</span><span class="cm-bar"><span class="cm-seg native" style="width:100%"></span></span></div>
-  <div class="cm-row"><span class="cm-name">primeng</span><span class="cm-bar"><span class="cm-seg native" style="width:69%"></span><span class="cm-seg derived" style="width:20%"></span><span class="cm-seg approx" style="width:3%"></span><span class="cm-seg other" style="width:9%"></span></span></div>
+  <div class="cm-row"><span class="cm-name">primeng</span><span class="cm-bar"><span class="cm-seg native" style="width:69%"></span><span class="cm-seg derived" style="width:19%"></span><span class="cm-seg approx" style="width:3%"></span><span class="cm-seg other" style="width:9%"></span></span></div>
   <div class="cm-row"><span class="cm-name">storybook</span><span class="cm-bar"><span class="cm-seg native" style="width:61%"></span><span class="cm-seg derived" style="width:16%"></span><span class="cm-seg approx" style="width:13%"></span><span class="cm-seg other" style="width:10%"></span></span></div>
   <div class="cm-row"><span class="cm-name">shadcn</span><span class="cm-bar"><span class="cm-seg native" style="width:50%"></span><span class="cm-seg derived" style="width:47%"></span><span class="cm-seg approx" style="width:3%"></span></span></div>
   <div class="cm-row"><span class="cm-name">echarts</span><span class="cm-bar"><span class="cm-seg native" style="width:29%"></span><span class="cm-seg derived" style="width:53%"></span><span class="cm-seg approx" style="width:12%"></span><span class="cm-seg other" style="width:6%"></span></span></div>

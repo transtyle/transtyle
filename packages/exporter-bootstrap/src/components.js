@@ -41,6 +41,31 @@ const MECH = {
 };
 
 /**
+ * The global custom properties whose Sass source in Bootstrap's `_root.scss`
+ * is not `$<name>` (5.3.8: `--bs-secondary-color: #{$body-secondary-color}`).
+ * A `-rgb` twin reads the same variable through `to-rgb()`.
+ */
+const ROOT_SOURCE = {
+  'emphasis-color': 'body-emphasis-color',
+  'secondary-color': 'body-secondary-color',
+  'secondary-bg': 'body-secondary-bg',
+  'tertiary-color': 'body-tertiary-color',
+  'tertiary-bg': 'body-tertiary-bg',
+};
+
+/**
+ * The variables a mechanically classified row follows, for the coverage
+ * row's `via` (docs/specs/validation-and-coverage.md): a chained variable's
+ * `$` refs, or the Sass variable behind each global `var(--bs-*)` it aliases.
+ */
+function viaOf(v, mech) {
+  if (mech === 'chained') return v.refs.map((r) => `$${r}`);
+  if (mech !== 'follows-global') return [];
+  const names = [...v.value.matchAll(/var\(--#\{\$prefix\}([\w-]+)\)/g)].map((m) => m[1].replace(/-rgb$/, ''));
+  return [...new Set(names.map((n) => `$${ROOT_SOURCE[n] ?? n}`))];
+}
+
+/**
  * Resolve every emit recipe against the light map. Returns
  * [{ v, recipe, value, cls, slot, note }] in inventory (source) order.
  * Dimensions/motion are mode-invariant in Bootstrap's variable layer, so the
@@ -55,6 +80,7 @@ export function resolveEmits(light, ctx) {
     if (!recipe) continue;
     let value,
       slot,
+      slots,
       cls,
       note = recipe.note;
     const provCls = (entry) =>
@@ -81,6 +107,7 @@ export function resolveEmits(light, ctx) {
         value: undefined,
         cls: 'dropped',
         slot: '—',
+        slots: [],
         note: `nothing to bind: this design system has no ${sourcePath}. The binding exists, its source does not — author that slot (or the scale it derives from) and this variable starts being driven.`,
       });
       continue;
@@ -89,6 +116,7 @@ export function resolveEmits(light, ctx) {
       const entry = light.get(`component.${recipe.comp}`);
       value = entry.value;
       slot = `component.${recipe.comp}`;
+      slots = [slot];
       cls = recipe.cls ?? provCls(entry);
     } else if (recipe.sem) {
       const entry = light.get(`semantic.${recipe.sem}`);
@@ -107,6 +135,7 @@ export function resolveEmits(light, ctx) {
                 entry.value[recipe.part]
               : entry.value;
       slot = `semantic.${recipe.sem}${recipe.part ? ` (${recipe.part})` : ''}`;
+      slots = [`semantic.${recipe.sem}`];
       cls = recipe.cls ?? provCls(entry);
     } else if (recipe.trans) {
       const dur = light.get(`semantic.${recipe.trans.duration}`).value;
@@ -114,10 +143,11 @@ export function resolveEmits(light, ctx) {
       const props = v.value.split(',').map((seg) => seg.trim().split(/\s+/)[0]);
       value = props.map((p) => `${p} ${dur} ${ease}`).join(', ');
       slot = `semantic.${recipe.trans.duration} + ${recipe.trans.easing}`;
+      slots = [`semantic.${recipe.trans.duration}`, `semantic.${recipe.trans.easing}`];
       cls = 'approximated';
       note = note ?? `timing from the motion scale; property list kept from Bootstrap's default`;
     }
-    out.push({ v, recipe, value: String(value), cls, slot, note });
+    out.push({ v, recipe, value: String(value), cls, slot, slots, note });
   }
   return out;
 }
@@ -157,9 +187,13 @@ export function componentVariables(light, ctx) {
     const c = coverageForVariable(v);
     const emit = emits.find((e) => e.v.name === v.name);
     if (emit) {
+      // `slots` (the IR paths read) only where the label isn't one: a member
+      // suffix (`… (fontSize)`) or a duration + easing pair.
+      const labelled = emit.slots?.length && !(emit.slots.length === 1 && emit.slots[0] === emit.slot);
       coverage.push({
         variable: `$${v.name}`,
         slot: emit.slot,
+        ...(labelled && { slots: emit.slots }),
         class: emit.cls,
         ...(emit.note && { note: emit.note }),
       });
@@ -173,9 +207,11 @@ export function componentVariables(light, ctx) {
       });
     } else {
       const m = MECH[c.mech];
+      const via = viaOf(v, c.mech);
       coverage.push({
         variable: `$${v.name}`,
         slot: m.slot,
+        ...(via.length && { via }),
         class: m.class,
         note: c.from ? `${m.note} ${c.from}` : m.note,
       });

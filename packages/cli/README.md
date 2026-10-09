@@ -26,16 +26,17 @@ npx transtyle build              # compile every configured target
 
 ## Commands
 
-| Command           | Does                                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------- |
-| `init`            | Ask for a brand color, schemes, targets, preset and layout, then scaffold the files   |
-| `add <target>`    | Add one of the nine official targets to the config                                    |
-| `build [target…]` | Compile — writes artifacts, `usage.md` and `report.json`                              |
-| `check`           | The whole pipeline without emitting: validation, contrast, coverage                   |
-| `check --matrix`  | Which targets read each catalog slot, so you know what authoring one changes          |
-| `explain <slot>`  | Why one token has the value it has, rule by rule, with provenance                     |
-| `diff [ref]`      | Semantic diff of the resolved graph against a git ref, including contrast regressions |
-| `catalog`         | Every catalog slot with its type and derivation rule; `--json` for tools              |
+| Command                                  | Does                                                                                                                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `init`                                   | Ask for a brand color, schemes, targets, preset and layout, then scaffold the files                                                                                 |
+| `add <target>`                           | Add one of the nine official targets to the config                                                                                                                  |
+| `build [target…]`                        | Compile — writes artifacts, `usage.md` and `report.json`                                                                                                            |
+| `check`                                  | The whole pipeline without emitting: validation, contrast, coverage                                                                                                 |
+| `check --matrix`                         | Which targets read each catalog slot, so you know what authoring one changes                                                                                        |
+| `explain <slot>`                         | Why one token has the value it has, rule by rule, with provenance                                                                                                   |
+| `explain --variable <name> --target <t>` | From a target variable (`$btn-border-radius`) back to the slot it reads, then why it has that value; `explain <slot> --target <t>` lists the variables a slot feeds |
+| `diff [ref]`                             | Semantic diff of the resolved graph against a git ref, including contrast regressions                                                                               |
+| `catalog`                                | Every catalog slot with its type and derivation rule; `--json` for tools                                                                                            |
 
 `build` and `check` exit non-zero on error; `diff` uses `git diff`-style exit codes. Every
 command takes `--json` where a machine might be reading, and diagnostics carry stable

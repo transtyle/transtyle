@@ -44,6 +44,7 @@ Concrete recipes:
 - **"Make me a theme from this brand color"** — write an 11-token project like the [Acme example](/docs/examples/), run `build`, return `globals.transtyle.css`. Derivation does the heavy lifting; the agent's job is only the brand facts.
 - **"Fix the contrast warnings"** — run `check`, filter stderr for `TST2101` (each includes the measured ratio, the token pair, and the mode), adjust the named token's lightness in OKLCH, re-run until clean.
 - **"What breaks if I change this token?"** — run `check --matrix --json` and read `matrix.slots["<slot>"]`: the targets that read the slot, each with its coverage class and the variables it maps to. A target missing from that object never reads the slot, so editing it there is a no-op. The [slot matrix](/docs/slot-matrix/) page is the same answer for the official exporters.
+- **"Why does this target variable have this value?"** — run `explain --variable '<name>' --target <t> --json`: the variable's coverage rows, the variables it is chained to, the slots it reaches (`slots`) and one provenance tree per slot (`trees`), down to what was authored. `explain <slot> --target <t> --json` answers the other way round, in `target.consumers`.
 - **"Port this design system's weird vocabulary"** — follow the [Cathode pattern](/docs/examples/#cathode--the-hostile-example): express the vocabulary as custom semantic tokens, then write one-line catalog bindings. The agent never needs to understand the whole system — only to map meanings.
 
 ## Machine-readable documentation
