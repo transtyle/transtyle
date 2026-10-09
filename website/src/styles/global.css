@@ -72,98 +72,52 @@ body > :is(main, .post-layout) { flex: 1 0 auto; width: 100%; min-width: 0; }
 
 h1, h2, h3 { text-wrap: balance; }
 
-/* ---------- copy button (injected around every <pre> by Base.astro) ---------- */
-/* Icon-only, borderless, and out of the way until you reach for it — a labelled
-   pill in the corner reads as chrome and competes with the code itself.
+/* ---------- code blocks (hand-built <pre>s wrapped by Base.astro) ---------- */
+/* The homepage and the compare page write their <pre>s by hand, so the script
+   in Base.astro wraps each one in `.code-wrap` and adds the copy button and the
+   overflow cue. Markdown code blocks get theirs from the package's Prose.
 
-   `.code-wrap` is the SINGLE owner of the rounded shape: radius + overflow:hidden
-   here, nowhere else. Previously the radius lived on both the inner `pre` (per
-   context) and independently on the `::after` fade — two separately-rounded
-   boxes with nothing forcing them to agree, which is exactly how you get a
-   rounded corner floating against a square edge. With overflow:hidden on the
-   wrapper, `::after` can be a plain rectangle and still comes out perfectly
-   clipped to the wrapper's shape — there is no second radius left to drift. */
+   `.code-wrap` is the single owner of the rounded shape: radius and
+   overflow:hidden here, nowhere else, so the ring and the cue below can be
+   plain rectangles and still come out clipped to it. Flat: solid fills and
+   hairlines, no blur, no gradient, no glow. */
 .code-wrap {
   position: relative; border-radius: var(--radius-md); overflow: hidden;
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--text-muted) 22%, transparent);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--color-line);
 }
 /* The hero terminal already owns a rounded frame one level up (`.terminal`,
-   14px, overflow:hidden, around the title bar AND the code) — nesting a second
-   radius/ring here would double up right where they meet. This wrap is a plain
-   rectangle instead and inherits its shape from the ancestor's clip. */
+   overflow:hidden, around the title bar and the code); a second ring or radius
+   here would double up where they meet. */
 .terminal .code-wrap { border-radius: 0; overflow: visible; box-shadow: none; }
 
-/* A first attempt at this used an inset-shadow vignette instead of the chevron
-   below — verified live (screenshot, both themes) and it was too weak to read
-   against colourful syntax-highlighted text; removed rather than kept as dead
-   weight. A shape-based signal doesn't have this problem: a chevron reads as
-   "more" regardless of what colour the code underneath happens to be. */
-.code-wrap.overflowing::before {
-  content: '›'; position: absolute; top: 50%; right: 0.55rem; z-index: 1;
-  transform: translateY(-54%); line-height: 1; pointer-events: none;
-  font: 700 1.3rem/1 var(--mono);
-  color: var(--text-muted); opacity: 0.9;
-  text-shadow: 0 0 4px var(--code-bg), 0 0 4px var(--code-bg);
-}
-.terminal .code-wrap.overflowing::before { text-shadow: 0 0 4px var(--terminal-bg), 0 0 4px var(--terminal-bg); }
-.code-wrap.overflowing.at-end::before { opacity: 0; }
-
-/* Overflow affordance: a block wider than its column otherwise just hard-clips
-   with no sign it's scrollable. The fade appears only while there's genuinely
-   more to the right, and clears once you've scrolled to the end. It fades to
-   the block's own background — Shiki's theme vars are copied onto the wrapper
-   by the script in Base.astro, so this tracks the highlighter, not a guess.
-   The solid stop sits at 45%, not 95%: a sliver of "almost transparent" right
-   at the edge still reads as legible text, so the tail needs real width — about
-   1.6rem of flat, fully-opaque background — to actually hide a character. */
+/* Overflow cue: a block wider than its column otherwise hard-clips with no sign
+   that it scrolls. While there is more to the right, a solid panel square with a
+   hairline left edge carries a chevron; it hides once scrolled to the end, so
+   the last characters are never left under it. The script sets `.overflowing`
+   (more than a character of overflow) and `.at-end`. Both code backgrounds are
+   var(--color-panel), so one rule covers the terminal too. */
 .code-wrap::after {
-  /* --fade-w is set per-block by Base.astro's script, capped to how much is
-     actually hidden (plus a small margin) rather than always 48px — a block
-     that overflows by only 20px must not paint a 48px overlay across text
-     that was already fully visible. Falls back to 3rem for the rare case the
-     script hasn't run yet (e.g. no-JS). */
-  content: ''; position: absolute; inset: 0; left: auto; width: var(--fade-w, 3rem);
-  pointer-events: none;
-  background: linear-gradient(to right, transparent, var(--code-bg) 45%, var(--code-bg));
-  opacity: 0; transition: opacity 0.15s ease;
-}
-/* The hero terminal isn't Shiki-rendered, so it has no --shiki-*-bg to lift and
-   the generic rules above fall back to --code-bg — a DIFFERENT colour from the
-   terminal's own --terminal-bg in both themes (near-white vs dark navy in
-   light; two visibly distinct dark shades in dark), painting a mismatched
-   patch rather than fading into the box it's supposedly part of. Fade to the
-   terminal's real background instead. `--terminal-bg` already differs per
-   theme on its own, so one rule covers both — but it must be placed AFTER the
-   dark-theme rule above: same specificity (class+class vs attribute+class),
-   so source order is what wins the tie in dark mode. */
-.terminal .code-wrap::after {
-  background: linear-gradient(to right, transparent, var(--terminal-bg) 45%, var(--terminal-bg));
+  content: '›'; position: absolute; top: 0; right: 0; bottom: 0; width: 1.75rem;
+  display: grid; place-items: center; pointer-events: none;
+  background: var(--color-panel); border-left: var(--stroke-hairline) solid var(--color-line);
+  color: var(--color-muted); font: 700 1.3rem/1 var(--mono);
+  opacity: 0; transition: opacity var(--motion-duration-dimension) var(--motion-easing-precise);
 }
 .code-wrap.overflowing::after { opacity: 1; }
 .code-wrap.overflowing.at-end::after { opacity: 0; }
-/* The copy button rides above the fade. */
-.code-wrap .copy-btn { z-index: 1; }
-/* No extra right padding here on purpose: the block's own padding survives to
-   the scroll end, and the fade clears at `.at-end`, so the last characters are
-   never left sitting under the gradient. */
-.code-wrap .copy-btn {
-  position: absolute; top: 0.45rem; right: 0.45rem;
-  display: grid; place-items: center; width: 1.75rem; height: 1.75rem;
-  padding: 0; border: none; border-radius: var(--radius-md); cursor: pointer;
-  background: color-mix(in oklch, var(--bg) 55%, transparent);
-  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  color: var(--text-muted);
-  opacity: 0; transition: opacity 0.14s ease, color 0.14s ease, background 0.14s ease;
-}
-.code-wrap .copy-btn svg { width: 0.9rem; height: 0.9rem; }
-/* Pointer users on hover; keyboard users whenever it's focused. */
-.code-wrap:hover .copy-btn,
-.code-wrap .copy-btn:focus-visible { opacity: 1; }
-.code-wrap .copy-btn:hover { color: var(--text); background: color-mix(in oklch, var(--bg) 85%, transparent); }
-.code-wrap .copy-btn.done { opacity: 1; color: var(--cov-native); }
-/* No hover on touch — show it, quietly. */
-@media (hover: none) { .code-wrap .copy-btn { opacity: 0.55; } }
 
+/* Copy button: the package's `.d-copy` look (see content.css), which assumes it
+   sits inside the <pre>. Ours is a sibling of the <pre> in `.code-wrap`, so it
+   needs its own reveal rules. It sits above the cue. */
+.code-wrap .d-copy {
+  z-index: 1;
+  transition: opacity var(--motion-duration-dimension) var(--motion-easing-precise),
+    color var(--motion-duration-dimension) var(--motion-easing-precise),
+    border-color var(--motion-duration-dimension) var(--motion-easing-precise);
+}
+.code-wrap:hover > .d-copy { opacity: 1; }
+/* While the cue is showing, the button steps left of it instead of covering it. */
+.code-wrap.overflowing:not(.at-end) > .d-copy { right: calc(1.75rem + 8px); }
 
 /* ---------- docs components (usable from markdown as raw HTML) ---------- */
 .sw {
