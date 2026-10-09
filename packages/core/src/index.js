@@ -33,6 +33,8 @@ export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY
 export { consumption } from './reads.js';
 export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
 export { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
+export { suggestBindings, SUGGEST_THRESHOLDS } from './suggest.js';
+export { SYNONYMS_VERSION } from './synonyms.js';
 
 /**
  * Run the pipeline. `emit: false` = `transtyle check` (pipeline minus EMIT —

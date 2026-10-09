@@ -25,7 +25,7 @@ export const INIT_DEFAULTS = {
 /** Flags `init` takes a value for, in prompt order. */
 export const INIT_VALUE_FLAGS = ['brand', 'schemes', 'targets', 'preset', 'layout'];
 
-const TOKENS_SCHEMA = 'https://transtyle.dev/schemas/tokens/v0.json';
+export const TOKENS_SCHEMA = 'https://transtyle.dev/schemas/tokens/v0.json';
 const CONFIG_SCHEMA = 'https://transtyle.dev/schemas/config/v0.json';
 
 // ---------- validation (one function per answer, shared by flags and prompts) ----------

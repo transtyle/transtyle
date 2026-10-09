@@ -174,7 +174,7 @@ npm run demos:all                      # build all 44 + the site, exactly as dep
 
 ## Status
 
-`build`, `check`, `explain`, `diff`, `catalog`, `init` and `add` are implemented; `import`, `preview` and
+`build`, `check`, `explain`, `diff`, `catalog`, `bind --suggest`, `init` and `add` are implemented; `import`, `preview` and
 version pinning are specced. The component tier — theming components, not just palettes — is live
 on Bootstrap and PrimeNG. [ROADMAP.md](ROADMAP.md) is the authority on what is real versus planned;
 [docs/findings/](docs/findings/) records what needed a judgment call.

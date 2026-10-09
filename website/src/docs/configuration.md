@@ -67,7 +67,7 @@ Full annotated example:
 - `from` is a single alias and may only use placeholders the `slot` uses.
 - **Explicit bindings win.** A slot you already bind in a token file (an authored value or a hand-written alias) is left alone by every rule, silently, so overriding one cell of the grid is just writing it. Between two rules, the first in the array wins and the second gets a `TST1119` note.
 - A slot whose target token does not exist is skipped silently, so one rule can cover the whole grid and bind only what your vocabulary has. Add `"required": true` and a missing target is an error instead (`TST1118`). Targets must be tokens written in a token file.
-- Rules expand when the config loads into ordinary aliases, so exporters and [`diff`](/docs/cli/) see nothing new, and [`explain`](/docs/cli/) names the rule behind an alias. `npx transtyle bindings --expand` prints the expansion as a token file when you prefer to freeze it.
+- Rules expand when the config loads into ordinary aliases, so exporters and [`diff`](/docs/cli/) see nothing new, and [`explain`](/docs/cli/) names the rule behind an alias. `npx transtyle bindings --expand` prints the expansion as a token file when you prefer to freeze it, and `npx transtyle bind --suggest --rules` drafts rules from your own names.
 - A malformed rule is `TST1117`: an unknown placeholder, a `from` that is not one alias, `roles` without `{role}` or naming a role that does not exist.
 
 ## Token files in your editor

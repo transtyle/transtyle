@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * transtyle CLI (docs/specs/cli.md). Commands: build, check, explain, bindings, diff, catalog, init, add, migrate.
+ * transtyle CLI (docs/specs/cli.md). Commands: build, check, explain, bindings, bind, diff, catalog, init, add, migrate.
  * Human logs → stderr; exit codes: 0 ok, 1 diagnostics ≥ fail-on, 2 usage error.
  */
 
@@ -11,10 +11,10 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, slotConsumers, formatColor, formatHex } from '@transtyle/core';
+import { compile, catalog, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, formatColor, formatHex } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
-import { INIT_DEFAULTS, INIT_VALUE_FLAGS, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
+import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
 
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -112,6 +112,8 @@ function parseArgs(argv) {
     else if (a === '--expand') args.expand = true;
     else if (a === '--from') args.from = argv[++i];
     else if (a === '--write') args.write = true;
+    else if (a === '--suggest') args.suggest = true;
+    else if (a === '--rules') args.rules = true;
     else if (a.startsWith('--') && INIT_VALUE_FLAGS.includes(a.slice(2))) {
       const v = argv[++i];
       if (v === undefined || v.startsWith('--')) { console.error(`Flag ${a} needs a value`); process.exit(2); }
@@ -135,6 +137,7 @@ Usage:
   transtyle explain --variable <name> --target <t>
                                   from a target variable to the slot(s) it reads, then their provenance
   transtyle bindings --expand     print the config's bindings rules expanded into a plain alias token file
+  transtyle bind --suggest        propose bindings from your token names and colors to unbound catalog slots
   transtyle diff [ref]            semantic diff of the resolved graph vs a git ref (default: HEAD), with per-target impact
   transtyle catalog               list every catalog slot: type, derivation rule, inputs (no project needed)
   transtyle init [name]           scaffold transtyle.config.json + token files (asks on a terminal)
@@ -147,6 +150,8 @@ Options:
   --target <t>                    explain only: a target instance; lists the variables consuming the slot
   --variable <name>               explain only (with --target): the target variable to look up
   --expand                        bindings only: required, prints the expansion to stdout
+  --suggest                       bind only: required, prints the proposals as an alias token file to stdout
+  --rules                         bind only: print them as "bindings" rules for transtyle.config.json instead
   --from <source>                 migrate only: what to migrate from (style-dictionary)
   --write                         migrate only: apply the rewrite (default: print the diff, change nothing)
   --out <dir>                     build only: write target <name> to <dir>/<name> instead of its configured output
@@ -154,7 +159,7 @@ Options:
   --quiet                         build/check only: print only errors and the diagnostics that fail the run
   --verbose                       build/check only: add exporter, output directory, file sizes; stack on a fatal error
                                   (also TRANSTYLE_DEBUG=1). The CLI never colors its output; NO_COLOR is honored (init's color chip)
-  --json                          check/diff/catalog/explain only: print a machine-readable report to stdout
+  --json                          check/diff/catalog/explain/bind only: print a machine-readable report to stdout
   --matrix                        check only: print which targets read each catalog slot (with --json: a "matrix" key)
 init options (each skips its question; without a terminal, unset ones take the default):
   --brand <color>                 brand color, any CSS color (default: oklch(0.55 0.18 255))
@@ -193,7 +198,7 @@ function printDiagnostics(diagnostics) {
   const n = diagnostics.suppressed.length;
   if (n > 0) console.error(`${ICONS.info} ${n} diagnostic${n === 1 ? '' : 's'} suppressed by check.suppress (listed in report.json)`);
 }
-const COMMANDS = ['build', 'check', 'explain', 'bindings', 'diff', 'catalog', 'init', 'add', 'migrate'];
+const COMMANDS = ['build', 'check', 'explain', 'bindings', 'bind', 'diff', 'catalog', 'init', 'add', 'migrate'];
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -230,6 +235,7 @@ async function main() {
   if (args.command === 'migrate') return cmdMigrate(args);
   if (args.command === 'explain') return cmdExplain(args);
   if (args.command === 'bindings') return cmdBindings(args);
+  if (args.command === 'bind') return cmdBind(args);
   if (args.command === 'diff') return cmdDiff(args);
   if (args.command === 'catalog') return cmdCatalog(args);
   if (args.command === 'init') return cmdInit(args);
@@ -338,6 +344,61 @@ async function cmdBindings(args) {
   }
   console.error(`${bindings.aliases.length} alias(es) from ${new Set(bindings.aliases.map((a) => a.rule)).size} rule(s)`);
   console.log(JSON.stringify(bindings.tree, null, 2));
+}
+
+// ---------- bind --suggest ----------
+
+/**
+ * `bind --suggest`: core's suggestBindings(), printed. Requested data goes to
+ * stdout (the alias token file, the `bindings` rules with --rules, or the whole
+ * report with --json); the table a human reads goes to stderr. Nothing is
+ * written: adding the file to `tokens`, or the rules to the config, is the
+ * review (docs/specs/cli.md).
+ */
+async function cmdBind(args) {
+  const usage = 'Usage: transtyle bind --suggest [--rules | --json] [--cwd <dir>]';
+  if (!args.suggest) { console.error(usage); process.exit(2); }
+  if (args.targets.length) { console.error(`✖ transtyle bind takes no arguments (got: ${args.targets.join(' ')})\n  ${usage}`); process.exit(2); }
+  if (args.rules && args.json) { console.error(`✖ --rules and --json are two different outputs; pick one\n  ${usage}`); process.exit(2); }
+  let result;
+  try {
+    result = await suggestBindings({ cwd: args.cwd });
+  } catch (e) {
+    console.error(`✖ ${e.message}`);
+    process.exit(2);
+  }
+  const { diagnostics, report } = result;
+  if (!report) {
+    for (const d of diagnostics.errors) printDiagnostic(d);
+    process.exitCode = 1;
+    return;
+  }
+
+  const by = (status) => report.slots.filter((s) => s.status === status);
+  const proposed = by('proposed');
+  const contested = by('contested');
+  console.error(`bind --suggest: ${report.synonyms}, rule pack ${report.rulePack}, modes ${report.modes.join(' | ')}`);
+  if (proposed.length) {
+    console.error(`\nProposed (${proposed.length}):`);
+    const w = Math.max(...proposed.map((s) => s.slot.length));
+    const f = Math.max(...proposed.map((s) => s.from.length));
+    for (const s of proposed) console.error(`  ${s.slot.padEnd(w)}  ← ${s.from.padEnd(f)}  ${s.confidence.padEnd(6)}  ${s.reasons.join('; ')}`);
+  }
+  if (contested.length) {
+    console.error(`\nContested, not written (${contested.length}): bind these yourself`);
+    for (const s of contested) {
+      console.error(`  ${s.slot}`);
+      for (const c of s.candidates) console.error(`    ${c.token}  ${c.confidence}  ${c.reasons.join('; ')}`);
+    }
+  }
+  const none = by('none');
+  if (none.length) console.error(`\nNothing proposed (${none.length}): ${none.map((s) => `${s.slot.replace(/^semantic\.(color\.)?/, '')} (${s.fallback})`).join(', ')}`);
+  const bound = by('bound');
+  if (bound.length) console.error(`Already bound (${bound.length}): ${bound.map((s) => s.slot.replace(/^semantic\.(color\.)?/, '')).join(', ')}`);
+
+  if (args.json) console.log(JSON.stringify(report, null, 2));
+  else if (args.rules) console.log(JSON.stringify({ bindings: report.rules }, null, 2));
+  else console.log(JSON.stringify({ $schema: TOKENS_SCHEMA, ...report.tokens }, null, 2));
 }
 
 // ---------- explain ----------

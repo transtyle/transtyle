@@ -39,7 +39,9 @@ semantic diff), `explainToken` (the provenance walk behind `transtyle explain`, 
 tree), `explainVariable` and `slotConsumers` (from a target variable to the slots it reads, and
 back, over a compile's coverage rows), `coverageSlots` (what one coverage row reads), `consumption` (which targets read each catalog
 slot, from the `reads` that `compile()` records on every target result and writes to its
-`report.json`; what `transtyle check --matrix` prints), `Diagnostics`,
+`report.json`; what `transtyle check --matrix` prints), `suggestBindings({ cwd })` (the binding
+proposals behind `transtyle bind --suggest`, from a versioned name table, `SYNONYMS_VERSION`,
+and color measurements), `Diagnostics`,
 and the colour module — `parseColor` (any CSS color syntax a stylesheet holds, to OKLCH), `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
 `mix` — which is OKLCH-native and has no dependencies. `makeUnits(config)` builds the `ctx.units` helpers
 (`toPx`, `toRem`, `remBase`) exporters get, from the config's `units.remBase`.

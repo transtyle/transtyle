@@ -143,7 +143,7 @@ Each rule has a `slot` (a dotted token path) and a `from` (one alias). Optional:
 
 A rule iterates only the placeholders its `slot` uses (two placeholders are the cross product). `from` may use only placeholders the `slot` uses, so every slot gets exactly one value. Any other `{name}` is `TST1117`; ramp steps such as `600` are written literally (a `{step}` placeholder that discovers the keys under a group is a later issue).
 
-**Expansion.** LOAD appends one more base layer, after every token file, holding one plain alias per slot a rule produces. `$type` comes from the target like any hand-written alias, and mode overlays keep working because the alias resolves per mode. The IR, exporters and `diff` see ordinary aliases; `explain` prints the rule on the alias's provenance (`aliased(target, rule)`). `transtyle bindings --expand` prints that layer as a token file, to freeze it.
+**Expansion.** LOAD appends one more base layer, after every token file, holding one plain alias per slot a rule produces. `$type` comes from the target like any hand-written alias, and mode overlays keep working because the alias resolves per mode. The IR, exporters and `diff` see ordinary aliases; `explain` prints the rule on the alias's provenance (`aliased(target, rule)`). `transtyle bindings --expand` prints that layer as a token file, to freeze it. `transtyle bind --suggest --rules` drafts rules from a project's names ([cli.md](cli.md#bind---suggest--a-first-draft-of-the-bindings)), generalizing only where the expansion gives back exactly its proposals.
 
 **Precedence is deterministic, and explicit bindings win.**
 

@@ -949,6 +949,120 @@ try {
   }
 }
 
+// ---------- #60: bind --suggest ----------
+// Each example that keeps a bindings file is copied with that file removed from
+// its config, and the suggestion must give its bindings back: every in-scope
+// binding recovered (one deliberate exception), nothing else proposed (no false
+// friend, no binding of a slot the example leaves to derivation). Acme binds
+// its slots in place, so nothing is left to propose. The fixture's regular
+// vocabulary must come back as three pattern rules that expand to exactly the
+// alias file, and its two brand names must be contested, not written.
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'transtyle-check-bind-'));
+  const flat = (tree, prefix = []) => Object.entries(tree).flatMap(([k, v]) => k.startsWith('$') ? []
+    : v && typeof v === 'object' && '$value' in v ? [[[...prefix, k].join('.'), v.$value]] : flat(v, [...prefix, k]));
+  const parse = (text) => { try { return JSON.parse(text); } catch { return null; } };
+  // In scope: role solids but neutral, text rungs, elevation 0/1, border, ring, links, fonts. radius.md is a literal, not a binding.
+  const inScope = (slot) => !/^semantic\.color\.neutral\./.test(slot) && !slot.startsWith('semantic.radius.') && !/^semantic\.color\.[^.]+-[^.]+\.solid$/.test(slot);
+  const examples = {
+    // Cathode binds font.sans to its mono stack on purpose (the CRT look): no
+    // sans-serif token exists to suggest, so that one is the expected miss.
+    cathode: { miss: ['semantic.font.sans'] },
+    govuk: { miss: [] },
+    carbon: { miss: [] },
+  };
+  const recall = [];
+  try {
+    for (const [name, { miss }] of Object.entries(examples)) {
+      const dir = join(tmp, name);
+      cpSync(join(root, 'examples', name), dir, { recursive: true, filter: (src) => !/\/(demo|dist|node_modules)(\/|$)/.test(src) });
+      const cfg = JSON.parse(readFileSync(join(dir, 'transtyle.config.json'), 'utf8'));
+      const bindingsFile = cfg.tokens.find((t) => typeof t === 'string' && t.endsWith('transtyle.bindings.tokens.json'));
+      cfg.tokens = cfg.tokens.filter((t) => t !== bindingsFile);
+      writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify(cfg));
+      const authored = new Map(flat(JSON.parse(readFileSync(join(dir, bindingsFile), 'utf8'))).filter(([slot]) => inScope(slot)));
+
+      const r = run(['bind', '--suggest', '--json', '--cwd', dir]);
+      const report = parse(r.stdout);
+      expect(`bind --suggest (${name}, bindings removed): exit 0 with a JSON report`, r.code === 0 && !!report, r.out);
+      if (!report) continue;
+      const proposed = new Map(report.slots.filter((x) => x.status === 'proposed').map((x) => [x.slot, x]));
+      const recovered = [...authored].filter(([slot, from]) => proposed.get(slot) && `{${proposed.get(slot).from}}` === from).map(([slot]) => slot);
+      const missed = [...authored.keys()].filter((slot) => !recovered.includes(slot));
+      const extra = [...proposed.keys()].filter((slot) => !authored.has(slot) || `{${proposed.get(slot).from}}` !== authored.get(slot));
+      recall.push(`${name} ${recovered.length}/${authored.size}`);
+      expect(`bind --suggest (${name}): recovers every in-scope binding${miss.length ? ` but ${miss.join(', ')}` : ''}`, missed.join() === miss.join(), `missed: ${missed.join(', ')}`);
+      expect(`bind --suggest (${name}): proposes nothing the example doesn't bind`, extra.length === 0, extra.map((slot) => `${slot} ← ${proposed.get(slot).from}`).join(', '));
+      expect(`bind --suggest (${name}): nothing contested`, !report.slots.some((x) => x.status === 'contested'), JSON.stringify(report.slots.filter((x) => x.status === 'contested')));
+
+      const again = run(['bind', '--suggest', '--json', '--cwd', dir]);
+      expect(`bind --suggest (${name}): byte-identical on a second run`, again.stdout === r.stdout);
+      const file = run(['bind', '--suggest', '--cwd', dir]);
+      const tokens = parse(file.stdout);
+      expect(`bind --suggest (${name}): stdout is a token file with an annotated alias per proposal`,
+        !!tokens && tokens.$schema?.includes('/schemas/tokens/') && flat(tokens).length === proposed.size
+        && flat(tokens).every(([slot, from]) => `{${proposed.get(slot)?.from}}` === from), file.stdout.slice(0, 400));
+
+      if (name === 'cathode') {
+        const c = (slot) => proposed.get(`semantic.color.${slot}`)?.confidence;
+        expect('bind --suggest (cathode): primary on value alone is low (one mode decides it)', c('primary.solid') === 'low', c('primary.solid'));
+        expect('bind --suggest (cathode): warning and danger on value alone, never high', c('warning.solid') === 'medium' && c('danger.solid') === 'medium', `${c('warning.solid')} ${c('danger.solid')}`);
+        expect('bind --suggest (cathode): the reasons say why (hue against the anchor)', /hue \d+° \| \d+° off the danger anchor \(25\)/.test(proposed.get('semantic.color.danger.solid')?.reasons.join(';') ?? ''), proposed.get('semantic.color.danger.solid')?.reasons.join(';'));
+        // The suggested file, added back in place of the authored one, builds.
+        writeFileSync(join(dir, 'tokens/bindings.suggested.tokens.json'), file.stdout);
+        cfg.tokens.push('tokens/bindings.suggested.tokens.json');
+        writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify(cfg));
+        const built = run(['check', '--cwd', dir]);
+        expect('bind --suggest (cathode): the suggested file checks clean in place of the authored one', built.code === 0, built.out);
+      }
+      if (name === 'carbon') {
+        expect('bind --suggest (carbon): "text-primary" is a text rung, not the brand', proposed.get('semantic.color.primary.solid')?.from === 'semantic.color.carbon.button-primary' && proposed.get('semantic.color.text.base')?.from === 'semantic.color.carbon.text-primary');
+      }
+      if (name === 'govuk') {
+        const left = ['secondary', 'accent', 'warning', 'info'].filter((role) => report.slots.find((x) => x.slot === `semantic.color.${role}.solid`)?.status !== 'none');
+        expect('bind --suggest (govuk): the roles GOV.UK leaves to derivation stay derived', left.length === 0, left.join(', '));
+      }
+    }
+    console.log(`  bind --suggest recall (in-scope bindings recovered): ${recall.join(', ')}`);
+
+    // Acme authors its catalog slots in place: they are bound, nothing is proposed.
+    let r = run(['bind', '--suggest', '--json', '--cwd', join(root, 'examples/acme')]);
+    let report = parse(r.stdout);
+    expect('bind --suggest (acme): exit 0, nothing proposed above low', r.code === 0 && !!report && !report.slots.some((x) => x.status === 'proposed' && x.confidence !== 'low'), r.out.slice(0, 400));
+    expect('bind --suggest (acme): its authored slots are reported as bound', report?.slots.find((x) => x.slot === 'semantic.color.primary.solid')?.status === 'bound');
+
+    // The fixture: pattern rules, contested slot.
+    const fx = join(root, 'packages/core/test-fixtures/bind-suggest');
+    r = run(['bind', '--suggest', '--cwd', fx]);
+    const aliases = flat(parse(r.stdout) ?? {});
+    expect('bind --suggest (fixture): contested primary is reported, not written', !aliases.some(([slot]) => slot === 'semantic.color.primary.solid')
+      && /Contested, not written \(1\)/.test(r.out) && /Contested, not written: semantic\.color\.primary\.solid \(semantic\.color\.ui\.action or semantic\.color\.ui\.brand\)/.test(r.stdout), r.out);
+    r = run(['bind', '--suggest', '--rules', '--cwd', fx]);
+    const rules = parse(r.stdout)?.bindings ?? [];
+    expect('bind --suggest --rules (fixture): the regular vocabulary becomes {role}, {rung} and {level} rules',
+      rules.length === 4 && rules.some((x) => x.slot === 'semantic.color.{role}.solid' && x.from === '{semantic.color.ui.{role}}' && x.roles?.join() === 'success,danger')
+      && rules.some((x) => x.slot === 'semantic.color.text.{rung}') && rules.some((x) => x.slot === 'semantic.color.elevation.{level}.surface'), r.stdout);
+    const ruled = join(tmp, 'fixture-rules');
+    cpSync(fx, ruled, { recursive: true });
+    const cfg = JSON.parse(readFileSync(join(ruled, 'transtyle.config.json'), 'utf8'));
+    cfg.bindings = rules;
+    writeFileSync(join(ruled, 'transtyle.config.json'), JSON.stringify(cfg));
+    r = run(['bindings', '--expand', '--cwd', ruled]);
+    const expanded = flat(parse(r.stdout) ?? {});
+    const key = (list) => list.map(([slot, from]) => `${slot}=${from}`).sort().join('\n');
+    expect('bind --suggest --rules (fixture): the rules expand to exactly the alias file', r.code === 0 && aliases.length === 7 && key(expanded) === key(aliases), `${key(expanded)}\n---\n${key(aliases)}`);
+
+    r = run(['bind', '--cwd', fx]);
+    expect('bind without --suggest: usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+    r = run(['bind', '--suggest', 'extra', '--cwd', fx]);
+    expect('bind --suggest with an argument: usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+    r = run(['bind', '--suggest', '--rules', '--json', '--cwd', fx]);
+    expect('bind --suggest --rules --json: usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 // ---------- #99: init's answers — flags, presets, layouts, prompts ----------
 // Every answer has a flag, validated before anything is written; without a
 // terminal nothing is asked; the same answers give the same bytes; every
@@ -1375,4 +1489,4 @@ if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--out/--dry-run/--quiet/--verbose golden path and error cases all pass');
+console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/bind --suggest/--out/--dry-run/--quiet/--verbose golden path and error cases all pass');
