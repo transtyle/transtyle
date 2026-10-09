@@ -17,18 +17,21 @@ PrimeNG reports one row per component family, so for PrimeNG the unit is the slo
 | Bootstrap      | 56 rows       | 56             | 0       |
 | Radix Themes   | 1 row         | 1              | 0       |
 | PrimeNG        | 1105 slots    | 57             | 1048    |
+| Mantine        | 28 rows       | 26             | 2       |
 
-Every row and slot below is reported by all the examples, except PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
+Every row and slot below is reported by all the examples, except Mantine `theme.fontFamilyMonospace` (govuk only), Mantine `variables.--mantine-font-family-monospace` (govuk only), PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
 
-shadcn/ui, Storybook, Mantine, Chakra UI, CSS variables report no `unsupported` row: only exporters that inventory their target's whole surface can say what they leave undriven.
+shadcn/ui, Storybook, Chakra UI, CSS variables report no `unsupported` row: only exporters that inventory their target's whole surface can say what they leave undriven.
 
 ## By meaning
 
 | Meaning                 | Status          | Exporters | Evidence                               | Settled by                                                                           |
 | ----------------------- | --------------- | --------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
+| `color.gradient`        | open            | 1         | Mantine (3 rows)                       |                                                                                      |
 | `opacity.component`     | open            | 1         | Bootstrap (12 rows)                    |                                                                                      |
 | `opacity.compositional` | open            | 1         | Bootstrap (1 row)                      |                                                                                      |
 | `shadow.inset`          | open            | 1         | Bootstrap (1 row)                      |                                                                                      |
+| `type.text-wrap`        | open            | 1         | Mantine (2 rows)                       |                                                                                      |
 | `icon.size`             | watch           | 2         | Bootstrap (3 rows), PrimeNG (57 slots) | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
 | `color.wide-gamut`      | watch           | 1         | Radix Themes (1 row)                   | [radix](../specs/exporters/radix.md)                                                 |
 | `icon.asset`            | watch           | 1         | Bootstrap (16 rows)                    | [backlog](../backlog.md#bl-19)                                                       |
@@ -38,6 +41,8 @@ shadcn/ui, Storybook, Mantine, Chakra UI, CSS variables report no `unsupported` 
 | `type.display-ladder`   | disagreement    | 1         | Bootstrap (1 row)                      | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
 | `geometry.component`    | rejected        | 1         | Bootstrap (17 rows)                    | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
 | `chart.series-style`    | target-specific | 1         | Apache ECharts (1 row)                 | [echarts](../specs/exporters/echarts.md)                                             |
+| `color.named-palette`   | target-specific | 1         | Mantine (7 rows)                       | [mantine](../specs/exporters/mantine.md)                                             |
+| `target.config`         | target-specific | 1         | Mantine (14 rows)                      | [mantine](../specs/exporters/mantine.md)                                             |
 
 Statuses:
 
@@ -49,6 +54,12 @@ Statuses:
 - **promoted**: now a catalog slot.
 
 ### What each meaning holds
+
+#### `color.gradient`
+
+A default gradient (start colour, end colour, angle) for a gradient variant: the IR has no gradient. Single-source so far (Mantine's `defaultGradient`). See [mantine](../specs/exporters/mantine.md).
+
+- Mantine: `theme.defaultGradient.deg`, `theme.defaultGradient.from`, `theme.defaultGradient.to`.
 
 #### `opacity.component`
 
@@ -67,6 +78,12 @@ A catalog opacity the target composes against its own resting alpha, so the cata
 An inset shadow: the elevation shadows have no inset counterpart in the IR.
 
 - Bootstrap: `$box-shadow-inset`.
+
+#### `type.text-wrap`
+
+How headings wrap (`text-wrap: wrap | balance | pretty`): the IR has no text-wrap slot. Single-source so far (Mantine's `headings.textWrap`). See [mantine](../specs/exporters/mantine.md).
+
+- Mantine: `theme.headings.textWrap`, `variables.--mantine-heading-text-wrap`.
 
 #### `icon.size`
 
@@ -123,6 +140,18 @@ Series-type styling (candlestick colours, gauge bands): chart configuration, not
 
 - Apache ECharts: `series-specific styles (candlestick, gauge, …)`.
 
+#### `color.named-palette`
+
+The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept. See [mantine](../specs/exporters/mantine.md).
+
+- Mantine: `theme.black`, `theme.colors.red`, `theme.colors.teal`, `theme.white`, `variables.--mantine-color-black`, `variables.--mantine-color-red-<shade>`, `variables.--mantine-color-teal-<shade>`.
+
+#### `target.config`
+
+Target configuration rather than a design value: behaviour switches (focus-ring visibility, reduced motion, cursor, font smoothing), class names, algorithm parameters (Mantine's autoContrast luminance threshold, its global rem scale) and constants (the colour-scheme name). See [mantine](../specs/exporters/mantine.md).
+
+- Mantine: `dark.--mantine-color-scheme`, `light.--mantine-color-scheme`, `theme.activeClassName`, `theme.cursorType`, `theme.focusClassName`, `theme.focusRing`, `theme.fontSmoothing`, `theme.luminanceThreshold`, `theme.respectReducedMotion`, `theme.scale`, `variables.--mantine-cursor-type`, `variables.--mantine-moz-font-smoothing`, `variables.--mantine-scale`, `variables.--mantine-webkit-font-smoothing`.
+
 ## Undriven Aura paths
 
 414 PrimeNG slots keep Aura's default because Aura points them at a semantic path this exporter does not drive. These are exporter work before they are catalog evidence: driving the path cascades to every slot that references it, and some of these paths are reachable with vocabulary the catalog already ships (see the [coverage spec](../specs/validation-and-coverage.md), "Coverage percentages are not comparable across targets").
@@ -147,6 +176,11 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 
 634 slots keep one of Aura's own literals, by property: `padding` 110, `gap` 67, `width` 44, `borderWidth` 39, `borderRadius` 37, `height` 36, `fontWeight` 35, `size` 35, `shadow` 29, `fontSize` 28, `background` 21, `offset` 14, `margin` 13, `borderColor` 11, and 115 slots under 59 other properties.
 
+### Mantine
+
+- `theme.fontFamilyMonospace` (govuk only): set whenever the design system defines font.mono; this one does not, so Mantine's monospace stack stays
+- `variables.--mantine-font-family-monospace` (govuk only): from fontFamilyMonospace, set whenever the design system defines font.mono; this one does not, so Mantine's monospace stack stays
+
 ## Target limits (`dropped`)
 
 `dropped` is the opposite direction: the IR expresses something the target can't. It is not catalog-growth signal, but it says which catalog slots and mode dimensions a target leaves out. Rows naming a catalog slot or a mode dimension:
@@ -154,6 +188,7 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 | Catalog slot or mode                                                                                                                                       | Dropped by                                                                                          |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `(mode:density)` (acme only)                                                                                                                               | shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI |
+| `semantic.z.*`                                                                                                                                             | Mantine                                                                                             |
 | `component.control.{padding-x,padding-y}, component.button.padding-y`                                                                                      | Mantine                                                                                             |
 | `component.{control,button}.padding-y`                                                                                                                     | Chakra UI                                                                                           |
 | `semantic.*`                                                                                                                                               | Storybook                                                                                           |
@@ -176,6 +211,5 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 | `semantic.color.warning.{solid-hover,solid-active,solid-selected,tint-selected,outline-hover,text-hover,text-active,on-tint,text-strong}`                  | Chakra UI                                                                                           |
 | `semantic.palette.categorical.*`                                                                                                                           | Chakra UI                                                                                           |
 | `semantic.type.role.display.*`                                                                                                                             | Mantine                                                                                             |
-| `semantic.z.*`                                                                                                                                             | Mantine                                                                                             |
 
-The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): Bootstrap 71, Storybook 2, Mantine 10, Chakra UI 1. Each one's reason is in that target's `report.json`.
+The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): Bootstrap 71, Storybook 2, Mantine 37, Chakra UI 1. Each one's reason is in that target's `report.json`.

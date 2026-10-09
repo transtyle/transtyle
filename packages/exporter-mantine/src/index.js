@@ -29,6 +29,7 @@
  */
 
 import { COLOR_ROLES, droppedDimensions } from '@transtyle/ir';
+import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
 
@@ -451,6 +452,18 @@ export default {
     row('(link hover / visited)', `${S}link.{hover,visited}`, 'dropped', 'Mantine has one anchor colour');
     row('(motion, scrim, text.inverse, opacity.disabled)', '—', 'dropped', 'no theme slot: transitions are per-component props and overlays take their colour as a prop');
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
+
+    // AL3: measure what was emitted against Mantine's whole theming surface
+    // (surface-inventory.json, extracted from @mantine/core's DEFAULT_THEME and
+    // defaultCssVariablesResolver).
+    coverage.push(
+      ...surfaceRows({
+        theme,
+        colorNames: [...Object.keys(colors), ...virtuals.map((v) => v.name)],
+        blocks: { variables: {}, light: lightVars, dark: darkVars ?? {} },
+        hasDark: !!darkVars,
+      }),
+    );
 
     const ts = renderTheme(ctx, theme, virtuals, lightVars, darkVars);
     return {

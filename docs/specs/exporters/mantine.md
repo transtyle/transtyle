@@ -99,9 +99,36 @@ Mantine's per-component `vars` are resolver **functions** (`(theme, props) => �
 | `radius.container`                                          | `components.Card.defaultProps.radius`                                  | native       |                                                                                                     |
 | `component.tooltip.max-width` (only when authored)          | `components.Tooltip.styles.tooltip.maxWidth`                           | approximated | a Mantine tooltip only wraps when `multiline`                                                       |
 
-## Not yet measured against Mantine's whole surface
+## Measured against Mantine's whole surface
 
-Bootstrap and PrimeNG carry a checked-in surface inventory that `check:coverage-bar` reconciles against every report. Mantine's equivalent (the leaves of `DEFAULT_THEME` and the variables of `defaultCssVariablesResolver(DEFAULT_THEME)`, extracted from the installed `@mantine/core` like `exporter-primeng/tools/extract-surface.mjs` does for Aura) is a follow-up: until it lands, the rows above are what the report classifies, and nothing proves the list is the whole surface.
+Like Bootstrap and PrimeNG, Mantine carries a checked-in surface inventory, `packages/exporter-mantine/surface-inventory.json`, that `check:coverage-bar` reconciles against every report.
+
+<!-- measured: mantine.surface.total = 203 -->
+<!-- measured: mantine.surface.families = 4 -->
+
+**What it holds.** `tools/extract-surface.mjs` reads the installed `@mantine/core` (a demo dependency, never a package dependency) and writes 203 entries in 4 families: `theme`, every leaf of `DEFAULT_THEME` minus functions (`variantColorResolver`) and the open `components` / `other` maps, a colour tuple counting as one leaf; and `variables`, `light`, `dark`, every variable `defaultCssVariablesResolver(DEFAULT_THEME)` writes, per block. The palettes are folded so the inventory does not grow with Mantine's default palettes: `--mantine-color-red-filled` … `-orange-filled` are one entry, `--mantine-color-<color>-filled`, and `colors.pink` … `colors.orange` are `colors.<color>`. A palette stays named when Mantine's own resolver reads it for something other than its own variables: `gray` and `dark` for the page, `red` for `--mantine-color-error`, `teal` for `--mantine-color-success`. That list is found by the extractor, not written by hand; folding those four would let "this theme sets some palettes" stand for "it sets the one the page reads". The per-component CSS-module variables (`--button-*`, `--input-*`, …) are not in the inventory: they are computed by each component's `vars` function, not by the theme, and the component tier reaches the few it can through `styles` (above).
+
+**How an entry depends on the theme.** Each variable records `from`, what its value is computed from, the Mantine counterpart of PrimeNG's `{ref}`. It is measured, not read from Mantine's source: the extractor changes one theme leaf at a time on a copy of `DEFAULT_THEME`, re-runs the resolver, and records which variables moved; it adds the `var(--…)` each value references (`--mantine-color-dimmed` is `var(--mantine-color-gray-6)`), except a reference the theme value itself carries (`fontSizes.xs` is `calc(0.75rem * var(--mantine-scale))`, which a theme replaces whole). The resolver is a pure function, so the extraction is deterministic.
+
+**Classification** (`src/surface-coverage.js`, shared by the exporter and the check). An entry is **set** when the emitted `createTheme()` object has the leaf or the emitted resolver writes the variable; it **follows** when it is not written but everything in its `from` is set or follows, so Mantine derives it from this theme (`--mantine-font-size-xs` from `fontSizes.xs`); otherwise it keeps **Mantine's default**, and each of those has a reason in the module's `REASONS` table. An `unsupported` reason also names its catalog-signals `meaning` (`target.config`, `color.named-palette`, `color.gradient`, `type.text-wrap`). A design system with no dark scheme (GOV.UK) has one shared reason for the dark block and everything that reads it. An entry the exporter maps but the design system gives it nothing to map from (a minimal one with no type scale) gets a catch-all reason, so a user's report never has a silent row; the check refuses that catch-all on the four examples, which author everything the exporter maps, so an entry new in a Mantine upgrade still needs a reason of its own.
+
+**The reconciliation rule.** Mantine is neither per-variable like Bootstrap nor per-family like PrimeNG, so it takes from both. `report.json` has one summary row per family, `theme.* (73 entries)` with `n set · n follow · n on Mantine's default`, whose three counts must add up to the inventory's family size (a missing entry is an arithmetic mismatch, as on PrimeNG); and every entry on Mantine's default has its own row, named by its inventory id, with a note (a gap is named, as on Bootstrap). The check fails when a family row is missing or its counts don't add up, when the number of named rows differs from the default count, when one has no reason of its own, and when a fresh extraction differs from the checked-in file (a Mantine upgrade, or a hand edit); the message names `node packages/exporter-mantine/tools/extract-surface.mjs --write`.
+
+<!-- measured: acme.mantine.set = 106 -->
+<!-- measured: acme.mantine.follow = 66 -->
+<!-- measured: acme.mantine.default = 31 -->
+<!-- measured: cathode.mantine.default = 31 -->
+<!-- measured: carbon.mantine.default = 31 -->
+<!-- measured: govuk.mantine.set = 80 -->
+<!-- measured: govuk.mantine.follow = 63 -->
+<!-- measured: govuk.mantine.default = 60 -->
+
+| Example                 | Set | Follow | Mantine's default |
+| ----------------------- | --- | ------ | ----------------- |
+| Acme, Cathode, Carbon   | 106 | 66     | 31                |
+| GOV.UK (no dark scheme) | 80  | 63     | 60                |
+
+The 31 kept on every example are behaviour switches with no design value (`focusRing`, `focusClassName`, `activeClassName`, `respectReducedMotion`, `cursorType`, `fontSmoothing`), slots the catalog has no concept for (`headings.textWrap`, the gradient variant's `defaultGradient`, `luminanceThreshold`, `scale`), Mantine's `white` and `black` (their colours are set through the resolver instead), the `red` and `teal` palettes (the page reads them only for the error and success colours, which are set from `danger.text` and `success.text`), the five z-index variables (not read by Mantine's stylesheet: `dropped`) and each scheme's `--mantine-color-scheme` name. GOV.UK adds its missing dark scheme and `font.mono`.
 
 ## Ground-truth testing
 

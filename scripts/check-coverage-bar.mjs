@@ -2,15 +2,20 @@
 /**
  * AL3 — the coverage bar: make "ALL tokens mapped" measurable and enforced.
  *
- * For the two component-heavy targets, every slot of the target's documented
- * theming surface must be ACCOUNTED FOR in the emitted report, and nothing may
- * be silently absent or silently unsupported:
+ * For every target with a checked-in surface inventory, every slot of the
+ * target's documented theming surface must be ACCOUNTED FOR in the emitted
+ * report, and nothing may be silently absent or silently unsupported:
  *
  *   1. Completeness — the report's rows cover every slot in the target's
  *      checked-in surface inventory. Bootstrap reports one row per variable
  *      (657); PrimeNG reports per-family counts whose sums must equal the
  *      inventory's per-family totals (2759 slots across 98 families), so a
  *      dropped slot shows up as an arithmetic mismatch, not a silent gap.
+ *      Mantine is between the two: its four families (the theme object and
+ *      the resolver's variables / light / dark blocks) are reconciled by
+ *      arithmetic like PrimeNG's, and every entry left on Mantine's default
+ *      gets its own named row like Bootstrap's, so the count of those rows
+ *      must equal the family's "on Mantine's default" count.
  *   2. Honesty — every `unsupported` or `dropped` row carries a note saying
  *      why. "Zero silent unsupported" is the bar, not "zero unsupported":
  *      a target we cannot fully drive must say so, per principle 3.
@@ -48,6 +53,9 @@ const bsInventory = JSON.parse(
 const pnInventory = JSON.parse(
   readFileSync(join(root, 'packages/exporter-primeng/surface-inventory.json'), 'utf8'),
 );
+const mtInventory = JSON.parse(
+  readFileSync(join(root, 'packages/exporter-mantine/surface-inventory.json'), 'utf8'),
+);
 
 // Drift guard for the PrimeNG inventory (Bootstrap's lives in
 // check-bootstrap-surface.mjs): the checked-in denominator must match a fresh
@@ -66,6 +74,37 @@ const pnInventory = JSON.parse(
     );
   }
 }
+
+// The same drift guard for Mantine's inventory, extracted from the installed
+// @mantine/core (DEFAULT_THEME and defaultCssVariablesResolver).
+{
+  const { extractSurface } = await import(
+    join(root, 'packages/exporter-mantine/tools/extract-surface.mjs')
+  );
+  const fresh = await extractSurface();
+  if (JSON.stringify(fresh) !== JSON.stringify(mtInventory)) {
+    if (fresh.mantineVersion !== mtInventory.mantineVersion) {
+      errors.push(
+        `mantine inventory was extracted from @mantine/core@${mtInventory.mantineVersion} but @${fresh.mantineVersion} is installed`,
+      );
+    } else {
+      const ids = (inv) => new Set(inv.entries.map((e) => e.id));
+      const [had, has] = [ids(mtInventory), ids(fresh)];
+      for (const id of has) if (!had.has(id)) errors.push(`mantine: ${id} exists upstream but not in the inventory`);
+      for (const id of had) if (!has.has(id)) errors.push(`mantine: the inventory lists ${id}, which no longer exists upstream`);
+      if (had.size === has.size && [...had].every((id) => has.has(id))) {
+        errors.push('mantine surface-inventory.json drifted from a fresh extraction (same entries, field-level change)');
+      }
+    }
+    errors.push(
+      '→ regenerate: node packages/exporter-mantine/tools/extract-surface.mjs --write (and review the diff)',
+    );
+  }
+}
+const mtIds = new Map(mtInventory.entries.map((e) => [e.id, e.block]));
+const { UNMAPPED: mtUnmapped } = await import(
+  join(root, 'packages/exporter-mantine/src/surface-coverage.js')
+);
 
 for (const example of EXAMPLES) {
   execSync(`npx transtyle build --cwd examples/${example}`, { cwd: root, stdio: 'pipe' });
@@ -136,6 +175,65 @@ for (const example of EXAMPLES) {
     if (!totals) errors.push(`${example}/primeng: no surface totals row`);
     summary.push([example, 'primeng', pnInventory.counts.total, tally(items), totals?.slot]);
   }
+
+  // ---- Mantine: per-family arithmetic, plus a named row per entry on Mantine's default ----
+  const mtPath = join(root, 'examples', example, 'dist/mantine/report.json');
+  if (!existsSync(mtPath)) {
+    errors.push(`${example}: no mantine report.json`);
+  } else {
+    const items = JSON.parse(readFileSync(mtPath, 'utf8')).coverage.items;
+    const familyRows = new Map();
+    for (const i of items) {
+      const m = /^(\w+)\.\* \((\d+) entries\)$/.exec(i.variable);
+      if (m) familyRows.set(m[1], { declared: Number(m[2]), row: i });
+    }
+    const entryRows = items.filter((i) => mtIds.has(i.variable));
+    for (const [family, total] of Object.entries(mtInventory.counts.families)) {
+      const got = familyRows.get(family);
+      if (!got) {
+        errors.push(`${example}/mantine: family "${family}" (${total} entries) has no coverage row`);
+        continue;
+      }
+      if (got.declared !== total) {
+        errors.push(`${example}/mantine: family "${family}" reports ${got.declared} entries, inventory has ${total}`);
+        continue;
+      }
+      const m = /^(\d+) set · (\d+) follow · (\d+) on Mantine's default$/.exec(got.row.slot);
+      if (!m) {
+        errors.push(`${example}/mantine: family "${family}" row does not read "<n> set · <n> follow · <n> on Mantine's default"`);
+        continue;
+      }
+      const [set, follow, kept] = m.slice(1).map(Number);
+      if (set + follow + kept !== total) {
+        errors.push(
+          `${example}/mantine: family "${family}" counts sum to ${set + follow + kept}, expected ${total} — an entry is unaccounted for`,
+        );
+      }
+      const named = entryRows.filter((i) => mtIds.get(i.variable) === family).length;
+      if (named !== kept) {
+        errors.push(
+          `${example}/mantine: family "${family}" has ${kept} entries on Mantine's default but ${named} named row(s) — each needs its own row`,
+        );
+      }
+    }
+    // The examples author everything the exporter maps, so the catch-all
+    // "this design system defines nothing for it" is never the real reason here.
+    const unnoted = entryRows.filter((i) => !i.note || i.note === mtUnmapped.note);
+    if (unnoted.length) {
+      errors.push(
+        `${example}/mantine: ${unnoted.length} entry row(s) on Mantine's default with no reason of their own — e.g. ${unnoted[0].variable} (add it to REASONS in packages/exporter-mantine/src/surface-coverage.js)`,
+      );
+    }
+    const silent = items.filter((i) => ['unsupported', 'dropped'].includes(i.class) && !i.note);
+    if (silent.length) {
+      errors.push(
+        `${example}/mantine: ${silent.length} ${silent[0].class} row(s) with no note — e.g. ${silent[0].variable}`,
+      );
+    }
+    const totals = items.find((i) => i.variable === 'Mantine surface totals');
+    if (!totals) errors.push(`${example}/mantine: no surface totals row`);
+    summary.push([example, 'mantine', mtInventory.counts.total, tally(items), totals?.slot]);
+  }
 }
 
 function tally(items) {
@@ -158,10 +256,11 @@ for (const [example, target, surfaceSize, counts, note] of summary) {
 // Printed with the numbers, because this is where someone is most likely to
 // read them as a ranking. They are not one: the ceiling is architectural.
 console.log(
-  '\n  Not a ranking — the two surfaces have different ceilings. PrimeNG resolves refs at\n' +
-    '  runtime (one semantic binding cascades to many slots), Bootstrap binds per variable.\n' +
+  '\n  Not a ranking — the surfaces have different ceilings. PrimeNG resolves refs at\n' +
+    '  runtime (one semantic binding cascades to many slots), Bootstrap binds per variable,\n' +
+    '  Mantine computes most of its variables from a small theme object.\n' +
     '  Bootstrap is at its floor (~0 slots reachable without new catalog vocabulary); PrimeNG\n' +
-    '  has ~221. Compare each target to its own history, not to the other one.',
+    '  has ~221. Compare each target to its own history, not to another one.',
 );
 
 if (errors.length) {
@@ -170,5 +269,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `\n✔ coverage bar: every slot of both targets’ documented surfaces is accounted for on all ${EXAMPLES.length} examples; no silent unsupported\n`,
+  `\n✔ coverage bar: every slot of the bootstrap, primeng and mantine surfaces is accounted for on all ${EXAMPLES.length} examples; no silent unsupported\n`,
 );

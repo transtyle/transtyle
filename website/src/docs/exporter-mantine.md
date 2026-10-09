@@ -13,10 +13,10 @@ order: 16
 
 [Mantine](https://mantine.dev/) themes through one object passed to `<MantineProvider>`: colours are named ten-shade tuples, `primaryShade` picks the filled shade per scheme, and `virtualColor()` lets one name stand for a different tuple in light and in dark. That is [the role grid](/docs/language/#color-roles-the-role-grid) in another shape, so this exporter is mostly a mapping table. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `theme` and `cssVariablesResolver`.
 
-<!-- measured: acme.mantine.rows = 158 -->
-<!-- measured: acme.mantine.native = 112 -->
+<!-- measured: acme.mantine.rows = 194 -->
+<!-- measured: acme.mantine.native = 116 -->
 
-On [Acme](/docs/examples/) that is 158 classified rows in `report.json`, 112 of them native.
+On [Acme](/docs/examples/) that is 194 classified rows in `report.json`, 116 of them native, measured against [Mantine's whole theming surface](#measured-against-mantines-whole-surface).
 
 ```json
 "targets": { "mantine": { "output": "dist/mantine" } }
@@ -63,6 +63,15 @@ Mantine's two neutral tuples, `gray` and `dark`, are read directly by its styles
 - **The focus ring.** Mantine draws every focus outline from the primary filled colour, in its stylesheet; `ring` is reported `dropped`.
 - **The z-index ladder.** Mantine's components take z-index from JavaScript defaults, not from the `--mantine-z-index-*` variables.
 - **Display type, `2xl` breakpoint, link hover/visited, motion, density.** No matching key; each is a `dropped` row with its reason.
+
+## Measured against Mantine's whole surface
+
+<!-- measured: mantine.surface.total = 203 -->
+<!-- measured: acme.mantine.set = 106 -->
+<!-- measured: acme.mantine.follow = 66 -->
+<!-- measured: acme.mantine.default = 31 -->
+
+The rows above say what the exporter maps. A checked-in inventory says what there is to map: 203 entries extracted from the installed `@mantine/core`, every leaf of `DEFAULT_THEME` and every variable `defaultCssVariablesResolver` writes. Ten of Mantine's fourteen default palettes fold into one `<color>` entry; `gray`, `dark`, `red` and `teal` stay named, because Mantine's own page variables read them. On Acme, this theme sets 106 entries, Mantine computes 66 more from those (`--mantine-font-size-xs` from `fontSizes.xs`, `--mantine-primary-color-filled` from `primaryColor` and the role's filled colour), and 31 keep Mantine's value, each on its own row in `report.json` with the reason: behaviour switches such as `focusRing` and `cursorType`, the gradient variant, `scale`, the unread z-index variables. The [coverage bar](/docs/concepts/#5-provenance-and-coverage) fails the build when an entry is unaccounted for or kept without a reason.
 
 Component geometry goes through Mantine's data-only routes, `defaultProps` and `styles`: button and control radius, the default button's horizontal padding, and control heights mapped default size to default size. Inputs and buttons are height-driven, so vertical padding is dropped. The full mapping is in the [exporter spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/exporters/mantine.md).
 
