@@ -1,8 +1,8 @@
 # Validation, diagnostics, and coverage
 
-<!-- measured: codes = 59 -->
+<!-- measured: codes = 63 -->
 
-> **Status (re-verified 2026-10-09):** the diagnostics collector, the 59 shipped
+> **Status (re-verified 2026-10-09):** the diagnostics collector, the 63 shipped
 > `TST` codes, DTCG structural validation, contrast checking, the coverage
 > classes, `report.json`, `check --json`, per-diagnostic source locations,
 > config suppressions (`check.suppress`), the exporter compatibility check,
@@ -136,6 +136,8 @@ When the caller's loader knows an exporter's `package.json` (the CLI's does), co
 | `TST1310` | warning  | An exporter package has no `transtyle` manifest, or it lacks `irSpec` or `pluginApi`, so its compatibility was not checked                                             | Declare the manifest in the exporter's `package.json`; the exporter still loads                                         |
 
 An incompatible exporter doesn't stop later targets from being loaded and checked, so one run reports every incompatible exporter, and nothing is written. A caller that hands core the bare plugin (the repository's scripts, the website) gets no check and no warning.
+
+The manifest's `targets` ranges also serve a target's requested framework version (`targets.<t>.version`, [versioning.md](../architecture/versioning.md#target-framework-versions-adr-0006)): core selects the range covering it and hands it to the exporter as `ctx.targetProfile`. A version no declared range covers, or a version asked of an exporter that declares no ranges (a bare plugin, a mapping file), is `TST1313` (error), with the ranges in the message; that target is not emitted and the others are still checked. A declarative mapping ([declarative-mapping.md](declarative-mapping.md)) is checked here too, before its `emit`: `TST1014` for a mapping that can't be read or doesn't validate (one per problem, with the row's path), `TST1015` for a row naming a slot neither the catalog nor the design system has.
 
 ## Exporter failures (`TST3xxx`)
 
@@ -286,7 +288,7 @@ An unbound token still reaches the open-vocabulary targets, css-variables and da
 
 ## Report format
 
-`report.json` (schema-versioned, [`report/v0.json`](../../website/public/schemas/report/v0.json), generated from `packages/core/src/schema/report.schema.js`) per target per build: `target`, `options`, `generatedBy`, `coverage` (`counts` and the rows), `reads`, `diagnostics`, `suppressed` and `files`.
+`report.json` (schema-versioned, [`report/v0.json`](../../website/public/schemas/report/v0.json), generated from `packages/core/src/schema/report.schema.js`) per target per build: `target`, `options`, `version` (only when the target asked for one: `{ requested, profile }`, the version from `targets.<t>.version` and the manifest range that decided the output), `generatedBy`, `coverage` (`counts` and the rows), `reads`, `diagnostics`, `suppressed` and `files`.
 
 `reads` is the sorted list of catalog slots (`semantic.*`, `component.*`) the exporter read while it emitted, recorded by core rather than declared by the exporter ([cli.md, `check --matrix`](cli.md#check---matrix--who-reads-a-slot), [issue #160](https://github.com/transtyle/transtyle/issues/160)). It is wider than the slots coverage rows name: a slot read to compute a value described under another slot or a pattern counts, and a slot read and then discarded counts too, so a slot missing from `reads` is one the target never depends on. A lookup of a slot the design system doesn't resolve is not a read, and a target that crashed reads nothing (`[]`). The schema keeps the field optional, so a report written before it still validates. `check --json` carries the same `reads` on each entry of `targets`.
 

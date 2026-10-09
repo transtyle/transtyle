@@ -27,6 +27,8 @@ import { coverageSlots } from './explain.js';
 import { buildReport } from './report.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 import { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
+import { validateMapping, unknownMappingModes, unknownMappingSlots } from './declarative.js';
+import { declaredProfiles, selectProfile } from './profiles.js';
 import { IR_SPEC } from '@transtyle/ir';
 import { completenessStatus, COMPLETENESS_REQUIRE_PREFIX } from './completeness.js';
 import { readTokenTrees, toFileMap, projectPath } from './project.js';
@@ -337,6 +339,44 @@ export async function compileProject({
       }
     }
 
+    // A declarative exporter (#82) is a mapping, checked like config is: a
+    // malformed table (TST1014) or a row naming no slot this IR or the catalog
+    // knows (TST1015) is refused before its emit runs.
+    if (exporter?.declarative) {
+      const invalid = reportMapping(name, exporter.declarative, normalized, diagnostics);
+      if (invalid > 0) {
+        crashes += invalid;
+        results.push({ target: name, exporter: exporterName, output, files: [], coverage: [], reads: [], skipped: true });
+        continue;
+      }
+    }
+
+    // Version profiles (#83, ADR-0006): a requested framework version selects
+    // the manifest range covering it; one outside every range is TST1313.
+    const requested = targetConfig.version ?? null;
+    const declared = withManifest ? declaredProfiles(loaded.manifest, name) : null;
+    if (requested !== null) {
+      const label = withManifest && loaded.package?.name ? `${loaded.package.name}${loaded.package.version ? ` ${loaded.package.version}` : ''}` : `the "${exporterName}" exporter`;
+      const outside = declared && selectProfile(declared.ranges, requested) === null;
+      if (!declared) {
+        diagnostics.error('TST1313', `Target "${name}" asks for version ${requested}, but ${label} declares no version ranges in its "transtyle" manifest`, {
+          target: name,
+          hint: `Remove "version" from targets.${name}, or use an exporter whose manifest lists the framework versions it supports ("targets": { "<framework>": [">=1 <2"] }).`,
+        });
+      } else if (outside) {
+        diagnostics.error('TST1313', `Target "${name}" asks for ${declared.framework} ${requested}, outside every range ${label} supports: ${declared.ranges.join(', ')}`, {
+          target: name,
+          hint: `Pick a version in ${declared.ranges.map((r) => `"${r}"`).join(' or ')} for targets.${name}.version, or use a release of the exporter that supports ${declared.framework} ${requested}.`,
+        });
+      }
+      if (!declared || outside) {
+        crashes++;
+        results.push({ target: name, exporter: exporterName, output, files: [], coverage: [], reads: [], skipped: true });
+        continue;
+      }
+    }
+    const profile = declared ? selectProfile(declared.ranges, requested) : null;
+
     // Validate this instance's options against the exporter's own schema (audit
     // A8): unknown or mis-typed options are errors. Exporters without options
     // reject any options object; exporters with options declare `optionsSchema`.
@@ -359,6 +399,12 @@ export async function compileProject({
       config, units,
       targetConfig: outRoot ? { ...targetConfig, output } : targetConfig, formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
       projectName: config.name ?? 'design-system',
+      // The framework version this target asked for (`targets.<t>.version`,
+      // null when unset) and the manifest range core selected for it (the
+      // newest one when no version is asked for; null when the exporter
+      // declares none). An exporter keys its profile tables on the range.
+      targetVersion: requested,
+      targetProfile: profile,
       // Sibling-target manifest (docs/specs/exporters/storybook.md#composition):
       // name, exporter, and output dir of every configured target — never their
       // resolutions. Lets composition-capable exporters reference sibling
@@ -429,7 +475,7 @@ export async function compileProject({
     // Its report.json is added after the loop, once every exporter has had its say.
     const result = { target: name, exporter: exporterName, output, files: [...files], coverage, reads, ...(customVocabulary && { customVocabulary }) };
     results.push(result);
-    if (withReports) reports.push({ result, targetConfig, view });
+    if (withReports) reports.push({ result, targetConfig, view, version: requested === null ? null : { requested, profile } });
   }
 
   // Source locations first (so the suppressed list carries them too), then
@@ -444,10 +490,10 @@ export async function compileProject({
   // loop, which serialised each report with the diagnostics raised so far: a
   // warning from a later target's exporter was missing from every earlier
   // target's report.json (issue #186).
-  for (const { result, targetConfig, view } of reports) {
+  for (const { result, targetConfig, view, version } of reports) {
     const listed = result.files.map((f) => projectPath(result.output, f.path, root));
     const report = buildReport({
-      target: result.target, config: configChain, options: targetConfig.options, coverage: result.coverage, reads: result.reads,
+      target: result.target, config: configChain, options: targetConfig.options, version, coverage: result.coverage, reads: result.reads,
       normalized: view, customVocabulary: result.customVocabulary,
       diagnostics: diagnostics.items, suppressed: diagnostics.suppressed, files: listed,
     });
@@ -464,6 +510,34 @@ export async function compileProject({
  */
 function ruleLabels(origins, leafName, key) {
   return origins.map(({ file, index }) => `${key}[${index}]${file === leafName ? '' : ` in ${file}`}`);
+}
+
+/**
+ * TST1014 for a mapping that can't be read or doesn't validate (one per
+ * problem, with the row's path), TST1015 for each row whose slot neither the
+ * catalog nor this IR has. Returns the number of errors.
+ */
+function reportMapping(name, { mapping, source, error }, normalized, diagnostics) {
+  const where = `Mapping ${source} (target "${name}")`;
+  const hint = 'See the declarative mapping format in the "Write an exporter" guide, or validate the file against https://transtyle.dev/schemas/mapping/v0.json.';
+  if (error) {
+    diagnostics.error('TST1014', `${where}: ${error}`, { target: name, hint });
+    return 1;
+  }
+  const problems = validateMapping(mapping);
+  if (problems.length === 0) problems.push(...unknownMappingModes(mapping, normalized));
+  for (const { path: p, message } of problems) {
+    diagnostics.error('TST1014', `${where}: ${p === '(root)' ? '' : p + ' '}${message}`, { target: name, hint });
+  }
+  if (problems.length) return problems.length;
+  const unknown = unknownMappingSlots(mapping, normalized);
+  for (const { path: p, slot, near } of unknown) {
+    diagnostics.error('TST1015', `${where}: ${p} "${slot}" is not a slot of the catalog or of this design system`, {
+      target: name,
+      hint: near ? `Did you mean "${near}"? \`transtyle catalog\` lists every catalog slot.` : '`transtyle catalog` lists every catalog slot; a custom role or component token must be authored to be mapped.',
+    });
+  }
+  return unknown.length;
 }
 
 /**

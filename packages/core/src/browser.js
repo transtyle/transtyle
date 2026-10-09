@@ -6,6 +6,7 @@
  * entry minus the functions that read or write a disk: `compile()`,
  * `loadProject()`, `writeResults()`, `loadConfig()`, `expandTokenFiles()`,
  * `loadConfigChain()`/`mergeConfigChain()` (an `extends` chain is file paths),
+ * `readMappingFile()`/`loadDeclarativePackage()` (a mapping read from a path),
  * `MANIFEST_FILE`/`hashContents()` (the emitted-file manifest records what
  * landed on disk), `loadContrast()`/`loadApca()` (which resolve `apca-w3` from
  * a directory) and `suggestBindings()` (which reads a project from disk).
@@ -29,3 +30,6 @@ export { customTokens, isCustomRow, accountCustomTokens, customVocabularySentenc
 export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
 export { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
 export { SYNONYMS_VERSION } from './synonyms.js';
+export { createDeclarativeExporter, validateMapping, unknownMappingModes, unknownMappingSlots, mappingSchema } from './declarative.js';
+export { declaredProfiles, selectProfile } from './profiles.js';
+export { parseRange, satisfies } from './semver.js';

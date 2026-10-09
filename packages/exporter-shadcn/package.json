@@ -29,8 +29,8 @@
     "pluginApi": "0",
     "targets": {
       "shadcn": [
-        "tailwind-v3",
-        "tailwind-v4"
+        ">=3 <4",
+        ">=4 <5"
       ]
     },
     "modes": [

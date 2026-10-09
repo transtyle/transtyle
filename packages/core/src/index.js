@@ -14,6 +14,8 @@ import { loadConfigChain, mergeConfigChain, readTokenFiles, requireTokens, DEFAU
 import { writeResults } from './emit.js';
 import { MANIFEST_FILE, readManifests, renderManifest, reportDrift, staleFiles } from './manifest.js';
 import { compileProject } from './pipeline.js';
+import { createDeclarativeExporter } from './declarative.js';
+import { readMappingFile } from './declarative-fs.js';
 import { loadApca } from './apca.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
@@ -22,6 +24,10 @@ import { Diagnostics } from './diagnostics.js';
 export * from './browser.js';
 export { loadProject, loadConfig, expandTokenFiles, loadConfigChain, mergeConfigChain, DEFAULT_CONFIG_FILE } from './load.js';
 export { writeResults } from './emit.js';
+export { createDeclarativeExporter, validateMapping, unknownMappingModes, unknownMappingSlots, mappingSchema } from './declarative.js';
+export { readMappingFile, loadDeclarativePackage } from './declarative-fs.js';
+export { declaredProfiles, selectProfile } from './profiles.js';
+export { parseRange, satisfies } from './semver.js';
 export { MANIFEST_FILE, hashContents } from './manifest.js';
 export { loadContrast, loadApca } from './apca.js';
 // Reads a project from disk (`cwd`), so it stays out of the browser entry.
@@ -52,6 +58,10 @@ export { suggestBindings, SUGGEST_THRESHOLDS } from './suggest.js';
  *
  * `loadExporter(name)` returns the plugin, or `{ plugin, manifest, package }`
  * so its compatibility is checked (TST1309, TST1310): see `compileProject()`.
+ *
+ * A target whose `exporter` is a path to a `.json` file (`./ourlib.mapping.json`)
+ * is a declarative mapping: compile() reads it from the project directory
+ * itself and never calls `loadExporter` for it (declarative.js).
  *
  * `apcaLoader` (optional) is an async function returning `{ lib, version }`,
  * `lib` being the `apca-w3` module: for an integration that bundles it rather
@@ -125,8 +135,16 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
       }
     : undefined;
 
+  // A mapping file next to the config is an exporter too (#82, ADR-0017): read
+  // here, so every caller of compile() gets it, and nothing is imported.
+  const loadWithMappings = async (spec) => {
+    if (!isMappingPath(spec)) return loadExporter(spec);
+    const { mapping, error } = readMappingFile(path.resolve(projectDir, spec));
+    return createDeclarativeExporter(mapping, { source: spec, error, fallbackName: path.basename(spec).replace(/\.json$/i, '') });
+  };
+
   const run = await compileProject({
-    config, files, targets, loadExporter, knownExporters, skipExporters, debug, outRoot,
+    config, files, targets, loadExporter: loadWithMappings, knownExporters, skipExporters, debug, outRoot,
     apcaLoader: apcaLoader ?? (() => loadApca(projectDir)),
     root: path.resolve(projectDir).split(path.sep).join('/'),
     configChain, origins, checkOutputs,
@@ -173,3 +191,6 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
 
   return { config: run.config, configChain, projectDir, diagnostics: run.diagnostics, results, normalized: run.normalized, bindings: run.bindings, contrast: run.contrast };
 }
+
+/** A target's `exporter` that names a mapping file next to the config rather than a package. */
+const isMappingPath = (spec) => /\.json$/i.test(spec) && (spec.startsWith('./') || spec.startsWith('../') || path.isAbsolute(spec));
