@@ -66,6 +66,23 @@ Two keys an earlier draft of this page showed are **specced, and rejected today*
 
 Target-specific `options` are defined and schema-validated by each exporter (the exporter ships its options schema; unknown options are errors, not silent ignores). An exporter that declares none — Bootstrap, ECharts, css-variables — rejects any `options` object at all.
 
+### Per-target mode subsets
+
+`modes` on a target keeps only some of the project's mode values for that target: a map from a declared dimension to the subset of its values to emit. Modes stay declared once for the project and the whole matrix is still derived and checked once; the exporter then receives only the kept combinations. A dimension the subset doesn't name keeps all its values.
+
+```jsonc
+"targets": {
+  "bootstrap": { "output": "dist/bootstrap", "modes": { "color-scheme": ["light"] } }, // light-only marketing site
+  "shadcn":    { "output": "dist/shadcn" }                                             // light + dark
+}
+```
+
+- A single-value dimension behaves exactly like a project that declares one value (the GOV.UK example): no dark block, and every exporter already guards for it.
+- A dimension not declared in the project's `modes`, a value not declared for it, or a subset that leaves out the dimension's `default` is an error, `TST1308` (the default is the base every other value is expressed against). Checked once per requested target before anything is written, so one bad subset emits nothing for any target.
+- A dimension narrowed by the subset is a deliberate exclusion, so it produces no `dropped` coverage row (an unnamed dimension an exporter can't express still does). Each target's `usage.md` ends with the modes its files contain.
+- Project-level diagnostics are not filtered: a dark-mode contrast warning (`TST2101`) or carry-over note (`TST1204`) still fires even if every target leaves dark out, because modes are declared for the project.
+- `modes` on a target whose exporter never expresses the dimension (`density` on Bootstrap) is allowed and only narrows the view. PrimeNG's preset always has a `dark` scheme; without a dark mode it repeats the light values there.
+
 ### Target instances
 
 A `targets` key is an **instance name**, not necessarily an exporter name. The optional `exporter` field selects the plugin (defaulting to the key), so one exporter can be configured multiple times with different options — e.g. shadcn in both Tailwind eras:

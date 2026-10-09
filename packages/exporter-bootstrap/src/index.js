@@ -114,7 +114,7 @@ export default {
       { path: '_variables.transtyle.scss', contents: dropUndefined(renderVariables(r, ctx), '_variables.transtyle.scss'), kind: 'stylesheet' },
       { path: '_maps.transtyle.scss', contents: renderMaps(r, ctx, drop), kind: 'stylesheet' },
       { path: 'bootstrap-theme.css', contents: dropUndefined(renderCss(r, ctx), 'bootstrap-theme.css'), kind: 'stylesheet' },
-      { path: 'usage.md', contents: renderUsage(ctx, r.coverage), kind: 'doc' },
+      { path: 'usage.md', contents: renderUsage(ctx, r.coverage, Boolean(normalized.modes.dark)), kind: 'doc' },
     ];
     return { files, coverage: r.coverage };
   },
@@ -659,7 +659,7 @@ function renderCss(r, ctx) {
 
 // ---------- usage ----------
 
-function renderUsage(ctx, coverage) {
+function renderUsage(ctx, coverage, hasDark = true) {
   const counts = {};
   for (const c of coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
   const summary = Object.entries(counts)
@@ -705,10 +705,15 @@ paths; unauthored ones resolve from their semantic defaults with provenance in
 \`report.json\` — one row per inventoried Bootstrap variable (657), including
 what is deliberately not driven and why.
 
-## Dark mode
+${hasDark
+    ? `## Dark mode
 
 Both paths follow Bootstrap's own mechanism: \`data-bs-theme="dark"\` on \`<html>\`.
+`
+    : `## Dark mode
 
+This theme was generated without a dark mode, so it carries no \`data-bs-theme="dark"\` values: Bootstrap's own dark palette applies if you set that attribute.
+`}
 ## Regenerating
 
 Never edit these files — change the design system tokens and run \`transtyle build bootstrap\`.

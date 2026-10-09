@@ -65,6 +65,8 @@ const mustReject = [
   { why: 'wrong type for tokens', cfg: { tokens: 'not-an-array' } },
   { why: 'bad check.failOn enum', cfg: { tokens: ['t/*.json'], check: { failOn: 'sometimes' } } },
   { why: 'unknown key inside a target', cfg: { tokens: ['t/*.json'], targets: { shadcn: { outputt: 'x' } } } },
+  { why: 'target modes with an empty value list', cfg: { tokens: ['t/*.json'], targets: { shadcn: { modes: { 'color-scheme': [] } } } } },
+  { why: 'target modes value not an array', cfg: { tokens: ['t/*.json'], targets: { shadcn: { modes: { 'color-scheme': 'light' } } } } },
   { why: 'mode dimension missing values', cfg: { tokens: ['t/*.json'], modes: { 'color-scheme': { default: 'light' } } } },
 ];
 for (const { why, cfg } of mustReject) {

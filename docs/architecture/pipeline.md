@@ -40,7 +40,7 @@ Output: **complete IR** — the semantic surface exporters may rely on is now to
 
 ## 4. RESOLVE
 
-Per target. The exporter's mapping runs against the complete IR:
+Per target. The exporter's mapping runs against the IR — the complete one, or, when the target sets `modes`, a view of it restricted to the kept combos (derivation and checks have already run once on the full matrix; no exporter needs to know the option exists, see [configuration.md](../specs/configuration.md#per-target-mode-subsets)):
 
 - the exporter owns its mapping table and applies it in its own `emit` — an earlier draft had core evaluating declarative tables through a `resolve`/`emit` split, and [plugins.md](plugins.md) records why that was dropped: eight exporters were written against the single-hook interface and none needed it;
 - programmatic resolution handles what a table can't express (ECharts' categorical palette, PrimeNG's severity grid);

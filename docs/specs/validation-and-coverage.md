@@ -50,6 +50,16 @@ Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — ca
 | `TST1113` | error    | A `semantic.*` token aliases a `component.*` token — the alias points the wrong way up the tiers (direct edge only; a chain reports the token that points into the component tier) | Alias the component token's own source instead, or move the token under `component.`                                                      |
 | `TST1307` | error    | A token file looks like Style Dictionary v3 (`value`/`type` without `$`), so it has no DTCG tokens                                                                                 | Convert it to DTCG (`$value`/`$type`/`$description`, references without `.value`); `transtyle migrate --from style-dictionary` is planned |
 
+## Per-target mode subsets
+
+`targets.<t>.modes` (see [configuration.md](configuration.md#per-target-mode-subsets)) is checked once per requested target, at EMIT, before anything is written. All of a target's problems are reported, and one bad subset stops the build for every target.
+
+| Code      | Severity | Meaning                                                                                                        | Remediation                                                                                      |
+| --------- | -------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `TST1308` | error    | A target's `modes` names a dimension or a value the project's `modes` doesn't declare, or leaves out a default | Use declared names; include the dimension's default value, or change `modes.<dimension>.default` |
+
+`TST1109` already means "a mode-scoped _layer_ targets an undeclared mode" (a token-file mistake), so the target-level mistake has its own code. A dimension narrowed to a single value by a target is a deliberate exclusion, not a loss: it produces no `dropped` coverage row, even for an exporter that never expresses that dimension. Dimensions the subset doesn't name keep all their values (and keep their `dropped` row where the exporter can't express them).
+
 `transtyle check --json` prints the full diagnostics array (plus per-target coverage) to stdout as one JSON object — human logs still go to stderr, so both can run in the same invocation without interleaving (`docs/specs/cli.md` "Behavioral contracts").
 
 ## Exporter failures (`TST3xxx`)

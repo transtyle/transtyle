@@ -127,9 +127,15 @@
  * and the accepted forms. Validated by reverting normalize.js to carry those
  * values as authored: the twin fails on all eight exporters.
  *
+ * **Per-target mode subsets** (issue #89, `targets.<t>.modes`): Acme with one
+ * target narrowed at a time. Restricted to light, a target emits no dark block
+ * and no `dropped` coverage row for the deliberate exclusion, its usage.md
+ * says which modes it holds, and every exporter survives it; a bad subset
+ * (default omitted, undeclared value or dimension) is TST1308 and emits nothing.
+ *
  * Run: node scripts/check-minimal-ds.mjs   (npm run check:minimal-ds)
  */
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, cpSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -560,6 +566,72 @@ if (!df.diagnostics.errors.some((d) => d.code === 'TST1112')) {
 
 rmSync(root, { recursive: true, force: true });
 
+// Per-target mode subsets (issue #89, `targets.<t>.modes`). Acme (color-scheme
+// light/dark x density comfortable/compact) with one target narrowed at a time:
+//  - light only: no dark in the files, no `dropped` row for a deliberate
+//    exclusion, usage.md says what it holds, and the unnarrowed run of the same
+//    target is untouched;
+//  - density narrowed to one value on a target that never expresses density:
+//    still no `dropped` row, where leaving density wholly out of the subset
+//    keeps it;
+//  - a subset that names an undeclared value or dimension, or drops the
+//    default, is TST1308 and emits nothing for ANY target.
+const subsetDir = mkdtempSync(join(tmpdir(), 'transtyle-subset-'));
+cpSync('examples/acme', subsetDir, { recursive: true, filter: (src) => !/[\\/](demo|expected|dist)([\\/]|$)/.test(src) });
+const subsetConfig = JSON.parse(readFileSync(join(subsetDir, 'transtyle.config.json'), 'utf8'));
+const compileSubset = async (name, modes) => {
+  const cfg = structuredClone(subsetConfig);
+  cfg.targets = { [name]: { ...cfg.targets[name] } };
+  if (modes) cfg.targets[name].modes = modes;
+  writeFileSync(join(subsetDir, 'transtyle.config.json'), JSON.stringify(cfg, null, 2));
+  const r = await compile({ cwd: subsetDir, emit: false, loadExporter: async () => (await import(EXPORTERS[name])).default });
+  return { r, res: r.results.find((x) => x.target === name) };
+};
+const droppedRows = (res) => (res?.coverage ?? []).filter((c) => c.class === 'dropped' && c.variable.startsWith('(mode:'));
+const fileOf = (res, f) => res?.emitted.find((x) => x.path === f)?.contents ?? '';
+{
+  const full = await compileSubset('bootstrap', null);
+  const light = await compileSubset('bootstrap', { 'color-scheme': ['light'] });
+  if (light.r.diagnostics.errors.length) errors.push(`target modes: bootstrap light-only produced errors — ${light.r.diagnostics.errors.map((d) => d.message).join('; ')}`);
+  if (!/\[data-bs-theme=dark\]|data-bs-theme="dark"/.test(fileOf(full.res, 'bootstrap-theme.css'))) errors.push('target modes: the full Acme Bootstrap theme has no dark block, so the light-only case proves nothing');
+  if (/\[data-bs-theme=dark\]|data-bs-theme="dark"/.test(fileOf(light.res, 'bootstrap-theme.css'))) errors.push('target modes: bootstrap restricted to light still emitted a dark block');
+  if (droppedRows(light.res).some((c) => c.variable === '(mode:color-scheme)')) errors.push('target modes: a deliberate color-scheme exclusion produced a `dropped` row');
+  if (!droppedRows(full.res).some((c) => c.variable === '(mode:density)')) errors.push('target modes: the full Bootstrap build lost its (mode:density) dropped row');
+  if (!fileOf(light.res, 'usage.md').includes('- `color-scheme`: light')) errors.push('target modes: usage.md does not state the modes the files contain');
+
+  const dens = await compileSubset('bootstrap', { density: ['comfortable'] });
+  if (droppedRows(dens.res).length) errors.push('target modes: density narrowed to one value still produced a `dropped` row');
+  if (fileOf(dens.res, 'bootstrap-theme.css') !== fileOf(full.res, 'bootstrap-theme.css')) errors.push('target modes: narrowing a dimension Bootstrap does not express changed its stylesheet');
+
+  const echarts = await compileSubset('echarts', { 'color-scheme': ['light'] });
+  const themes = (echarts.res?.emitted ?? []).filter((f) => /^theme\..*\.json$/.test(f.path));
+  if (themes.length !== 1) errors.push(`target modes: echarts restricted to light should emit one theme, got ${themes.length}`);
+
+  const css = await compileSubset('css-variables', { density: ['comfortable'] });
+  if (/data-density/.test(fileOf(css.res, 'variables.transtyle.css'))) errors.push('target modes: css-variables narrowed to density: comfortable still emitted a compact block');
+
+  const mantine = await compileSubset('mantine', { 'color-scheme': ['light'] });
+  if ((mantine.res?.emitted ?? []).some((f) => /primary-dark/.test(f.contents ?? ''))) errors.push('target modes: mantine restricted to light still emitted a primary-dark tuple');
+
+  for (const name of Object.keys(EXPORTERS)) {
+    const r = await compileSubset(name, { 'color-scheme': ['light'] });
+    if (r.r.diagnostics.errors.length) errors.push(`target modes (${name}, light only): ${r.r.diagnostics.errors.map((d) => d.message).join('; ')}`);
+    for (const f of r.res?.emitted ?? []) if (leaks(f.contents ?? '')) errors.push(`target modes (${name}, light only)/${f.path}: leaked a JS value into output`);
+  }
+
+  for (const [why, modes, wantInMessage] of [
+    ['omits the default', { 'color-scheme': ['dark'] }, 'leaves out the default value "light"'],
+    ['names an undeclared value', { 'color-scheme': ['light', 'sepia'] }, '"sepia"'],
+    ['names an undeclared dimension', { brand: ['a'] }, '"brand" is not a mode dimension'],
+  ]) {
+    const bad = await compileSubset('bootstrap', modes);
+    const hit = bad.r.diagnostics.errors.find((d) => d.code === 'TST1308');
+    if (!hit || !hit.message.includes(wantInMessage)) errors.push(`target modes (${why}): expected TST1308 containing ${wantInMessage} — got ${bad.r.diagnostics.errors.map((d) => `${d.code} ${d.message}`).join('; ') || 'no errors'}`);
+    if (bad.res) errors.push(`target modes (${why}): a bad subset still emitted`);
+  }
+}
+rmSync(subsetDir, { recursive: true, force: true });
+
 // Binding-layer case: TST1204 must judge the RESOLVED value, not the slot's own
 // text. A design system adopted the way the docs recommend binds catalog slots
 // to its own vocabulary with one-line aliases, and the per-mode values live on
@@ -940,4 +1012,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106; per-target mode subsets drop the excluded values with no \`dropped\` row and a bad subset is TST1308 (nothing emitted)`);
