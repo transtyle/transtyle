@@ -67,6 +67,12 @@ const mustReject = [
   { why: 'unknown key inside a target', cfg: { tokens: ['t/*.json'], targets: { shadcn: { outputt: 'x' } } } },
   { why: 'target modes with an empty value list', cfg: { tokens: ['t/*.json'], targets: { shadcn: { modes: { 'color-scheme': [] } } } } },
   { why: 'target modes value not an array', cfg: { tokens: ['t/*.json'], targets: { shadcn: { modes: { 'color-scheme': 'light' } } } } },
+  { why: 'check.suppress entry without a reason', cfg: { tokens: ['t/*.json'], check: { suppress: [{ code: 'TST1305' }] } } },
+  { why: 'check.suppress entry with an empty reason', cfg: { tokens: ['t/*.json'], check: { suppress: [{ code: 'TST1305', reason: '' }] } } },
+  { why: 'check.suppress entry with a blank reason', cfg: { tokens: ['t/*.json'], check: { suppress: [{ code: 'TST1305', reason: '   ' }] } } },
+  { why: 'check.suppress entry with an unknown key', cfg: { tokens: ['t/*.json'], check: { suppress: [{ code: 'TST1305', reason: 'x', target: 'shadcn' }] } } },
+  { why: 'check.suppress code that is not a TST code', cfg: { tokens: ['t/*.json'], check: { suppress: [{ code: 'warning', reason: 'x' }] } } },
+  { why: 'check.suppress path with a wildcard in the middle', cfg: { tokens: ['t/*.json'], check: { suppress: [{ code: 'TST1305', path: 'a.*.b', reason: 'x' }] } } },
   { why: 'mode dimension missing values', cfg: { tokens: ['t/*.json'], modes: { 'color-scheme': { default: 'light' } } } },
 ];
 for (const { why, cfg } of mustReject) {

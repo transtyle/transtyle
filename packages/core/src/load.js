@@ -2,6 +2,7 @@
 
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { locateJson, parseErrorLocation } from './locate.js';
 
 export async function loadConfig(cwd) {
   const file = path.join(cwd, 'transtyle.config.json');
@@ -77,15 +78,23 @@ export async function loadTokenTrees(cwd, entries, diagnostics) {
           hint: `Resolved relative to ${cwd}. Check the path in "tokens" in transtyle.config.json.`,
         });
       for (const f of files) {
+        const rel = path.relative(cwd, f);
+        let text;
         try {
-          const tree = JSON.parse(await readFile(f, 'utf8'));
-          const rel = path.relative(cwd, f);
-          validateTokenTree(tree, rel, diagnostics, seenExtensionNamespaces);
-          trees.push({ file: rel, tree, modeScope, ...(override ? { override } : {}) });
+          text = await readFile(f, 'utf8');
+          const tree = JSON.parse(text);
+          const positions = locateJson(text);
+          validateTokenTree(tree, rel, diagnostics, seenExtensionNamespaces, positions);
+          trees.push({ file: rel, tree, modeScope, positions, ...(override ? { override } : {}) });
         } catch (e) {
           // Relative path (AL5): an absolute one buries the filename that
-          // matters at the end of a long, uninformative prefix.
-          diagnostics.error('TST1002', `Failed to parse ${path.relative(cwd, f)}: ${e.message}`);
+          // matters at the end of a long, uninformative prefix. The line comes
+          // from the "position N" the parser puts in its message (none, when
+          // the failure was reading the file rather than parsing it).
+          diagnostics.error('TST1002', `Failed to parse ${rel}: ${e.message}`, {
+            file: rel,
+            ...(text !== undefined ? parseErrorLocation(text, e.message) : null),
+          });
         }
       }
     }
@@ -144,7 +153,14 @@ function findStyleDictionaryLeaf(tree) {
  * Runs per loaded file, before merging — `seenNamespaces` is shared across
  * the whole `loadTokenTrees()` call so TST1304 fires once per compile.
  */
-export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new Set()) {
+export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new Set(), positions = new Map()) {
+  // Where a key sits in `file`: `file`, `line`, `column` and the token `path`
+  // the diagnostic is about, ready to spread into its context.
+  const where = (keys) => {
+    const dotted = keys.join('.');
+    const pos = positions.get(dotted);
+    return { file, ...(dotted ? { path: dotted } : {}), ...(pos ?? {}) };
+  };
   // A Style Dictionary v3 file (`value`/`type` without `$`) has no `$value`
   // anywhere, so every check below would see an empty tree and the user would
   // get TST1305/TST1201 noise that never names the real cause. Say it once and
@@ -155,6 +171,7 @@ export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new 
       'TST1307',
       `${file}: looks like a Style Dictionary (v3) token file — tokens use "value"/"type" without the "$" prefix (first one: ${legacyAt.join('.') || '(root)'}), so none of them is a DTCG token`,
       {
+        ...where(legacyAt),
         hint: 'Rename "value" → "$value", "type" → "$type" and "comment" → "$description", strip ".value" from "{a.b.c.value}" references, and put the tokens under option/semantic/component. `transtyle migrate --from style-dictionary` is planned to do this for you (docs/specs/cli.md).',
       },
     );
@@ -163,7 +180,7 @@ export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new 
   for (const key of Object.keys(tree)) {
     if (key.startsWith('$')) continue;
     if (!TIERS.has(key)) {
-      diagnostics.warn('TST1305', `${file}: top-level group "${key}" is not option/semantic/component`);
+      diagnostics.warn('TST1305', `${file}: top-level group "${key}" is not option/semantic/component`, where([key]));
     }
   }
   const walk = (node, path_) => {
@@ -173,19 +190,19 @@ export function validateTokenTree(tree, file, diagnostics, seenNamespaces = new 
       for (const ns of Object.keys(node.$extensions)) {
         if (!KNOWN_EXTENSION_NAMESPACES.has(ns) && !seenNamespaces.has(ns)) {
           seenNamespaces.add(ns);
-          diagnostics.info('TST1304', `${file}: foreign $extensions namespace "${ns}" carried through untouched (not a transtyle namespace)`);
+          diagnostics.info('TST1304', `${file}: foreign $extensions namespace "${ns}" carried through untouched (not a transtyle namespace)`, where(path_));
         }
       }
     }
     const hasValue = '$value' in node;
     const childKeys = Object.keys(node).filter((k) => !k.startsWith('$'));
     if (!hasValue && childKeys.length === 0 && localType !== undefined) {
-      diagnostics.error('TST1302', `${path_.join('.')}: declares $type "${localType}" but has neither $value nor child tokens`);
+      diagnostics.error('TST1302', `${path_.join('.')}: declares $type "${localType}" but has neither $value nor child tokens`, where(path_));
       return;
     }
     if (hasValue) {
       if (localType !== undefined && !DTCG_TYPES.has(localType)) {
-        diagnostics.warn('TST1306', `${path_.join('.')}: unknown $type "${localType}" — carried through opaque (no type-specific parsing or derivation)`);
+        diagnostics.warn('TST1306', `${path_.join('.')}: unknown $type "${localType}" — carried through opaque (no type-specific parsing or derivation)`, where(path_));
       }
       return;
     }

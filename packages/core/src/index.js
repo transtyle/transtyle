@@ -13,6 +13,7 @@ import { normalize, resolveDeferredAliases, reportModeCarryOver, reportTierViola
 import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
+import { fillLocations } from './locations.js';
 import { nearestName } from './nearest.js';
 import { makeUnits } from './units.js';
 import { validateTargetModes, targetView, narrowedDimensions, withModesNote } from './target-modes.js';
@@ -104,6 +105,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
         // The old text blamed `config derivation.require`, which most configs
         // (including `transtyle init`'s own scaffold) never set. It is an engine
         // invariant, not a consequence of configuration.
+        path: 'semantic.color.primary.solid',
         hint: 'Author it as `semantic.color.primary.solid` (your brand color). A bare `semantic.color.primary` is a different path — the role grid anchors on the `.solid` cell.',
       },
     );
@@ -118,11 +120,19 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     const kind = normalized.modes[normalized.defaultMode].get(`${req}.solid`)?.provenance.kind
       ?? normalized.modes[normalized.defaultMode].get(req)?.provenance.kind;
     if (kind === 'derived' || kind === undefined) {
-      diagnostics.error('TST1202', `Required token is not authored: ${req}`);
+      diagnostics.error('TST1202', `Required token is not authored: ${req}`, { path: req });
     }
   }
 
   const units = makeUnits(config);
+
+  // Source locations first (so the suppressed list carries them too), then
+  // `check.suppress`: every diagnostic that can
+  // exist before the target loop exists now (exporters never emit diagnostics
+  // of this kind), so one pass serves every target's report.
+  fillLocations(diagnostics.items, normalized.sources);
+  diagnostics.applySuppressions(config.check?.suppress);
+
   const targetNames = skipExporters ? [] : targets?.length ? targets : Object.keys(config.targets ?? {});
   const results = [];
   // Exporter crashes (TST3001/TST3002) are recorded per target and must not
@@ -305,6 +315,7 @@ function buildReport(target, targetConfig, coverage, diagnostics, files) {
     generatedBy: 'transtyle 0.1.0 (walking skeleton)',
     coverage: { counts, items: coverage },
     diagnostics: diagnostics.items,
+    suppressed: diagnostics.suppressed,
     files,
   };
 }

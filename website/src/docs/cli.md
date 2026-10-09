@@ -33,11 +33,13 @@ The pipeline minus EMIT — same code path, guaranteed to agree with real builds
 
 ### `--json`
 
-`check`, `diff` and `catalog`. For `check`, prints the full diagnostics array and per-target coverage to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
+`check`, `diff` and `catalog`. For `check`, prints the full diagnostics array, the `suppressed` list and per-target coverage to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
 
 ```bash
 npx transtyle check --json
-# { "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "..." }, ... ],
+# { "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "...",
+#                         "path": "scratch", "file": "tokens/brand.tokens.json", "line": 74, "column": 3 }, ... ],
+#   "suppressed": [ ... ],
 #   "targets": [ { "target": "shadcn", "coverage": [ ... ] }, ... ] }
 ```
 

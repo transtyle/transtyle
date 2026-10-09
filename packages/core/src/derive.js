@@ -160,6 +160,7 @@ export function derive(normalized, config, diagnostics) {
           diagnostics.warn(
             'TST1203',
             `${role}: has a role archetype but no authored ${role}.solid in ${mode} mode — grid not derived`,
+            { path: `${S}${role}` },
           );
         }
         continue; // built-ins: only reachable if primary itself were missing, already handled above
@@ -222,6 +223,7 @@ export function derive(normalized, config, diagnostics) {
         diagnostics.warn(
           'TST2101',
           `${role}.on-solid is ${onSolidPick.ratio.toFixed(1)}:1 against ${role}.solid in ${mode} mode (< 4.5:1 AA)`,
+          { path: `${S}${role}.on-solid` },
         );
       }
 
@@ -235,6 +237,7 @@ export function derive(normalized, config, diagnostics) {
         diagnostics.warn(
           'TST2101',
           `${role}.on-tint is ${onTintRatio.toFixed(1)}:1 against ${role}.tint in ${mode} mode (< 4.5:1 AA)`,
+          { path: `${S}${role}.on-tint` },
         );
       }
 
@@ -606,6 +609,7 @@ export function reportUnderived(normalized, underived, diagnostics) {
         'TST1205',
         `${slot} aliases {${target}}, which is derived after the role grids — ${role}'s grid is not derived ${where}`,
         {
+          path,
           hint: `Alias an authored token or another role's .solid or grid cell (those are derived in time), or author ${slot} as a color.`,
         },
       );
@@ -614,6 +618,7 @@ export function reportUnderived(normalized, underived, diagnostics) {
         'TST1205',
         `${slot} aliases {${target}}, which is derived after text.base is read — text.muted, text.subtle, text.disabled, text.strong and every role's text-strong are not derived ${where}`,
         {
+          path,
           hint: 'Alias an authored token (a role\'s cells are derived after text.base is read), or author text.base as a color.',
         },
       );

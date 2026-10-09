@@ -20,6 +20,19 @@ const coverageItem = {
   },
 };
 
+/**
+ * Where a diagnostic is about, when it is about something authored: the token
+ * or group `path`, and the `file` (relative to the project), `line` and
+ * `column` (1-based) of its key. Absent when the thing is derived or not in a
+ * file (docs/specs/validation-and-coverage.md#source-locations).
+ */
+const location = {
+  path: { type: 'string' },
+  file: { type: 'string' },
+  line: { type: 'integer' },
+  column: { type: 'integer' },
+};
+
 const diagnostic = {
   type: 'object',
   required: ['severity', 'code', 'message'],
@@ -32,12 +45,20 @@ const diagnostic = {
     // and what to change are different sentences, and tools consuming the
     // report (editors, CI annotations) want to place them differently.
     hint: { type: 'string' },
+    ...location,
   },
+};
+
+/** A diagnostic silenced by `check.suppress`, with the reason its entry gave. */
+const suppressedDiagnostic = {
+  ...diagnostic,
+  required: [...diagnostic.required, 'reason'],
+  properties: { ...diagnostic.properties, reason: { type: 'string' } },
 };
 
 export const reportSchema = {
   type: 'object',
-  required: ['target', 'generatedBy', 'coverage', 'diagnostics', 'files'],
+  required: ['target', 'generatedBy', 'coverage', 'diagnostics', 'suppressed', 'files'],
   additionalProperties: false,
   properties: {
     $schema: { type: 'string' },
@@ -54,6 +75,7 @@ export const reportSchema = {
       },
     },
     diagnostics: { type: 'array', items: diagnostic },
+    suppressed: { type: 'array', items: suppressedDiagnostic },
     files: { type: 'array', items: { type: 'string' } },
   },
 };
