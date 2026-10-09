@@ -79,6 +79,14 @@ export const configSchema = {
           additionalProperties: false,
           properties: { standard: { type: 'string', enum: ['wcag21-aa', 'wcag21-aaa'] } },
         },
+        hygiene: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            unusedOption: { type: 'string', enum: ['info', 'warning', 'off'] },
+            duplicateOption: { type: 'string', enum: ['info', 'warning', 'off'] },
+          },
+        },
       },
     },
   },
