@@ -48,7 +48,8 @@ export function checkOutOfGamut(normalized, diagnostics) {
       if (src?.provenance?.kind !== 'authored' || !isColor(src.value)) continue;
       const { text: hex, clamped } = formatHex(src.value);
       if (!clamped) continue;
-      const raw = typeof src.rawValue === 'string' ? src.rawValue : formatColor(src.value);
+      // The value as authored: a CSS string, or a DTCG color object written back as JSON.
+      const raw = typeof src.rawValue === 'string' ? src.rawValue : src.rawValue && typeof src.rawValue === 'object' ? JSON.stringify(src.rawValue) : formatColor(src.value);
       const key = `${source} ${raw}`;
       if (!found.has(key)) found.set(key, { source, raw, hex, slots: new Set() });
       if (path !== source) found.get(key).slots.add(path);

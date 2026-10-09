@@ -9,7 +9,7 @@
  *
  * Run: node scripts/check-color.mjs (also: npm run check:color; in check:all).
  */
-import { parseColor, formatHex, contrastRatio, mix } from '../packages/core/src/color.js';
+import { parseColor, formatHex, contrastRatio, mix, DTCG_COLOR_SPACES } from '../packages/core/src/color.js';
 
 let failures = 0;
 const eq = (label, got, want) => {
@@ -54,11 +54,93 @@ for (const [input, want] of [
   ['red', 1],
 ]) near(`alpha ${input}`, parseColor(input).alpha, want);
 
-// --- unsupported syntax still fails loudly rather than silently mis-parsing ---
-for (const bad of ['lab(50% 40 59)', 'not-a-color', 'rgb(1,2)', 'hsl(nope 1% 2%)']) {
+// --- every DTCG color space, and the CSS functions that share its converter (issue #25) ---
+// Reference values: sRGB red (#ff0000) written in each space, as published by
+// independent implementations of the CSS Color 4 conversions (colorjs.io's
+// `new Color('red').to(space)`), rounded to 4–5 decimals. Never our own output.
+// Within 1/255 per channel of #ff0000, and of red's OKLCH within 0.001.
+const RED_IN = {
+  srgb: [1, 0, 0],
+  'srgb-linear': [1, 0, 0],
+  hsl: [0, 100, 50],
+  hwb: [0, 0, 0],
+  lab: [54.29, 80.81, 69.89],
+  lch: [54.29, 106.84, 40.85],
+  oklab: [0.62796, 0.22486, 0.12585],
+  oklch: [0.62796, 0.25768, 29.2339],
+  'display-p3': [0.91749, 0.20029, 0.13856],
+  'a98-rgb': [0.85839, 0, 0],
+  rec2020: [0.79198, 0.23098, 0.07376],
+  'prophoto-rgb': [0.70225, 0.27572, 0.10355],
+  'xyz-d65': [0.41239, 0.21264, 0.01933],
+  'xyz-d50': [0.43607, 0.22249, 0.01392],
+};
+const RED = { l: 0.62796, c: 0.25768, h: 29.2339 };
+const channels = (hex) => [1, 3, 5].map((k) => parseInt(hex.substr(k, 2), 16));
+const nearRed = (label, color) => {
+  const got = channels(formatHex(color).text);
+  if (got.some((v, i) => Math.abs(v - [255, 0, 0][i]) > 1)) { console.error(`✖ ${label}: got ${formatHex(color).text}, want #ff0000 ±1/255`); failures++; }
+  near(`${label} L`, color.l, RED.l, 0.001);
+  near(`${label} C`, color.c, RED.c, 0.001);
+  near(`${label} H`, color.h, RED.h, 0.05);
+};
+eq('DTCG color spaces all covered', Object.keys(RED_IN).sort().join(), [...DTCG_COLOR_SPACES].sort().join());
+for (const [colorSpace, components] of Object.entries(RED_IN)) nearRed(`DTCG ${colorSpace}`, parseColor({ colorSpace, components }));
+for (const input of [
+  'lab(54.29% 80.81 69.89)',
+  'lab(54.29 64.648% 55.912%)',             // a/b percentages: 100% = 125
+  'lch(54.29 106.84 40.85deg)',
+  'oklab(62.796% 0.22486 0.12585)',
+  'oklch(62.796% 64.42% 29.2339)',          // chroma percentage: 100% = 0.4
+  'oklch(0.62796 0.25768 0.081205turn)',
+  'hwb(0 0% 0%)',
+  'color(srgb 100% 0% 0%)',
+  'color(display-p3 0.91749 0.20029 0.13856)',
+  'color(xyz 0.41239 0.21264 0.01933)',
+  'color(xyz-d50 0.43607 0.22249 0.01392)',
+]) nearRed(`parse ${input}`, parseColor(input));
+// CSS Color 4: whiteness + blackness ≥ 100% is a gray; `none` is 0.
+eq('hwb gray', hexOf('hwb(0 90% 60%)'), '#999999');
+eq('hwb(120 20% 20%)', hexOf('hwb(120 20% 20%)'), '#33cc33');
+eq('DTCG hwb gray', formatHex(parseColor({ colorSpace: 'hwb', components: ['none', 60, 40] })).text, '#999999');
+near('alpha lab() / 40%', parseColor('lab(50 0 0 / 40%)').alpha, 0.4);
+near('alpha DTCG', parseColor({ colorSpace: 'oklch', components: [0.5, 0, 0], alpha: 0.25 }).alpha, 0.25);
+// Wide gamut survives: display-p3 red is outside sRGB (published oklch(0.6486 0.2995 28.96)).
+const p3red = parseColor({ colorSpace: 'display-p3', components: [1, 0, 0] });
+near('display-p3 red L', p3red.l, 0.6486, 0.001);
+near('display-p3 red C', p3red.c, 0.2995, 0.001);
+eq('display-p3 red is clamped in hex', formatHex(p3red).clamped, true);
+
+// --- the srgb object and #hex are the same bits; an oklch object, the same as oklch() ---
+const same = (label, a, b) => eq(label, JSON.stringify(a), JSON.stringify(b));
+same('srgb object = #1d70b8', parseColor({ colorSpace: 'srgb', components: [29 / 255, 112 / 255, 184 / 255] }), parseColor('#1d70b8'));
+same('oklch object = oklch()', parseColor({ colorSpace: 'oklch', components: [0.62, 0.17, 255], alpha: 1 }), parseColor('oklch(0.62 0.17 255)'));
+
+// --- `hex` on an srgb object: wins within 0.01 per channel, else components + TST1123 ---
+const warnings = [];
+const onWarning = (w) => warnings.push(w);
+// The DTCG spec's own example: two-decimal components, the hex the tool showed.
+same('agreeing hex wins', parseColor({ colorSpace: 'srgb', components: [0, 0.43, 0.84], alpha: 1, hex: '#026fd7' }, { onWarning }), parseColor('#026fd7'));
+eq('agreeing hex: no warning', warnings.length, 0);
+same('disagreeing hex loses', parseColor({ colorSpace: 'srgb', components: [0, 0.5, 0.84], hex: '#026fd7' }, { onWarning }), parseColor({ colorSpace: 'srgb', components: [0, 0.5, 0.84] }));
+eq('disagreeing hex: TST1123', warnings.map((w) => w.code).join(), 'TST1123');
+same('hex is a fallback outside srgb', parseColor({ colorSpace: 'oklch', components: [0.62, 0.17, 255], hex: '#000000' }, { onWarning }), parseColor('oklch(0.62 0.17 255)'));
+eq('no warning outside srgb', warnings.length, 1);
+
+// --- unsupported syntax and malformed objects still fail loudly rather than silently mis-parsing ---
+for (const bad of [
+  'not-a-color', 'rgb(1,2)', 'hsl(nope 1% 2%)', 'lab(50% 40)', 'lch(50 x 30)', 'color(cmyk 0 0 0)', 'color(srgb 1 0)', 'device-cmyk(0 0 0 1)',
+  { colorSpace: 'cmyk', components: [0, 0, 0] },
+  { components: [0, 0, 0] },
+  { colorSpace: 'srgb', components: [0, 0] },
+  { colorSpace: 'srgb', components: [0, '0.5', 0] },
+  { colorSpace: 'srgb', components: [0, 0, 0], alpha: 2 },
+  { colorSpace: 'srgb', components: [0, 0, 0], hex: '#fff' },
+  42,
+]) {
   let threw = false;
   try { parseColor(bad); } catch { threw = true; }
-  if (!threw) { console.error(`✖ ${bad} should have thrown`); failures++; }
+  if (!threw) { console.error(`✖ ${JSON.stringify(bad)} should have thrown`); failures++; }
 }
 
 // --- round-trip fidelity: hex → OKLCH → hex ---
@@ -101,4 +183,4 @@ if (failures) {
   console.error(`\n✖ check-color: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('✔ check-color: all syntaxes parse to reference values; alpha, round-trip fidelity, contrast and mix endpoints correct');
+console.log('✔ check-color: all syntaxes and the fourteen DTCG color spaces parse to reference values; srgb objects match their hex bit for bit; hex-vs-components rule, alpha, round-trip fidelity, contrast and mix endpoints correct');

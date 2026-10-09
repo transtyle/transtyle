@@ -137,7 +137,14 @@
  * for `[object Object]` either. Malformed structured values must stop the build
  * with TST1106 naming the token (or the composite member's own path), the type
  * and the accepted forms. Validated by reverting normalize.js to carry those
- * values as authored: the twin fails on all eight exporters.
+ * values as authored: the twin fails on all eight exporters. Colors joined
+ * the twin with issue #25: DTCG color objects in five color spaces (an srgb
+ * object with two-decimal components and the hex the design tool showed, a
+ * per-mode srgb value, an oklch option reached through an alias, a lab text,
+ * an hwb role, a display-p3 role outside sRGB that must raise TST1120 in both
+ * twins, a shadow member with alpha) against their CSS strings, five malformed
+ * color objects and one malformed member, and an srgb hex that disagrees with
+ * its components (TST1123, top level and member).
  *
  * **Per-target mode subsets** (issue #89, `targets.<t>.modes`): Acme with one
  * target narrowed at a time. Restricted to light, a target emits no dark block
@@ -987,8 +994,37 @@ rmSync(compDir, { recursive: true, force: true });
 const twinTokens = (structured) => {
   const pick = (string, dtcg) => (structured ? dtcg : string);
   return {
+    // Colors (issue #25): an option aliased by a role, so the object form also
+    // reaches a slot through an alias.
+    option: { color: { teal: { $type: 'color', $value: pick('oklch(0.62 0.12 195)', { colorSpace: 'oklch', components: [0.62, 0.12, 195] }) } } },
     semantic: {
       ...MINIMAL_TOKENS.semantic,
+      color: {
+        ...MINIMAL_TOKENS.semantic.color,
+        // Two-decimal components with the hex the design tool showed: the hex
+        // wins (within 0.01 per channel), so this is #3b5bdb to the bit.
+        primary: { solid: { $type: 'color', $value: pick('#3b5bdb', { colorSpace: 'srgb', components: [0.23, 0.36, 0.86], alpha: 1, hex: '#3b5bdb' }) } },
+        elevation: {
+          0: {
+            surface: {
+              $type: 'color',
+              $value: pick('#ffffff', { colorSpace: 'srgb', components: [1, 1, 1] }),
+              $extensions: { 'transtyle.modes': { 'color-scheme': { dark: pick('#101114', { colorSpace: 'srgb', components: [16 / 255, 17 / 255, 20 / 255] }) } } },
+            },
+          },
+          1: {
+            shadow: {
+              $type: 'shadow',
+              $value: { color: pick('rgb(0 0 0 / 0.2)', { colorSpace: 'srgb', components: [0, 0, 0], alpha: 0.2 }), offsetX: '0px', offsetY: '1px', blur: '3px', spread: '0px' },
+            },
+          },
+        },
+        text: { base: { $type: 'color', $value: pick('lab(13.6 0.5 -3)', { colorSpace: 'lab', components: [13.6, 0.5, -3] }) } },
+        info: { solid: { $type: 'color', $value: '{option.color.teal}' } },
+        // Outside sRGB: same output, and TST1120 in both twins.
+        danger: { solid: { $type: 'color', $value: pick('color(display-p3 0.85 0.1 0.12)', { colorSpace: 'display-p3', components: [0.85, 0.1, 0.12] }) } },
+        success: { solid: { $type: 'color', $value: pick('hwb(140 10% 40%)', { colorSpace: 'hwb', components: [140, 10, 40] }) } },
+      },
       radius: { md: { $type: 'dimension', $value: pick('0.375rem', { value: 0.375, unit: 'rem' }) } },
       space: {
         $type: 'dimension',
@@ -1050,6 +1086,12 @@ const asDtcg = await twinBuild(true);
 let twinFiles = 0;
 for (const [label, r] of [['string twin', asString], ['DTCG object-form twin', asDtcg]]) {
   for (const d of r.diagnostics.errors) errors.push(`${label}: ${d.code} ${d.message}`);
+  for (const d of r.diagnostics.warnings) {
+    if (d.code === 'TST1123') errors.push(`${label}: ${d.code} ${d.message} (the twin's hex agrees with its components)`);
+  }
+  const gamut = r.diagnostics.items.find((d) => d.code === 'TST1120' && d.message.startsWith('semantic.color.danger.solid'));
+  if (!gamut) errors.push(`${label}: a display-p3 danger.solid outside sRGB did not raise TST1120`);
+  else if (label !== 'string twin' && !gamut.message.includes('"colorSpace":"display-p3"')) errors.push(`${label}: TST1120 does not show the authored DTCG object: ${gamut.message}`);
 }
 for (const name of Object.keys(EXPORTERS)) {
   const files = (r) => r.results.find((x) => x.target === name)?.emitted ?? [];
@@ -1087,6 +1129,11 @@ const MALFORMED = {
   'three-points': ['cubicBezier', [0.2, 0, 0]],
   'x-out-of-range': ['cubicBezier', [1.2, 0, 0, 1]],
   'unknown-weight': ['fontWeight', 'semi-boldish'],
+  'unknown-color-space': ['color', { colorSpace: 'cmyk', components: [0, 0, 0] }],
+  'two-components': ['color', { colorSpace: 'srgb', components: [0, 0.5] }],
+  'string-component': ['color', { colorSpace: 'srgb', components: [0, '0.5', 1] }],
+  'alpha-out-of-range': ['color', { colorSpace: 'oklch', components: [0.5, 0.1, 30], alpha: 2 }],
+  'short-hex': ['color', { colorSpace: 'srgb', components: [1, 1, 1], hex: '#fff' }],
 };
 // …and the same mistakes inside a composite, where resolveComposite() hands
 // each member to the same parser: reported under the member's own path, with
@@ -1094,7 +1141,11 @@ const MALFORMED = {
 const MALFORMED_MEMBERS = {
   'member-no-unit': ['shadow', { color: '#000', offsetX: '0px', offsetY: '2px', blur: { value: 8 }, spread: '0px' }, 'blur', 'dimension'],
   'member-three-points': ['transition', { duration: '100ms', delay: '0ms', timingFunction: [0.2, 0, 0] }, 'timingFunction', 'cubicBezier'],
+  'member-color-space': ['shadow', { color: { colorSpace: 'cmyk', components: [0, 0, 0] }, offsetX: '0px', offsetY: '2px', blur: '8px', spread: '0px' }, 'color', 'color'],
 };
+// An srgb color whose hex disagrees with its components compiles the
+// components and warns (TST1123), at the top level and as a composite member.
+const HEX_MISMATCH = { colorSpace: 'srgb', components: [0, 0.5, 0.84], hex: '#026fd7' };
 const badDir = mkdtempSync(join(tmpdir(), 'transtyle-malformed-'));
 mkdirSync(join(badDir, 'tokens'));
 writeFileSync(
@@ -1105,6 +1156,10 @@ writeFileSync(
       probe: Object.fromEntries(
         [...Object.entries(MALFORMED), ...Object.entries(MALFORMED_MEMBERS)].map(([k, [type, value]]) => [k, { $type: type, $value: value }]),
       ),
+      mismatch: {
+        top: { $type: 'color', $value: HEX_MISMATCH },
+        member: { $type: 'border', $value: { color: HEX_MISMATCH, width: '1px', style: 'solid' } },
+      },
     },
   }),
 );
@@ -1129,6 +1184,11 @@ for (const [k, [composite, value, member, type]] of Object.entries(MALFORMED_MEM
   else if (!d.hint) errors.push(`TST1106 for ${slot} carries no hint naming the accepted forms`);
 }
 
+for (const slot of ['semantic.mismatch.top', 'semantic.mismatch.member.color']) {
+  const d = malformed.diagnostics.items.find((x) => x.code === 'TST1123' && x.message.startsWith(`${slot}:`));
+  if (!d || d.severity !== 'warning') errors.push(`an srgb color whose hex disagrees with its components (${slot}) must warn TST1123 under its own path — got ${malformed.diagnostics.items.filter((x) => x.code === 'TST1123').map((x) => x.message).join('; ') || 'nothing'}`);
+}
+
 if (errors.length) {
   console.error(`✘ minimal-ds check: ${errors.length} problem(s)`);
   for (const e of errors) console.error('  - ' + e);
@@ -1137,4 +1197,4 @@ if (errors.length) {
   console.error('  defensively — never crash, never leak a JS value, never over-claim coverage.');
   process.exit(1);
 }
-console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text, a 2-token (text, no page) and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; a light text with no page is swapped into the other polarity, and only there; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms compile byte-identical to their string twin (${twinFiles} files) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106; per-target mode subsets drop the excluded values with no \`dropped\` row and a bad subset is TST1308 (nothing emitted)`);
+console.log(`✔ minimal-ds: all ${Object.keys(EXPORTERS).length} exporters compile a 1-token, a late-bound-text, a 2-token (text, no page) and a 3-token design system cleanly across ${Object.keys(MODE_SHAPES).length} mode shapes × autoDark on/off (${files} files, no leaks; every anchor a fixture authors reaches the IR authored; the 1-token system gets a defaulted text.base and its full content side in every combo, with no failing contrast pair; a text.base alias read too late is never defaulted; a light text with no page is swapped into the other polarity, and only there; the 1-token and late-text Bootstrap Sass paths build against Bootstrap; authored dark/dim distinctly reach the IR where declared; autoDark reclassifies carry-over provenance without touching values, in the IR and in emitted output); polarity-axis-not-first is a build error; authored shadow/border/transition/typography composites reach every exporter parsed (${compFiles} files), and malformed ones name the member; DTCG object forms, colors in five color spaces included, compile byte-identical to their string twin (${twinFiles} files; an out-of-sRGB one raises TST1120 in both) and ${Object.keys(MALFORMED).length + Object.keys(MALFORMED_MEMBERS).length} malformed values fail with TST1106, and an srgb hex that disagrees with its components warns TST1123; per-target mode subsets drop the excluded values with no \`dropped\` row and a bad subset is TST1308 (nothing emitted)`);

@@ -1,13 +1,14 @@
 {
   "semantic": {
     "color": {
-      "primary": { "solid": { "$type": "color", "$value": "#3b5bdb" } },
+      "primary": { "solid": { "$type": "color", "$value": { "colorSpace": "srgb", "components": [0.23, 0.36, 0.86], "alpha": 1, "hex": "#3b5bdb" } } },
+      "danger": { "solid": { "$type": "color", "$value": { "colorSpace": "display-p3", "components": [0.85, 0.1, 0.12] } } },
       "elevation": {
         "0": {
           "surface": {
             "$type": "color",
-            "$value": "#ffffff",
-            "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "#101114" } } }
+            "$value": { "colorSpace": "srgb", "components": [1, 1, 1] },
+            "$extensions": { "transtyle.modes": { "color-scheme": { "dark": { "colorSpace": "oklch", "components": [0.17, 0.006, 270] } } } }
           }
         }
       },

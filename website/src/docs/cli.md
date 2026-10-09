@@ -127,6 +127,8 @@ npx transtyle explain primary.on-tint
 
 A rule that reads the other color scheme (`text.inverse`, `swap-neutrals`) shows its inputs from that mode, named after the path: `inputs: semantic.color.text.base (light) = …`. An unknown slot exits 2 and lists the 5 closest catalog names instead of a bare error. `--json` prints the same tree as data (what `explainToken()` returns).
 
+A color authored as a [DTCG color object](/docs/authoring-tokens/#colors) shows what was written, since the value line is OKLCH: `└─ authored as {"colorSpace":"display-p3","components":[0.85,0.1,0.12]}`.
+
 A slot produced by a [`bindings` rule](/docs/configuration/#binding-rules) names it: `└─ aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)`.
 
 ### `transtyle explain --target <t>`, `--variable <name>`

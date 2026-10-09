@@ -406,6 +406,28 @@ try {
   }
 }
 
+// ---------- #25: explain a DTCG object-form color ----------
+// The value line shows OKLCH; the authored line shows what was written, since
+// an object in another color space no longer reads back from the value.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-explain-color-'));
+  try {
+    run(['init', 'explain-color-ds', '--cwd', dir]);
+    const tp = join(dir, 'tokens/brand.tokens.json');
+    const tree = JSON.parse(readFileSync(tp, 'utf8'));
+    tree.semantic.color.danger = { solid: { $type: 'color', $value: { colorSpace: 'display-p3', components: [0.85, 0.1, 0.12] } } };
+    writeFileSync(tp, JSON.stringify(tree, null, 2));
+    const r = run(['explain', 'danger.solid', '--cwd', dir]);
+    expect('explain object color: exit 0', r.code === 0, r.out);
+    expect('explain object color: value in OKLCH', r.out.includes('semantic.color.danger.solid = oklch('), r.out);
+    expect('explain object color: shows the authored object', r.out.includes('└─ authored as {"colorSpace":"display-p3","components":[0.85,0.1,0.12]}'), r.out);
+    const plain = run(['explain', 'primary.solid', '--cwd', dir]);
+    expect('explain string color: the authored line stays bare', !plain.out.includes('authored as'), plain.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- #65: catalog, the semantic contract as data ----------
 // Needs no project: run from an empty directory, with no config anywhere up
 // the tree that could be read by accident. Same bytes on every run (the

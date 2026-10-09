@@ -5,25 +5,57 @@
 
 import { NAMED_COLORS } from './css-colors.js';
 
-const OKLCH_RE = /^oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)$/i;
-const FUNC_RE = /^(rgba?|hsla?)\(\s*([^)]*)\s*\)$/i;
+const FUNC_RE = /^([a-z][a-z0-9-]*)\(\s*([^)]*)\s*\)$/i;
 
 /**
- * Parse any color syntax a real stylesheet is likely to contain
- * (docs/architecture/ir.md#values): `oklch()`, `#hex` (3/4/6/8 digits),
- * `rgb()`/`rgba()`, `hsl()`/`hsla()`, the CSS named colors, and `transparent`.
- * Both the modern space-separated (`rgb(255 0 0 / 50%)`) and legacy comma
- * (`rgba(255, 0, 0, .5)`) forms are accepted. Everything canonicalizes to OKLCH.
+ * The fourteen DTCG color spaces (DTCG 2025.10, Color module), and the
+ * `colorSpace` values a DTCG color object may name.
  */
-export function parseColor(str) {
-  if (typeof str !== 'string') throw new Error(`Not a color string: ${JSON.stringify(str)}`);
-  const s = str.trim();
+export const DTCG_COLOR_SPACES = [
+  'srgb', 'srgb-linear', 'hsl', 'hwb', 'lab', 'lch', 'oklab', 'oklch',
+  'display-p3', 'a98-rgb', 'prophoto-rgb', 'rec2020', 'xyz-d65', 'xyz-d50',
+];
 
-  const m = OKLCH_RE.exec(s);
-  if (m) {
-    const num = (v) => (v.endsWith('%') ? parseFloat(v) / 100 : parseFloat(v));
-    return { l: num(m[1]), c: parseFloat(m[2]), h: parseFloat(m[3]), alpha: m[4] ? num(m[4]) : 1 };
+/** `color(<space> …)`'s predefined spaces (CSS Color 4); `xyz` is `xyz-d65`. */
+const CSS_PREDEFINED = {
+  srgb: 'srgb', 'srgb-linear': 'srgb-linear', 'display-p3': 'display-p3', 'a98-rgb': 'a98-rgb',
+  'prophoto-rgb': 'prophoto-rgb', rec2020: 'rec2020', xyz: 'xyz-d65', 'xyz-d65': 'xyz-d65', 'xyz-d50': 'xyz-d50',
+};
+
+/**
+ * What 100% means for each component of the CSS functions that share the
+ * DTCG converter (CSS Color 4, "reference range"); `hue` is an <angle>.
+ * Percentages map onto the DTCG component ranges, so `hwb(0 20% 30%)` and
+ * `{ "colorSpace": "hwb", "components": [0, 20, 30] }` are the same color.
+ */
+const CSS_PERCENT = {
+  lab: [100, 125, 125],
+  lch: [100, 150, 'hue'],
+  oklab: [1, 0.4, 0.4],
+  oklch: [1, 0.4, 'hue'],
+  hwb: ['hue', 100, 100],
+};
+
+/**
+ * Parse any color syntax a real stylesheet or a DTCG file is likely to contain
+ * (docs/architecture/ir.md#values): `#hex` (3/4/6/8 digits), `rgb()`/`rgba()`,
+ * `hsl()`/`hsla()`, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()`,
+ * `color(<predefined space> …)`, the CSS named colors and `transparent`, or a
+ * DTCG color object `{ colorSpace, components, alpha?, hex? }` in any of the
+ * fourteen DTCG color spaces. `rgb()`/`hsl()` take both the modern
+ * space-separated (`rgb(255 0 0 / 50%)`) and legacy comma (`rgba(255, 0, 0, .5)`)
+ * forms. Everything canonicalizes to OKLCH.
+ *
+ * `onWarning({ code, message, hint })` receives the non-fatal findings (a DTCG
+ * `srgb` object whose `hex` disagrees with its `components`, TST1123); a
+ * malformed value throws.
+ */
+export function parseColor(input, { onWarning } = {}) {
+  if (input !== null && typeof input === 'object' && !Array.isArray(input)) return parseColorObject(input, onWarning);
+  if (typeof input !== 'string') {
+    throw new Error(`expected a CSS color string or a DTCG color object { colorSpace, components, alpha? }, got ${JSON.stringify(input)}`);
   }
+  const s = input.trim();
 
   if (/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(s)) {
     const { alpha, ...rgb } = hexToSrgb(s);
@@ -33,6 +65,15 @@ export function parseColor(str) {
   const fn = FUNC_RE.exec(s);
   if (fn) {
     const kind = fn[1].toLowerCase();
+    if (kind === 'color') return parseColorFunction(fn[2], s);
+    if (CSS_PERCENT[kind]) {
+      const { parts, alpha } = splitComponents(fn[2]);
+      if (parts.length !== 3) throw new Error(`Malformed ${kind}() color: ${s}`);
+      const components = parts.map((p, i) => cssComponent(p, CSS_PERCENT[kind][i]));
+      if (components.some(Number.isNaN)) throw new Error(`Malformed ${kind}() color: ${s}`);
+      return spaceToOklch(kind, components, parseAlpha(alpha));
+    }
+    if (!/^(rgba?|hsla?)$/.test(kind)) throw unsupported(s);
     const { parts, alpha } = splitComponents(fn[2]);
     if (parts.length < 3) throw new Error(`Malformed ${kind}() color: ${s}`);
     const a = parseAlpha(alpha);
@@ -56,8 +97,181 @@ export function parseColor(str) {
     return srgbToOklch(rgb, alpha);
   }
 
-  throw new Error(`Unsupported color syntax: ${s} (expected oklch(), #hex, rgb(), hsl(), or a CSS named color)`);
+  throw unsupported(s);
 }
+
+const unsupported = (s) =>
+  new Error(`Unsupported color syntax: ${s} (expected #hex, rgb(), hsl(), hwb(), lab(), lch(), oklab(), oklch(), color(), a CSS named color, or a DTCG color object)`);
+
+/** `color(<space> c1 c2 c3 [/ alpha])`: components are numbers, or percentages of 1. */
+function parseColorFunction(inner, s) {
+  const [name, ...rest] = inner.trim().split(/\s+/);
+  const space = CSS_PREDEFINED[name?.toLowerCase()];
+  if (!space) {
+    throw new Error(`Unsupported color() space in ${s} (expected one of ${Object.keys(CSS_PREDEFINED).join(', ')})`);
+  }
+  const { parts, alpha } = splitComponents(rest.join(' '));
+  const components = parts.map((p) => cssComponent(p, 1));
+  if (parts.length !== 3 || components.some(Number.isNaN)) throw new Error(`Malformed color() color: ${s}`);
+  return spaceToOklch(space, components, parseAlpha(alpha));
+}
+
+const NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+
+/** One CSS component: `none` (→ 0), a number, a percentage of `ref`, or an <angle> when ref is 'hue'. */
+function cssComponent(v, ref) {
+  if (v.toLowerCase() === 'none') return 0;
+  if (ref === 'hue') return parseHue(v);
+  if (v.endsWith('%')) return NUMBER_RE.test(v.slice(0, -1)) ? (Number(v.slice(0, -1)) / 100) * ref : NaN;
+  return NUMBER_RE.test(v) ? Number(v) : NaN;
+}
+
+const isNumber = (v) => typeof v === 'number' && Number.isFinite(v);
+
+/**
+ * A DTCG color object (DTCG 2025.10, Color module): `colorSpace` one of the
+ * fourteen, three `components` (each a number or `"none"`, which converts as
+ * 0), an optional `alpha` in [0, 1], an optional six-digit `hex` fallback.
+ * Out-of-range components are accepted (`lab` a/b and `xyz` are unbounded; a
+ * wide-gamut color is the point of the form): lightness and chroma clamp at 0
+ * as in CSS, and what lands outside sRGB is TST1120's business downstream.
+ *
+ * `hex`: for `srgb`, a `hex` that agrees with `components` within 0.01 per
+ * channel (the precision of a two-decimal export) wins, so the color the
+ * designer saw in their tool is the one that ships; one that disagrees loses
+ * to `components` with a TST1123 warning naming both. For the other spaces
+ * `hex` is the fallback the spec calls it and `components` are the value.
+ */
+function parseColorObject(obj, onWarning) {
+  const show = JSON.stringify(obj);
+  const { colorSpace, components, alpha = 1, hex } = obj;
+  if (colorSpace === undefined) throw new Error(`color object has no "colorSpace": ${show}`);
+  if (!DTCG_COLOR_SPACES.includes(colorSpace)) {
+    throw new Error(`unknown colorSpace ${JSON.stringify(colorSpace)} (DTCG color spaces: ${DTCG_COLOR_SPACES.join(', ')})`);
+  }
+  if (!Array.isArray(components) || components.length !== 3 || !components.every((c) => isNumber(c) || c === 'none')) {
+    throw new Error(`color "components" must be three numbers (or "none"), got ${JSON.stringify(components)}`);
+  }
+  if (!isNumber(alpha) || alpha < 0 || alpha > 1) throw new Error(`color "alpha" must be a number from 0 to 1, got ${JSON.stringify(alpha)}`);
+  if (hex !== undefined && (typeof hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(hex))) {
+    throw new Error(`color "hex" must be a six-digit "#rrggbb", got ${JSON.stringify(hex)}`);
+  }
+  const values = components.map((c) => (c === 'none' ? 0 : c));
+  if (colorSpace === 'srgb' && hex !== undefined) {
+    const { r, g, b } = hexToSrgb(hex);
+    const rgb = { r, g, b };
+    const agrees = [rgb.r, rgb.g, rgb.b].every((v, i) => Math.abs(v - values[i]) <= HEX_TOLERANCE);
+    if (agrees) return srgbToOklch(rgb, alpha);
+    const compiled = spaceToOklch('srgb', values, alpha);
+    onWarning?.({
+      code: 'TST1123',
+      message: `srgb components [${components.join(', ')}] and hex ${hex} disagree by more than 0.01 per channel; compiled the components (${formatHex(compiled).text})`,
+      hint: 'Within 0.01 per channel the hex wins, as the color the design tool shows; beyond that the components are the value and the hex is ignored. Fix whichever one is wrong in the token file, or drop "hex".',
+    });
+    return compiled;
+  }
+  return spaceToOklch(colorSpace, values, alpha);
+}
+
+/** 0.01 per channel, with room for the float error in a two-decimal value. */
+const HEX_TOLERANCE = 0.01 + 1e-9;
+
+/**
+ * DTCG/CSS color space → OKLCH. Every space goes to **unbounded** linear sRGB
+ * (so a wide-gamut color survives) and then through the one OKLab matrix
+ * (linearSrgbToOklch); `srgb` takes srgbToOklch(), the same path as `#hex`, so
+ * an `srgb` object and its hex compile bit-identical. `oklch`/`oklab` skip
+ * the matrices. Matrices and transfer functions: CSS Color 4, "Sample code
+ * for color conversions".
+ */
+function spaceToOklch(space, [x, y, z], alpha) {
+  switch (space) {
+    case 'srgb': return srgbToOklch({ r: x, g: y, b: z }, alpha);
+    case 'srgb-linear': return linearSrgbToOklch({ r: x, g: y, b: z }, alpha);
+    case 'hsl': return srgbToOklch(hslToSrgb(x, y / 100, z / 100), alpha);
+    case 'hwb': return srgbToOklch(hwbToSrgb(x, y / 100, z / 100), alpha);
+    case 'lab': return xyzD50ToOklch(labToXyzD50(x, y, z), alpha);
+    case 'lch': {
+      const c = Math.max(0, y), hr = (z * Math.PI) / 180;
+      return xyzD50ToOklch(labToXyzD50(x, c * Math.cos(hr), c * Math.sin(hr)), alpha);
+    }
+    case 'oklab': {
+      const c = Math.hypot(y, z);
+      return { l: clamp01(x), c, h: ((Math.atan2(z, y) * 180) / Math.PI + 360) % 360, alpha };
+    }
+    case 'oklch': return { l: clamp01(x), c: Math.max(0, y), h: z, alpha };
+    case 'display-p3': return xyzD65ToOklch(mul(P3_TO_XYZ, [x, y, z].map(srgbToLinear)), alpha);
+    case 'a98-rgb': return xyzD65ToOklch(mul(A98_TO_XYZ, [x, y, z].map(a98ToLinear)), alpha);
+    case 'rec2020': return xyzD65ToOklch(mul(REC2020_TO_XYZ, [x, y, z].map(rec2020ToLinear)), alpha);
+    case 'prophoto-rgb': return xyzD50ToOklch(mul(PROPHOTO_TO_XYZ_D50, [x, y, z].map(prophotoToLinear)), alpha);
+    case 'xyz-d65': return xyzD65ToOklch([x, y, z], alpha);
+    case 'xyz-d50': return xyzD50ToOklch([x, y, z], alpha);
+    default: throw new Error(`unknown colorSpace ${JSON.stringify(space)}`);
+  }
+}
+
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+const mul = (m, v) => m.map((row) => row[0] * v[0] + row[1] * v[1] + row[2] * v[2]);
+const signed = (v, f) => (v < 0 ? -f(-v) : f(v));
+
+const XYZ_TO_LINEAR_SRGB = [
+  [12831 / 3959, -329 / 214, -1974 / 3959],
+  [-851781 / 878810, 1648619 / 878810, 36519 / 878810],
+  [705 / 12673, -2585 / 12673, 705 / 667],
+];
+const P3_TO_XYZ = [
+  [608311 / 1250200, 189793 / 714400, 198249 / 1000160],
+  [35783 / 156275, 247089 / 357200, 198249 / 2500400],
+  [0, 32229 / 714400, 5220557 / 5000800],
+];
+const A98_TO_XYZ = [
+  [573536 / 994567, 263643 / 1420810, 187206 / 994567],
+  [591459 / 1989134, 6239551 / 9945670, 374412 / 4972835],
+  [53769 / 1989134, 351524 / 4972835, 4929758 / 4972835],
+];
+const REC2020_TO_XYZ = [
+  [63426534 / 99577255, 20160776 / 139408157, 47086771 / 278816314],
+  [26158966 / 99577255, 472592308 / 697040785, 8267143 / 139408157],
+  [0, 19567812 / 697040785, 295819943 / 278816314],
+];
+const PROPHOTO_TO_XYZ_D50 = [
+  [0.7977666449006423, 0.13518129740053308, 0.0313477341283922],
+  [0.2880748288194013, 0.711835234241873, 0.00008993693872564],
+  [0, 0, 0.8251046025104602],
+];
+/** Bradford chromatic adaptation, D50 → D65. */
+const D50_TO_D65 = [
+  [0.955473421488075, -0.02309845494876471, 0.06325924320057072],
+  [-0.0283697093338637, 1.0099953980813041, 0.021041441191917323],
+  [0.012314014864481998, -0.020507649298898964, 1.330365926242124],
+];
+const D50_WHITE = [0.3457 / 0.3585, 1, (1 - 0.3457 - 0.3585) / 0.3585];
+
+const a98ToLinear = (v) => signed(v, (a) => a ** (563 / 256));
+const prophotoToLinear = (v) => signed(v, (a) => (a <= 16 / 512 ? a / 16 : a ** 1.8));
+const REC_A = 1.09929682680944, REC_B = 0.018053968510807;
+const rec2020ToLinear = (v) => signed(v, (a) => (a < REC_B * 4.5 ? a / 4.5 : ((a + REC_A - 1) / REC_A) ** (1 / 0.45)));
+
+/** CIE Lab (D50) → XYZ (D50). */
+function labToXyzD50(L, a, b) {
+  const l = Math.min(100, Math.max(0, L));
+  const k = 24389 / 27, e = 216 / 24389;
+  const f1 = (l + 16) / 116;
+  const f0 = a / 500 + f1;
+  const f2 = f1 - b / 200;
+  const xyz = [
+    f0 ** 3 > e ? f0 ** 3 : (116 * f0 - 16) / k,
+    l > k * e ? ((l + 16) / 116) ** 3 : l / k,
+    f2 ** 3 > e ? f2 ** 3 : (116 * f2 - 16) / k,
+  ];
+  return xyz.map((v, i) => v * D50_WHITE[i]);
+}
+
+const xyzD65ToOklch = (xyz, alpha) => {
+  const [r, g, b] = mul(XYZ_TO_LINEAR_SRGB, xyz);
+  return linearSrgbToOklch({ r, g, b }, alpha);
+};
+const xyzD50ToOklch = (xyz, alpha) => xyzD65ToOklch(mul(D50_TO_D65, xyz), alpha);
 
 /** Split a function body into 3 components + optional alpha, modern or legacy form. */
 function splitComponents(inner) {
@@ -101,6 +315,17 @@ function hslToSrgb(hDeg, s, l) {
     h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x]
     : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
   return { r: r + m, g: g + m, b: b + m };
+}
+
+/** CSS Color 4: whiteness + blackness ≥ 1 is the gray w / (w + b). */
+function hwbToSrgb(hDeg, w, b) {
+  if (w + b >= 1) {
+    const gray = w / (w + b);
+    return { r: gray, g: gray, b: gray };
+  }
+  const { r, g, b: bl } = hslToSrgb(hDeg, 1, 0.5);
+  const k = 1 - w - b;
+  return { r: r * k + w, g: g * k + w, b: bl * k + w };
 }
 
 export function formatColor({ l, c, h, alpha = 1 }) {
@@ -152,12 +377,18 @@ function hexToSrgb(hex) {
   return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255, alpha };
 }
 
+/** sRGB transfer function, extended to negative values by symmetry (CSS Color 4). */
 function srgbToLinear(v) {
+  if (v < -0.04045) return -(((-v + 0.055) / 1.055) ** 2.4);
   return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
 }
 
 function srgbToOklch({ r, g, b }, alpha = 1) {
-  const lr = srgbToLinear(r), lg = srgbToLinear(g), lb = srgbToLinear(b);
+  return linearSrgbToOklch({ r: srgbToLinear(r), g: srgbToLinear(g), b: srgbToLinear(b) }, alpha);
+}
+
+/** Linear sRGB (unbounded, so a wide-gamut color keeps its chroma) → OKLCH. */
+function linearSrgbToOklch({ r: lr, g: lg, b: lb }, alpha = 1) {
   const l_ = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
   const m_ = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
   const s_ = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);

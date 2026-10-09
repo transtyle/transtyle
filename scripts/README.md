@@ -13,7 +13,7 @@ already made once.
 | `check-docs.mjs`              | Website structure: nav, links, anchors, CLI commands, diagnostic codes, blog posts, language tables                                              |
 | `check-doc-numbers.mjs`       | Every number the docs copy out of a build, re-derived                                                                                            |
 | `check-encoding.mjs`          | Tracked text files are clean UTF-8 — no NUL bytes, no BOM                                                                                        |
-| `check-color.mjs`             | The colour engine against reference values: parsing, round-trips, contrast, mixing                                                               |
+| `check-color.mjs`             | The colour engine against reference values: parsing (all DTCG spaces), round-trips, contrast, mixing                                             |
 | `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                                                                            |
 | `check-grid.mjs`              | Catalog completeness against `catalog()`, both ways; the frozen Phase 0 values; bound roles get grids                                            |
 | `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                                                                |

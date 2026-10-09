@@ -56,7 +56,7 @@ loader: open one to see exactly what your plugin received.
 | `component-tier` | authored `component.control.radius`, `button.radius` (an alias to a derived slot), `button.padding-x`, `tooltip.max-width` | [ir.md, the three-tier token model][tiers]                                                     |
 | `custom-role`    | a custom `promo` role joining the grid through `$extensions.transtyle.role`                                                | [ir.md, the role grid][grid]                                                                   |
 | `composites`     | authored shadow (per mode, stacked with `inset`, aliased), border, transition and typography                               | [ir.md, values and canonicalization][values]                                                   |
-| `object-form`    | dimension, duration, cubicBezier, fontWeight and typography members in DTCG structured form, under two dimensions          | [ir.md, values and canonicalization][values]: byte-identical to the string form                |
+| `object-form`    | colors and dimension, duration, cubicBezier, fontWeight, typography members in DTCG structured form, two dimensions        | [ir.md, values and canonicalization][values]: byte-identical to the string form                |
 
 ## Checks
 

@@ -30,7 +30,7 @@ Your palette, your names, your structure. This tier is private vocabulary — no
 }
 ```
 
-Paste whatever your stylesheets already contain — hex (including 4/8-digit alpha), `rgb()`/`hsl()` in either the modern or legacy comma form, and CSS named colors like `red` or `purple` all parse. OKLCH is canonical internally; conversion is automatic, so you never retype a value to satisfy the compiler.
+Paste whatever your stylesheets already contain — hex (including 4/8-digit alpha), `rgb()`/`hsl()` in either the modern or legacy comma form, `hwb()`, `lab()`, `lch()`, `oklab()`, `color(display-p3 …)`, and CSS named colors like `red` or `purple` all parse. A DTCG export from a design tool pastes as is too: its color objects (`{ "colorSpace": "srgb", "components": […], "hex": "#…" }`) are read in all fourteen DTCG color spaces. OKLCH is canonical internally; conversion is automatic, so you never retype a value to satisfy the compiler.
 
 ### No palette? Synthesize one — the names are throwaway
 

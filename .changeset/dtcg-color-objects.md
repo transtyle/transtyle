@@ -1,0 +1,7 @@
+---
+'@transtyle/core': minor
+'@transtyle/cli': minor
+'@transtyle/plugin-kit': patch
+---
+
+Accept DTCG color objects, the color form design tools export: `{ "colorSpace": "srgb", "components": [0, 0.43, 0.84], "alpha": 1, "hex": "#026fd7" }` used to stop the build with `TST1106 Not a color string`. All fourteen DTCG color spaces are read (`srgb`, `srgb-linear`, `hsl`, `hwb`, `lab`, `lch`, `oklab`, `oklch`, `display-p3`, `a98-rgb`, `prophoto-rgb`, `rec2020`, `xyz-d65`, `xyz-d50`), at the top level, per mode, in layer files and as composite members, and the `hwb()`, `lab()`, `lch()`, `oklab()` and `color(<space> …)` CSS syntaxes now parse through the same converter (`oklch()` also takes `none`, angle units and a percentage chroma). An `srgb` object compiles to the same bytes as its hex, and a wide-gamut color keeps its chroma (`TST1120` names the sRGB fallback hex and HSL targets ship). For `srgb`, a `hex` within 0.01 per channel of the components wins, so two-decimal exports ship the designer's exact color; one further off loses to the components with a new `TST1123` warning. A malformed object (unknown `colorSpace`, not three components, `alpha` outside 0–1, a `hex` that isn't `#rrggbb`) is `TST1106` with a hint listing the accepted forms. `transtyle explain` prints the authored object (`└─ authored as {…}`), and the plugin-kit `object-form` fixture now authors its colors as DTCG objects too.
