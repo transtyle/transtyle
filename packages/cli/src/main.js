@@ -293,7 +293,9 @@ async function cmdBuildOrCheck(args) {
   if (emit && args.matrix) { console.error('✖ --matrix is a `transtyle check` option'); process.exit(2); }
   let result;
   try {
-    result = await compile({ cwd: args.cwd, targets: args.targets, emit, outRoot: args.out, dryRun: args.dryRun, loadExporter: makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: VERBOSE });
+    // `drift`: build and check compare the output with the manifest its last
+    // build wrote (TST1312); explain, diff and init never do.
+    result = await compile({ cwd: args.cwd, targets: args.targets, emit, outRoot: args.out, dryRun: args.dryRun, drift: true, loadExporter: makeLoadExporter(args.cwd), knownExporters: Object.keys(OFFICIAL_EXPORTERS), debug: VERBOSE });
   } catch (e) {
     console.error(`✖ ${e.message}`);
     if (VERBOSE && e.stack) console.error(e.stack.split('\n').slice(1).join('\n'));
@@ -340,6 +342,9 @@ async function cmdBuildOrCheck(args) {
       for (const f of args.dryRun ? r.planned : r.files.map((p) => ({ path: p, bytes: r.planned.find((x) => x.path === p)?.bytes }))) {
         console.error(`  ↳ ${verb}${f.path}${VERBOSE && f.bytes !== undefined ? `  (${f.bytes} bytes)` : ''}`);
       }
+      // Files an earlier build wrote here that this one no longer produces:
+      // left in place (nothing is ever deleted), listed once, here.
+      for (const f of r.stale ?? []) console.error(`  · stale: ${f} (an earlier build wrote it, this one ${args.dryRun ? 'would not' : 'did not'}; left in place)`);
     }
   }
 

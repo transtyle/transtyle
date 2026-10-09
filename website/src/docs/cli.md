@@ -25,15 +25,24 @@ npx transtyle build shadcn
 #   ↳ dist/shadcn/globals.transtyle.css
 #   ↳ dist/shadcn/usage.md
 #   ↳ dist/shadcn/report.json
+#   ↳ dist/shadcn/transtyle-manifest.json
 #
 # ✔ build complete
 ```
 
-The first line is the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`check.completeness`, default `recommended`) and how many of its items you author; it is printed once, whatever the number of targets. Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list; the [report viewer](/report/) draws one as a page). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
+The first line is the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`check.completeness`, default `recommended`) and how many of its items you author; it is printed once, whatever the number of targets. Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list; the [report viewer](/report/) draws one as a page) and `transtyle-manifest.json`, the emitted-file manifest: a sha256 of each artifact, so the next `build` or `check` can tell when one was changed by hand (see [Drift detection](#drift-detection)). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
+
+A file that an earlier build wrote in the output directory and this one no longer produces (a renamed theme, an option that drops a file) is never deleted. The build that stops producing it lists it once, under its target:
+
+```
+#   · stale: dist/echarts/theme.old.json (an earlier build wrote it, this one did not; left in place)
+```
+
+Delete it if nothing uses it. The new manifest no longer lists it.
 
 ### `--out <dir>`, `--dry-run`
 
-`build` only. `--out <dir>` writes every target to `<dir>/<instance name>` instead of its configured `output`, `report.json` included (a relative `<dir>` is relative to your shell, like `--cwd`). A Storybook target's imports of its sibling stylesheets follow the redirect. `--dry-run` runs the whole build and stops before writing: it prints the coverage and the files it **would** write, `report.json` and sizes included, and leaves the disk untouched. Both compose, and a dry run fails exactly like the real build would (exit 1 on a diagnostic at or above `failOn`), so it works as a CI gate.
+`build` only. `--out <dir>` writes every target to `<dir>/<instance name>` instead of its configured `output`, `report.json` and `transtyle-manifest.json` included (a relative `<dir>` is relative to your shell, like `--cwd`). A Storybook target's imports of its sibling stylesheets follow the redirect. `--dry-run` runs the whole build and stops before writing: it prints the coverage and the files it **would** write, `report.json` and sizes included, and leaves the disk untouched. Both compose, and a dry run fails exactly like the real build would (exit 1 on a diagnostic at or above `failOn`), so it works as a CI gate.
 
 ```bash
 npx transtyle build --dry-run --out /tmp/themes
@@ -41,6 +50,7 @@ npx transtyle build --dry-run --out /tmp/themes
 # shadcn  42% native · 53% derived · 3% approximated · 3% dropped
 #   ↳ would write ../../tmp/themes/shadcn/globals.transtyle.css
 #   ↳ would write ../../tmp/themes/shadcn/report.json
+#   ↳ would write ../../tmp/themes/shadcn/transtyle-manifest.json
 #
 # ✔ dry run complete, nothing written
 ```
@@ -53,7 +63,23 @@ The CLI never colors its output, so `NO_COLOR` changes nothing there; it is hono
 
 ### `transtyle check [instance...]`
 
-The pipeline minus EMIT — same code path, guaranteed to agree with real builds. Runs schema validation, alias/cycle detection, mode validation, contrast checks (WCAG 2.1, or APCA when [configured](/docs/configuration/#wcag-21-or-apca)), and coverage computation, writing nothing.
+The pipeline minus EMIT — same code path, guaranteed to agree with real builds. Runs schema validation, alias/cycle detection, mode validation, contrast checks (WCAG 2.1, or APCA when [configured](/docs/configuration/#wcag-21-or-apca)), coverage computation and drift detection, writing nothing.
+
+### Drift detection
+
+Every generated file says "do not edit"; the manifest is what checks it. Before writing anything, `build` and `check` compare each selected instance's output directory with the `transtyle-manifest.json` its last build wrote, and warn with `TST1312` for every listed file whose content changed or that is gone:
+
+```
+⚠ TST1312 shadcn: dist/shadcn/globals.transtyle.css was changed outside transtyle since the last build
+  ↳ `transtyle build shadcn` overwrites it with the generated file. Make the change in the tokens or the config to keep it; if a formatter or linter rewrote it, exclude dist/shadcn/ from that tool.
+```
+
+- It is a warning: `check` fails on it only under `check.failOn: "warning"`, and it can be silenced with [`check.suppress`](/docs/diagnostics/#suppressing-a-diagnostic) like any other warning.
+- `build` warns, then overwrites: the message appears at the moment the edit is lost (it is still in version control if the output is committed). `build --dry-run` warns and writes nothing.
+- The manifest moves with the output: with `build --out <dir>` it is read from and written to `<dir>/<instance name>`.
+- Line endings don't count: hashes are taken with CRLF turned into LF, so a checkout with `core.autocrlf` is not reported.
+- No manifest, no warning: a project never built, output from a build before manifests existed, or an output directory that isn't committed. Files in the output directory that the manifest doesn't list are not Transtyle's and are ignored. A manifest that is not valid JSON or doesn't match its published schema (`schemas/manifest/v0.json`) gets one warning; the next build writes a new one.
+- `explain`, `diff` and `init` never check for drift.
 
 ### `--completeness <level>`
 

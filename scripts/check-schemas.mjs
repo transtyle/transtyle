@@ -11,7 +11,10 @@
  *  3. Known-bad configs are rejected with the right kind of error — the validator
  *     actually catches unknown keys, bad enums, wrong types, missing required.
  *  4. A real emitted report.json validates against the report schema — the
- *     published report schema matches what core actually writes.
+ *     published report schema matches what core actually writes. The same for
+ *     every emitted transtyle-manifest.json against the manifest schema, which
+ *     must also list exactly the files report.json lists (minus the two
+ *     bookkeeping files) and reject a few broken manifests.
  *  5. Every config example the docs mark `<!-- validates: config -->` parses and
  *     validates — a reference manifest a reader copies must actually load.
  *
@@ -37,6 +40,7 @@ import { validate } from '../packages/core/src/schema/validate.js';
 import { configSchema } from '../packages/core/src/schema/config.schema.js';
 import { reportSchema } from '../packages/core/src/schema/report.schema.js';
 import { tokenSchema, catalogSlots } from '../packages/core/src/schema/token.schema.js';
+import { manifestSchema } from '../packages/core/src/schema/manifest.schema.js';
 import { OUTPUTS, render } from './gen-schemas.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -84,6 +88,7 @@ for (const { why, cfg } of mustReject) {
 // `field` where the schema requires `variable`, and it hid because only the
 // shadcn report was validated (found by the P1 conformance kit). Scan them all.
 let reportsChecked = 0;
+let manifestsChecked = 0;
 for (const ex of examples) {
   // Fresh, not whatever is on disk — see the header note.
   execSync(`npx transtyle build --cwd examples/${ex}`, { cwd: root, stdio: 'pipe' });
@@ -93,11 +98,36 @@ for (const ex of examples) {
     const rel = `examples/${ex}/dist/${target}/report.json`;
     if (!existsSync(join(root, rel))) continue;
     reportsChecked++;
-    const errs = validate(JSON.parse(read(rel)), reportSchema);
+    const report = JSON.parse(read(rel));
+    const errs = validate(report, reportSchema);
     if (errs.length) fail(`${rel} does not match the published report schema: ${errs.slice(0, 3).map((e) => `${e.path} ${e.message}`).join('; ')}${errs.length > 3 ? ` (+${errs.length - 3} more)` : ''}`);
+
+    // The manifest beside it: valid, this target's, and listing exactly the
+    // exporter's files (report.json lists them relative to the project).
+    const mrel = `examples/${ex}/dist/${target}/transtyle-manifest.json`;
+    if (!existsSync(join(root, mrel))) { fail(`${mrel} missing — every build writes one per target`); continue; }
+    manifestsChecked++;
+    const manifest = JSON.parse(read(mrel));
+    const merrs = validate(manifest, manifestSchema);
+    if (merrs.length) fail(`${mrel} does not match the published manifest schema: ${merrs.slice(0, 3).map((e) => `${e.path} ${e.message}`).join('; ')}`);
+    const prefix = `examples/${ex}/`;
+    const listed = report.files.map((f) => f.replace(prefix, '').replace(`dist/${target}/`, '')).filter((f) => f !== 'report.json' && f !== 'transtyle-manifest.json').sort().join(', ');
+    const hashed = Object.keys(manifest.files ?? {}).join(', ');
+    if (listed !== hashed) fail(`${mrel} lists [${hashed}] but report.json lists [${listed}]`);
   }
 }
 if (reportsChecked === 0) fail('no emitted report.json found — build an example first so report-schema conformance can be checked');
+
+const sha = 'a'.repeat(64);
+const manifestMustReject = [
+  { why: 'an unknown algorithm', doc: { target: 'x', algorithm: 'md5', files: {} } },
+  { why: 'a hash that is not a sha256 digest', doc: { target: 'x', algorithm: 'sha256', files: { 'a.css': 'abc' } } },
+  { why: 'a missing target', doc: { algorithm: 'sha256', files: { 'a.css': sha } } },
+  { why: 'an unknown key', doc: { target: 'x', algorithm: 'sha256', files: {}, generatedAt: '2026-10-09' } },
+];
+for (const { why, doc } of manifestMustReject) {
+  if (validate(doc, manifestSchema).length === 0) fail(`manifest schema FAILED to reject: ${why}`);
+}
 
 // 5. Config examples in the docs actually load.
 //
@@ -177,6 +207,6 @@ if (errors.length) {
 }
 console.log(
   `✔ schema check: published schemas current; ${examples.length} example configs valid; ${examplesChecked} documented config example(s) load; ` +
-    `${mustReject.length} bad-config cases rejected; ${reportsChecked} emitted reports conform; ` +
+    `${mustReject.length} bad-config cases rejected; ${reportsChecked} emitted reports conform; ${manifestsChecked} emitted manifests conform (${manifestMustReject.length} bad manifests rejected); ` +
     `${tokenFiles.length} example token files valid against the token schema (${slots.length} catalog slots), ${tokenMustReject.length} bad-token cases rejected`,
 );

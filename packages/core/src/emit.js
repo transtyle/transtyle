@@ -15,9 +15,9 @@
  *      build created.
  *   3. Both staging directories are removed, on success and on failure.
  *
- * Files in an output directory that this build does not produce are never read,
- * moved or deleted (orphan cleanup needs the manifest, #10), which is why the
- * swap is per file rather than per directory. Zero dependencies, no timestamps
+ * Files in an output directory that this build does not produce are never
+ * moved or deleted (orphan cleanup is still specced; src/manifest.js only lists
+ * them as stale), which is why the swap is per file rather than per directory. Zero dependencies, no timestamps
  * or randomness: the temp names are fixed, so a leftover from a killed process
  * is cleared by the next build.
  */
