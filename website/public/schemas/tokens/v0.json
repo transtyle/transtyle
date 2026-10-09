@@ -1769,6 +1769,9 @@
             "md": {
               "$ref": "#/$defs/node"
             },
+            "none": {
+              "$ref": "#/$defs/node"
+            },
             "sm": {
               "$ref": "#/$defs/node"
             },
@@ -2752,6 +2755,7 @@
         "{semantic.radius.full}",
         "{semantic.radius.lg}",
         "{semantic.radius.md}",
+        "{semantic.radius.none}",
         "{semantic.radius.sm}",
         "{semantic.radius.xl}",
         "{semantic.size.control.lg}",
