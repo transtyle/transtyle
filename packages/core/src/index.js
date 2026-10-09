@@ -17,6 +17,7 @@ import { fillLocations } from './locations.js';
 import { nearestName } from './nearest.js';
 import { makeUnits } from './units.js';
 import { validateTargetModes, targetView, narrowedDimensions, withModesNote } from './target-modes.js';
+import { recordingView } from './reads.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 import { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
 import { IR_SPEC } from '@transtyle/ir';
@@ -29,6 +30,7 @@ export { explainToken, explainVariable, slotConsumers, coverageSlots } from './e
 export { catalog } from './catalog.js';
 export { loadConfig, expandTokenFiles } from './load.js';
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
+export { consumption } from './reads.js';
 export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
 export { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
 
@@ -213,7 +215,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       loaded = await loadExporter(targetConfig.exporter ?? name);
     } catch (e) {
       crash('TST3002', name, 'load', e, 'Install the exporter package in this project, or fix its `exporter` field in transtyle.config.json. Re-run with --verbose (or TRANSTYLE_DEBUG=1) for the stack.');
-      results.push({ target: name, files: [], coverage: [], emitted: [] });
+      results.push({ target: name, files: [], coverage: [], emitted: [], reads: [] });
       continue;
     }
     const withManifest = loaded && typeof loaded.emit !== 'function' && 'plugin' in loaded;
@@ -225,7 +227,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       const incompatible = reportCompat(name, loaded, diagnostics);
       if (incompatible > 0) {
         crashes += incompatible;
-        results.push({ target: name, files: [], coverage: [], emitted: [] });
+        results.push({ target: name, files: [], coverage: [], emitted: [], reads: [] });
         continue;
       }
     }
@@ -261,10 +263,14 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     // not a loss, so it gets no `dropped` coverage row.
     const view = targetConfig.modes ? targetView(normalized, targetConfig.modes) : normalized;
     const narrowed = targetConfig.modes ? narrowedDimensions(normalized, view) : new Set();
-    let files, coverage, notes;
+    // The exporter gets a recording copy of its view (src/reads.js): `reads`
+    // lists the catalog slots it looked up while emitting.
+    const recording = recordingView(view);
+    let files, coverage, notes, reads;
     try {
-      ({ files, coverage, diagnostics: notes = [] } = exporter.emit(view, ctx));
+      ({ files, coverage, diagnostics: notes = [] } = exporter.emit(recording.view, ctx));
       checkExporterDiagnostics(notes);
+      reads = recording.reads();
     } catch (e) {
       // Only the exporter's own code is wrapped: file-system errors below are
       // not exporter bugs and keep failing loudly.
@@ -274,6 +280,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       files = [];
       coverage = [];
       notes = [];
+      reads = [];
     }
     // Exporter diagnostics (optional `diagnostics` in emit's return value): what
     // a target's own conventions do to a value, which only the exporter knows.
@@ -299,7 +306,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       // build is committed atomically below (src/emit.js).
       const staged = files.map((f) => ({ path: f.path, contents: f.contents }));
       for (const f of files) written.push(path.relative(cwd, path.join(outDir, f.path)));
-      const report = buildReport(name, targetConfig, coverage, diagnostics, [...written]);
+      const report = buildReport(name, targetConfig, coverage, reads, diagnostics, [...written]);
       staged.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
       written.push(path.relative(cwd, path.join(outDir, 'report.json')));
       staged.forEach((f, i) => planned.push({ path: written[i], bytes: Buffer.byteLength(f.contents, 'utf8') }));
@@ -308,7 +315,8 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     // `emitted` carries the file *specs* (path + contents) even when emit is
     // off — `transtyle diff` re-emits both sides in-memory to compute per-target
     // impact without writing anything. `files` stays the written paths.
-    results.push({ target: name, files: dryRun ? [] : written, planned, outDir, exporter: targetConfig.exporter ?? name, coverage, emitted: files });
+    // `reads` is what `consumption()` (src/reads.js) builds the slot matrix from.
+    results.push({ target: name, files: dryRun ? [] : written, planned, outDir, exporter: targetConfig.exporter ?? name, coverage, emitted: files, reads });
   }
 
   // EMIT commit: all exporters have run. Nothing is written if any error-level
@@ -379,7 +387,7 @@ export function checkExporterDiagnostics(list) {
   });
 }
 
-function buildReport(target, targetConfig, coverage, diagnostics, files) {
+function buildReport(target, targetConfig, coverage, reads, diagnostics, files) {
   const counts = {};
   for (const item of coverage) counts[item.class] = (counts[item.class] ?? 0) + 1;
   return {
@@ -388,6 +396,7 @@ function buildReport(target, targetConfig, coverage, diagnostics, files) {
     options: targetConfig.options ?? {},
     generatedBy: 'transtyle 0.1.0 (walking skeleton)',
     coverage: { counts, items: coverage },
+    reads,
     diagnostics: diagnostics.items,
     suppressed: diagnostics.suppressed,
     files,

@@ -92,6 +92,13 @@ export const reportSchema = {
         items: { type: 'array', items: coverageItem },
       },
     },
+    // Issue #160: the catalog slots (`semantic.*`, `component.*`) the exporter
+    // read while it emitted, sorted. Optional: reports written before it lack it.
+    reads: {
+      type: 'array',
+      items: { type: 'string', pattern: '^(semantic|component)\\.' },
+      description: 'Catalog slots the exporter read while emitting, sorted (recorded by core, not declared by the exporter).',
+    },
     diagnostics: { type: 'array', items: diagnostic },
     suppressed: { type: 'array', items: suppressedDiagnostic },
     files: { type: 'array', items: { type: 'string' } },

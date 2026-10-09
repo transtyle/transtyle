@@ -90,7 +90,7 @@ Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — ca
 
 `TST1109` already means "a mode-scoped _layer_ targets an undeclared mode" (a token-file mistake), so the target-level mistake has its own code. A dimension narrowed to a single value by a target is a deliberate exclusion, not a loss: it produces no `dropped` coverage row, even for an exporter that never expresses that dimension. Dimensions the subset doesn't name keep all their values (and keep their `dropped` row where the exporter can't express them).
 
-`transtyle check --json` prints the full diagnostics array (plus the `suppressed` list and per-target coverage) to stdout as one JSON object — human logs still go to stderr, so both can run in the same invocation without interleaving (`docs/specs/cli.md` "Behavioral contracts").
+`transtyle check --json` prints the full diagnostics array (plus the `suppressed` list and per-target coverage and reads) to stdout as one JSON object — human logs still go to stderr, so both can run in the same invocation without interleaving (`docs/specs/cli.md` "Behavioral contracts").
 
 ## Exporter diagnostics
 
@@ -207,7 +207,11 @@ Mantine is a third shape, measured since 2026-10-09: a small theme object from w
 
 ## Report format
 
-`report.json` (schema-versioned) per build, plus terminal rendering:
+`report.json` (schema-versioned, [`report/v0.json`](../../website/public/schemas/report/v0.json), generated from `packages/core/src/schema/report.schema.js`) per target per build: `target`, `options`, `generatedBy`, `coverage` (`counts` and the rows), `reads`, `diagnostics`, `suppressed` and `files`.
+
+`reads` is the sorted list of catalog slots (`semantic.*`, `component.*`) the exporter read while it emitted, recorded by core rather than declared by the exporter ([cli.md, `check --matrix`](cli.md#check---matrix--who-reads-a-slot), [issue #160](https://github.com/transtyle/transtyle/issues/160)). It is wider than the slots coverage rows name: a slot read to compute a value described under another slot or a pattern counts, and a slot read and then discarded counts too, so a slot missing from `reads` is one the target never depends on. A lookup of a slot the design system doesn't resolve is not a read, and a target that crashed reads nothing (`[]`). The schema keeps the field optional, so a report written before it still validates. `check --json` carries the same `reads` on each entry of `targets`.
+
+Terminal rendering:
 
 What the CLI actually prints, from `npx transtyle build shadcn --cwd examples/acme`:
 

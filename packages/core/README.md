@@ -37,7 +37,9 @@ Also exported: `catalog()` (every catalog slot with its type, derivation rule an
 data — what `transtyle catalog --json` prints), `diffResolved` and `contrastRegressions` (the
 semantic diff), `explainToken` (the provenance walk behind `transtyle explain`, as a JSON
 tree), `explainVariable` and `slotConsumers` (from a target variable to the slots it reads, and
-back, over a compile's coverage rows), `coverageSlots` (what one coverage row reads), `Diagnostics`,
+back, over a compile's coverage rows), `coverageSlots` (what one coverage row reads), `consumption` (which targets read each catalog
+slot, from the `reads` that `compile()` records on every target result and writes to its
+`report.json`; what `transtyle check --matrix` prints), `Diagnostics`,
 and the colour module — `parseColor` (any CSS color syntax a stylesheet holds, to OKLCH), `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
 `mix` — which is OKLCH-native and has no dependencies. `makeUnits(config)` builds the `ctx.units` helpers
 (`toPx`, `toRem`, `remBase`) exporters get, from the config's `units.remBase`.

@@ -101,6 +101,14 @@
         }
       }
     },
+    "reads": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(semantic|component)\\."
+      },
+      "description": "Catalog slots the exporter read while emitting, sorted (recorded by core, not declared by the exporter)."
+    },
     "diagnostics": {
       "type": "array",
       "items": {

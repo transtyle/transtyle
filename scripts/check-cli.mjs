@@ -687,6 +687,8 @@ try {
     const json = (() => { try { return JSON.parse(r.stdout); } catch { return null; } })();
     expect('check --json: lists the crash as a diagnostic', !!json && json.diagnostics.some((d) => d.code === 'TST3001' && d.message.includes('"boom"')), r.out);
     expect('check --json: the crashed target is listed, with empty coverage', !!json && json.targets.some((t) => t.target === 'boom' && t.coverage.length === 0), r.out);
+    expect('check --json: a crashed or unloadable target reads nothing (reads: [])',
+      !!json && ['boom', 'gone'].every((n) => json.targets.some((t) => t.target === n && Array.isArray(t.reads) && t.reads.length === 0)), r.out);
     expect('check: exit 1', r.code === 1, `exit ${r.code}`);
 
     r = runCrash(['explain', 'primary.solid']);
@@ -733,12 +735,53 @@ try {
   expect('check --matrix --json: catalog slots only (no option.*), every slot listed',
     !!m && !Object.keys(m.slots).some((k) => k.startsWith('option.')) && Object.keys(m.slots).length > 200, `${Object.keys(m?.slots ?? {}).length} slots`);
 
+  // #160: core records the reads; --matrix only adds the matrix built from them.
   const plain = parse(run(['check', '--json', '--cwd', acme]).stdout);
-  expect('check --matrix: recording reads changes no coverage row',
+  expect('check --matrix: the per-target report is the same with and without --matrix',
     !!plain && JSON.stringify(plain.targets) === JSON.stringify(json?.targets));
+  const shadcnReads = plain?.targets?.find((t) => t.target === 'shadcn')?.reads ?? [];
+  expect('check --json: each target carries its reads, sorted, catalog slots only',
+    shadcnReads.includes('semantic.color.elevation.3.surface') &&
+      shadcnReads.every((s) => /^(semantic|component)\./.test(s)) &&
+      JSON.stringify(shadcnReads) === JSON.stringify([...shadcnReads].sort()), JSON.stringify(shadcnReads));
+  expect('check --matrix --json: every cell comes from that target\'s reads (and every read has a cell)',
+    !!m && !!plain && plain.targets.every((t) =>
+      JSON.stringify(t.reads) === JSON.stringify(Object.keys(m.slots).filter((s) => m.slots[s][t.target]))),
+    'matrix and reads disagree');
+
+  // The same reads land in each target's report.json (a build in a scratch copy).
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-reads-'));
+  try {
+    cpSync(acme, dir, { recursive: true, filter: (src) => !/[\\/](dist|demo|node_modules)$/.test(src) });
+    const b = run(['build', 'shadcn', 'primeng', '--cwd', dir]);
+    const report = (t) => parse(existsSync(join(dir, 'dist', t, 'report.json')) ? readFileSync(join(dir, 'dist', t, 'report.json'), 'utf8') : '');
+    expect('build: report.json carries the target\'s reads, as check --json lists them',
+      b.code === 0 && ['shadcn', 'primeng'].every((t) =>
+        JSON.stringify(report(t)?.reads) === JSON.stringify(plain?.targets?.find((x) => x.target === t)?.reads)),
+      `exit ${b.code}: ${b.out.slice(-300)}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 
   r = run(['build', '--matrix', '--cwd', acme]);
   expect('build --matrix: refused as a usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+
+  // The recording view an exporter gets is the IR it would get without it:
+  // same keys and entry values, mode aliases still one object, and listing
+  // keys is not a read (packages/core/src/reads.js).
+  const { recordingView } = await import('../packages/core/src/reads.js');
+  const shared = new Map([['semantic.radius.md', { type: 'dimension', value: '4px' }], ['option.blue.500', { type: 'color', value: '#00f' }]]);
+  const { view, reads } = recordingView({ defaultMode: 'light', modes: { light: shared, 'mode:light': shared } });
+  const keys = [...view.modes.light.keys()];
+  expect('recording: same keys, same size, aliases kept as one map',
+    JSON.stringify(keys) === JSON.stringify([...shared.keys()]) && view.modes.light.size === 2 && view.modes.light === view.modes['mode:light'],
+    JSON.stringify(keys));
+  expect('recording: listing keys reads nothing', reads().length === 0, JSON.stringify(reads()));
+  const values = [...view.modes.light.values()].map((e) => e.value);
+  expect('recording: entries opened while iterating keep their values and count as reads (catalog slots only)',
+    JSON.stringify(values) === JSON.stringify(['4px', '#00f']) && JSON.stringify(reads()) === '["semantic.radius.md"]', JSON.stringify(reads()));
+  view.modes.light.get('semantic.color.accent.solid');
+  expect('recording: a lookup of a slot the design system lacks is not a read', JSON.stringify(reads()) === '["semantic.radius.md"]', JSON.stringify(reads()));
 }
 
 // ---------- explain --target / --variable: slot ↔ target variable (#98) ----------

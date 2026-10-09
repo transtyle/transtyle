@@ -47,6 +47,7 @@ Per target. The exporter's mapping runs against the IR — the complete one, or,
 - **specced:** version selection against the exporter's compat ranges ([versioning.md](versioning.md)). Today a target era is an explicit option (shadcn's `tailwind-v3`/`v4`, daisyUI's `v5`), not a range match;
 - each mapping decision is classified for the coverage report: `native | derived | approximated | dropped | unsupported`;
 - an exporter may also return `info`/`warning` diagnostics about what its target's own conventions do to an authored value (shadcn's radius rungs, `TST2104`); core validates them and adds them to the shared collector under the target instance's name ([plugins.md](plugins.md#the-exporter-interface-v0-as-implemented)).
+- core records which catalog slots the exporter reads while it runs: the mode maps it is handed note every `get`/`has` and every entry opened while iterating, with the same keys and values as the IR. The sorted list is the target's `reads`, in its `report.json`, and what `check --matrix` is built from ([cli.md](../specs/cli.md#check---matrix--who-reads-a-slot)). No exporter declares or changes anything for it.
 
 Output: per-target **resolution** — a pure data structure, still no files.
 
