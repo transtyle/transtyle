@@ -13,9 +13,9 @@ order: 9
 
 The second reference exporter, and proof that Transtyle is not a CSS generator: the output is a **JSON theme object** for `echarts.registerTheme()`, colors are hex (canvas rendering), and the star of the show is a derivation problem no UI-framework target has — the **categorical data palette**.
 
-<!-- measured: acme.echarts.rows = 11 -->
+<!-- measured: acme.echarts.rows = 18 -->
 
-It is also the smallest surface any target exposes — 11 classified theme keys on [Acme](/docs/examples/) — which is why the palette is the whole story here.
+It is also the smallest surface any target exposes — 18 classified theme keys on [Acme](/docs/examples/) — which is why the palette is the whole story here.
 
 ## The palette problem
 
@@ -40,7 +40,7 @@ One theme per `color-scheme` mode — ECharts has no runtime mode concept, so th
 
 | Theme path                                   | Comes from                                 | Note                                                                    |
 | -------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
-| `color[]`                                    | `palette.categorical.1–8`                  | derived from `primary` (or authored)                                    |
+| `color[0]` … `color[7]`                      | `palette.categorical.1–8`, one each        | derived from `primary` (or authored)                                    |
 | `backgroundColor`                            | `background.base`                          |                                                                         |
 | `textStyle.color` / `.fontFamily`            | `text.base`, `font.sans`                   | font list joined to a CSS string                                        |
 | `title`, `legend`, `axisLabel`               | `text.base`, `text-muted.base`             |                                                                         |
