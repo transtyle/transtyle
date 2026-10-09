@@ -12,6 +12,7 @@
 
 import { COLOR_ROLES, PROVENANCE, comboKey, COMPONENT_CATALOG } from '@transtyle/ir';
 import { mix, contrastRatio, contrastPick, clampChromaToGamut } from './color.js';
+import { resolveIfReady } from './normalize.js';
 
 const S = 'semantic.color.';
 const WHITE = { l: 1, c: 0, h: 0, alpha: 1 };
@@ -19,6 +20,10 @@ const NEARBLACK = { l: 0.145, c: 0, h: 0, alpha: 1 };
 const DARK_CANVAS = { l: 0.145, c: 0, h: 0, alpha: 1 };
 
 export function derive(normalized, config, diagnostics) {
+  // Inputs DERIVE had to skip because they were still a pending alias when read
+  // ({ mode, path, role? }). Reported by reportUnderived() once every alias has
+  // had its chance to resolve.
+  const underived = [];
   // Every combo in the expanded mode matrix (T8) gets a full pass — not just
   // the primary dimension's values — so a slot that only the *other*
   // dimension varies (e.g. `space.*` under `density`) still gets every
@@ -39,8 +44,15 @@ export function derive(normalized, config, diagnostics) {
     // The check now lives in compile(), after all alias resolution, where it can
     // both see the root cause and stay silent when there is one.
     const primary = get(map, `${S}primary.solid`);
-    if (!primary) return;
+    if (!primary) return { underived };
     const textBase = get(map, `${S}text.base`);
+    // `text.base` is read here, before the role grids: an alias to a role cell
+    // (`{semantic.color.neutral.solid}`) can't be settled yet, and reordering
+    // wouldn't help since the roles read text.base too (text-strong, the on-tint
+    // fallbacks). It still resolves after DERIVE; TST1205 says what was lost.
+    if (!textBase && map.get(`${S}text.base`)?.pendingAlias) {
+      underived.push({ mode, path: `${S}text.base` });
+    }
 
     // Custom archetyped roles (T7, docs/architecture/ir.md §archetypes) join the
     // grid loop below exactly like a built-in role: resolveRoleSolid()'s fallback
@@ -101,11 +113,34 @@ export function derive(normalized, config, diagnostics) {
     }
 
     // --- Role grid (C1): solid/tint/outline/text x rest/hover/active/selected + on-colors ---
-    for (const role of roles) {
+    // A worklist, not a single pass: a role whose `.solid` is an authored alias
+    // to a slot not derived yet (another role's `.solid` or grid cell further
+    // down the list) goes to the back of the queue and is retried once that
+    // slot exists, so "our secondary is the info blue" gets its grid whatever
+    // the order of the roles. Roles that alias nothing derived never wait, so
+    // they keep today's order and output. The queue stops when every role left
+    // in it has waited since the last grid was derived (no progress possible):
+    // those are reported after the post-DERIVE pass (TST1205, or the TST1105/
+    // TST1104 that explains them) — see reportUnderived().
+    const queue = [...roles];
+    let waitedSinceProgress = 0;
+    for (let i = 0; i < queue.length; i++) {
+      const role = queue[i];
       const rp = `${S}${role}.`;
       const solid = resolveRoleSolid(ctx, role, rp, primary);
       if (!solid) {
-        if (normalized.roleArchetypes.has(role)) {
+        if (map.get(rp + 'solid')?.pendingAlias) {
+          queue.push(role);
+          waitedSinceProgress++;
+          if (waitedSinceProgress === queue.length - 1 - i) {
+            for (const r of queue.slice(i + 1)) underived.push({ mode, path: `${S}${r}.solid`, role: r });
+            break;
+          }
+          continue;
+        }
+        // Only for a `.solid` that isn't there at all. An authored one that
+        // failed to resolve (TST1104/1105/1106) already has its cause reported.
+        if (normalized.roleArchetypes.has(role) && !map.has(rp + 'solid')) {
           diagnostics.warn(
             'TST1203',
             `${role}: has a role archetype but no authored ${role}.solid in ${mode} mode — grid not derived`,
@@ -113,6 +148,7 @@ export function derive(normalized, config, diagnostics) {
         }
         continue; // built-ins: only reachable if primary itself were missing, already handled above
       }
+      waitedSinceProgress = 0;
 
       const solidHover = rc(
         ctx,
@@ -520,7 +556,56 @@ export function derive(normalized, config, diagnostics) {
       'text.base',
     ]);
   }
+  return { underived };
 }
+
+/**
+ * TST1205: an authored alias that DERIVE read too early. The alias itself is
+ * legal and resolves after DERIVE (ir.md, References), but what DERIVE builds on
+ * it was skipped because its target is derived later than the slot that needs
+ * it: a role bound to `ring`, `link.*`, `palette.categorical.*` or the content
+ * ladder (all derived after the role grids), or `text.base` bound to a role cell.
+ *
+ * Runs in compile() after resolveDeferredAliases(), and reports only the
+ * aliases that did resolve in the end. One that is dangling (TST1105) or loops
+ * (TST1104) is skipped for that reason, already reported: the diagnostics page
+ * shows causes, not their consequences. Modes are grouped into one message per
+ * alias.
+ */
+export function reportUnderived(normalized, underived, diagnostics) {
+  const groups = new Map();
+  for (const { mode, path, role } of underived) {
+    const entry = normalized.modes[mode]?.get(path);
+    if (entry?.value === undefined || entry.provenance?.kind !== 'aliased') continue;
+    const key = `${path}|${entry.provenance.target}`;
+    if (!groups.has(key)) groups.set(key, { path, role, target: entry.provenance.target, modes: [] });
+    groups.get(key).modes.push(mode);
+  }
+  for (const { path, role, target, modes } of groups.values()) {
+    const where = `in ${listModes(modes)} mode${modes.length > 1 ? 's' : ''}`;
+    const slot = path.slice(S.length);
+    if (role) {
+      diagnostics.warn(
+        'TST1205',
+        `${slot} aliases {${target}}, which is derived after the role grids — ${role}'s grid is not derived ${where}`,
+        {
+          hint: `Alias an authored token or another role's .solid or grid cell (those are derived in time), or author ${slot} as a color.`,
+        },
+      );
+    } else {
+      diagnostics.warn(
+        'TST1205',
+        `${slot} aliases {${target}}, which is derived after text.base is read — text.muted, text.subtle, text.disabled, text.strong and every role's text-strong are not derived ${where}`,
+        {
+          hint: 'Alias an authored token (a role\'s cells are derived after text.base is read), or author text.base as a color.',
+        },
+      );
+    }
+  }
+}
+
+const listModes = (modes) =>
+  modes.length < 2 ? modes.join('') : `${modes.slice(0, -1).join(', ')} and ${modes.at(-1)}`;
 
 // ---------- role-solid anchors ----------
 
@@ -676,8 +761,12 @@ const TYPE_ROLE_LEADING = {
 
 // ---------- helpers ----------
 
+// Every DERIVE read goes through resolveIfReady (normalize.js): an authored
+// alias to a slot this pass has already filled reads as its value, instead of
+// staying `undefined` until the post-DERIVE pass and silently dropping
+// everything derived from it.
 function get(map, path) {
-  return map.get(path)?.value;
+  return resolveIfReady(map, path)?.value;
 }
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const r3 = (n) => Math.round(n * 1000) / 1000;
@@ -685,13 +774,14 @@ const trimNum = (n) => String(Math.round(n * 1000) / 1000);
 
 /** Resolve-or-fill: returns the existing (authored/aliased) value, or computes, stores, and returns it. */
 function resolve(ctx, path, type, compute, rule, inputs, kind = PROVENANCE.DERIVED) {
-  const existing = ctx.map.get(path);
+  const existing = resolveIfReady(ctx.map, path);
   if (existing?.value !== undefined) return existing.value;
   // An authored alias waiting on a slot DERIVE fills later (normalize.js
   // DEFERRED) — or an authored composite with such a member, like a shadow
   // whose color is `{semantic.color.scrim}` — has no value yet but must still
   // win over the default: filling it here would silently discard what the
-  // author wrote.
+  // author wrote. (An alias whose target this pass already filled has just
+  // been settled by resolveIfReady above and returned its value.)
   if (existing?.pendingAlias || existing?.pendingMembers) return undefined;
   const value = compute();
   ctx.map.set(path, {

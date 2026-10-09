@@ -9,7 +9,7 @@ import { loadConfig, loadTokenTrees } from './load.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
 import { normalize, resolveDeferredAliases, reportModeCarryOver } from './normalize.js';
-import { derive } from './derive.js';
+import { derive, reportUnderived } from './derive.js';
 import { runChecks } from './checks.js';
 import { Diagnostics } from './diagnostics.js';
 import { nearestName } from './nearest.js';
@@ -46,10 +46,16 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // LOAD + NORMALIZE + DERIVE (shared across targets)
   const trees = await loadTokenTrees(cwd, config.tokens, diagnostics);
   const normalized = normalize(trees, config, diagnostics);
-  derive(normalized, config, diagnostics);
+  const { underived } = derive(normalized, config, diagnostics);
   // Authored aliases pointing at slots DERIVE materializes (e.g. a component
   // token aliasing `{semantic.radius.full}`) resolve here — see normalize.js.
   resolveDeferredAliases(normalized, diagnostics);
+
+  // TST1205 (an alias DERIVE read before its target existed, so what it feeds
+  // was skipped) is judged here, not in DERIVE: only now is it known whether
+  // the alias resolved in the end. A dangling or looping one already has its
+  // TST1105/TST1104 and stays silent. See reportUnderived.
+  reportUnderived(normalized, underived, diagnostics);
 
   // TST1204 (cross-mode carry-over) can only be judged once every alias has a
   // value: the slot's own text is identical in both modes when the per-mode

@@ -495,6 +495,40 @@ export function resolveDeferredAliases(normalized, diagnostics) {
   }
 }
 
+/**
+ * Resolve-if-ready: settle a deferred alias *now* when its target already has a
+ * value, and otherwise leave it pending, silently. Returns the entry (or
+ * undefined when the path doesn't exist); callers read `.value`.
+ *
+ * DERIVE reads its inputs through this. A deferred alias used to stay
+ * `undefined` for the whole stage, even once DERIVE had filled its target, so
+ * everything derived FROM it was dropped: `secondary.solid` authored as
+ * `{semantic.color.info.solid}` resolved after DERIVE, but its grid (hover,
+ * tint, on-colors…) was never built, and nothing said so. Reading through here,
+ * a slot derived earlier in the pass is seen right away.
+ *
+ * Unlike resolveDeferredAliases() it never reports anything: a target that
+ * doesn't exist yet may still be derived later in the pass, and only the
+ * post-DERIVE pass can call it dangling (TST1105). Chains are followed (an alias
+ * to an alias that is itself waiting), with a cycle guard; a cycle stays pending
+ * for the post-DERIVE pass to report as TST1104. The resolved entry is exactly
+ * what resolvePending() would have produced, so settling early changes no value
+ * and no provenance. Whole-token aliases only: a composite waiting on a member
+ * (`pendingMembers`) is still settled after DERIVE.
+ */
+export function resolveIfReady(map, tokenPath, stack = []) {
+  const entry = map.get(tokenPath);
+  if (!entry?.pendingAlias || stack.includes(tokenPath)) return entry;
+  const target = entry.pendingAlias;
+  const resolved = resolveIfReady(map, target, [...stack, tokenPath]);
+  if (resolved?.value === undefined) return entry;
+  entry.type = entry.type ?? resolved.type;
+  entry.value = resolved.value;
+  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode };
+  delete entry.pendingAlias;
+  return entry;
+}
+
 function resolvePending(map, tokenPath, stack, diagnostics) {
   const entry = map.get(tokenPath);
   if (!entry || !(entry.pendingAlias || entry.pendingMembers)) return entry;

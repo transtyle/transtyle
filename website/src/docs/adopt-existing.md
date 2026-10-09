@@ -113,6 +113,8 @@ One small file of aliases connects [the Transtyle language](/docs/language/) to 
 
 Don't translate everything on day one. Bind what you're sure of; the coverage report will show you what derivation guessed for the rest.
 
+A binding can also point at another catalog slot when two meanings share a colour in your system: `"secondary": { "solid": { "$value": "{semantic.color.info.solid}" } }` makes secondary the info blue and still derives secondary's own grid (hover, tint, on-colours), whatever the order of the roles. The one limit is a slot derived after the role grids: bound to `ring`, `link.*` or `palette.categorical.*`, a role keeps the colour but gets no grid, and `TST1205` [says so](/docs/diagnostics/).
+
 ## 4. Build, and read the report
 
 ```bash
