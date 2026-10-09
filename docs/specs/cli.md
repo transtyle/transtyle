@@ -1,6 +1,6 @@
 # CLI specification
 
-> **Status:** `build`, `check`, `explain`, `init`, `add`, `diff`, `catalog` are implemented (`packages/cli/src/main.js`; golden-tested by `scripts/check-cli.mjs`) — a real subset of the full surface below, not yet the whole vision. Implemented `init` scaffolds a config + `tokens/brand.tokens.json` non-interactively (no `--yes` flag needed, there's no interactive mode yet); `add <target>` validates against the CLI's own exporter registry and read-modify-writes the config; `explain <slot> [--mode <name>]` prints the resolved value, provenance, and rule inputs recursively (see the corrected example below — no `--target` filtering or WCAG candidate list yet, and there's no per-token file:line tracking in provenance); `check --json` prints the diagnostics array + per-target coverage to stdout as one JSON object (human logs still go to stderr); `catalog [--json]` prints the catalog (below); `check --matrix` prints which targets read each catalog slot (below), and adds it to the `--json` object as `matrix`. `--out`, `--dry-run` remain specced, not implemented ([issue #5](https://github.com/transtyle/transtyle/issues/5)); `--frozen` likewise ([issue #1](https://github.com/transtyle/transtyle/issues/1)); `import`, `migrate` wait on the importer contract (ROADMAP I1/I2, Phase 3).
+> **Status:** `build`, `check`, `explain`, `bindings --expand`, `init`, `add`, `diff`, `catalog` are implemented (`packages/cli/src/main.js`; golden-tested by `scripts/check-cli.mjs`) — a real subset of the full surface below, not yet the whole vision. Implemented `init` scaffolds a config + `tokens/brand.tokens.json` non-interactively (no `--yes` flag needed, there's no interactive mode yet); `add <target>` validates against the CLI's own exporter registry and read-modify-writes the config; `explain <slot> [--mode <name>]` prints the resolved value, provenance, and rule inputs recursively (see the corrected example below — no `--target` filtering or WCAG candidate list yet, and there's no per-token file:line tracking in provenance); `check --json` prints the diagnostics array + per-target coverage to stdout as one JSON object (human logs still go to stderr); `catalog [--json]` prints the catalog (below); `check --matrix` prints which targets read each catalog slot (below), and adds it to the `--json` object as `matrix`. `--out`, `--dry-run` remain specced, not implemented ([issue #5](https://github.com/transtyle/transtyle/issues/5)); `--frozen` likewise ([issue #1](https://github.com/transtyle/transtyle/issues/1)); `import`, `migrate` wait on the importer contract (ROADMAP I1/I2, Phase 3).
 
 ## Design corrections from the original vision
 
@@ -27,6 +27,8 @@ transtyle check [target...]         pipeline minus emit: validation, contrast, c
 transtyle explain <token> [--target <t>] [--mode <dim>=<v>]
                               provenance chain: authored where / derived by which rule from what /
                               mapped to which target variable and why
+transtyle bindings --expand           print the config's `bindings` pattern rules as the plain alias token file they expand to
+                                      (stdout; what each rule skipped goes to stderr)
 transtyle import <source> [--write] materialize an importer's output as token files (review, then adopt)
 transtyle diff [<git-ref>]          semantic diff of resolved IR vs ref (default: HEAD); per-target impact summary
 transtyle catalog [--json]          every catalog slot: type, derivation rule and inputs, required anchor (no project needed)
@@ -52,6 +54,8 @@ semantic.color.primary.on-tint = oklch(0.48 0.162 255)  [#005bb6]
 ```
 
 An unknown slot exits 2 and lists the 5 closest catalog names (Levenshtein distance) instead of a bare error — e.g. asking for the pre-revision `primary.subtle` surfaces `primary.tint`, `primary.outline`, `primary.on-tint`. `--target` filtering, per-token file:line provenance, and the WCAG candidate list shown in the original mockup above remain specced.
+
+`explain` also names the rule behind a slot that a `bindings` rule produced: `└─ aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)`. `transtyle bindings --expand` is a thin wrapper over `compile()`'s `bindings` result (`expandBindings()` in core); see [configuration.md](configuration.md#binding-rules).
 
 ## `catalog` — the contract as data
 

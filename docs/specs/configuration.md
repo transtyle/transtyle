@@ -29,6 +29,11 @@ Every key below is accepted by the shipped schema — this block validates clean
     "color-scheme": { "values": ["light", "dark"], "default": "light" },
   },
 
+  "bindings": [
+    // optional: pattern rules that expand into plain aliases (see Binding rules)
+    { "slot": "semantic.color.{role}.solid", "from": "{option.color.{role}.600}" },
+  ],
+
   "derivation": {
     "rules": "standard@1", // pinned rule pack (see architecture/derivation.md)
     "autoDark": false,
@@ -110,6 +115,43 @@ The `tokens` array is an **ordered list of layers** ([ADR-0009](../adr/0009-toke
 ```
 
 This is the **recommended layout for teams whose token files are generated or owned elsewhere**: every token file stays valid, tool-ingestible DTCG; transtyle-specific syntax is confined to this manifest. Inline `$extensions["transtyle.modes"]` remains fully supported (see the Acme example) — both forms produce the identical internal representation, and may be mixed. Precedence: later layers win; overriding an existing mode value warns (`TST1108`); a mode value for a token with no default-mode value is skipped with a warning (`TST1107`); an undeclared mode errors (`TST1109`). A file matched by a mode-scoped entry is never also loaded as a base layer, whatever the order of the entries, so `"tokens/*.tokens.json"` can cover the folder that holds the overlays ([ADR-0009, amended 2026-10-08](../adr/0009-token-layering.md#amendment-2026-10-08-an-overlay-claims-its-file)). **Override layers.** `override: true` marks a layer that redefines earlier layers on purpose (core, business unit, product): a redefinition from it raises no `TST1103`, an unmarked layer still does. A token an `override: true` layer defines that no earlier layer defined raises `TST1116` (once for the layer when it is the first one); `override: "extend"` may add tokens silently. On a mode-scoped layer, `override` suppresses `TST1108`. Normalized provenance of an overridden token carries `layer` (the winning file) and `overrides` (the files it shadowed); `explain` prints them. The object form requires `mode` or `override`. See [ADR-0009, amended 2026-10-09](../adr/0009-token-layering.md#amendment-2026-10-09-explicit-override-layers). Layer _order is semantic_ — treat the manifest's `tokens` array as carefully as an import order.
+
+## Binding rules
+
+A binding is one alias from a catalog slot to a token of the design system's own vocabulary. For a regular vocabulary (a `brand.50…950` ramp per role, Material's `primary` / `on-primary` pairs) that is dozens of near-identical lines. The optional `bindings` array writes them as rules instead. It is data, like the rest of the manifest, and it adds nothing to the IR ([ADR-0012](../adr/0012-binding-rules.md)).
+
+```jsonc
+"bindings": [
+  { "slot": "semantic.color.{role}.solid",    "from": "{option.color.{role}.600}" },
+  { "slot": "semantic.color.{role}.tint",     "from": "{option.color.{role}.50}" },
+  { "slot": "semantic.color.{role}.on-solid", "from": "{option.color.white}", "roles": ["primary", "danger"] },
+  { "slot": "semantic.color.text.{rung}",     "from": "{option.color.ink.{rung}}" },
+  { "slot": "semantic.color.elevation.{level}.surface", "from": "{option.color.surface.{level}}" }
+]
+```
+
+Each rule has a `slot` (a dotted token path) and a `from` (one alias). Optional: `roles` (restrict `{role}` to a list), `required`, `description`.
+
+**Placeholders.** Only three exist, each a whole path segment:
+
+| Placeholder | Iterates                                                                                                                                     |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{role}`    | the built-in color roles in catalog order, then every custom role that opted into the grid with `$extensions.transtyle.role`, sorted by name |
+| `{rung}`    | the text rungs: `strong`, `base`, `muted`, `subtle`, `disabled`, `inverse`                                                                   |
+| `{level}`   | the elevation levels `0`–`5`                                                                                                                 |
+
+A rule iterates only the placeholders its `slot` uses (two placeholders are the cross product). `from` may use only placeholders the `slot` uses, so every slot gets exactly one value. Any other `{name}` is `TST1117`; ramp steps such as `600` are written literally (a `{step}` placeholder that discovers the keys under a group is a later issue).
+
+**Expansion.** LOAD appends one more base layer, after every token file, holding one plain alias per slot a rule produces. `$type` comes from the target like any hand-written alias, and mode overlays keep working because the alias resolves per mode. The IR, exporters and `diff` see ordinary aliases; `explain` prints the rule on the alias's provenance (`aliased(target, rule)`). `transtyle bindings --expand` prints that layer as a token file, to freeze it.
+
+**Precedence is deterministic, and explicit bindings win.**
+
+1. A token already in a token file (an authored value or a hand-written alias) beats every rule: the rule skips that slot, silently. This is how one cell of a regular grid is overridden.
+2. Between rules, the first in the array wins; the later one gets an `info` note (`TST1119`).
+3. Rules apply in array order and each iterates its placeholders in the fixed order above, so the same inputs always expand to the same layer.
+4. A slot whose target token does not exist is skipped silently, so a rule can be written for the whole grid and only bind what the vocabulary has. With `"required": true` a missing target is an error instead (`TST1118`). The target must be a token authored in a token file: a rule cannot point at a slot that DERIVE materializes, or at another rule's slot.
+
+A malformed rule (unknown placeholder, `from` not a single alias, `roles` without `{role}` or naming an unknown role, a `from` placeholder the `slot` lacks) is `TST1117`.
 
 ## Token file conventions
 

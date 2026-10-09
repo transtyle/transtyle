@@ -8,7 +8,7 @@
  * target, unknown slot) behave as specced.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync, cpSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync, cpSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -572,6 +572,85 @@ try {
 
   r = run(['build', '--matrix', '--cwd', acme]);
   expect('build --matrix: refused as a usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+}
+
+// ---------- #59: binding pattern rules ----------
+// The same design system bound by 6 rules and by the plain alias file those
+// rules expand to must build byte-identical output; the committed plain file is
+// itself the golden of `bindings --expand`.
+{
+  const rulesFx = join(root, 'packages/core/test-fixtures/bindings-rules');
+  const explicitFx = join(root, 'packages/core/test-fixtures/bindings-explicit');
+  const tmp = mkdtempSync(join(tmpdir(), 'transtyle-check-bindings-'));
+  try {
+    let r = run(['bindings', '--expand', '--cwd', rulesFx]);
+    expect('bindings --expand: exit 0', r.code === 0, r.out);
+    expect('bindings --expand: matches the committed plain file', r.stdout === readFileSync(join(explicitFx, 'tokens/bindings.tokens.json'), 'utf8'), 'regenerate it: transtyle bindings --expand --cwd packages/core/test-fixtures/bindings-rules');
+    expect('bindings --expand: the authored cell wins over its rule', !r.stdout.includes('"danger": {\n      "solid"'), r.stdout);
+    expect('bindings --expand: a role without the target token is skipped silently', !r.stdout.includes('option.color.info.700'), r.stdout);
+    expect('bindings --expand: reports what was skipped on stderr', /skipped 1 already authored/.test(r.out) && /target missing/.test(r.out), r.out);
+
+    r = run(['bindings', '--cwd', rulesFx]);
+    expect('bindings without --expand: usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+    r = run(['bindings', '--expand', '--cwd', explicitFx]);
+    expect('bindings --expand: no rules is a usage error (exit 2)', r.code === 2, `exit ${r.code}`);
+
+    for (const [name, fx] of [['rules', rulesFx], ['explicit', explicitFx]]) {
+      cpSync(fx, join(tmp, name), { recursive: true });
+    }
+    // the explicit fixture reaches into the rules fixture's token files
+    const explicitCfg = JSON.parse(readFileSync(join(tmp, 'explicit/transtyle.config.json'), 'utf8'));
+    explicitCfg.tokens = explicitCfg.tokens.map((t) => t.replace('../bindings-rules/', '../rules/'));
+    writeFileSync(join(tmp, 'explicit/transtyle.config.json'), JSON.stringify(explicitCfg));
+    for (const name of ['rules', 'explicit']) {
+      r = run(['build', '--cwd', join(tmp, name)]);
+      expect(`bindings fixture (${name}): builds`, r.code === 0, r.out);
+    }
+    const readAll = (dir) => {
+      const out = new Map();
+      for (const t of ['css-variables', 'bootstrap', 'shadcn']) {
+        for (const f of readdirSync(join(dir, 'dist', t))) {
+          if (f === 'report.json') continue; // lists the same files; compared via the others
+          out.set(`${t}/${f}`, readFileSync(join(dir, 'dist', t, f), 'utf8'));
+        }
+      }
+      return out;
+    };
+    const a = readAll(join(tmp, 'rules'));
+    const b = readAll(join(tmp, 'explicit'));
+    expect('bindings: rules and the plain alias file emit the same files', [...a.keys()].join() === [...b.keys()].join() && a.size > 3, [...a.keys()].join());
+    const differing = [...a.keys()].filter((k) => a.get(k) !== b.get(k));
+    expect('bindings: rules and the plain alias file emit byte-identical output', differing.length === 0, `differs: ${differing.join(', ')}`);
+
+    r = run(['explain', 'primary.tint', '--cwd', rulesFx]);
+    expect('explain: names the rule behind a bound slot', r.code === 0 && r.out.includes('aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)'), r.out);
+    r = run(['explain', 'danger.solid', '--cwd', rulesFx]);
+    expect('explain: an authored cell shows no rule', r.code === 0 && r.out.includes('authored') && !r.out.includes('from rule'), r.out);
+
+    // error cases, on a copy of the rules fixture with one rule swapped in
+    const bad = (label, rule, code, extra = {}) => {
+      const dir = join(tmp, `bad-${label}`);
+      cpSync(rulesFx, dir, { recursive: true });
+      const cfg = JSON.parse(readFileSync(join(dir, 'transtyle.config.json'), 'utf8'));
+      cfg.bindings = [...(extra.before ?? []), rule];
+      writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify(cfg));
+      const res = run(['check', '--cwd', dir, '--json']);
+      expect(`bindings ${label}: ${code}`, res.out.includes(code), res.out);
+      return { dir, res };
+    };
+    let x = bad('unknown placeholder', { slot: 'semantic.color.{colour}.solid', from: '{option.color.white}' }, 'TST1117');
+    expect('bindings unknown placeholder: fails (exit 1)', x.res.code === 1, `exit ${x.res.code}`);
+    bad('from placeholder missing in slot', { slot: 'semantic.color.primary.solid', from: '{option.color.{role}.600}' }, 'TST1117');
+    bad('from is not an alias', { slot: 'semantic.color.{role}.solid', from: 'oklch(0.5 0.1 255)' }, 'TST1117');
+    bad('roles without {role}', { slot: 'semantic.color.primary.solid', from: '{option.color.primary.600}', roles: ['primary'] }, 'TST1117');
+    bad('unknown role', { slot: 'semantic.color.{role}.solid', from: '{option.color.{role}.600}', roles: ['primray'] }, 'TST1117');
+    x = bad('required target missing', { slot: 'semantic.color.{role}.solid-hover', from: '{option.color.{role}.700}', required: true }, 'TST1118');
+    expect('bindings required target missing: fails (exit 1)', x.res.code === 1, `exit ${x.res.code}`);
+    x = bad('rule conflict', { slot: 'semantic.color.{role}.tint', from: '{option.color.white}' }, 'TST1119', { before: [{ slot: 'semantic.color.{role}.solid', from: '{option.color.{role}.600}' }, { slot: 'semantic.color.{role}.tint', from: '{option.color.{role}.50}' }] });
+    expect('bindings rule conflict: only a note (exit 0)', x.res.code === 0, `exit ${x.res.code}`);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 }
 
 if (failures) {

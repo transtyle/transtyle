@@ -65,6 +65,7 @@ function parseArgs(argv) {
     else if (a === '--mode') args.mode = argv[++i];
     else if (a === '--json') args.json = true;
     else if (a === '--matrix') args.matrix = true;
+    else if (a === '--expand') args.expand = true;
     else if (a === '--help' || a === '-h') args.help = true;
     else if (a.startsWith('--')) { console.error(`Unknown flag: ${a}`); process.exit(2); }
     else if (!args.command) args.command = a;
@@ -79,6 +80,7 @@ Usage:
   transtyle build [target...]     compile configured targets (default: all)
   transtyle check [target...]     run the pipeline without writing files
   transtyle explain <slot>        show a resolved slot's value, provenance, and rule inputs
+  transtyle bindings --expand     print the config's bindings rules expanded into a plain alias token file
   transtyle diff [ref]            semantic diff of the resolved graph vs a git ref (default: HEAD), with per-target impact
   transtyle catalog               list every catalog slot: type, derivation rule, inputs (no project needed)
   transtyle init [name]           scaffold transtyle.config.json + tokens/tokens.json
@@ -86,6 +88,7 @@ Usage:
 Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
   --mode <name>                   mode to resolve for (explain only; default: the DS's default mode)
+  --expand                        bindings only: required, prints the expansion to stdout
   --json                          check/diff/catalog only: print a machine-readable report to stdout
   --matrix                        check only: print which targets read each catalog slot (with --json: a "matrix" key)
 `;
@@ -106,7 +109,7 @@ function printDiagnostic(d) {
   if (d.stack) console.error(d.stack.split('\n').map((l) => `    ${l}`).join('\n'));
   if (d.hint) console.error(`  ↳ ${d.hint}`);
 }
-const COMMANDS = ['build', 'check', 'explain', 'diff', 'catalog', 'init', 'add'];
+const COMMANDS = ['build', 'check', 'explain', 'bindings', 'diff', 'catalog', 'init', 'add'];
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -117,6 +120,7 @@ async function main() {
   }
 
   if (args.command === 'explain') return cmdExplain(args);
+  if (args.command === 'bindings') return cmdBindings(args);
   if (args.command === 'diff') return cmdDiff(args);
   if (args.command === 'catalog') return cmdCatalog(args);
   if (args.command === 'init') return cmdInit(args);
@@ -175,6 +179,44 @@ async function cmdBuildOrCheck(args) {
     return;
   }
   console.error(emit ? '\n✔ build complete' : '\n✔ check passed');
+}
+
+// ---------- bindings ----------
+
+/**
+ * `bindings --expand`: the config's pattern rules as the plain alias token file
+ * they expand to (stdout, pipeable into `tokens/*.json`), so a team can freeze
+ * them. What was skipped and why goes to stderr, one line per rule.
+ */
+async function cmdBindings(args) {
+  if (!args.expand) { console.error('Usage: transtyle bindings --expand [--cwd <dir>]'); process.exit(2); }
+  let result;
+  try {
+    result = await compile({ cwd: args.cwd, targets: [], emit: false, skipExporters: true, loadExporter: makeLoadExporter(args.cwd) });
+  } catch (e) {
+    console.error(`✖ ${e.message}`);
+    process.exit(2);
+  }
+  const { diagnostics, bindings } = result;
+  for (const d of diagnostics.items) printDiagnostic(d);
+  // Only the errors that make the expansion itself wrong stop it; the rest of
+  // the design system may still be incomplete while its bindings are being written.
+  if (diagnostics.errors.some((d) => ['TST1010', 'TST1117', 'TST1118'].includes(d.code))) { process.exitCode = 1; return; }
+  if (!bindings) { console.error('✖ transtyle.config.json has no "bindings" rules to expand.'); process.exit(2); }
+
+  const byRule = new Map();
+  for (const s of bindings.skipped) {
+    const entry = byRule.get(s.rule) ?? { authored: 0, rule: 0, 'missing-target': 0 };
+    entry[s.reason]++;
+    byRule.set(s.rule, entry);
+  }
+  for (const [rule, n] of byRule) {
+    const parts = [['authored', 'already authored'], ['rule', 'bound by an earlier rule'], ['missing-target', 'target missing']]
+      .filter(([k]) => n[k] > 0).map(([k, why]) => `${n[k]} ${why}`);
+    console.error(`  ${rule}: skipped ${parts.join(', ')}`);
+  }
+  console.error(`${bindings.aliases.length} alias(es) from ${new Set(bindings.aliases.map((a) => a.rule)).size} rule(s)`);
+  console.log(JSON.stringify(bindings.tree, null, 2));
 }
 
 // ---------- explain ----------
@@ -272,7 +314,7 @@ function printExplain(entry, inputs, depth) {
     return;
   }
   if (prov.kind === 'aliased') {
-    console.log(`${indent} └─ aliased → ${prov.target}`);
+    console.log(`${indent} └─ aliased → ${prov.target}${prov.rule ? `  (from rule ${prov.rule})` : ''}`);
     overrides();
     return;
   }

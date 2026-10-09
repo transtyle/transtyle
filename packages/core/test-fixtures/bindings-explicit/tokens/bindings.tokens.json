@@ -1,0 +1,125 @@
+{
+  "semantic": {
+    "color": {
+      "primary": {
+        "solid": {
+          "$value": "{option.color.primary.600}"
+        },
+        "solid-hover": {
+          "$value": "{option.color.primary.700}"
+        },
+        "tint": {
+          "$value": "{option.color.primary.50}"
+        },
+        "on-solid": {
+          "$value": "{option.color.white}"
+        }
+      },
+      "secondary": {
+        "solid": {
+          "$value": "{option.color.secondary.600}"
+        },
+        "solid-hover": {
+          "$value": "{option.color.secondary.700}"
+        },
+        "tint": {
+          "$value": "{option.color.secondary.50}"
+        }
+      },
+      "accent": {
+        "solid": {
+          "$value": "{option.color.accent.600}"
+        },
+        "solid-hover": {
+          "$value": "{option.color.accent.700}"
+        },
+        "tint": {
+          "$value": "{option.color.accent.50}"
+        }
+      },
+      "success": {
+        "solid": {
+          "$value": "{option.color.success.600}"
+        },
+        "solid-hover": {
+          "$value": "{option.color.success.700}"
+        },
+        "tint": {
+          "$value": "{option.color.success.50}"
+        }
+      },
+      "warning": {
+        "solid": {
+          "$value": "{option.color.warning.600}"
+        },
+        "solid-hover": {
+          "$value": "{option.color.warning.700}"
+        },
+        "tint": {
+          "$value": "{option.color.warning.50}"
+        }
+      },
+      "info": {
+        "solid": {
+          "$value": "{option.color.info.600}"
+        },
+        "tint": {
+          "$value": "{option.color.info.50}"
+        }
+      },
+      "neutral": {
+        "solid": {
+          "$value": "{option.color.neutral.600}"
+        },
+        "solid-hover": {
+          "$value": "{option.color.neutral.700}"
+        },
+        "tint": {
+          "$value": "{option.color.neutral.50}"
+        }
+      },
+      "danger": {
+        "solid-hover": {
+          "$value": "{option.color.danger.700}"
+        },
+        "tint": {
+          "$value": "{option.color.danger.50}"
+        },
+        "on-solid": {
+          "$value": "{option.color.white}"
+        }
+      },
+      "text": {
+        "strong": {
+          "$value": "{option.color.ink.strong}"
+        },
+        "base": {
+          "$value": "{option.color.ink.base}"
+        },
+        "muted": {
+          "$value": "{option.color.ink.muted}"
+        },
+        "subtle": {
+          "$value": "{option.color.ink.subtle}"
+        }
+      },
+      "elevation": {
+        "0": {
+          "surface": {
+            "$value": "{option.color.surface.0}"
+          }
+        },
+        "1": {
+          "surface": {
+            "$value": "{option.color.surface.1}"
+          }
+        },
+        "2": {
+          "surface": {
+            "$value": "{option.color.surface.2}"
+          }
+        }
+      }
+    }
+  }
+}
