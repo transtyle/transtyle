@@ -110,7 +110,7 @@ export default {
     if (radius) {
       coverage.push({ variable: '--radius-{selector,field,box}', slot: 'semantic.radius.md', class: 'approximated', provenance: radius.provenance.kind, note: 'one radius feeds three component families' });
     }
-    coverage.push({ variable: '--depth / --noise / --size-*', slot: '—', class: 'dropped', note: 'daisyUI stylistic effects with no token semantics; theme uses daisyUI defaults' });
+    coverage.push({ variable: '--depth / --noise / --size-*', slot: '—', class: 'unsupported', meaning: 'style.effect', note: 'daisyUI themable stylistic effects and control sizes (depth, noise, size-selector, size-field) the IR has no vocabulary for; theme uses daisyUI defaults' });
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
