@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transtyle.dev/schemas/manifest/v0.json",
+  "title": "Transtyle emitted-file manifest (transtyle-manifest.json)",
+  "description": "Schema for the per-target manifest of the files a Transtyle build wrote and their content hashes, used for drift detection. See https://transtyle.dev/docs/cli/.",
+  "type": "object",
+  "required": [
+    "target",
+    "algorithm",
+    "files"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "algorithm": {
+      "type": "string",
+      "enum": [
+        "sha256"
+      ]
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$",
+        "description": "a lowercase hex sha256 digest"
+      }
+    }
+  }
+}

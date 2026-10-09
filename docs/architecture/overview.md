@@ -53,7 +53,7 @@ Three data shapes cross public boundaries, and each is schema-versioned:
 ## Key invariants
 
 - **Determinism:** identical inputs (config + tokens + plugin versions) produce byte-identical outputs. No timestamps, no randomness, no network access during build. Verified in CI by double-build comparison.
-- **Isolation:** exporters cannot mutate the IR or affect other exporters — both enforced by `plugin-kit`'s conformance suite, not by convention. Exporters return _file descriptions_ (path + content); only core touches the filesystem, which is what makes `check` a real dry run (same code path, EMIT skipped) and what atomic writes and the manifest would build on once they exist.
+- **Isolation:** exporters cannot mutate the IR or affect other exporters — both enforced by `plugin-kit`'s conformance suite, not by convention. Exporters return _file descriptions_ (path + content); only core touches the filesystem, which is what makes `check` a real dry run (same code path, EMIT skipped) and what atomic writes and the emitted-file manifest (drift detection, `TST1312`) build on.
 - **Provenance everywhere:** every value in the IR knows whether it was authored, aliased, derived (by which rule, from what), or defaulted. This powers `explain`, coverage classification, and trustworthy diffs.
 - **No network at build time.** Plugin installation (`transtyle add`) touches the network; `transtyle build` never does. Doc generation ([specs/doc-generation.md](../specs/doc-generation.md)) is the sole, explicitly-flagged exception.
 

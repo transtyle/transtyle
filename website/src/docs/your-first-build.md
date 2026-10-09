@@ -46,6 +46,7 @@ shadcn  42% native · 53% derived · 3% approximated · 3% dropped
   ↳ dist/shadcn/globals.transtyle.css
   ↳ dist/shadcn/usage.md
   ↳ dist/shadcn/report.json
+  ↳ dist/shadcn/transtyle-manifest.json
 
 ✔ build complete
 ```

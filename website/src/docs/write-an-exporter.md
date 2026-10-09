@@ -264,6 +264,7 @@ npx transtyle build alacritty
 alacritty  55% native · 23% approximated · 18% dropped · 5% unsupported
   ↳ dist/alacritty/alacritty.transtyle.toml
   ↳ dist/alacritty/report.json
+  ↳ dist/alacritty/transtyle-manifest.json
 ```
 
 That coverage line is your exporter being honest in public — and `dist/alacritty/alacritty.transtyle.toml` is a terminal theme built from the same tokens as your buttons.

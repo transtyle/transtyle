@@ -1907,8 +1907,133 @@ try {
   }
 }
 
+// ---------- emitted-file manifest and drift (TST1312, issue #10) ----------
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-drift-'));
+  const out = (p) => join(dir, 'dist/css-variables', p);
+  const drifts = (r) => (r.out.match(/TST1312/g) ?? []).length;
+  const setFailOn = (failOn) => {
+    const cfgPath = join(dir, 'transtyle.config.json');
+    const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
+    if (failOn) cfg.check = { ...cfg.check, failOn };
+    else if (cfg.check) delete cfg.check.failOn;
+    writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+  };
+  try {
+    let r = run(['check', '--cwd', join(root, 'packages/core/test-fixtures/dtcg-validation')]);
+    expect('drift: a project never built reports nothing', drifts(r) === 0, r.out);
+
+    // A git repository, so `diff` below has a HEAD to compare with (dist/ committed, as a team that commits its themes would).
+    const git = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' });
+    git('init', '-q');
+    git('config', 'user.email', 't@t.test');
+    git('config', 'user.name', 'test');
+    run(['init', 'drift-ds', '--cwd', dir]);
+    r = run(['build', '--cwd', dir]);
+    git('add', '-A');
+    git('commit', '-q', '-m', 'initial');
+    expect('drift: build writes the manifest and lists it', r.code === 0 && existsSync(out('transtyle-manifest.json')) && r.out.includes('↳ dist/css-variables/transtyle-manifest.json'), r.out);
+    const manifest = JSON.parse(readFileSync(out('transtyle-manifest.json'), 'utf8'));
+    const css = 'variables.transtyle.css';
+    expect('drift: the manifest hashes the exporter\'s files, not report.json or itself', manifest.target === 'css-variables' && manifest.algorithm === 'sha256' && css in manifest.files && !('report.json' in manifest.files) && !('transtyle-manifest.json' in manifest.files), JSON.stringify(manifest));
+    r = run(['check', '--cwd', dir]);
+    expect('drift: check right after a build is clean', r.code === 0 && drifts(r) === 0, r.out);
+
+    // A line ending conversion is not an edit.
+    const original = readFileSync(out(css), 'utf8');
+    writeFileSync(out(css), original.replace(/\n/g, '\r\n'));
+    r = run(['check', '--cwd', dir]);
+    expect('drift: an output converted to CRLF is not reported', r.code === 0 && drifts(r) === 0, r.out);
+
+    // Hand edit: one warning naming the file and the instance; failOn decides the exit.
+    writeFileSync(out(css), original + '/* hand edit */\n');
+    r = run(['check', '--cwd', dir]);
+    expect('drift: a hand-edited output warns once, naming the file and the target', r.code === 0 && drifts(r) === 1 && r.out.includes(`⚠ TST1312 css-variables: dist/css-variables/${css} was changed outside transtyle since the last build`) && r.out.includes('transtyle build css-variables'), r.out);
+    r = run(['check', '--cwd', dir, '--json']);
+    expect('drift: check --json carries it as a warning', (() => { try { return JSON.parse(r.stdout).diagnostics.some((d) => d.code === 'TST1312' && d.severity === 'warning' && d.target === 'css-variables'); } catch { return false; } })(), r.stdout);
+    setFailOn('warning');
+    r = run(['check', '--cwd', dir]);
+    expect('drift: fails the check under failOn: "warning" (exit 1)', r.code === 1 && drifts(r) === 1, r.out);
+    setFailOn(null);
+    r = run(['explain', 'primary.solid', '--cwd', dir]);
+    expect('drift: explain never reports it', r.code === 0 && drifts(r) === 0, r.out);
+    r = run(['diff', '--cwd', dir]);
+    expect('drift: diff never reports it', r.code === 0 && r.out.includes('No semantic changes') && drifts(r) === 0, r.out);
+
+    // Build: warns once more (the edit is lost now), overwrites, and the next check is clean.
+    r = run(['build', '--cwd', dir]);
+    expect('drift: build warns, then overwrites the edited file', r.code === 0 && drifts(r) === 1 && readFileSync(out(css), 'utf8') === original, r.out);
+    expect('drift: the build\'s report.json records the warning', JSON.parse(readFileSync(out('report.json'), 'utf8')).diagnostics.some((d) => d.code === 'TST1312'));
+    r = run(['check', '--cwd', dir]);
+    expect('drift: check after the rebuild is clean', r.code === 0 && drifts(r) === 0, r.out);
+
+    // A listed file that is gone.
+    rmSync(out('usage.md'));
+    r = run(['check', '--cwd', dir]);
+    expect('drift: a deleted output is reported missing', drifts(r) === 1 && r.out.includes('dist/css-variables/usage.md is listed in transtyle-manifest.json but missing'), r.out);
+    run(['build', '--cwd', dir]);
+
+    // A manifest that can't be trusted is reported, not silently ignored.
+    writeFileSync(out('transtyle-manifest.json'), '{');
+    r = run(['check', '--cwd', dir]);
+    expect('drift: an unreadable manifest warns, naming it', drifts(r) === 1 && r.out.includes('dist/css-variables/transtyle-manifest.json is not valid JSON'), r.out);
+    // No manifest at all (output from a build before manifests existed): silent.
+    rmSync(out('transtyle-manifest.json'));
+    writeFileSync(out(css), original + '/* edited before manifests existed */\n');
+    r = run(['check', '--cwd', dir]);
+    expect('drift: output without a manifest reports nothing', r.code === 0 && drifts(r) === 0, r.out);
+    run(['build', '--cwd', dir]);
+
+    // A filtered build rewrites only its own target's manifest.
+    run(['add', 'shadcn', '--cwd', dir]);
+    run(['build', '--cwd', dir]);
+    const cssManifest = readFileSync(out('transtyle-manifest.json'), 'utf8');
+    // A blank line at the end: still a valid manifest, but no build would write it.
+    writeFileSync(out('transtyle-manifest.json'), cssManifest + '\n');
+    const touched = readFileSync(out('transtyle-manifest.json'), 'utf8');
+    r = run(['build', 'shadcn', '--cwd', dir]);
+    expect('drift: build shadcn leaves css-variables\' manifest alone', r.code === 0 && readFileSync(out('transtyle-manifest.json'), 'utf8') === touched && existsSync(join(dir, 'dist/shadcn/transtyle-manifest.json')), r.out);
+    run(['build', '--cwd', dir]);
+
+    // Stale: a file the last build wrote that this one does not produce stays, listed once.
+    const old = readFileSync(out(css), 'utf8');
+    writeFileSync(out('old.transtyle.css'), old);
+    const m = JSON.parse(readFileSync(out('transtyle-manifest.json'), 'utf8'));
+    m.files['old.transtyle.css'] = m.files[css];
+    writeFileSync(out('transtyle-manifest.json'), JSON.stringify(m, null, 2) + '\n');
+    r = run(['build', '--cwd', dir]);
+    expect('drift: a file this build no longer produces is listed stale and left in place', r.code === 0 && drifts(r) === 0 && r.out.includes('· stale: dist/css-variables/old.transtyle.css') && existsSync(out('old.transtyle.css')), r.out);
+    expect('drift: the new manifest no longer lists the stale file', !('old.transtyle.css' in JSON.parse(readFileSync(out('transtyle-manifest.json'), 'utf8')).files));
+    r = run(['build', '--cwd', dir]);
+    expect('drift: a stale file is listed once, by the build that stopped producing it', r.code === 0 && !r.out.includes('stale:'), r.out);
+
+    // --dry-run: the manifest is in the list of what would be written; drift is still reported, nothing changes.
+    writeFileSync(out(css), original + '/* hand edit */\n');
+    const beforeDry = readFileSync(out('transtyle-manifest.json'), 'utf8');
+    r = run(['build', '--dry-run', '--cwd', dir]);
+    expect('drift: build --dry-run reports drift, lists the manifest, writes nothing', r.code === 0 && drifts(r) === 1 && r.out.includes('would write dist/css-variables/transtyle-manifest.json') && readFileSync(out(css), 'utf8').endsWith('/* hand edit */\n') && readFileSync(out('transtyle-manifest.json'), 'utf8') === beforeDry, r.out);
+    run(['build', '--cwd', dir]);
+
+    // --out: the manifest moves with the output, and drift is checked there.
+    const outer = mkdtempSync(join(tmpdir(), 'transtyle-check-drift-out-'));
+    try {
+      r = run(['build', '--out', outer, '--cwd', dir]);
+      expect('drift: build --out writes the manifest under <dir>/<target>', r.code === 0 && existsSync(join(outer, 'css-variables/transtyle-manifest.json')), r.out);
+      writeFileSync(join(outer, 'css-variables', css), original + '/* edited in the --out copy */\n');
+      r = run(['build', '--out', outer, '--cwd', dir]);
+      expect('drift: build --out checks the manifest in that directory', r.code === 0 && drifts(r) === 1 && r.out.includes(`css-variables/${css} was changed outside transtyle`), r.out);
+      r = run(['check', '--cwd', dir]);
+      expect('drift: the configured output is unaffected by an edit under --out', r.code === 0 && drifts(r) === 0, r.out);
+    } finally {
+      rmSync(outer, { recursive: true, force: true });
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--completeness/bind --suggest/--out/--dry-run/--quiet/--verbose golden path, WCAG and APCA contrast standards, and error cases all pass');
+console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--completeness/bind --suggest/--out/--dry-run/--quiet/--verbose/drift golden path, WCAG and APCA contrast standards, and error cases all pass');

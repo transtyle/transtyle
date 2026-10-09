@@ -23,6 +23,10 @@
  *      earlier target's report missed it); `--dry-run`'s planned byte counts
  *      are those of the reports a real build writes.
  *
+ * Each target's `transtyle-manifest.json` (issue #10) is part of the same swap:
+ * the snapshots above include it, so a failed build leaves the previous
+ * manifest describing the previous files, and a clean build updates both.
+ *
  * Run: node scripts/check-atomic-emit.mjs (also: npm run check:atomic-emit; in check:all).
  */
 import { execFileSync } from 'node:child_process';
@@ -30,7 +34,7 @@ import { mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync, mkdirSyn
 import { tmpdir } from 'node:os';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compile } from '@transtyle/core';
+import { compile, hashContents } from '@transtyle/core';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'packages/cli/src/main.js');
@@ -90,6 +94,8 @@ try {
   expect('clean build: no errors', r.diagnostics.errors.length === 0);
   expect('clean build: files written', readFileSync(join(dir, 'out/alpha/nested/b.txt'), 'utf8') === 'nested v1\n' && existsSync(join(dir, 'out/beta/report.json')));
   expect('clean build: no staging directories left', leftovers().length === 0, leftovers().join(', '));
+  const manifestOf = (out) => JSON.parse(readFileSync(join(dir, out, 'transtyle-manifest.json'), 'utf8'));
+  expect('clean build: each target\'s manifest written with its files', manifestOf('out/alpha').files['nested/b.txt'] === hashContents('nested v1\n') && manifestOf('out/beta').files['c.txt'] === hashContents('beta v1\n'));
 
   // An orphan a previous build (or a human) left in a shared output directory.
   writeFileSync(join(dir, 'out/alpha/orphan.txt'), 'keep me\n');
@@ -131,7 +137,8 @@ try {
   r = await build();
   expect('rebuild: changed files replaced', readFileSync(join(dir, 'out/alpha/a.txt'), 'utf8') === 'alpha v2\n' && readFileSync(join(dir, 'out/beta/c.txt'), 'utf8') === 'beta v2\n');
   expect('rebuild: file this build did not produce is untouched', readFileSync(join(dir, 'out/alpha/orphan.txt'), 'utf8') === 'keep me\n');
-  expect('rebuild: results list the written files', r.results[0].files.includes('out/alpha/a.txt') && r.results[0].files.includes('out/alpha/report.json'));
+  expect('rebuild: results list the written files', r.results[0].files.includes('out/alpha/a.txt') && r.results[0].files.includes('out/alpha/report.json') && r.results[0].files.includes('out/alpha/transtyle-manifest.json'));
+  expect('rebuild: manifest swapped in with the new files', manifestOf('out/alpha').files['a.txt'] === hashContents('alpha v2\n') && !('orphan.txt' in manifestOf('out/alpha').files));
   expect('rebuild: no staging directories left', leftovers().length === 0);
 
   // 5. every report.json of one build agrees, a later exporter's warning included

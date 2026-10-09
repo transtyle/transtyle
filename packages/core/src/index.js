@@ -5,6 +5,7 @@
 
 import path from 'node:path';
 import { commitOutputs } from './emit.js';
+import { MANIFEST_FILE, readManifests, renderManifest, reportDrift, staleFiles } from './manifest.js';
 import { loadConfig, loadTokenTrees } from './load.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
@@ -37,6 +38,7 @@ export { deprecationsReached } from './metadata.js';
 export { catalog, isCatalogSlot } from './catalog.js';
 export { adoption } from './adoption.js';
 export { buildReport, REPORT_SCHEMA_ID } from './report.js';
+export { MANIFEST_FILE, hashContents } from './manifest.js';
 export { loadConfig, expandTokenFiles } from './load.js';
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
 export { consumption } from './reads.js';
@@ -83,8 +85,15 @@ export { SYNONYMS_VERSION } from './synonyms.js';
  *
  * The result's `contrast` is the check standard's measure (contrast.js); pass
  * it to `contrastRegressions` so `diff` measures with the same standard.
+ *
+ * `drift: true` compares each selected target's output directory (under
+ * `outRoot` when set) with the `transtyle-manifest.json` its last build wrote,
+ * before anything is written, and warns (TST1312) about files changed or
+ * removed outside transtyle (src/manifest.js). Off by default: only
+ * `transtyle build` and `check` ask for it, so `explain`, `diff` and other API
+ * callers never report on whatever output happens to sit next to the project.
  */
-export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false, outRoot, dryRun = false, apcaLoader }) {
+export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false, outRoot, dryRun = false, apcaLoader, drift = false }) {
   const diagnostics = new Diagnostics();
   const { config } = await loadConfig(cwd);
 
@@ -208,6 +217,14 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   const units = makeUnits(config);
 
   const targetNames = skipExporters ? [] : targets?.length ? targets : Object.keys(config.targets ?? {});
+
+  // The previous build's manifests, read before the target loop so a build
+  // sees its output as it was before overwriting it. Drift is reported here,
+  // before `check.suppress` is applied (after the loop), so it can be silenced,
+  // and it is reported even when an error stops the build below.
+  const manifests = drift || emit ? await readManifests(cwd, config, targetNames, outRoot) : new Map();
+  if (drift) await reportDrift(manifests, cwd, diagnostics);
+
   const results = [];
   // Exporter crashes (TST3001/TST3002) and incompatible exporters (TST1309) are
   // recorded per target and must not trip the "never emit with errors present"
@@ -267,7 +284,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       loaded = await loadExporter(targetConfig.exporter ?? name);
     } catch (e) {
       crash('TST3002', name, 'load', e, 'Install the exporter package in this project, or fix its `exporter` field in transtyle.config.json. Re-run with --verbose (or TRANSTYLE_DEBUG=1) for the stack.');
-      results.push({ target: name, files: [], coverage: [], emitted: [], reads: [] });
+      results.push({ target: name, files: [], stale: [], coverage: [], emitted: [], reads: [] });
       continue;
     }
     const withManifest = loaded && typeof loaded.emit !== 'function' && 'plugin' in loaded;
@@ -279,7 +296,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       const incompatible = reportCompat(name, loaded, diagnostics);
       if (incompatible > 0) {
         crashes += incompatible;
-        results.push({ target: name, files: [], coverage: [], emitted: [], reads: [] });
+        results.push({ target: name, files: [], stale: [], coverage: [], emitted: [], reads: [] });
         continue;
       }
     }
@@ -357,19 +374,23 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     const outDir = outRoot ? path.resolve(outRoot, name) : path.resolve(cwd, targetConfig.output ?? `dist/${name}`);
     const written = [];
     const planned = [];
+    let stale = [];
     if (emit) {
       // Nothing is written here: every target is collected first and the whole
-      // build is committed atomically below (src/emit.js). Its report.json is
-      // added after the loop too, once every exporter has had its say.
+      // build is committed atomically below (src/emit.js). Its report.json and
+      // emitted-file manifest (src/manifest.js) are added after the loop too,
+      // once every exporter has had its say; they are swapped in with the
+      // files, so a manifest never describes files that did not land.
       const staged = files.map((f) => ({ path: f.path, contents: f.contents }));
       for (const f of files) written.push(path.relative(cwd, path.join(outDir, f.path)));
+      stale = await staleFiles(manifests.get(name), files, cwd);
       plans.push({ outDir, files: staged, name, targetConfig, coverage, view, reads, written, planned });
     }
     // `emitted` carries the file *specs* (path + contents) even when emit is
     // off — `transtyle diff` re-emits both sides in-memory to compute per-target
     // impact without writing anything. `files` stays the written paths.
     // `reads` is what `consumption()` (src/reads.js) builds the slot matrix from.
-    results.push({ target: name, files: dryRun ? [] : written, planned, outDir, exporter: targetConfig.exporter ?? name, coverage, emitted: files, reads });
+    results.push({ target: name, files: dryRun ? [] : written, stale, planned, outDir, exporter: targetConfig.exporter ?? name, coverage, emitted: files, reads });
   }
 
   // Source locations first (so the suppressed list carries them too), then
@@ -390,8 +411,11 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
       target: name, options: targetConfig.options, coverage, reads, normalized: view,
       diagnostics: diagnostics.items, suppressed: diagnostics.suppressed, files: [...written],
     });
+    const manifest = renderManifest(name, plan.files);
     plan.files.push({ path: 'report.json', contents: JSON.stringify(report, null, 2) + '\n' });
     written.push(path.relative(cwd, path.join(plan.outDir, 'report.json')));
+    plan.files.push({ path: MANIFEST_FILE, contents: manifest });
+    written.push(path.relative(cwd, path.join(plan.outDir, MANIFEST_FILE)));
     plan.files.forEach((f, i) => planned.push({ path: written[i], bytes: Buffer.byteLength(f.contents, 'utf8') }));
   }
 
@@ -400,7 +424,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   // rolls every output directory back to its previous state.
   if (plans.length > 0) {
     if (diagnostics.errors.length > 0) {
-      for (const r of results) { r.files = []; r.planned = []; }
+      for (const r of results) { r.files = []; r.stale = []; r.planned = []; }
     } else if (!dryRun) {
       await commitOutputs(plans);
     }
