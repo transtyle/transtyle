@@ -54,7 +54,7 @@ Why one hook and not a `resolve`/`emit` split with core-evaluated JSON mapping t
 
 Constraints, enforced executably by the conformance kit rather than by convention: exporters receive an IR they must **not mutate**; they return file _descriptions_ and never touch the filesystem; they have no access to other targets' resolutions (only the `ctx.siblings` manifest of names and paths); and `emit` must be **deterministic** — the kit double-runs it and diffs.
 
-`ctx` carries the project config, this instance's `targetConfig` (with `options`), the color helpers (`formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`, `mix`), `projectName`, and `siblings`.
+`ctx` carries the project config, this instance's `targetConfig` (with `options`), the color helpers (`formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`, `mix`), `projectName`, `siblings`, and `units` (`remBase`, `toPx(dimension)`, `toRem(dimension)`: unit conversion at the config's `units.remBase`, returning `undefined` for anything that is not a `px` or `rem` dimension).
 
 **Version profiles — specced.** The design is that an exporter supports version _ranges_ of its framework as mapping profiles, with conditional logic via `ctx.targetVersion`, and core selects the profile so the exporter never parses version strings ([ADR-0006](../adr/0006-version-ranges.md)). Today `ctx` carries no `targetVersion`: era selection is an explicit exporter option (shadcn's `tailwind-v3`/`v4`), and each exporter states the framework version it was built against.
 

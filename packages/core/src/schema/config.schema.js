@@ -68,6 +68,17 @@ export const configSchema = {
         require: { type: 'array', items: { type: 'string' } },
       },
     },
+    units: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        remBase: {
+          type: 'string',
+          pattern: '^(?=.*[1-9])\\d+(\\.\\d+)?px$',
+          description: 'What one rem is worth, as a positive px length such as "16px" (the default).',
+        },
+      },
+    },
     targets: { type: 'object', additionalProperties: target },
     check: {
       type: 'object',

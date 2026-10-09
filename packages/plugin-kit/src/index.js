@@ -15,7 +15,7 @@
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { compile, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
+import { compile, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
 const FIXTURE = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixture');
 const COVERAGE_CLASSES = new Set(['native', 'derived', 'approximated', 'dropped', 'unsupported']);
@@ -39,6 +39,7 @@ function makeCtx() {
   return {
     config: { name: 'conformance-fixture', targets: {} },
     targetConfig: { output: 'dist', options: {} },
+    units: makeUnits({}),
     formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
     projectName: 'conformance-fixture',
     siblings: [],

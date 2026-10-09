@@ -38,16 +38,16 @@ One theme per `color-scheme` mode — ECharts has no runtime mode concept, so th
 
 ## What maps where
 
-| Theme path                                   | Comes from                                 | Note                                              |
-| -------------------------------------------- | ------------------------------------------ | ------------------------------------------------- |
-| `color[]`                                    | `palette.categorical.1–8`                  | derived from `primary` (or authored)              |
-| `backgroundColor`                            | `background.base`                          |                                                   |
-| `textStyle.color` / `.fontFamily`            | `text.base`, `font.sans`                   | font list joined to a CSS string                  |
-| `title`, `legend`, `axisLabel`               | `text.base`, `text-muted.base`             |                                                   |
-| axis lines, ticks, split lines               | `border.base`                              | applied to all four axis types                    |
-| `tooltip` background / border / text         | `overlay.base`, `border.base`, `text.base` | overlay = floating surface, as everywhere         |
-| `tooltip.borderRadius`                       | `radius.md`                                | rem → px (base 16) — classified `approximated`    |
-| series-specific styles (candlestick, gauge…) | —                                          | honestly reported `unsupported`; extend at `init` |
+| Theme path                                   | Comes from                                 | Note                                                                    |
+| -------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
+| `color[]`                                    | `palette.categorical.1–8`                  | derived from `primary` (or authored)                                    |
+| `backgroundColor`                            | `background.base`                          |                                                                         |
+| `textStyle.color` / `.fontFamily`            | `text.base`, `font.sans`                   | font list joined to a CSS string                                        |
+| `title`, `legend`, `axisLabel`               | `text.base`, `text-muted.base`             |                                                                         |
+| axis lines, ticks, split lines               | `border.base`                              | applied to all four axis types                                          |
+| `tooltip` background / border / text         | `overlay.base`, `border.base`, `text.base` | overlay = floating surface, as everywhere                               |
+| `tooltip.borderRadius`                       | `radius.md`                                | rem → px at `units.remBase` (16 by default) — classified `approximated` |
+| series-specific styles (candlestick, gauge…) | —                                          | honestly reported `unsupported`; extend at `init`                       |
 
 OKLCH → hex may clamp colors outside the sRGB gamut; clamped values are classified `approximated` with a note.
 

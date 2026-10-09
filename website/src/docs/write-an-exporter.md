@@ -189,6 +189,7 @@ export default {
 Three things worth pointing at:
 
 - **`ctx` gives you the colour helpers** — `formatHex`, `formatColor`, `formatHslTriplet`, `contrastRatio`, `mix`. Use them. They're the same functions the derivation engine uses, so your output agrees with everyone else's by construction.
+- **`ctx.units` converts dimensions.** `ctx.units.toPx("0.5rem")` and `toRem("8px")` use the config's `units.remBase`, return `undefined` for anything that is not a `px` or `rem` dimension, and `ctx.units.remBase` is the base itself, for your coverage note. Don't hard-code 16.
 - **A missing slot is data, not a crash.** If the IR has no `accent.solid`, record `unsupported` and carry on. Never throw because a design system didn't author something.
 - **The dropped rows are the point.** A terminal can't express radius or type. Saying so, in the report, is the difference between a translation and a guess.
 

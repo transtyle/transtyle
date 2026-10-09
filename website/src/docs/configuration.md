@@ -31,6 +31,7 @@ Full annotated example:
     "autoDark": false,
     "require": ["semantic.color.primary"]
   },
+  "units": { "remBase": "16px" },
   "targets": {
     "shadcn": { "output": "dist/shadcn", "options": { "era": "tailwind-v4" } },
     "shadcn-v3": {
@@ -152,6 +153,10 @@ Two constraints worth knowing:
 - `overrides` — per-slot derivation rules (specced, not yet implemented; today, simply author the token — authored always wins).
 
 Note that `require` is a **policy** knob, not the engine's own floor. `semantic.color.primary.solid` is required whether or not you list it — nothing can invent your brand color — and its absence is `TST1201`, which fires even with no `derivation` block at all.
+
+## `units`
+
+- `remBase` — what one `rem` is worth, as a `px` length: `"16px"` (the default). Exporters whose target wants pixels (ECharts, Storybook) convert `rem` dimensions at this base and name it in the `approximated` row of the report. Set it when your system's root font size is not 16px: GOV.UK's 62.5 % trick is `"10px"`, some enterprise systems use `"14px"`. A value that is not a positive `px` length (`"abc"`, `"0px"`, `"100%"`) is `TST1010`. Storybook's own `options.remBase` (a number) still overrides it for that target.
 
 ## `targets` — instances, not just names
 

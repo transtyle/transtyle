@@ -9,7 +9,7 @@
  * truth, two consumers — `scripts/check-schemas.mjs` asserts they never diverge.
  *
  * Supported keywords: type, enum, const, required, properties,
- * additionalProperties (boolean | schema), items, minItems, anyOf, and local
+ * additionalProperties (boolean | schema), items, minItems, anyOf, pattern, and local
  * `$ref` ("#/$defs/<name>", resolved against the root schema, so a recursive
  * token-file schema can be written). That is
  * exactly what our schemas need and no more — extend deliberately.
@@ -55,6 +55,10 @@ export function validate(value, schema, path = '', root = schema) {
   if (schema.type && !typeMatches(value, schema.type)) {
     push(path, `must be ${Array.isArray(schema.type) ? schema.type.join(' or ') : schema.type}, got ${typeOf(value)}`);
     return errors; // wrong type → downstream keyword checks are noise
+  }
+
+  if (schema.pattern && typeof value === 'string' && !new RegExp(schema.pattern).test(value)) {
+    push(path, `must match ${schema.pattern}${schema.description ? ` — ${schema.description}` : ''}`);
   }
 
   if (schema.anyOf) {
