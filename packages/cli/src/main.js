@@ -282,6 +282,12 @@ async function cmdExplain(args) {
   printExplain(tree.entry, tree.inputs, 0);
 }
 
+// Round a contrast ratio down to one decimal so a pair just under a threshold
+// never prints as the threshold itself (4.47 must not read "4.5:1").
+function floor1(n) {
+  return Math.floor(n * 10) / 10;
+}
+
 function formatEntryValue(entry) {
   const { type, value } = entry;
   if (type === 'color') {
@@ -520,7 +526,7 @@ function printDiff(ref, diff, impact, a11y = []) {
     console.error(`\n⚠ Contrast ${regressed.length ? 'regressions' : 'changes'}:`);
     for (const r of a11y) {
       const verb = r.status === 'regressed' ? 'now FAILS' : 'still fails';
-      console.error(`  ${r.status === 'regressed' ? '✖' : '⚠'} ${r.fg} on ${r.bg} (${r.mode}): ${r.before.toFixed(1)}:1 → ${r.after.toFixed(1)}:1 — ${verb} ${r.threshold}:1`);
+      console.error(`  ${r.status === 'regressed' ? '✖' : '⚠'} ${r.fg} on ${r.bg} (${r.mode}): ${floor1(r.before)}:1 → ${floor1(r.after)}:1 — ${verb} ${r.threshold}:1`);
     }
     if (regressed.length) {
       console.error(`\n  ${regressed.length} pair${regressed.length === 1 ? '' : 's'} passed before this change and fail${regressed.length === 1 ? 's' : ''} after it.`);

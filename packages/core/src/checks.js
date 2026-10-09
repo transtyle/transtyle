@@ -185,7 +185,7 @@ export function runChecks(normalized, config, diagnostics) {
               );
         diagnostics.warn(
           'TST2101',
-          `${fg} vs ${bg} is ${ratio.toFixed(1)}:1 in ${mode} mode (< ${min}:1 ${standard})`,
+          `${fg} vs ${bg} is ${Math.floor(ratio * 10) / 10}:1 in ${mode} mode (< ${min}:1 ${standard})`,
           carried.length
             ? {
                 path: `${S}${fg}`,

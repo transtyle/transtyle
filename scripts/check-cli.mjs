@@ -796,6 +796,15 @@ try {
       expect(`init --brand ${brand}: no neutral pair below AA in either mode`, neutral.length === 0, neutral.map((d) => d.message).join('\n'));
     }
 
+    // A ratio just under a threshold never prints as the threshold: the violet
+    // brand's derived secondary measures just under 4.5 and must not read "4.5:1 (< 4.5:1)".
+    dir = fresh('under-threshold'); dirs.push(dir);
+    run(['init', '--cwd', dir, '--yes', '--brand', '#7c3aed', '--targets', 'css-variables']);
+    const under = report(dir).diagnostics.filter((d) => d.code === 'TST2101');
+    const printed = (m) => { const x = /is (\d+(?:\.\d+)?):1 .*\(< (\d+(?:\.\d+)?):1/.exec(m); return x && [Number(x[1]), Number(x[2])]; };
+    expect('TST2101: a printed ratio is always below the printed threshold (rounded down, never "4.5:1 (< 4.5:1)")',
+      under.length > 0 && under.every((d) => { const p = printed(d.message); return p && p[0] < p[1]; }), under.map((d) => d.message).join('\n'));
+
     // Bad answers: exit 2 with the valid values, and nothing written.
     for (const [label, args, says] of [
       ['an unknown target', ['--targets', 'shadcn,nope'], 'Valid targets:'],
