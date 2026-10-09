@@ -17,6 +17,16 @@ const coverageItem = {
     class: { type: 'string', enum: ['native', 'derived', 'approximated', 'dropped', 'unsupported'] },
     provenance: { type: 'string', enum: ['authored', 'aliased', 'derived', 'defaulted'] },
     note: { type: 'string' },
+    // Issue #94: an optional, exporter-declared key for WHAT an `unsupported`
+    // row is missing ("icon.size"), so rows from different exporters can be
+    // grouped by meaning instead of by note text. Read by
+    // scripts/gen-catalog-signals.mjs; every key must be registered in
+    // docs/findings/catalog-meanings.json.
+    meaning: {
+      type: 'string',
+      pattern: '^[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*)*$',
+      description: 'dot-separated kebab-case segments, e.g. "icon.size"',
+    },
   },
 };
 

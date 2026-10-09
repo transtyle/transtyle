@@ -130,8 +130,8 @@ function resolve(light, dark, ctx) {
   const provKind = (map, p) => map?.get(S + p)?.provenance.kind;
   const cls = (p, mappedCls = 'native') =>
     mappedCls !== 'native' ? mappedCls : provKind(light, p) === 'derived' ? 'derived' : 'native';
-  const cov = (variable, slot, klass, note) =>
-    coverage.push({ variable, slot, class: klass, ...(note && { note }) });
+  const cov = (variable, slot, klass, note, meaning) =>
+    coverage.push({ variable, slot, class: klass, ...(note && { note }), ...(meaning && { meaning }) });
 
   const perMode = (map) => {
     if (!map) return null;
@@ -238,6 +238,7 @@ function resolve(light, dark, ctx) {
     '—',
     'unsupported',
     'no IR inset-shadow concept; Bootstrap default kept',
+    'shadow.inset',
   );
 
   const radius = (k) => light.get(`semantic.radius.${k}`);
@@ -288,6 +289,7 @@ function resolve(light, dark, ctx) {
     '—',
     'unsupported',
     "the IR does have this concept — `semantic.type.role.display.{sm,md,lg}` — but the two ladders disagree: Bootstrap runs 6 rungs from 2.5rem to 5rem, the type-role scale 3 from 1.953rem to 3.052rem, so mapping either onto the other invents rungs or drops them. Same shape as AL2's size-ladder deferral; Bootstrap defaults kept",
+    'type.display-ladder',
   );
 
   const spaceProv = light.get('semantic.space.4')?.provenance.kind;
@@ -302,6 +304,7 @@ function resolve(light, dark, ctx) {
     '—',
     'unsupported',
     "`semantic.breakpoint.*` ships (6 rungs), but only `md` (768px) agrees: Bootstrap's sm/lg/xl/xxl are 576/992/1200/1400 against the catalog's 640/1024/1280/1536, and its `xs` is `0` — the unqueried mobile-first base, not a boundary at all, where the catalog's is 480px. Rebinding would move every responsive boundary in the framework: a behavioral change, not a theming one. `$container-max-widths` has no IR counterpart at all. Bootstrap defaults kept",
+    'breakpoint.ladder',
   );
   cov(
     'motion ($transition-*)',

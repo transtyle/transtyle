@@ -77,6 +77,11 @@
               },
               "note": {
                 "type": "string"
+              },
+              "meaning": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*(\\.[a-z][a-z0-9]*(-[a-z0-9]+)*)*$",
+                "description": "dot-separated kebab-case segments, e.g. \"icon.size\""
               }
             }
           }

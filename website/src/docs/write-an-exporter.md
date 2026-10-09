@@ -194,6 +194,7 @@ Three things worth pointing at:
 - **The dropped rows are the point.** A terminal can't express radius or type. Saying so, in the report, is the difference between a translation and a guess.
 - **Read only what you use.** `transtyle check --matrix` records every slot an exporter looks up in the mode maps (`get`, `has`, or an entry opened while iterating) and lists your target as a reader of each. Looking a slot up "just in case" makes your target show up as depending on it. Listing the keys to filter them, as css-variables does, is not a read.
 - **Diagnostics are optional, and for your target's quirks.** When your target's own conventions turn an authored value into something the author didn't ask for, return `diagnostics: [{ severity: 'info', code, message, hint }]` next to `files` and `coverage` (shadcn does this when its radius offsets collapse a small `radius.md` to 0, [`TST2104`](/docs/diagnostics/)). Core prints them with your target's name in front. Only `info` and `warning`: to stop a build, the design system has to be wrong, and core already checks that.
+- **Say what an `unsupported` row is missing.** When the target themes something the catalog has no word for, add a `meaning` to the row (`meaning: 'icon.size'`), reusing a key from the [registry](https://github.com/transtyle/transtyle/blob/main/docs/findings/catalog-meanings.json) when another exporter already reports the same concept. Rows that share a meaning across exporters are the evidence the [catalog grows on](/docs/language/#how-the-language-grows).
 
 ## 4. Prove it
 

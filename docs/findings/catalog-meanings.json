@@ -1,0 +1,54 @@
+{
+  "$comment": "The registry of meaning keys exporters put on `unsupported` coverage rows (report.json `meaning`). scripts/gen-catalog-signals.mjs groups rows by these keys into docs/findings/catalog-signals.md and fails on a key that is not listed here. A status changes when a proposal or a worklog settles the question; update `ref` with it. Statuses: open, watch, disagreement, rejected, target-specific, promoted (docs/specs/validation-and-coverage.md, \"Catalog signals\").",
+  "meanings": {
+    "breakpoint.ladder": {
+      "status": "disagreement",
+      "summary": "Responsive breakpoints and container widths. `semantic.breakpoint.*` ships, but the target's ladder agrees with it on one rung only, and rebinding it would move every responsive boundary.",
+      "ref": "docs/worklog/2026-07-27-coverage-bar-asymmetry.md"
+    },
+    "chart.series-style": {
+      "status": "target-specific",
+      "summary": "Series-type styling (candlestick colours, gauge bands): chart configuration, not design-token semantics.",
+      "ref": "docs/specs/exporters/echarts.md"
+    },
+    "geometry.component": {
+      "status": "rejected",
+      "summary": "Bespoke component geometry (spinner, popover, modal widths, offcanvas, dropdown and toast widths): one-sided or false friends when measured against the second reference target.",
+      "ref": "docs/proposals/0004-component-geometry.md"
+    },
+    "geometry.indicator": {
+      "status": "disagreement",
+      "summary": "Indicator and control-box sizes (carousel indicator, checkbox box, switch track): both reference targets have the concept and model it incompatibly (em and one axis against rem, two axes and a ladder).",
+      "ref": "docs/proposals/0004-component-geometry.md"
+    },
+    "icon.asset": {
+      "status": "watch",
+      "summary": "Embedded icon and glyph images (SVG data URIs): the IR has no asset vocabulary. Single-source so far.",
+      "ref": "docs/backlog.md#bl-19"
+    },
+    "icon.size": {
+      "status": "watch",
+      "summary": "Component icon sizes. PrimeNG models them systematically, Bootstrap has a few ad-hoc ones; revisit when a third target brings a systematic icon-size concept.",
+      "ref": "docs/proposals/0004-component-geometry.md"
+    },
+    "opacity.component": {
+      "status": "open",
+      "summary": "Per-component opacities that are not `semantic.opacity.disabled`: a veil strength, a shimmer range, a glyph alpha. A candidate only once a second target needs the identical one.",
+      "ref": "docs/worklog/2026-07-23-bootstrap-coverage-chase.md"
+    },
+    "opacity.compositional": {
+      "status": "open",
+      "summary": "A catalog opacity the target composes against its own resting alpha, so the catalog value can't be written as is: it needs a compositional recipe (catalog factor × the target's resting value).",
+      "ref": "docs/worklog/2026-07-23-bootstrap-coverage-chase.md"
+    },
+    "shadow.inset": {
+      "status": "open",
+      "summary": "An inset shadow: the elevation shadows have no inset counterpart in the IR."
+    },
+    "type.display-ladder": {
+      "status": "disagreement",
+      "summary": "The display type sizes. `semantic.type.role.display.*` ships, but the target's ladder has twice the rungs over a different range, so mapping either invents rungs or drops them.",
+      "ref": "docs/worklog/2026-07-27-coverage-bar-asymmetry.md"
+    }
+  }
+}

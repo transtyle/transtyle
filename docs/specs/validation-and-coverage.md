@@ -93,7 +93,24 @@ Produced per target in RESOLVE ([pipeline.md](../architecture/pipeline.md#4-reso
 | `dropped`      | IR expresses it; this target cannot; omitted with reason       | `density` mode for a target with no density concept                                     |
 | `unsupported`  | Target has a themable slot the IR doesn't cover yet            | an exotic framework variable left at framework default                                  |
 
-`dropped` and `unsupported` are opposite directions of mismatch — reporting both keeps us honest about the IR's limits, not just the targets'. `unsupported` entries across exporters are the data that drives semantic-catalog growth (an `unsupported` slot appearing in 3+ exporters is a catalog candidate).
+`dropped` and `unsupported` are opposite directions of mismatch — reporting both keeps us honest about the IR's limits, not just the targets'. `unsupported` entries across exporters are the data that drives semantic-catalog growth: a concept that two independent exporters report `unsupported`, for architectural rather than nominal reasons, is a catalog candidate (the rule in the language reference's "How the language grows"). The count is necessary, not sufficient — a proposal still decides. This sentence used to say "3+ exporters" while the language reference and [proposal 0003](../proposals/0003-component-catalog-generalization.md) said two; two is the rule.
+
+### Catalog signals
+
+A row can say what it is missing in an optional **`meaning`** field: a key of dot-separated kebab-case segments (`icon.size`, `type.display-ladder`), the same key on every exporter that reports the same concept. Rows are grouped across exporters by that key, never by their note text — two exporters' prose never matches, and a grouping no exporter declared is a claim nobody made. Every key is registered, with a status, in [`docs/findings/catalog-meanings.json`](../findings/catalog-meanings.json):
+
+| Status            | Meaning                                                                     |
+| ----------------- | --------------------------------------------------------------------------- |
+| `open`            | a candidate waiting for evidence from another exporter                      |
+| `watch`           | deferred by a proposal, reopens on a named trigger (BL-19, proposal 0004)   |
+| `disagreement`    | both sides have the concept and model it incompatibly — not a growth signal |
+| `rejected`        | tested by a proposal and turned down                                        |
+| `target-specific` | the target's own surface, not design-token semantics                        |
+| `promoted`        | now a catalog slot; kept so the history stays readable                      |
+
+`disagreement` answers the open question the [2026-07-27 worklog](../worklog/2026-07-27-coverage-bar-asymmetry.md) left: `unsupported` keeps covering both a gap and a disagreement, and the status tells them apart without a sixth coverage class.
+
+`npm run gen:catalog-signals` compiles every example against every official exporter and writes [`docs/findings/catalog-signals.md`](../findings/catalog-signals.md): totals per exporter, every meaning with the exporters and rows behind it and the proposal that settled it, PrimeNG's slots that wait on an undriven Aura path, the rows with no meaning yet, and the catalog slots targets `dropped`. PrimeNG reports one row per family, so for it the page reads the slots one by one (the exporter's own `classifySurface()` over its emitted preset) and reconciles the total with the report. `check:catalog-signals`, part of `check:all`, fails when the page is stale, when a row declares a key the registry doesn't list, and when the registry keeps a key nothing reports (other than `promoted`).
 
 ### Coverage percentages are not comparable across targets
 
@@ -108,16 +125,16 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 <!-- measured: acme.bootstrap.approximated = 35 -->
 <!-- measured: acme.bootstrap.dropped = 71 -->
 <!-- measured: acme.bootstrap.unsupported = 56 -->
-<!-- measured: acme.primeng.driven = 78 -->
+<!-- measured: acme.primeng.driven = 89 -->
 <!-- measured: acme.primeng.inherited = 1566 -->
-<!-- measured: acme.primeng.base = 1115 -->
+<!-- measured: acme.primeng.base = 1104 -->
 
-|                                          | Bootstrap                                                               | PrimeNG                                                              |
-| ---------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                        |
-| Driven                                   | 59 native + 493 derived = 552 of 714 rows (77%), plus 35 `approximated` | 78 driven + 1566 inherited = 1644 (60%), 1115 left on Aura's default |
-| Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | see the family rows in `report.json`                                 |
-| Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                              |
+|                                          | Bootstrap                                                               | PrimeNG                                                                                             |
+| ---------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                                                       |
+| Driven                                   | 59 native + 493 derived = 552 of 714 rows (77%), plus 35 `approximated` | 89 driven + 1566 inherited = 1655 (60%), 1104 left on Aura's default                                |
+| Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | the family rows in `report.json`; slot by slot in [catalog signals](../findings/catalog-signals.md) |
+| Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                                                             |
 
 The 60% is the target with room to grow; the 77% is the one that has converged. The reason is architectural:
 

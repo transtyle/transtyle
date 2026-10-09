@@ -64,6 +64,15 @@ const N_ICON =
 const N_STRUCT =
   'structural/behavioral option (layout, cursor, transform, ordering, animation mechanics), not a theme value.';
 const N_FILTER = 'CSS filter trick — presentation mechanics, not a token meaning.';
+// Meaning keys (issue #94): what each unsupported bucket is missing, declared on
+// the row so scripts/gen-catalog-signals.mjs can group rows across exporters by
+// meaning rather than by note text. Every key is registered, with its status,
+// in docs/findings/catalog-meanings.json.
+const M_ASSET = 'icon.asset';
+const M_OPACITY = 'opacity.component';
+const M_BESPOKE = 'geometry.component';
+const M_ARCH_DISAGREE = 'geometry.indicator';
+const M_ICON = 'icon.size';
 const N_EM =
   'em-relative in Bootstrap (proportional to local font size); bound to the nearest rem rung — proportional intent is approximated, not preserved.';
 
@@ -74,7 +83,7 @@ export const DESCRIPTORS = {
   caret: {
     drop: { 'caret-width': { cls: 'dropped', note: N_STRUCT + ' (caret glyph geometry)' } },
   },
-  hr: { drop: { 'hr-opacity': { cls: 'unsupported', note: N_OPACITY } } },
+  hr: { drop: { 'hr-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY } } },
   legend: {
     emit: {
       'legend-margin-bottom': { sem: 'space.2' },
@@ -112,8 +121,8 @@ export const DESCRIPTORS = {
   thumbnail: { emit: { 'thumbnail-padding': { sem: 'space.1' } } },
   placeholder: {
     drop: {
-      'placeholder-opacity-max': { cls: 'unsupported', note: N_OPACITY },
-      'placeholder-opacity-min': { cls: 'unsupported', note: N_OPACITY },
+      'placeholder-opacity-max': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
+      'placeholder-opacity-min': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
     },
   },
 
@@ -197,15 +206,16 @@ export const DESCRIPTORS = {
   },
   'btn-close': {
     drop: {
-      'btn-close-width': { cls: 'unsupported', note: N_ICON + ' (close glyph)' },
-      'btn-close-padding-x': { cls: 'unsupported', note: N_BESPOKE + ' ' + N_EM },
-      'btn-close-bg': { cls: 'unsupported', note: N_ASSET },
-      'btn-close-opacity': { cls: 'unsupported', note: N_OPACITY },
-      'btn-close-hover-opacity': { cls: 'unsupported', note: N_OPACITY },
-      'btn-close-focus-opacity': { cls: 'unsupported', note: N_OPACITY },
+      'btn-close-width': { cls: 'unsupported', note: N_ICON + ' (close glyph)', meaning: M_ICON },
+      'btn-close-padding-x': { cls: 'unsupported', note: N_BESPOKE + ' ' + N_EM, meaning: M_BESPOKE },
+      'btn-close-bg': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'btn-close-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
+      'btn-close-hover-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
+      'btn-close-focus-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
       'btn-close-disabled-opacity': {
         cls: 'unsupported',
         note: 'the same concept as `semantic.opacity.disabled`, but not bindable to it: Bootstrap composes this against the glyph\'s own resting alpha ($btn-close-opacity: .5), so writing the catalog value (0.6) here would make the disabled close button MORE visible than the enabled one. Needs a compositional recipe (catalog factor x the target\'s resting alpha) the cross-walk has no form for yet — a real AL2-style growth signal, unlike the other -opacity rows in this family.',
+        meaning: 'opacity.compositional',
       },
       'btn-close-white-filter': { cls: 'dropped', note: N_FILTER },
     },
@@ -223,7 +233,7 @@ export const DESCRIPTORS = {
       'form-label-font-weight': { sem: 'type.role.label.md', part: 'fontWeight' },
     },
   },
-  'form-color': { drop: { 'form-color-width': { cls: 'unsupported', note: N_BESPOKE } } },
+  'form-color': { drop: { 'form-color-width': { cls: 'unsupported', note: N_BESPOKE, meaning: M_BESPOKE } } },
   'form-check': {
     emit: {
       'form-check-margin-bottom': {
@@ -243,31 +253,32 @@ export const DESCRIPTORS = {
       'form-check-input-width': {
         cls: 'unsupported',
         note: N_ARCH_DISAGREE + ' (checkbox/radio box)',
+        meaning: M_ARCH_DISAGREE,
       },
       'form-check-input-active-filter': { cls: 'dropped', note: N_FILTER },
       'form-check-radio-border-radius': {
         cls: 'dropped',
         note: N_STRUCT + ' (50% is the radio shape identity, not a radius token)',
       },
-      'form-check-input-checked-bg-image': { cls: 'unsupported', note: N_ASSET },
-      'form-check-radio-checked-bg-image': { cls: 'unsupported', note: N_ASSET },
-      'form-check-input-indeterminate-bg-image': { cls: 'unsupported', note: N_ASSET },
+      'form-check-input-checked-bg-image': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'form-check-radio-checked-bg-image': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'form-check-input-indeterminate-bg-image': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
     },
   },
   'form-switch': {
     emit: { 'form-switch-transition': T_FAST },
     drop: {
-      'form-switch-width': { cls: 'unsupported', note: N_ARCH_DISAGREE + ' (switch track)' },
-      'form-switch-bg-image': { cls: 'unsupported', note: N_ASSET },
-      'form-switch-focus-bg-image': { cls: 'unsupported', note: N_ASSET },
-      'form-switch-checked-bg-image': { cls: 'unsupported', note: N_ASSET },
+      'form-switch-width': { cls: 'unsupported', note: N_ARCH_DISAGREE + ' (switch track)', meaning: M_ARCH_DISAGREE },
+      'form-switch-bg-image': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'form-switch-focus-bg-image': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'form-switch-checked-bg-image': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
       'form-switch-checked-bg-position': { cls: 'dropped', note: N_STRUCT },
     },
   },
   'form-select': {
     drop: {
       'form-select-bg-size': { cls: 'dropped', note: N_STRUCT + ' (indicator geometry)' },
-      'form-select-indicator': { cls: 'unsupported', note: N_ASSET },
+      'form-select-indicator': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
     },
   },
   'form-range': {
@@ -288,7 +299,7 @@ export const DESCRIPTORS = {
     drop: {
       'form-range-track-width': { cls: 'dropped', note: N_STRUCT },
       'form-range-track-cursor': { cls: 'dropped', note: N_STRUCT },
-      'form-range-thumb-width': { cls: 'unsupported', note: N_BESPOKE + ' (thumb size)' },
+      'form-range-thumb-width': { cls: 'unsupported', note: N_BESPOKE + ' (thumb size)', meaning: M_BESPOKE },
       'form-range-thumb-border': { cls: 'dropped', note: N_STRUCT },
     },
   },
@@ -310,14 +321,14 @@ export const DESCRIPTORS = {
         note: N_STRUCT + ' (float-label mechanics)',
       },
       'form-floating-label-height': { cls: 'dropped', note: N_STRUCT + ' (float-label mechanics)' },
-      'form-floating-label-opacity': { cls: 'unsupported', note: N_OPACITY },
+      'form-floating-label-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
       'form-floating-label-transform': { cls: 'dropped', note: N_STRUCT },
     },
   },
   'form-feedback': {
     drop: {
-      'form-feedback-icon-valid': { cls: 'unsupported', note: N_ASSET },
-      'form-feedback-icon-invalid': { cls: 'unsupported', note: N_ASSET },
+      'form-feedback-icon-valid': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'form-feedback-icon-invalid': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
     },
   },
   'form-valid': {},
@@ -353,8 +364,8 @@ export const DESCRIPTORS = {
       'navbar-toggler-transition': T_FAST,
     },
     drop: {
-      'navbar-light-toggler-icon-bg': { cls: 'unsupported', note: N_ASSET },
-      'navbar-dark-toggler-icon-bg': { cls: 'unsupported', note: N_ASSET },
+      'navbar-light-toggler-icon-bg': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'navbar-dark-toggler-icon-bg': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
     },
   },
   breadcrumb: {
@@ -399,10 +410,10 @@ export const DESCRIPTORS = {
       },
     },
     drop: {
-      'accordion-icon-width': { cls: 'unsupported', note: N_ICON + ' (chevron)' },
+      'accordion-icon-width': { cls: 'unsupported', note: N_ICON + ' (chevron)', meaning: M_ICON },
       'accordion-icon-transform': { cls: 'dropped', note: N_STRUCT },
-      'accordion-button-icon': { cls: 'unsupported', note: N_ASSET },
-      'accordion-button-active-icon': { cls: 'unsupported', note: N_ASSET },
+      'accordion-button-icon': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'accordion-button-active-icon': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
     },
   },
   dropdown: {
@@ -415,7 +426,7 @@ export const DESCRIPTORS = {
         note: '.125rem — sub-rung; nearest meaning',
       },
     },
-    drop: { 'dropdown-min-width': { cls: 'unsupported', note: N_BESPOKE } },
+    drop: { 'dropdown-min-width': { cls: 'unsupported', note: N_BESPOKE, meaning: M_BESPOKE } },
   },
   modal: {
     emit: {
@@ -437,10 +448,10 @@ export const DESCRIPTORS = {
       'modal-backdrop-opacity': { sem: 'color.scrim', part: 'alpha' },
     },
     drop: {
-      'modal-sm': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)' },
-      'modal-md': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)' },
-      'modal-lg': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)' },
-      'modal-xl': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)' },
+      'modal-sm': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)', meaning: M_BESPOKE },
+      'modal-md': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)', meaning: M_BESPOKE },
+      'modal-lg': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)', meaning: M_BESPOKE },
+      'modal-xl': { cls: 'unsupported', note: N_BESPOKE + ' (dialog width steps)', meaning: M_BESPOKE },
       'modal-fade-transform': { cls: 'dropped', note: N_STRUCT },
       'modal-show-transform': { cls: 'dropped', note: N_STRUCT },
       'modal-scale-transform': { cls: 'dropped', note: N_STRUCT },
@@ -455,8 +466,8 @@ export const DESCRIPTORS = {
       },
     },
     drop: {
-      'offcanvas-horizontal-width': { cls: 'unsupported', note: N_BESPOKE + ' (panel width)' },
-      'offcanvas-vertical-height': { cls: 'unsupported', note: N_BESPOKE + ' (panel height)' },
+      'offcanvas-horizontal-width': { cls: 'unsupported', note: N_BESPOKE + ' (panel width)', meaning: M_BESPOKE },
+      'offcanvas-vertical-height': { cls: 'unsupported', note: N_BESPOKE + ' (panel height)', meaning: M_BESPOKE },
     },
   },
   tooltip: {
@@ -471,7 +482,7 @@ export const DESCRIPTORS = {
       'tooltip-max-width': { comp: 'tooltip.max-width' },
     },
     drop: {
-      'tooltip-opacity': { cls: 'unsupported', note: N_OPACITY },
+      'tooltip-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
       'tooltip-arrow-width': { cls: 'dropped', note: N_STRUCT + ' (arrow geometry)' },
       'tooltip-arrow-height': { cls: 'dropped', note: N_STRUCT + ' (arrow geometry)' },
     },
@@ -479,7 +490,7 @@ export const DESCRIPTORS = {
   popover: {
     emit: { 'popover-header-padding-y': { sem: 'space.2' } },
     drop: {
-      'popover-max-width': { cls: 'unsupported', note: N_BESPOKE },
+      'popover-max-width': { cls: 'unsupported', note: N_BESPOKE, meaning: M_BESPOKE },
       'popover-arrow-width': { cls: 'dropped', note: N_STRUCT + ' (arrow geometry)' },
       'popover-arrow-height': { cls: 'dropped', note: N_STRUCT + ' (arrow geometry)' },
     },
@@ -494,7 +505,7 @@ export const DESCRIPTORS = {
         note: '.875rem vs the 0.8rem scale rung — nearest meaning',
       },
     },
-    drop: { 'toast-max-width': { cls: 'unsupported', note: N_BESPOKE } },
+    drop: { 'toast-max-width': { cls: 'unsupported', note: N_BESPOKE, meaning: M_BESPOKE } },
   },
 
   // ---- feedback / status -------------------------------------------------------
@@ -542,15 +553,17 @@ export const DESCRIPTORS = {
       },
     },
     drop: {
-      'spinner-width': { cls: 'unsupported', note: N_BESPOKE },
-      'spinner-width-sm': { cls: 'unsupported', note: N_BESPOKE },
+      'spinner-width': { cls: 'unsupported', note: N_BESPOKE, meaning: M_BESPOKE },
+      'spinner-width-sm': { cls: 'unsupported', note: N_BESPOKE, meaning: M_BESPOKE },
       'spinner-border-width': {
         cls: 'unsupported',
         note: N_BESPOKE + ' (em-relative ring thickness)',
+        meaning: M_BESPOKE,
       },
       'spinner-border-width-sm': {
         cls: 'unsupported',
         note: N_BESPOKE + ' (em-relative ring thickness)',
+        meaning: M_BESPOKE,
       },
       'spinner-vertical-align': { cls: 'dropped', note: N_STRUCT },
     },
@@ -567,12 +580,13 @@ export const DESCRIPTORS = {
     },
     drop: {
       'carousel-control-width': { cls: 'dropped', note: N_STRUCT },
-      'carousel-control-opacity': { cls: 'unsupported', note: N_OPACITY },
-      'carousel-control-hover-opacity': { cls: 'unsupported', note: N_OPACITY },
-      'carousel-indicator-width': { cls: 'unsupported', note: N_ARCH_DISAGREE + ' (PrimeNG has indicator width+height too, but 28x8 rounded vs Bootstrap 30x3 hairline — one value would give two differently-wrong carousels)' },
+      'carousel-control-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
+      'carousel-control-hover-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
+      'carousel-indicator-width': { cls: 'unsupported', note: N_ARCH_DISAGREE + ' (PrimeNG has indicator width+height too, but 28x8 rounded vs Bootstrap 30x3 hairline — one value would give two differently-wrong carousels)', meaning: M_ARCH_DISAGREE },
       'carousel-indicator-height': {
         cls: 'unsupported',
         note: N_ARCH_DISAGREE + ' (indicator, height axis)',
+        meaning: M_ARCH_DISAGREE,
       },
       'carousel-indicator-hit-area-height': {
         cls: 'dropped',
@@ -581,13 +595,14 @@ export const DESCRIPTORS = {
       'carousel-indicator-spacer': {
         cls: 'unsupported',
         note: N_BESPOKE + ' (gap between indicators — PrimeNG has no counterpart at all)',
+        meaning: M_BESPOKE,
       },
-      'carousel-indicator-opacity': { cls: 'unsupported', note: N_OPACITY },
-      'carousel-indicator-active-opacity': { cls: 'unsupported', note: N_OPACITY },
+      'carousel-indicator-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
+      'carousel-indicator-active-opacity': { cls: 'unsupported', note: N_OPACITY, meaning: M_OPACITY },
       'carousel-caption-width': { cls: 'dropped', note: N_STRUCT },
-      'carousel-control-icon-width': { cls: 'unsupported', note: N_ICON + ' (prev/next control)' },
-      'carousel-control-prev-icon-bg': { cls: 'unsupported', note: N_ASSET },
-      'carousel-control-next-icon-bg': { cls: 'unsupported', note: N_ASSET },
+      'carousel-control-icon-width': { cls: 'unsupported', note: N_ICON + ' (prev/next control)', meaning: M_ICON },
+      'carousel-control-prev-icon-bg': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
+      'carousel-control-next-icon-bg': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },
       'carousel-dark-control-icon-filter': { cls: 'dropped', note: N_FILTER },
     },
   },
