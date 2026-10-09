@@ -16,7 +16,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { conformance } from '@transtyle/plugin-kit';
+import { conformance, fixtureIR } from '@transtyle/plugin-kit';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const failures = [];
@@ -34,6 +34,24 @@ async function checkPlugin(label, plugin, manifest) {
     }
   }
 }
+
+// The fixture authors its radius, a duration and an easing in DTCG structured
+// form (issue #24). Core must hand every exporter the CSS string, so no plugin —
+// official or third-party — ever sees `{ value, unit }` and stringifies it to
+// `[object Object]`. Checked on the IR the conformance suite itself uses.
+const CANONICAL = {
+  'semantic.radius.md': '0.5rem',
+  'semantic.duration.fast': '150ms',
+  'semantic.easing.standard': 'cubic-bezier(0.2, 0, 0, 1)',
+};
+const ir = await fixtureIR();
+for (const [slot, want] of Object.entries(CANONICAL)) {
+  const got = ir.modes[ir.defaultMode].get(slot)?.value;
+  if (got === want) continue;
+  console.error(`✖ fixture IR: ${slot} is ${JSON.stringify(got)}, expected the CSS string ${JSON.stringify(want)} — core must canonicalize DTCG structured values before any exporter sees them (packages/core/src/values.js)`);
+  failures.push(`fixture:${slot}`);
+}
+if (!failures.length) console.log(`✔ fixture IR: ${Object.keys(CANONICAL).length} DTCG structured values reach exporters as CSS strings`);
 
 for (const name of OFFICIAL) {
   const pkgDir = join(root, `packages/exporter-${name}`);

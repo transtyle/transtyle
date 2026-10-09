@@ -4,7 +4,7 @@
  */
 
 import { collectTokens, collectRoleArchetypes, mergeTrees, aliasTarget, comboKey, expandModeMatrix, PROVENANCE, COLOR_ROLES } from '@transtyle/ir';
-import { parseColor } from './color.js';
+import { parseValue } from './values.js';
 
 /** Matches `semantic.color.<role>.solid` — the anchor cell an entire role grid
  *  (hover/active/tint/outline/on-colors, ~16 slots) fans out from. */
@@ -13,7 +13,10 @@ const ROLE_SOLID = /^semantic\.color\.([\w-]+)\.solid$/;
 /**
  * @returns {{ modes: Record<string, Map<string, Entry>>, modeDimension: string }}
  * Entry = { type, value, provenance }
- * Color values are parsed to { l, c, h, alpha }; other types kept as authored.
+ * Color values are parsed to { l, c, h, alpha }; the DTCG object/array/keyword
+ * forms of dimension, duration, cubicBezier and fontWeight (and the same members
+ * inside composites) are canonicalized to the CSS strings exporters read
+ * (values.js); everything else is kept as authored.
  *
  * Multi-dimension modes (T8, docs/architecture/ir.md#modes): every configured
  * dimension is resolved independently, then combos are the cross-product,
@@ -328,9 +331,9 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     );
   }
   try {
-    entry.value = entry.type === 'color' ? parseColor(raw) : raw;
+    entry.value = parseValue(entry.type, raw);
   } catch (e) {
-    diagnostics.error('TST1106', `${tokenPath}: ${e.message}`);
+    diagnostics.error('TST1106', `${tokenPath}: ${e.message}`, e.hint ? { hint: e.hint } : undefined);
     return undefined;
   }
   return entry;
@@ -351,8 +354,10 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
  * diagnostic. Members are now held to the same rules as top-level tokens:
  * colors parse to OKLCH (or fail with TST1106 naming the member), aliases
  * resolve per mode — deferred to after DERIVE when they point at a slot DERIVE
- * fills, exactly like a top-level alias — and everything else is carried as
- * authored, as top-level dimensions are.
+ * fills, exactly like a top-level alias — and every other member goes through
+ * the same per-type parsers as a top-level token (values.js), so a dimension,
+ * duration, cubicBezier or fontWeight member authored in its DTCG structured
+ * form becomes the CSS string too, and the rest is carried as authored.
  *
  * `required` lists the members an exporter renders positionally (a box-shadow,
  * a border shorthand): a missing one would print `undefined` into a
@@ -381,19 +386,23 @@ const COMPOSITES = {
   },
 };
 
-/** Parse one composite member by its DTCG member type. Throws with a reason. */
+/**
+ * Parse one composite member by its DTCG member type, through the same
+ * per-type parsers as a top-level token (values.js): a `shadow.color` becomes
+ * OKLCH, a `blur` authored as `{ "value": 8, "unit": "px" }` or a
+ * `timingFunction` authored as four numbers becomes the CSS string the
+ * exporters read, exactly as the top-level token would (#24). Throws with a
+ * reason, and a `hint` for the structured forms.
+ */
 function parseMember(type, value) {
-  if (type === 'color') {
-    // An alias to a color token arrives already parsed.
-    if (value !== null && typeof value === 'object' && ['l', 'c', 'h'].every((k) => typeof value[k] === 'number')) {
-      return { ...value };
-    }
-    return parseColor(value);
+  // An alias to a color token arrives already parsed.
+  if (type === 'color' && value !== null && typeof value === 'object' && ['l', 'c', 'h'].every((k) => typeof value[k] === 'number')) {
+    return { ...value };
   }
   if (type === 'boolean' && typeof value !== 'boolean') {
     throw new Error(`expected true or false, got ${JSON.stringify(value)}`);
   }
-  return value;
+  return parseValue(type, value);
 }
 
 /**
@@ -462,7 +471,7 @@ function resolveComposite(entry, tokenPath, diagnostics, lookup) {
       try {
         out[name] = parseMember(spec.members[name], value);
       } catch (e) {
-        diagnostics.error('TST1106', `${memberPath}${target ? ` (via {${target}})` : ''}: ${e.message}`);
+        diagnostics.error('TST1106', `${memberPath}${target ? ` (via {${target}})` : ''}: ${e.message}`, e.hint ? { hint: e.hint } : undefined);
         failed = true;
       }
     }

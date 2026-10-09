@@ -64,7 +64,7 @@ Importers are frontends: `import(source, ctx): DTCGDocument` — they emit the _
 
 ## The plugin-kit and conformance
 
-`@transtyle/plugin-kit` (shipped, P1) exports `conformance(plugin, { manifest? })`. It runs the plugin against a canonical fixture design system bundled with the kit — a brand color, both `color-scheme` modes, elevation, text, border, radius, fonts — and asserts the contract above:
+`@transtyle/plugin-kit` (shipped, P1) exports `conformance(plugin, { manifest? })`. It runs the plugin against a canonical fixture design system bundled with the kit — a brand color, both `color-scheme` modes, elevation, text, border, radius, a duration and an easing (the last three authored in DTCG structured form, so a plugin is always tested on the CSS strings core hands it), fonts — and asserts the contract above:
 
 | Check                    | Asserts                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------ |
