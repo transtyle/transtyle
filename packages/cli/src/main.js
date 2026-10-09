@@ -13,6 +13,7 @@ import { execSync } from 'node:child_process';
 import process from 'node:process';
 import { compile, catalog, diffResolved, contrastRegressions, explainToken, formatColor, formatHex } from '@transtyle/core';
 import { recordingLoader, consumption, renderMatrix } from './matrix.js';
+import { INIT_DEFAULTS, INIT_VALUE_FLAGS, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
 
 const OFFICIAL_EXPORTERS = {
   shadcn: '@transtyle/exporter-shadcn',
@@ -66,6 +67,11 @@ function parseArgs(argv) {
     else if (a === '--json') args.json = true;
     else if (a === '--matrix') args.matrix = true;
     else if (a === '--expand') args.expand = true;
+    else if (a.startsWith('--') && INIT_VALUE_FLAGS.includes(a.slice(2))) {
+      const v = argv[++i];
+      if (v === undefined || v.startsWith('--')) { console.error(`Flag ${a} needs a value`); process.exit(2); }
+      (args.init ??= {})[a.slice(2)] = v;
+    } else if (a === '--yes' || a === '-y') args.yes = true;
     else if (a === '--help' || a === '-h') args.help = true;
     else if (a.startsWith('--')) { console.error(`Unknown flag: ${a}`); process.exit(2); }
     else if (!args.command) args.command = a;
@@ -83,7 +89,7 @@ Usage:
   transtyle bindings --expand     print the config's bindings rules expanded into a plain alias token file
   transtyle diff [ref]            semantic diff of the resolved graph vs a git ref (default: HEAD), with per-target impact
   transtyle catalog               list every catalog slot: type, derivation rule, inputs (no project needed)
-  transtyle init [name]           scaffold transtyle.config.json + tokens/tokens.json
+  transtyle init [name]           scaffold transtyle.config.json + token files (asks on a terminal)
   transtyle add <target>          add a target to transtyle.config.json
 Options:
   --cwd <dir>                     project directory (with transtyle.config.json)
@@ -91,6 +97,14 @@ Options:
   --expand                        bindings only: required, prints the expansion to stdout
   --json                          check/diff/catalog only: print a machine-readable report to stdout
   --matrix                        check only: print which targets read each catalog slot (with --json: a "matrix" key)
+init options (each skips its question; without a terminal, unset ones take the default):
+  --brand <color>                 brand color, any CSS color (default: oklch(0.55 0.18 255))
+  --schemes <light,dark|light>    color schemes (default: light,dark)
+  --targets <t1,t2,...>           targets to configure (default: css-variables)
+  --preset <recommended|minimal>  recommended: brand, neutrals with dark values, radius, fonts;
+                                  minimal: the brand color only (default: recommended)
+  --layout <single|layered>       one token file, or your names + bindings (default: single)
+  --yes, -y                       ask nothing: take the default for every unset option
 `;
 
 /** TRANSTYLE_DEBUG=1: print the stack of a crashed exporter (until `--verbose`, #5, exists). */
@@ -116,6 +130,12 @@ async function main() {
   if (args.help || !args.command) { console.error(HELP); process.exit(args.help ? 0 : 2); }
   if (!COMMANDS.includes(args.command)) {
     console.error(`Unknown command: ${args.command}\n${HELP}`);
+    process.exit(2);
+  }
+
+  if ((args.init || args.yes) && args.command !== 'init') {
+    const flag = args.yes ? '--yes' : `--${Object.keys(args.init)[0]}`;
+    console.error(`✖ ${flag} only applies to init`);
     process.exit(2);
   }
 
@@ -536,62 +556,83 @@ function cmdCatalog(args) {
 
 // ---------- init ----------
 
+/**
+ * Flags first (validated before any question or write), then the questions
+ * no flag answered, on a terminal only: without one, `init` never waits on
+ * stdin, so scripts and CI get the defaults. Then the files, then a check of
+ * what was written (docs/specs/cli.md, "init").
+ */
 async function cmdInit(args) {
+  const known = Object.keys(OFFICIAL_EXPORTERS);
   const configPath = path.join(args.cwd, 'transtyle.config.json');
   if (existsSync(configPath)) {
     console.error(`✖ transtyle.config.json already exists at ${configPath}`);
     process.exit(2);
   }
+  const { given, errors } = validateFlags(args.init ?? {}, known);
+  if (errors.length) {
+    for (const e of errors) console.error(`✖ ${e}`);
+    process.exit(2);
+  }
+
+  const interactive = !args.yes && Boolean(process.stdin.isTTY && process.stderr.isTTY);
+  const color = Boolean(process.stderr.isTTY) && !process.env.NO_COLOR;
+  let answers = { ...INIT_DEFAULTS, ...given };
+  if (interactive) {
+    try {
+      answers = { ...INIT_DEFAULTS, ...(await promptAnswers(given, known, { input: process.stdin, output: process.stderr, color })) };
+    } catch (e) {
+      if (e.code !== 'input-ended') throw e;
+      console.error(`\n✖ init cancelled: ${e.message}; nothing was written.`);
+      process.exit(2);
+    }
+  }
+
   const name = args.targets[0] ?? path.basename(args.cwd) ?? 'design-system';
+  const files = scaffold({ name, ...answers });
+  const taken = files.filter((f) => existsSync(path.join(args.cwd, f.path))).map((f) => f.path);
+  if (taken.length) {
+    console.error(`✖ ${taken.join(', ')} already exist${taken.length === 1 ? 's' : ''} in ${args.cwd}; nothing was written.`);
+    process.exit(2);
+  }
+  for (const f of files) {
+    mkdirSync(path.dirname(path.join(args.cwd, f.path)), { recursive: true });
+    writeFileSync(path.join(args.cwd, f.path), f.contents);
+  }
+  console.error(`✔ created ${files.map((f) => f.path).join(', ')} in ${args.cwd}`);
+  console.error(`  preset ${answers.preset}, layout ${answers.layout}, schemes ${answers.schemes.join(' + ')}, targets ${answers.targets.join(', ')}\n`);
 
-  const config = {
-    $schema: 'https://transtyle.dev/schemas/config/v0.json',
-    name,
-    tokens: ['tokens/*.tokens.json'],
-    modes: { 'color-scheme': { values: ['light', 'dark'], default: 'light' } },
-    derivation: { rules: 'standard@1', autoDark: false, require: ['semantic.color.primary'] },
-    targets: { 'css-variables': { output: 'dist/css-variables' } },
-    check: { failOn: 'error', contrast: { standard: 'wcag21-aa' } },
-  };
+  // The closing check: the same pipeline as `transtyle check`, on what was
+  // just written. Its findings are reported, not fatal: the files are the user's now.
+  let result;
+  try {
+    result = await compile({ cwd: args.cwd, targets: [], emit: false, loadExporter: makeLoadExporter(args.cwd), knownExporters: known, debug: DEBUG });
+  } catch (e) {
+    console.error(`✖ ${e.message}`);
+    process.exitCode = 1;
+    return;
+  }
+  const { diagnostics, normalized } = result;
+  for (const d of diagnostics.items) printDiagnostic(d);
+  const count = (s) => diagnostics.items.filter((d) => d.severity === s).length;
+  const [nErr, nWarn, nInfo] = ['error', 'warning', 'info'].map(count);
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  console.error(`${nErr ? '✖' : '✔'} check: ${plural(nErr, 'error')}, ${plural(nWarn, 'warning')}, ${plural(nInfo, 'note')}`);
+  if (nErr) process.exitCode = 1;
 
-  const td = (value, description) => ({ $value: value, $description: description });
-  const tokens = {
-    $schema: 'https://transtyle.dev/schemas/tokens/v0.json',
-    option: {
-      color: { $type: 'color', brand: { 500: { $value: 'oklch(0.55 0.18 255)' } } },
-    },
-    semantic: {
-      color: {
-        $type: 'color',
-        primary: { solid: td('{option.color.brand.500}', 'TODO: your brand color — the one non-negotiable input') },
-        elevation: {
-          0: { surface: td('oklch(1 0 0)', 'TODO: the page background') },
-          1: { surface: td('oklch(0.98 0.003 255)', 'TODO: card/panel background') },
-        },
-        text: {
-          base: td('oklch(0.2 0.01 255)', 'TODO: body text color'),
-          muted: td('oklch(0.5 0.01 255)', 'TODO: muted/secondary text color'),
-        },
-        border: td('oklch(0.9 0.005 255)', 'TODO: default border color'),
-      },
-      radius: { md: { $type: 'dimension', $value: '0.5rem' } },
-      font: {
-        sans: { $type: 'fontFamily', $value: ['system-ui', 'sans-serif'] },
-        mono: { $type: 'fontFamily', $value: ['ui-monospace', 'monospace'] },
-      },
-    },
-  };
+  const mode = normalized?.modes[normalized.defaultMode];
+  const solid = mode?.get('semantic.color.primary.solid')?.value;
+  const onSolid = mode?.get('semantic.color.primary.on-solid')?.value;
+  if (solid && onSolid) console.error(`\n  ${swatch(solid, onSolid, color)}`);
 
-  mkdirSync(path.join(args.cwd, 'tokens'), { recursive: true });
-  writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
-  writeFileSync(path.join(args.cwd, 'tokens/brand.tokens.json'), JSON.stringify(tokens, null, 2) + '\n');
-
-  console.error(`✔ created transtyle.config.json + tokens/brand.tokens.json in ${args.cwd}`);
+  const darkFile = files.find((f) => f.path.includes('.dark.'))?.path;
   console.error(`
 Next steps:
-  1. Edit tokens/brand.tokens.json — replace the TODO placeholders with your brand.
-  2. npx transtyle build          (starts with css-variables; add more with "add")
-  3. npx transtyle add <target>   (${Object.keys(OFFICIAL_EXPORTERS).join(', ')})`);
+  1. Replace the TODO placeholders in tokens/brand.tokens.json with your own values${darkFile ? ` (their dark values are in ${darkFile})` : ''}.
+  2. npx transtyle build
+  3. npx transtyle add <target>   (${known.join(', ')})
+Worth authoring next (each derives until you do):
+${authorNext(answers.preset).map((l) => `  - ${l}`).join('\n')}`);
 }
 
 // ---------- add ----------
@@ -614,7 +655,7 @@ async function cmdAdd(args) {
     console.error(`✖ Target "${target}" is already configured`);
     process.exit(2);
   }
-  config.targets[target] = { output: `dist/${target}` };
+  config.targets[target] = targetEntry(target);
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
   console.error(`✔ added target "${target}" → dist/${target}\n\nBuild it: npx transtyle build ${target}`);
 }

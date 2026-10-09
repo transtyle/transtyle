@@ -27,10 +27,12 @@ Pin the exact version while the project is in alpha: the token vocabulary, the g
 
 ```bash
 mkdir my-ds && cd my-ds
-npx transtyle init          # scaffolds transtyle.config.json + tokens/brand.tokens.json
+npx transtyle init
 ```
 
-The scaffold authors the honest minimum — **six real decisions**, each marked `TODO` with a description of what it is:
+In a terminal, `init` asks five questions: your brand color, light and dark or light only, which targets, a preset and a file layout. Press Enter to take a default; every question also has a flag (`--brand '#e8590c' --targets shadcn,bootstrap`), and without a terminal it asks nothing. The [CLI reference](/docs/cli/#transtyle-init-name) lists them all.
+
+The default `recommended` preset authors the honest minimum — **six real decisions**, each marked `TODO` with a description of what it is:
 
 | You author       | Catalog slot          | Why you author it                      |
 | ---------------- | --------------------- | -------------------------------------- |
@@ -41,12 +43,13 @@ The scaffold authors the honest minimum — **six real decisions**, each marked 
 | Muted text color | `text.muted`          | Second rung of that hierarchy          |
 | Default border   | `border`              | The neutral hairline everything shares |
 
-Only the brand color is required. Leave the page background out and it defaults to white, or near-black in dark mode; leave the body text out and it defaults to whichever of near-black and white contrasts more with the page. Both are honest defaults, marked `defaulted` in `report.json`, and the five other decisions are what make the neutrals yours. (Card background and muted text derive from the page and the text too; the scaffold asks for them because they are part of your look.)
+The five neutrals start as a near-gray ladder in your brand's hue, each with a dark value: placeholders that already pass contrast, not your design. Only the brand color is required. Leave the page background out and it defaults to white, or near-black in dark mode; leave the body text out and it defaults to whichever of near-black and white contrasts more with the page. Both are honest defaults, marked `defaulted` in `report.json`, and the five other decisions are what make the neutrals yours. (Card background and muted text derive from the page and the text too; the scaffold asks for them because they are part of your look.) The `minimal` preset (`--preset minimal`) writes the brand color alone and leaves all of that to the defaults.
 
-In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
+In DTCG form (this is the default scaffold's `tokens/brand.tokens.json`, abridged):
 
 ```json
 {
+  "$schema": "https://transtyle.dev/schemas/tokens/v0.json",
   "option": {
     "color": { "$type": "color", "brand": { "500": { "$value": "oklch(0.55 0.18 255)" } } }
   },
@@ -56,19 +59,28 @@ In DTCG form (this is the scaffold's `tokens/brand.tokens.json`, abridged):
       "primary": { "solid": { "$value": "{option.color.brand.500}" } },
       "elevation": {
         "0": { "surface": { "$value": "oklch(1 0 0)" } },
-        "1": { "surface": { "$value": "oklch(0.98 0.003 255)" } }
+        "1": { "surface": { "$value": "oklch(0.985 0.003 255)" } }
       },
       "text": {
-        "base": { "$value": "oklch(0.2 0.01 255)" },
+        "base": { "$value": "oklch(0.21 0.01 255)" },
         "muted": { "$value": "oklch(0.5 0.01 255)" }
       },
-      "border": { "$value": "oklch(0.9 0.005 255)" }
+      "border": { "$value": "oklch(0.9 0.006 255)" }
     }
   }
 }
 ```
 
-Note the two tiers: `option.color.brand.500` is _your_ name for _your_ value; `primary.solid` is the catalog slot that aliases it. Dark-mode values go in a separate mode-scoped DTCG file (the recommended layout) or inline per token — see [Authoring tokens](/docs/authoring-tokens/#modes).
+Note the two tiers: `option.color.brand.500` is _your_ name for _your_ value; `primary.solid` is the catalog slot that aliases it. The dark values sit in `tokens/brand.dark.tokens.json`, a mode-scoped DTCG file the config loads for `color-scheme: dark` only:
+
+```json
+"tokens": [
+  "tokens/brand.tokens.json",
+  { "files": "tokens/brand.dark.tokens.json", "mode": { "color-scheme": "dark" } }
+]
+```
+
+Values can also go inline per token — see [Authoring tokens](/docs/authoring-tokens/#modes). Before it exits, `init` checks the new project and shows your brand color with the text color derived for it.
 
 ## 3. Add targets and build
 

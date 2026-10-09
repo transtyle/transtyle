@@ -1,6 +1,6 @@
 # CLI specification
 
-> **Status:** `build`, `check`, `explain`, `bindings --expand`, `init`, `add`, `diff`, `catalog` are implemented (`packages/cli/src/main.js`; golden-tested by `scripts/check-cli.mjs`) — a real subset of the full surface below, not yet the whole vision. Implemented `init` scaffolds a config + `tokens/brand.tokens.json` non-interactively (no `--yes` flag needed, there's no interactive mode yet); `add <target>` validates against the CLI's own exporter registry and read-modify-writes the config; `explain <slot> [--mode <name>]` prints the resolved value, provenance, and rule inputs recursively (see the corrected example below — no `--target` filtering or WCAG candidate list yet, and there's no per-token file:line tracking in provenance); `check --json` prints the diagnostics array + per-target coverage to stdout as one JSON object (human logs still go to stderr); `catalog [--json]` prints the catalog (below); `check --matrix` prints which targets read each catalog slot (below), and adds it to the `--json` object as `matrix`. `--out`, `--dry-run` remain specced, not implemented ([issue #5](https://github.com/transtyle/transtyle/issues/5)); `--frozen` likewise ([issue #1](https://github.com/transtyle/transtyle/issues/1)); `import`, `migrate` wait on the importer contract (ROADMAP I1/I2, Phase 3).
+> **Status:** `build`, `check`, `explain`, `bindings --expand`, `init`, `add`, `diff`, `catalog` are implemented (`packages/cli/src/main.js`; golden-tested by `scripts/check-cli.mjs`) — a real subset of the full surface below, not yet the whole vision. Implemented `init` asks for the brand color, color schemes, targets, preset and file layout on a terminal, takes each from a flag (`--brand`, `--schemes`, `--targets`, `--preset`, `--layout`, `--yes`) and never asks without one, then checks what it wrote (see [`init`](#init) below); `add <target>` validates against the CLI's own exporter registry and read-modify-writes the config; `explain <slot> [--mode <name>]` prints the resolved value, provenance, and rule inputs recursively (see the corrected example below — no `--target` filtering or WCAG candidate list yet, and there's no per-token file:line tracking in provenance); `check --json` prints the diagnostics array + per-target coverage to stdout as one JSON object (human logs still go to stderr); `catalog [--json]` prints the catalog (below); `check --matrix` prints which targets read each catalog slot (below), and adds it to the `--json` object as `matrix`. `--out`, `--dry-run` remain specced, not implemented ([issue #5](https://github.com/transtyle/transtyle/issues/5)); `--frozen` likewise ([issue #1](https://github.com/transtyle/transtyle/issues/1)); `import`, `migrate` wait on the importer contract (ROADMAP I1/I2, Phase 3).
 
 ## Design corrections from the original vision
 
@@ -13,7 +13,7 @@ The pitched invocation was `npx @transtyle/translate bootstrap 5.3.8`. Three cha
 ## Command surface (v1)
 
 ```
-transtyle init                      scaffold tokens/ + transtyle.config.json (interactive; --yes for defaults)
+transtyle init [name]               scaffold tokens/ + transtyle.config.json (asks on a terminal; a flag per question, --yes for defaults)
 transtyle add <plugin>...           install + register exporters/importers (resolves @transtyle/exporter-<name>,
                               falls back to exact npm name for community plugins; prints manifest before install)
 transtyle build [target...]         compile (all targets or listed subset)
@@ -36,6 +36,26 @@ transtyle migrate                   apply codemods across IR-spec / rule-pack up
 ```
 
 Phase 2+: `transtyle preview` (local themed preview server), `transtyle doc <target>` (experimental; [doc-generation.md](doc-generation.md)), `transtyle watch` (or `build --watch`).
+
+## `init`
+
+`transtyle init [name]` writes `transtyle.config.json` and the token files from five answers. Each answer has a flag; a flag given skips its question:
+
+| Flag               | Values                                                                                  | Default                |
+| ------------------ | --------------------------------------------------------------------------------------- | ---------------------- |
+| `--brand <color>`  | any color `parseColor` reads, opaque                                                    | `oklch(0.55 0.18 255)` |
+| `--schemes <set>`  | `light,dark` or `light`                                                                 | `light,dark`           |
+| `--targets <list>` | comma-separated names from the exporter registry, the same list `add` validates against | `css-variables`        |
+| `--preset <name>`  | `recommended`, `minimal`                                                                | `recommended`          |
+| `--layout <name>`  | `single`, `layered`                                                                     | `single`               |
+| `--yes`, `-y`      | ask nothing, take the default for every answer no flag gave                             |                        |
+
+- **Questions only on a terminal.** `init` asks when stdin and stderr are both TTYs and `--yes` is absent, on stderr like every other human log. Otherwise it never reads stdin: scripts and CI get the defaults plus their flags. A multi-choice question takes numbers or names (`1,4` or `shadcn,bootstrap`), not arrow keys, so the CLI stays dependency-free (`node:readline`).
+- **Validated before anything is written.** A bad flag (unknown target, preset, layout or scheme set, a color that doesn't parse or isn't opaque, a flag without its value) exits 2 naming the valid values; a bad answer at a prompt is explained and asked again; input that ends before the last answer exits 2. An existing config or token file is never overwritten (exit 2). Init flags on another command exit 2.
+- **Presets.** `recommended` authors `primary.solid` (aliasing `option.color.brand.500`), `elevation.0.surface`, `elevation.1.surface`, `text.base`, `text.muted`, `border`, `radius.md`, `font.sans`, `font.mono`, each color with a `TODO` `$description`. The neutrals are a fixed lightness ladder at low chroma in the brand's hue (chroma 0 for a gray brand), with a dark value for each when the schemes include dark. They are authored values in the user's file, not derivation, so `autoDark` stays off. `minimal` authors the brand color only; everything else derives or [defaults](../architecture/derivation.md).
+- **Layouts.** `single` writes `tokens/brand.tokens.json` in the catalog's names, plus `tokens/brand.dark.tokens.json` (a mode-scoped overlay) when there are dark values. `layered` writes the adoption guide's three kinds of files: `tokens/brand.tokens.json` holds the palette and the user's own names (`semantic.color.ui.*`), `tokens/brand.dark.tokens.json` their dark values, `tokens/transtyle.bindings.tokens.json` the catalog slots aliased to them. Every token file is listed by name in `tokens` (no glob) and starts with the token-file `$schema` line.
+- **Deterministic.** The same answers give byte-identical files; targets are written in registry order whatever order they were typed in.
+- **Closing check.** After writing, `init` runs the `check` pipeline on the new project, prints its diagnostics and counts, the brand with its derived `primary.on-solid` and their contrast ratio (rounded down; a truecolor chip when stderr is a TTY and `NO_COLOR` is unset), and what to author next. Warnings don't change the exit code; an error makes it 1.
 
 ## `explain` — the trust command
 
@@ -96,9 +116,9 @@ Each reader is classed from that target's coverage rows that name the slot exact
 
 - **Exit codes:** 0 success; 1 diagnostics at/above the fail-on threshold; 2 usage/config errors. Stable, documented, CI-safe. An exporter that throws is not a usage error: it becomes a `TST3001` error diagnostic naming the target, the other targets still run so every crash is reported, nothing is written to disk (atomic EMIT), and the run exits 1 (`TST3002` for an exporter that cannot be loaded). `TRANSTYLE_DEBUG=1` prints the stack under the message. `explain` loads and runs no exporter, so a broken one cannot fail it.
 - **Output streams:** human logs → stderr; requested data (`--json`, `explain`) → stdout. Pipeable by construction.
-- **Non-interactive by default** when not a TTY; anything interactive has a flag equivalent.
+- **Non-interactive by default** when not a TTY; anything interactive has a flag equivalent. `init` is the only command that asks (above).
 - **No telemetry.** If ever proposed, opt-in only, and it gets its own ADR and public schema.
-- **Specced:** `NO_COLOR`, `--quiet` and `--verbose` — none is read today ([issue #5](https://github.com/transtyle/transtyle/issues/5)). Output volume is fixed, and an unknown flag exits 2 rather than being ignored, so a script passing one of these fails loudly instead of silently getting the same output.
+- **Specced:** `NO_COLOR`, `--quiet` and `--verbose` — none is read today except `NO_COLOR` by `init`'s color chip ([issue #5](https://github.com/transtyle/transtyle/issues/5)). Output volume is fixed, and an unknown flag exits 2 rather than being ignored, so a script passing one of these fails loudly instead of silently getting the same output.
 
 ## Programmatic parity
 

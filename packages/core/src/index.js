@@ -18,7 +18,7 @@ import { makeUnits } from './units.js';
 import { validateTargetModes, targetView, narrowedDimensions, withModesNote } from './target-modes.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 
-export { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
+export { parseColor, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 export { Diagnostics } from './diagnostics.js';
 export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';

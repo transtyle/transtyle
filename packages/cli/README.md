@@ -28,8 +28,8 @@ npx transtyle build              # compile every configured target
 
 | Command           | Does                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------- |
-| `init`            | Scaffold a config and a starter token file                                            |
-| `add <target>`    | Add one of the eight official targets to the config                                   |
+| `init`            | Ask for a brand color, schemes, targets, preset and layout, then scaffold the files   |
+| `add <target>`    | Add one of the nine official targets to the config                                    |
 | `build [target…]` | Compile — writes artifacts, `usage.md` and `report.json`                              |
 | `check`           | The whole pipeline without emitting: validation, contrast, coverage                   |
 | `check --matrix`  | Which targets read each catalog slot, so you know what authoring one changes          |
