@@ -26,7 +26,9 @@ already depends on it.
 the catalog constants; `PROVENANCE` and `COVERAGE` — the vocabularies for _where a value came
 from_ and _how honestly a target expressed it_; plus token-tree helpers (`collectTokens`,
 `mergeTrees`, `aliasTarget`, `expandModeMatrix`, `comboKey`, `droppedDimensions`,
-`collectRoleArchetypes`).
+`collectRoleArchetypes`), and the coverage helpers for a target whose theming surface is a
+graph of entries reading each other (`surfaceStatus`, `surfaceRows`, `surfaceCounts`,
+`SURFACE_FAMILY_ROW`), which the Mantine and Chakra exporters measure their inventories with.
 
 **Zero dependencies.**
 

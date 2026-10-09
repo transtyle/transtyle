@@ -19,9 +19,14 @@
  *             keeps Mantine's value. Every one is reported on its own row with
  *             the reason (REASONS below). An entry with no reason of its own
  *             gets UNMAPPED, which check:coverage-bar refuses on the examples.
+ *
+ * The three-way walk and the report rows are @transtyle/ir's (surface.js),
+ * shared with Chakra's inventory; what is Mantine's own is here: which entry
+ * the emitted theme sets, and why an entry keeps Mantine's value.
  */
 
 import { readFileSync } from 'node:fs';
+import { surfaceRows as rowsFor, surfaceStatus } from '@transtyle/ir';
 
 let inventory;
 /** The checked-in inventory, read on first use (the extractor imports this module before the file exists). */
@@ -208,21 +213,7 @@ export function classifySurface(inv, emitted) {
   };
 
   const byId = new Map(inv.entries.map((e) => [e.id, e]));
-  const status = new Map();
-  const statusOf = (id, seen = new Set()) => {
-    if (status.has(id)) return status.get(id);
-    const entry = byId.get(id);
-    let s = 'default';
-    if (!entry) return s;
-    if (isSet(entry)) s = 'set';
-    else if (entry.from?.length && !seen.has(id)) {
-      seen.add(id);
-      if (entry.from.every((dep) => statusOf(dep, seen) !== 'default')) s = 'follows';
-    }
-    status.set(id, s);
-    return s;
-  };
-  for (const entry of inv.entries) statusOf(entry.id);
+  const status = surfaceStatus(inv.entries, isSet);
 
   // Without a dark scheme, the dark block and whatever reads it stay Mantine's
   // for that one reason, not for a reason of their own.
@@ -248,44 +239,13 @@ export function classifySurface(inv, emitted) {
  * report.json rows: one summary row per inventory family (`theme`, and the
  * resolver's `variables`, `light`, `dark` blocks) whose three counts add up to
  * the family's size, one row per entry on Mantine's default with its reason,
- * and a totals row.
+ * and a totals row (the shape every graph-shaped surface shares: @transtyle/ir).
  */
 export function surfaceRows(emitted, inv = INVENTORY()) {
-  const classified = classifySurface(inv, emitted);
-  const rows = [];
-  const totals = { set: 0, follows: 0, default: 0 };
-  for (const family of Object.keys(inv.counts.families)) {
-    const members = classified.filter((c) => c.entry.block === family);
-    const n = { set: 0, follows: 0, default: 0 };
-    for (const c of members) n[c.status]++;
-    for (const k of Object.keys(totals)) totals[k] += n[k];
-    rows.push({
-      variable: `${family}.* (${members.length} entries)`,
-      slot: `${n.set} set · ${n.follows} follow · ${n.default} on Mantine's default`,
-      class: n.set ? 'native' : n.follows > n.default ? 'derived' : 'unsupported',
-      note: n.default
-        ? n.default === 1
-          ? "1 entry keeps Mantine's value, on its own row with the reason"
-          : `${n.default} entries keep Mantine's value, each on its own row with the reason`
-        : 'every entry is set by this theme or follows it',
-    });
-    for (const c of members) {
-      if (c.status !== 'default') continue;
-      const { reason } = c;
-      rows.push({
-        variable: c.entry.id,
-        slot: reason?.slot ?? '—',
-        class: reason?.cls ?? 'unsupported',
-        ...(reason?.meaning ? { meaning: reason.meaning } : {}),
-        ...(reason ? { note: reason.note } : {}),
-      });
-    }
-  }
-  rows.push({
-    variable: 'Mantine surface totals',
-    slot: `${totals.set} set · ${totals.follows} follow · ${totals.default} on Mantine's default`,
-    class: 'derived',
-    note: `measured against surface-inventory.json (@mantine/core ${inv.mantineVersion}); AL3 bar: every entry classified, no silent gap`,
+  return rowsFor({
+    classified: classifySurface(inv, emitted),
+    families: Object.keys(inv.counts.families),
+    target: 'Mantine',
+    source: `@mantine/core ${inv.mantineVersion}`,
   });
-  return rows;
 }

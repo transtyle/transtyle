@@ -27,6 +27,7 @@
  */
 
 import { COLOR_ROLES, droppedDimensions } from '@transtyle/ir';
+import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
 
@@ -148,6 +149,11 @@ export default {
     const row = (variable, slot, cls, note) =>
       coverage.push({ variable, slot, class: cls, ...(note ? { note } : {}) });
     const sem = (map, path) => map?.get(`semantic.${path}`)?.value;
+    // Inventory id → the catalog slot this exporter writes it from, recorded
+    // whether or not this design system defines the slot, so an entry left on
+    // Chakra's default for want of it says which slot (surface-coverage.js).
+    const mapped = new Map();
+    const maps = (id, slot) => mapped.set(id, slot);
 
     /** A semantic token value: `{ _light, _dark }` when the design system has both schemes. */
     const colorToken = (path) => {
@@ -183,6 +189,7 @@ export default {
     }
 
     for (const [group, key, slot, cls, note] of GLOBAL_COLORS) {
+      maps(`semanticTokens.colors.${group}${key === 'DEFAULT' ? '' : `.${key}`}`, `${S}${slot}`);
       const token = colorToken(slot);
       if (!token) continue;
       colors[group] ??= {};
@@ -195,6 +202,7 @@ export default {
         ['fg', 'text'],
         ['border', 'solid', status === 'error' ? 'also the border of an invalid field' : undefined],
       ]) {
+        maps(`semanticTokens.colors.${group}.${status}`, `${S}${role}.${cell}`);
         const token = colorToken(`${role}.${cell}`);
         if (!token) continue;
         colors[group] ??= {};
@@ -220,6 +228,9 @@ export default {
     const display = sem(light, 'font.display');
     const mono = sem(light, 'font.mono');
     const serif = sem(light, 'font.serif');
+    maps('tokens.fonts.body', 'semantic.font.sans');
+    maps('tokens.fonts.heading', 'semantic.font.{display,sans}');
+    maps('tokens.fonts.mono', 'semantic.font.mono');
     if (sans) {
       put('fonts', 'body', fontStack(sans));
       row('fonts.body', 'semantic.font.sans', 'native');
@@ -238,24 +249,28 @@ export default {
     }
 
     for (const k of SCALES.fontSizes) {
+      maps(`tokens.fontSizes.${k}`, `semantic.type.size.${k}`);
       const v = sem(light, `type.size.${k}`);
       if (v === undefined) continue;
       put('fontSizes', k, String(v));
       row(`fontSizes.${k}`, `semantic.type.size.${k}`, 'native');
     }
     for (const [chakra, rung] of FONT_WEIGHTS) {
+      maps(`tokens.fontWeights.${chakra}`, `semantic.type.weight.${rung}`);
       const v = sem(light, `type.weight.${rung}`);
       if (v === undefined) continue;
       put('fontWeights', chakra, String(v));
       row(`fontWeights.${chakra}`, `semantic.type.weight.${rung}`, 'native');
     }
     for (const [chakra, rung] of LINE_HEIGHTS) {
+      maps(`tokens.lineHeights.${chakra}`, `semantic.type.leading.${rung}`);
       const v = sem(light, `type.leading.${rung}`);
       if (v === undefined) continue;
       put('lineHeights', chakra, v);
       row(`lineHeights.${chakra}`, `semantic.type.leading.${rung}`, 'approximated', "by rank: three catalog rungs for Chakra's five; Chakra's text styles carry their own line heights, so leading does not reach them");
     }
     for (const [chakra, rung] of LETTER_SPACINGS) {
+      maps(`tokens.letterSpacings.${chakra}`, `semantic.type.tracking.${rung}`);
       const v = sem(light, `type.tracking.${rung}`);
       if (v === undefined) continue;
       put('letterSpacings', chakra, String(v));
@@ -263,6 +278,7 @@ export default {
     }
 
     for (const k of SCALES.radii) {
+      maps(`tokens.radii.${k}`, `semantic.radius.${k}`);
       const v = sem(light, `radius.${k}`);
       if (v === undefined) continue;
       put('radii', k, String(v));
@@ -279,18 +295,21 @@ export default {
     }
 
     for (const [chakra, rung, cls, note] of DURATIONS) {
+      maps(`tokens.durations.${chakra}`, `semantic.duration.${rung}`);
       const v = sem(light, `duration.${rung}`);
       if (v === undefined) continue;
       put('durations', chakra, String(v));
       row(`durations.${chakra}`, `semantic.duration.${rung}`, cls, note);
     }
     for (const [chakra, rung] of EASINGS) {
+      maps(`tokens.easings.${chakra}`, `semantic.easing.${rung}`);
       const v = sem(light, `easing.${rung}`);
       if (v === undefined) continue;
       put('easings', chakra, String(v));
       row(`easings.${chakra}`, `semantic.easing.${rung}`, 'native', ['emphasized', 'spring'].includes(chakra) ? 'an extra key' : undefined);
     }
     for (const k of Z) {
+      maps(`tokens.zIndex.${k}`, `semantic.z.${k}`);
       const v = sem(light, `z.${k}`);
       if (v === undefined) continue;
       put('zIndex', k, v);
@@ -299,6 +318,7 @@ export default {
 
     const breakpoints = {};
     for (const k of BREAKPOINTS) {
+      maps(`breakpoints.${k}`, `semantic.breakpoint.${k}`);
       const v = sem(light, `breakpoint.${k}`);
       if (v === undefined) continue;
       breakpoints[k] = String(v);
@@ -316,6 +336,7 @@ export default {
       ['l2', 'radius.control', 'approximated', 'l2 rounds controls (buttons, inputs, selects) and also badges, tooltips and toasts'],
       ['l3', 'radius.container', 'native', 'l3 rounds containers (cards, dialogs, popovers, drawers, alerts)'],
     ]) {
+      maps(`semanticTokens.radii.${key}`, `semantic.${slot}`);
       const v = sem(light, slot);
       if (v === undefined) continue;
       radii[key] = { value: String(v) };
@@ -325,6 +346,7 @@ export default {
 
     const shadows = {};
     for (const [key, level] of SHADOWS) {
+      maps(`semanticTokens.shadows.${key}`, `${S}elevation.${level}.shadow`);
       const l = sem(light, `color.elevation.${level}.shadow`);
       if (!l) continue;
       const d = dark && sem(dark, `color.elevation.${level}.shadow`);
@@ -458,6 +480,10 @@ export default {
       recipes,
       slotRecipes,
     };
+
+    // AL3: measure what was emitted against Chakra's whole theming surface
+    // (surface-inventory.json, extracted from @chakra-ui/react's defaultConfig).
+    coverage.push(...surfaceRows({ globalCss, theme }, mapped));
 
     return {
       files: [

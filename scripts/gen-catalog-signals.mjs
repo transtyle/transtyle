@@ -22,9 +22,11 @@
  * on Aura's default are read one by one. The totals are reconciled against the
  * exporter's own report row, so the two views can't drift apart.
  *
- * Mantine reports one summary row per family of its surface inventory and a
- * named row for every entry left on Mantine's default; the named rows are the
- * units and the summaries are skipped.
+ * Mantine and Chakra report one summary row per family of their surface
+ * inventory and a named row for every entry left on the target's default; the
+ * named rows are the units and the summaries are skipped (Chakra's recipe
+ * families have a summary row only: their defaults are the named rows of the
+ * tokens they read).
  *
  * `dropped` rows point the other way (the IR has it, the target can't) and are
  * not catalog-growth signal; they get their own section, by catalog slot.
@@ -139,9 +141,9 @@ for (const [example, result] of results) {
     }
 
     for (const row of target.coverage) {
-      // Mantine's family rows (`theme.* (73 entries)`) summarize the named
-      // entry rows that follow them; the entries are the units, not the sums.
-      if (exporter === 'mantine' && /^\w+\.\* \(\d+ entries\)$/.test(row.variable)) continue;
+      // Mantine's and Chakra's family rows (`theme.* (73 entries)`) summarize
+      // the named entry rows that follow them; the entries are the units, not the sums.
+      if (['mantine', 'chakra'].includes(exporter) && /^\w+\.\* \(\d+ entries\)$/.test(row.variable)) continue;
       if (row.class === 'unsupported' && exporter !== 'primeng') {
         see(example, { direction: 'unsupported', kind: 'row', exporter, id: row.variable, meaning: row.meaning, note: row.note });
       } else if (row.class === 'dropped') {

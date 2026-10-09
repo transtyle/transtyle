@@ -23,8 +23,13 @@
     },
     "color.named-palette": {
       "status": "target-specific",
-      "summary": "The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept.",
+      "summary": "The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`; Chakra's hue palettes, their ramps and its `black` and `white`), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept.",
       "ref": "docs/specs/exporters/mantine.md"
+    },
+    "effect.blur": {
+      "status": "open",
+      "summary": "A blur-radius scale for backdrop and filter blur: the IR has no blur. Single-source so far (Chakra's `blurs`).",
+      "ref": "docs/specs/exporters/chakra.md"
     },
     "geometry.component": {
       "status": "rejected",
@@ -46,6 +51,11 @@
       "summary": "Component icon sizes. PrimeNG models them systematically, Bootstrap has a few ad-hoc ones; revisit when a third target brings a systematic icon-size concept.",
       "ref": "docs/proposals/0004-component-geometry.md"
     },
+    "motion.keyframes": {
+      "status": "open",
+      "summary": "A named keyframe animation (spin, ping, pulse, bounce) as a theme token: the IR has durations and easings, no animations. Single-source so far (Chakra's `animations`).",
+      "ref": "docs/specs/exporters/chakra.md"
+    },
     "opacity.component": {
       "status": "open",
       "summary": "Per-component opacities that are not `semantic.opacity.disabled`: a veil strength, a shimmer range, a glyph alpha. A candidate only once a second target needs the identical one.",
@@ -55,6 +65,11 @@
       "status": "open",
       "summary": "A catalog opacity the target composes against its own resting alpha, so the catalog value can't be written as is: it needs a compositional recipe (catalog factor × the target's resting value).",
       "ref": "docs/worklog/2026-07-23-bootstrap-coverage-chase.md"
+    },
+    "scale.extra-rung": {
+      "status": "open",
+      "summary": "A rung the target's scale has beyond the catalog's: a weight below regular or above bold, a half or a large spacing step, a duration, a layer or a shadow size outside the catalog's ladder. Mapping it would invent a value the design system never set. Single-source so far (Chakra's tokens, measured against its whole surface).",
+      "ref": "docs/specs/exporters/chakra.md"
     },
     "shadow.inset": {
       "status": "open",
@@ -67,7 +82,7 @@
     },
     "target.config": {
       "status": "target-specific",
-      "summary": "Target configuration rather than a design value: behaviour switches (focus-ring visibility, reduced motion, cursor, font smoothing), class names, algorithm parameters (Mantine's autoContrast luminance threshold, its global rem scale) and constants (the colour-scheme name).",
+      "summary": "Target configuration rather than a design value: behaviour switches (focus-ring visibility, reduced motion, cursor, font smoothing), class names, algorithm parameters (Mantine's autoContrast luminance threshold, its global rem scale) and constants (the colour-scheme name, Chakra's CSS keywords, fraction and viewport sizes, media aspect ratios).",
       "ref": "docs/specs/exporters/mantine.md"
     },
     "type.display-ladder": {

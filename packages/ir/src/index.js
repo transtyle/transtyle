@@ -95,6 +95,9 @@ export function droppedDimensions(dimensionNames, expressed) {
     }));
 }
 
+/** AL3 for graph-shaped target surfaces (Mantine, Chakra): see surface.js. */
+export { SURFACE_FAMILY_ROW, surfaceCounts, surfaceRows, surfaceStatus } from './surface.js';
+
 /**
  * Component tier (docs/plan/component-tier.md C2; docs/specs/component-layer.md;
  * generalized by AL2 — docs/proposals/0003-component-catalog-generalization.md).
