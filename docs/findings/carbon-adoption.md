@@ -2,14 +2,17 @@
 
 Source: [carbondesignsystem.com/elements/color/tokens](https://carbondesignsystem.com/elements/color/tokens/), fetched live 2026-07-21, for the White (light) theme core tokens and the Support/Button component tokens. The G100 (dark) theme's per-token values were **not** independently re-fetched from a live rendering of that specific theme tab in this pass (the site's theme switcher didn't expose a clean text extraction for it) — the G100 values used here are well-established, stable Carbon v11 constants, cross-checked against the White-theme values that _were_ live-verified (which matched expectations exactly), but flagged here as a lower-confidence input than the White theme numbers.
 
+> **Re-verified 2026-10-09 against Carbon's own source.** Every G100 value bound below was checked against the DTCG token files Carbon publishes in its repository ([`packages/themes/src/dtcg`](https://github.com/carbon-design-system/carbon/tree/81893f3d925daa624c516ef3d4edf2e7f339d7db/packages/themes/src/dtcg) at commit `81893f3`: `themes.json` for the core tokens, `components/button.json` for the button tokens). All of them match, with two corrections now applied to the example: `primary.solid` had been bound to `$link-primary`, which is Blue 40 on G100, while Carbon's `$button-primary` stays Blue 60 in all four themes; and `$button-secondary`, previously bound light-mode only, is Gray 60 on G100. `$support-warning` is confirmed as Yellow 30 in every theme.
+
 ## Clean 1:1 mappings, both modes
 
 Every one of these has a real, named Carbon token with a documented value in _both_ the White and G100 themes, bound via `$extensions.transtyle.modes`:
 
-- `primary.solid` ← `$link-primary` / `$interactive` / `$button-primary` (all Blue 60, #0f62fe light; Blue 40, #78a9ff dark).
+- `primary.solid` ← `$button-primary` (Blue 60, #0f62fe, in all four themes: Carbon's filled primary button does not lighten on G100). `$link-primary` and `$interactive` share Blue 60 on White but lighten on G100 (Blue 40 #78a9ff and Blue 50 #4589ff) for text and border contrast, which is why the catalog's `link.*` slots bind `$link-primary` and `primary.solid` does not. Dark mode carries the light value over, so `transtyle check` prints an informational `TST1204` for this role: that is Carbon's actual design, not a gap.
 - `danger.solid` ← `$support-error` (Red 60 #da1e28 light; Red 50 #fa4d56 dark).
 - `success.solid` ← `$support-success` (Green 50 #24a148 light; Green 40 #42be65 dark).
-- `warning.solid` ← `$support-warning` (Yellow 30 #f1c21b — same both themes).
+- `warning.solid` ← `$support-warning` (Yellow 30 #f1c21b, the same in all four themes).
+- `secondary.solid` ← `$button-secondary` (Gray 80 #393939 light; Gray 60 #6f6f6f dark).
 - `info.solid` ← `$support-info` (Blue 70 #0043ce light; Blue 50 #4589ff dark).
 - `ring` ← `$focus` (Blue 60 light; **white** on G100 — a real, deliberate Carbon choice: a blue focus ring on a near-black background would be too low-contrast, so Carbon's own dark theme swaps the focus indicator to white).
 - `text.base`/`text.muted` ← `$text-primary`/`$text-secondary`.
@@ -21,8 +24,8 @@ This is the **strongest per-role coverage of the two real-DS adoptions** — Car
 
 ## Judgment calls
 
-- **`neutral.solid`** — Carbon's core tokens don't name a "neutral brand" role either (same gap as GOV.UK). Bound to Gray 60 (#6f6f6f), Carbon's own `$text-helper`/`$icon-secondary` gray — mode-invariant, since Carbon doesn't publish a distinct G100 value for this exact gray step relative to White that would meaningfully change the pairing.
-- **`secondary.solid`** — Carbon _does_ have a real, named secondary role (`$button-secondary`, Gray 80 #393939) — a better starting point than GOV.UK, which has none. **Bound light-mode only.** The G100 theme's own `$button-secondary` value wasn't independently re-confirmed against a live source in this pass (see the header note); rather than guess a plausible-looking dark-mode hex, dark mode falls back to the same light value. This is the one place this adoption is honestly incomplete rather than fully verified — flagged, not hidden.
+- **`neutral.solid`** — Carbon's core tokens don't name a "neutral brand" role either (same gap as GOV.UK). Bound to Gray 60 (#6f6f6f), the gray Carbon's `$text-helper` uses on White, and kept mode-invariant. Carbon's source does give `$text-helper` a lighter G100 value (Gray 40), so following it in dark mode is a possible refinement; it stays a judgment call because no Carbon token is a neutral _fill_ role.
+- **`secondary.solid`** — Carbon _does_ have a real, named secondary role (`$button-secondary`), a better starting point than GOV.UK, which has none. It was first bound light-mode only, because its G100 value had not been confirmed; Carbon's source settles it (Gray 60 on G90 and G100), so both modes are now bound. On G100, secondary and `neutral` resolve to the same Gray 60: that is Carbon's own value for the secondary button, kept rather than nudged apart.
 
 ## Scope boundaries (not gaps — deliberate, documented)
 
@@ -33,7 +36,7 @@ This is the **strongest per-role coverage of the two real-DS adoptions** — Car
 
 - All seven targets (`shadcn`, `echarts`, `daisyui`, `bootstrap`, `storybook`, `css-variables`, `radix`) build with zero errors and zero warnings, in both modes.
 - `transtyle check --json` reports **zero diagnostics**.
-- All seven demo projects launched and screenshot-verified in-browser, both modes: the Radix demo's dark-mode screenshot shows the real G100 background (#161616) and Blue 40 primary (#78a9ff), an exact match to the bound values — confirming the mode-scoped `$extensions` resolved correctly end to end, not just at the token level. IBM Plex Sans/Mono load for real (Google Fonts). No console errors.
+- All seven demo projects launched and screenshot-verified in-browser, both modes: the Radix demo's dark-mode screenshot showed the real G100 background (#161616) and the primary then bound (Blue 40, #78a9ff, since corrected to Carbon's Blue 60 button value), an exact match to the bound values — confirming the mode-scoped `$extensions` resolved correctly end to end, not just at the token level. IBM Plex Sans/Mono load for real (Google Fonts). No console errors.
 - `check:determinism` extended to include this example: two builds are byte-identical.
 
 ## Catalog impact

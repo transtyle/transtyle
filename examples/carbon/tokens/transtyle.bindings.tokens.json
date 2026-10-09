@@ -4,14 +4,14 @@
       "$type": "color",
       "primary": {
         "solid": {
-          "$value": "{semantic.color.carbon.link-primary}",
-          "$description": "Carbon's $link-primary / $interactive / $button-primary all share Blue 60 (#0f62fe) — the one color that unambiguously anchors the brand across every Carbon core token group."
+          "$value": "{semantic.color.carbon.button-primary}",
+          "$description": "Carbon's own $button-primary: Blue 60 (#0f62fe) in all four themes, G100 included. Not $link-primary, which lightens to Blue 40 on the dark themes for text contrast; Carbon keeps its filled primary button the same blue everywhere, so dark mode deliberately carries the light value over."
         }
       },
       "secondary": {
         "solid": {
           "$value": "{semantic.color.carbon.button-secondary}",
-          "$description": "Carbon's own $button-secondary (Gray 80, #393939) — a real, named secondary role, unlike GOV.UK. Light mode only: the G100 theme's own $button-secondary value wasn't independently confirmed against the live source for this adoption, so dark mode falls back to this same value rather than guessing (see the findings ledger)."
+          "$description": "Carbon's own $button-secondary — a real, named secondary role, unlike GOV.UK: Gray 80 (#393939) on White, Gray 60 (#6f6f6f) on G100."
         }
       },
       "danger": {

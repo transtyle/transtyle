@@ -39,7 +39,11 @@
           "$value": "{option.color.purple.60}",
           "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.purple.40}" } } }
         },
-        "button-secondary": { "$value": "{option.color.gray.80}" },
+        "button-primary": { "$value": "{option.color.blue.60}" },
+        "button-secondary": {
+          "$value": "{option.color.gray.80}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.60}" } } }
+        },
         "support-error": {
           "$value": "{option.color.red.60}",
           "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.red.50}" } } }
