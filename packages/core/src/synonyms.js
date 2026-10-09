@@ -1,7 +1,7 @@
 /**
  * The name table `bind --suggest` reads token names with (suggest.js,
  * docs/specs/cli.md "bind --suggest"). Versioned data, like the rule pack:
- * `synonyms@1` is written into every suggestion, so a change to this table
+ * `synonyms@2` is written into every suggestion, so a change to this table
  * shows up in review as a version bump, not as a silent change of advice.
  *
  * A token's name is read by structure, not by substring. Its words (the path
@@ -13,13 +13,20 @@
  * role. That is the false-friend rule. Family precedence, first match wins:
  * focus/ring, link, text, surface, border, status, role.
  *
+ * `@2` (proposal 0005): an inverse word turns a text name into `inverse.text`
+ * and a surface name into `inverse.surface`, the inverse pair. Carbon's
+ * `text-inverse`, Material's `inverse-on-surface` and Fluent's
+ * `NeutralForegroundInverted` are all the text on the inverted surface, never
+ * the other mode's body text that `text.inverse` is, so no name proposes
+ * `text.inverse` any more. A border name reads as `border.base`.
+ *
  * Words that are not here mean nothing: `tube`, `scanline` or `meltdown`
  * (examples/cathode) are left to the value signals. Adding a word to fit one
  * design system is how a table like this goes wrong; a new word needs a
  * second, independent vocabulary that uses it the same way.
  */
 
-export const SYNONYMS_VERSION = 'synonyms@1';
+export const SYNONYMS_VERSION = 'synonyms@2';
 
 /** Family words. A token with one of these is that family whatever else its name says. */
 export const FAMILY_WORDS = {
@@ -133,15 +140,19 @@ export function readColorName(path) {
   const text = family('text');
   if (text) {
     if (status || family('surface') || family('border')) return claim('text', null, [text]);
+    const inverse = hit(words, RUNG_WORDS.inverse);
+    if (inverse) return claim('text', 'inverse.text', [text, inverse]);
     const rung = Object.entries(RUNG_WORDS).find(([, list]) => hit(words, list));
     return claim('text', `text.${rung?.[0] ?? 'base'}`, [text, rung && hit(words, rung[1])]);
   }
   const surface = family('surface');
   if (surface) {
+    const inverse = hit(words, RUNG_WORDS.inverse);
+    if (inverse) return claim('surface', status || role || interaction ? null : 'inverse.surface', [surface, inverse]);
     return claim('surface', status || role || interaction ? null : 'elevation.surface', [surface]);
   }
   const border = family('border');
-  if (border) return claim('border', status || role || interaction ? null : 'border', [border]);
+  if (border) return claim('border', status || role || interaction ? null : 'border.base', [border]);
   if (status) return claim('status', state ? null : `${status[0]}.solid`, [hit(words, status[1])]);
   if (role) return claim('role', state ? null : `${role[0]}.solid`, [hit(words, role[1])]);
   return null;

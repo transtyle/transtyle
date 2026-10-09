@@ -36,6 +36,11 @@ this entry records what changed in the repository and what was measured.
   select glyphs from `text.base`). Chakra's inverted pair and `border.subtle`,
   shadcn's `--input` and Storybook's `inputBorder` read the new slots; Mantine
   and MUI say in a `dropped` row why they can't.
+- **`bind --suggest`** proposes `border.base` and the inverse pair; its name
+  table moved to `synonyms@2`: an inverse word on a text or surface name reads
+  as `inverse.text` / `inverse.surface` (Carbon's `text-inverse`, Material's
+  `inverse-on-surface`), never as `text.inverse`. Its example check recovers
+  Carbon's 17 in-scope bindings, the new pair included.
 - **Carbon** authors the inverse pair from `$background-inverse` /
   `$text-inverse`, the authored case the defaults can't show.
 
