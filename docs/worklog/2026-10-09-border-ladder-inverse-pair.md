@@ -84,6 +84,11 @@ this entry records what changed in the repository and what was measured.
   `border-interactive` is its blue focus border). No field hover cell: PrimeNG's
   hover stays on `neutral.outline-hover`, so a design system that aliases
   `border.field` to `border.strong` gets a hover lighter than the rest state there.
+- PrimeNG's own types reject the new icon keys at component level: Listbox's
+  option has no `icon` and Menu's item icon no `activeColor`, so the Listbox and
+  Menu builders copy the archetype objects without them (the four PrimeNG demos'
+  `ng build` caught it; `check:all` doesn't type-check the preset). Those
+  components read the semantic paths through Aura's references anyway.
 - The PrimeNG coverage classifier counts the authored tooltip binding
   (`components.tooltip.colorScheme.*.root.*`) as inherited, not driven, because
   it matches emitted paths without the `colorScheme` segment; the binding has its
