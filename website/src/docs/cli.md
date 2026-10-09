@@ -173,7 +173,26 @@ The same object is `catalog()` in `@transtyle/core`.
 
 ### `transtyle init [name]`
 
-Scaffolds `transtyle.config.json` + `tokens/brand.tokens.json` (with a `$schema` line for [editor autocomplete](/docs/configuration/#token-files-in-your-editor); a minimal example: one brand color, elevation levels 0–1, text, border, radius, fonts — each with a `$description: "TODO: ..."` placeholder) and a `css-variables` target so the first build works immediately. Refuses (exit 2) if a config already exists.
+Scaffolds `transtyle.config.json` and your token files from five answers. In a terminal it asks for them; each also has a flag, and a flag you pass skips its question:
+
+| Flag               | Asks for                                                                                                                                                                                              | Default                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `--brand <color>`  | Your brand color, in any CSS color syntax (`#e8590c`, `oklch(…)`, `rgb(…)`, a name)                                                                                                                   | `oklch(0.55 0.18 255)` |
+| `--schemes <set>`  | `light,dark` or `light`                                                                                                                                                                               | `light,dark`           |
+| `--targets <list>` | Which of the nine targets to configure, comma-separated (`shadcn,bootstrap`)                                                                                                                          | `css-variables`        |
+| `--preset <name>`  | `recommended`: brand color, page and card backgrounds, text, muted text, border, radius and fonts, with dark values; `minimal`: the brand color only                                                  | `recommended`          |
+| `--layout <name>`  | `single`: one token file plus a dark overlay; `layered`: your own names, a dark overlay, and a bindings file ([the layered layout](/docs/authoring-tokens/#the-layered-layout-recommended-for-teams)) | `single`               |
+| `--yes`, `-y`      | Ask nothing and take the defaults                                                                                                                                                                     |                        |
+
+```bash
+npx transtyle init --brand '#e8590c' --targets shadcn,bootstrap --yes
+```
+
+Without a terminal (CI, a script, an agent), `init` asks nothing and never reads stdin: unset answers take their defaults. A wrong value exits 2 and names the valid ones, before any file is written; at a prompt, a wrong answer is asked again.
+
+The `recommended` neutrals are a starting ladder in your brand's hue, light and dark, each with a `$description: "TODO: ..."` placeholder: authored values in your file, there to be replaced. Token files are listed by name in the config, the dark one as a [mode-scoped overlay](/docs/authoring-tokens/#modes), and each starts with a `$schema` line for [editor autocomplete](/docs/configuration/#token-files-in-your-editor). The same answers always write the same bytes.
+
+`init` then checks what it wrote, prints any diagnostics, shows your brand color with the `on-solid` text color derived for it and their contrast ratio, and lists what is worth authoring next. Refuses (exit 2) if a config or one of the token files already exists.
 
 ### `transtyle add <target>`
 
@@ -206,10 +225,9 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 
 | Command                                             | What it will do                                                                                   |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `transtyle init` (interactive mode)                 | A brand-color prompt instead of the fixed placeholder scaffold shipped today                      |
 | `transtyle add <exporter>` (community plugins)      | Install + register third-party exporter packages, printing their manifest first                   |
 | `transtyle explain <token> --target <t>` (new flag) | Also show which target variable the value maps to and why (today's `explain` stops at provenance) |
 | `transtyle import <source>`                         | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files           |
 | `transtyle preview`                                 | Local themed preview site across all targets                                                      |
 
-Programmatic use: `build`, `check`, `diff`, `explain` and `catalog` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `catalog()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only.
+Programmatic use: `build`, `check`, `diff`, `explain` and `catalog` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `catalog()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).

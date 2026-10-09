@@ -194,5 +194,5 @@ This file, with the manifest above and the standard rule pack, is a _complete, c
 ## Validation & DX
 
 - Published JSON Schemas for manifest and token files (`https://transtyle.dev/schemas/config/v0.json`, `https://transtyle.dev/schemas/tokens/v0.json`; served today from the docs site under `/schemas/`) → editor autocomplete and red squiggles with zero custom tooling. The token-file schema is generated from the catalog by `npm run gen:schemas`, never hand-edited; `check:schemas` proves it current. It completes catalog slot paths and the alias strings that point at them, closes every catalog group except the ones users extend (`semantic`, `semantic.color`, `semantic.font`, `component`), and leaves custom tokens valid.
-- `transtyle init` scaffolds the pair above interactively (brand color prompt → working system).
+- `transtyle init` scaffolds a manifest and token files like the pair above: on a terminal it asks for the brand color, color schemes, targets, preset and layout (each also a flag), and checks the result before it exits ([cli.md](cli.md#init)).
 - All diagnostics reference file + line (source maps from LOAD) and carry stable codes (`TST1042`) for suppression and docs deep-links.

@@ -32,6 +32,7 @@ try {
   expect('init: exit 0', r.code === 0, `exit ${r.code}: ${r.out}`);
   expect('init: config created', existsSync(join(dir, 'transtyle.config.json')));
   expect('init: tokens created', existsSync(join(dir, 'tokens/brand.tokens.json')));
+  expect('init: dark overlay created', existsSync(join(dir, 'tokens/brand.dark.tokens.json')));
 
   r = run(['init', '--cwd', dir]);
   expect('init: refuses when config exists (exit 2)', r.code === 2, `exit ${r.code}`);
@@ -199,7 +200,7 @@ try {
       'dangling alias (TST1105)': ['TST1105', scaffold.replace('{option.color.brand.500}', '{option.color.brand.999}')],
       'alias cycle (TST1104)': ['TST1104', scaffold
         .replace('{option.color.brand.500}', '{semantic.color.text.base}')
-        .replace('"oklch(0.2 0.01 255)"', '"{semantic.color.primary.solid}"')],
+        .replace('"oklch(0.21 0.01 255)"', '"{semantic.color.primary.solid}"')],
       'unparseable color (TST1106)': ['TST1106', scaffold.replace('"{option.color.brand.500}"', '"not-a-color"')],
     };
     for (const [label, [cause, tokens]] of Object.entries(broken)) {
@@ -396,7 +397,7 @@ try {
     // Contrast regression: a brand-colour change must NOT flag one (no false
     // positives), while lightening body text until it fails AA must.
     expect('diff: brand-only change flags no contrast regression', !r.out.includes('Contrast regressions'));
-    writeFileSync(tp, readFileSync(tp, 'utf8').replace('oklch(0.2 0.01 255)', 'oklch(0.75 0.01 255)'));
+    writeFileSync(tp, readFileSync(tp, 'utf8').replace('oklch(0.21 0.01 255)', 'oklch(0.75 0.01 255)'));
     r = runIn(['diff']);
     expect('diff: flags a contrast regression', r.out.includes('Contrast regressions') && r.out.includes('now FAILS'), r.out.slice(-400));
     r = runIn(['diff', '--json']);
@@ -732,8 +733,133 @@ try {
   }
 }
 
+// ---------- #99: init's answers — flags, presets, layouts, prompts ----------
+// Every answer has a flag, validated before anything is written; without a
+// terminal nothing is asked; the same answers give the same bytes; every
+// preset × layout × schemes builds clean on all nine targets; the prompts
+// (driven here by scripted streams, as a terminal would) re-ask a wrong answer
+// and give up cleanly when input ends.
+{
+  const { promptAnswers, scaffold, INIT_DEFAULTS } = await import(join(root, 'packages/cli/src/init.js'));
+  const ALL = ['shadcn', 'echarts', 'daisyui', 'bootstrap', 'storybook', 'css-variables', 'radix', 'primeng', 'mantine'];
+  const fresh = (label) => mkdtempSync(join(tmpdir(), `transtyle-check-99-${label}-`));
+  const report = (cwd) => {
+    const r = run(['check', '--cwd', cwd, '--json']);
+    try { return JSON.parse(r.stdout); } catch { return { diagnostics: [{ code: `unparseable: ${r.out}`, severity: 'error', message: '' }], targets: [] }; }
+  };
+  const loud = (j) => j.diagnostics.filter((d) => d.severity !== 'info').map((d) => `${d.code} ${d.message}`);
+  const dirs = [];
+  try {
+    // The issue's acceptance command.
+    let dir = fresh('accept'); dirs.push(dir);
+    let r = run(['init', '--cwd', dir, '--brand', '#e8590c', '--schemes', 'light,dark', '--targets', 'shadcn,bootstrap', '--preset', 'recommended']);
+    expect('init flags: the acceptance command exits 0', r.code === 0, r.out);
+    expect('init flags: the closing check runs and shows the on-solid swatch', /check: 0 errors, 0 warnings/.test(r.out) && /primary\.solid #e8590c, on-solid #[0-9a-f]{6}: \d+\.\d:1/.test(r.out), r.out);
+    let j = report(dir);
+    expect('init flags: acceptance project has no error or warning', loud(j).length === 0, loud(j).join('\n'));
+    expect('init flags: --targets configures exactly those targets', JSON.stringify(j.targets.map((t) => t.target)) === '["shadcn","bootstrap"]', JSON.stringify(j.targets.map((t) => t.target)));
+    const cfg = JSON.parse(readFileSync(join(dir, 'transtyle.config.json'), 'utf8'));
+    expect('init: token files are listed by name, the dark one as a mode-scoped overlay', JSON.stringify(cfg.tokens) === JSON.stringify(['tokens/brand.tokens.json', { files: 'tokens/brand.dark.tokens.json', mode: { 'color-scheme': 'dark' } }]), JSON.stringify(cfg.tokens));
+    const tokens = JSON.parse(readFileSync(join(dir, 'tokens/brand.tokens.json'), 'utf8'));
+    expect('init: the brand is written as typed', tokens.option.color.brand['500'].$value === '#e8590c', JSON.stringify(tokens.option.color.brand));
+    expect('init: neutrals take the brand hue', tokens.semantic.color.text.base.$value === 'oklch(0.21 0.01 42)', tokens.semantic.color.text.base.$value);
+    expect('init: every token file carries the $schema line', ['brand', 'brand.dark'].every((f) => JSON.parse(readFileSync(join(dir, `tokens/${f}.tokens.json`), 'utf8')).$schema === 'https://transtyle.dev/schemas/tokens/v0.json'));
+
+    // Determinism: same answers, same bytes, whatever order the targets were typed in.
+    const twin = fresh('twin'); dirs.push(twin);
+    run(['init', '--cwd', twin, '--brand', '#e8590c', '--schemes', 'light,dark', '--targets', 'bootstrap,shadcn', '--preset', 'recommended']);
+    const same = ['transtyle.config.json', 'tokens/brand.tokens.json', 'tokens/brand.dark.tokens.json']
+      .every((f) => readFileSync(join(dir, f), 'utf8').replace(/"name": "[^"]*"/, '') === readFileSync(join(twin, f), 'utf8').replace(/"name": "[^"]*"/, ''));
+    expect('init: same answers give byte-identical files (target order ignored)', same);
+
+    // Every preset × layout × schemes, all nine targets, no error, no warning, each file loaded once.
+    for (const preset of ['recommended', 'minimal']) {
+      for (const layout of ['single', 'layered']) {
+        for (const schemes of ['light,dark', 'light']) {
+          dir = fresh(`${preset}-${layout}`); dirs.push(dir);
+          r = run(['init', '--cwd', dir, '--brand', '#e8590c', '--preset', preset, '--layout', layout, '--schemes', schemes, '--targets', ALL.join(',')]);
+          j = report(dir);
+          const label = `init --preset ${preset} --layout ${layout} --schemes ${schemes}`;
+          expect(`${label}: builds on all nine targets with no error or warning`, r.code === 0 && j.targets.length === 9 && loud(j).length === 0, `${r.out}\n${loud(j).join('\n')}`);
+          expect(`${label}: no file loaded twice (no TST1103)`, !j.diagnostics.some((d) => d.code === 'TST1103'));
+        }
+      }
+    }
+
+    // The neutral ladder in the hue of very different brands: no contrast warning
+    // on a neutral pair. (A violet brand's derived secondary can still warn:
+    // that comes from derivation, not from what init writes.)
+    for (const brand of ['#e8590c', '#ffe066', '#0a0a0a', '#00ff00', '#7c3aed']) {
+      dir = fresh('brand'); dirs.push(dir);
+      run(['init', '--cwd', dir, '--yes', '--brand', brand, '--targets', 'css-variables']);
+      const neutral = report(dir).diagnostics.filter((d) => d.code === 'TST2101' && /(text|elevation|border)\./.test(d.message));
+      expect(`init --brand ${brand}: no neutral pair below AA in either mode`, neutral.length === 0, neutral.map((d) => d.message).join('\n'));
+    }
+
+    // Bad answers: exit 2 with the valid values, and nothing written.
+    for (const [label, args, says] of [
+      ['an unknown target', ['--targets', 'shadcn,nope'], 'Valid targets:'],
+      ['a color that does not parse', ['--brand', 'notacolor'], 'is not a color'],
+      ['a translucent brand', ['--brand', 'transparent'], 'opaque'],
+      ['an unknown preset', ['--preset', 'nope'], 'Valid: recommended, minimal'],
+      ['a dark-only scheme set', ['--schemes', 'dark'], 'Valid: light,dark or light'],
+      ['an unknown layout', ['--layout', 'nope'], 'Valid: single, layered'],
+      ['a flag with no value', ['--brand'], 'needs a value'],
+    ]) {
+      dir = fresh('bad'); dirs.push(dir);
+      r = run(['init', '--cwd', dir, ...args]);
+      expect(`init refuses ${label} (exit 2, says why, writes nothing)`, r.code === 2 && r.out.includes(says) && !existsSync(join(dir, 'transtyle.config.json')) && !existsSync(join(dir, 'tokens')), `exit ${r.code}: ${r.out}`);
+    }
+    r = run(['build', '--brand', '#e8590c', '--cwd', dirs[0]]);
+    expect('an init flag on another command is a usage error', r.code === 2 && r.out.includes('only applies to init'), `exit ${r.code}: ${r.out}`);
+    dir = fresh('taken'); dirs.push(dir);
+    run(['init', '--cwd', dir, '--layout', 'layered']);
+    rmSync(join(dir, 'transtyle.config.json'));
+    r = run(['init', '--cwd', dir]);
+    expect('init refuses to overwrite an existing token file (exit 2, no config written)', r.code === 2 && r.out.includes('tokens/brand.tokens.json') && !existsSync(join(dir, 'transtyle.config.json')), `exit ${r.code}: ${r.out}`);
+
+    // No terminal: nothing asked, stdin never read, defaults written.
+    dir = fresh('notty'); dirs.push(dir);
+    const piped = spawnSync('node', [cli, 'init', '--cwd', dir], { encoding: 'utf8', input: '#00ff00\n2\n', timeout: 20000 });
+    expect('init without a terminal asks nothing and ignores stdin', piped.status === 0 && !/Brand color/.test(piped.stderr) && readFileSync(join(dir, 'tokens/brand.tokens.json'), 'utf8').includes(INIT_DEFAULTS.brand), `exit ${piped.status}: ${piped.stderr}`);
+
+    // The layered layout: your names, the overlay, the bindings; the slot resolves through them.
+    dir = fresh('layered'); dirs.push(dir);
+    run(['init', '--cwd', dir, '--layout', 'layered']);
+    r = run(['explain', 'text.base', '--cwd', dir, '--mode', 'dark']);
+    expect('init --layout layered: catalog slots bind to your names, dark from the overlay', /= oklch\(0\.97 0\.004 255\)/.test(r.out) && r.out.includes('aliased → semantic.color.ui.ink'), r.out);
+
+    // The prompts, driven by scripted input as a terminal would: a wrong
+    // answer is explained and asked again, numbers pick from the lists, Enter
+    // takes the default, flags already given are not asked.
+    const { PassThrough } = await import('node:stream');
+    const ask = async (script, given = {}) => {
+      const input = new PassThrough();
+      const output = new PassThrough();
+      let shown = '';
+      output.on('data', (c) => { shown += c; });
+      input.end(script);
+      try { return { answers: await promptAnswers(given, ALL, { input, output }), shown }; } catch (e) { return { error: e, shown }; }
+    };
+    let p = await ask('#zz\n#e8590c\n2\nnope\n1,bootstrap\n\n2\n');
+    expect('prompts: re-ask a color that does not parse', (p.shown.match(/Brand color/g) ?? []).length === 2 && p.shown.includes('"#zz" is not a color'), p.shown);
+    expect('prompts: re-ask an unknown target, listing the valid ones', (p.shown.match(/Targets \[/g) ?? []).length === 2 && p.shown.includes('Unknown target: nope'), p.shown);
+    expect('prompts: numbers, names and Enter give the expected answers', JSON.stringify(p.answers) === JSON.stringify({ brand: '#e8590c', schemes: ['light'], targets: ['shadcn', 'bootstrap'], preset: 'recommended', layout: 'layered' }), JSON.stringify(p.answers ?? p.error?.message));
+    p = await ask('\n\n', { brand: '#7c3aed', schemes: ['light', 'dark'], targets: ['radix'] });
+    expect('prompts: a flag skips its question', !p.shown.includes('Brand color') && !p.shown.includes('Targets') && JSON.stringify(p.answers) === JSON.stringify({ brand: '#7c3aed', schemes: ['light', 'dark'], targets: ['radix'], preset: 'recommended', layout: 'single' }), `${p.shown}\n${JSON.stringify(p.answers)}`);
+    p = await ask('#e8590c\n');
+    expect('prompts: input that ends early rejects as input-ended', p.error?.code === 'input-ended', p.error?.message ?? JSON.stringify(p.answers));
+    // What the prompts answered compiles like the flags do.
+    p = await ask('#e8590c\n\n1,4\n\n\n');
+    expect('prompts and flags write the same files for the same answers',
+      JSON.stringify(scaffold({ name: 'x', ...p.answers })) === JSON.stringify(scaffold({ name: 'x', brand: '#e8590c', schemes: ['light', 'dark'], targets: ['shadcn', 'bootstrap'], preset: 'recommended', layout: 'single' })));
+  } finally {
+    for (const d of dirs) rmSync(d, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init/add/build/explain/diff/check --matrix golden path and error cases all pass');
+console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain/diff/check --matrix golden path and error cases all pass');
