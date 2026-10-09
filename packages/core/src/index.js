@@ -77,7 +77,7 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   const primaryMissing = Object.values(normalized.modes).some(
     (m) => m.get('semantic.color.primary.solid')?.value === undefined,
   );
-  const upstream = ['TST1002', 'TST1104', 'TST1105', 'TST1106'].some((c) => diagnostics.has(c));
+  const upstream = ['TST1002', 'TST1104', 'TST1105', 'TST1106', 'TST1307'].some((c) => diagnostics.has(c));
   if (primaryMissing && !upstream) {
     diagnostics.error(
       'TST1201',
