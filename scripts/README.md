@@ -1,6 +1,6 @@
 # The checkers
 
-Twenty-four scripts, one job each — twenty-one chained by `npm run check:all` and
+Twenty-five scripts, one job each — twenty-two chained by `npm run check:all` and
 run individually by CI, plus three that guard a release, a deploy, and the
 history itself.
 Every one exists because something real broke or could have: they are not a
@@ -28,6 +28,7 @@ already made once.
 | `check-demos.mjs`             | The published demo grid: described, documented with its port, linked from its exporter page, deployed |
 | `gen-figures.mjs --check`     | The blog's figures still match a fresh compile of the examples they were painted from                 |
 | `gen-matrix.mjs --check`      | The docs' slot × target matrix still matches what each exporter reads                                 |
+| `gen-catalog-signals.mjs`     | (`--check`) The catalog-signals report matches every exporter's `unsupported` rows, keys registered   |
 | `check-package-manifests.mjs` | What a published tarball needs and the workspace hides: access, provenance, keywords, `files`, `bin`  |
 | `check-brand.mjs`             | The logo everywhere: assets current, every surface still carrying it, the site drawing the same glyph |
 | `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex              |
@@ -60,7 +61,7 @@ against a synthetic positive before the scan, because a scanner whose regexes
 quietly stopped matching reports "clean" forever and reads exactly like a repo
 with nothing to find.
 
-Eight scripts here render rather than check:
+Nine scripts here render rather than check:
 
 - `gen-schemas.mjs` and `gen-brand.mjs` render what `check-schemas.mjs` and
   `check-brand.mjs` then prove are current — the published JSON schemas, and
@@ -75,6 +76,14 @@ Eight scripts here render rather than check:
   the slots each one reads (`packages/cli/src/matrix.js`, the code behind `transtyle check --matrix`).
   Its `--check` regenerates the page in memory and fails on any difference, so a hand edit or an
   exporter that starts reading a new slot both turn it red until the page is regenerated.
+- `gen-catalog-signals.mjs` renders `docs/findings/catalog-signals.md`: every `unsupported`
+  coverage row of every official exporter on every example, grouped by the `meaning` key the
+  exporter declares on it and checked against the registry in `docs/findings/catalog-meanings.json`.
+  PrimeNG is read slot by slot from its emitted preset and reconciled with its own report — the
+  reconciliation is how the primary ramp was found counted as Aura's default. Its `--check` fails
+  on a stale page, an unregistered key, or a registered key nothing reports any more. It compiles
+  through `lib/compile-examples.mjs`, the in-process compile any generated view of the examples
+  should share.
 - `gen-social-card.mjs` renders the card a launch post carries, with every value
   on it read from a fresh compile of `examples/acme` rather than drawn by hand.
   Its output is gitignored (`brand/social/`) and has no checker, which is the

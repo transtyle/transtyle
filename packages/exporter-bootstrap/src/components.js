@@ -164,7 +164,13 @@ export function componentVariables(light, ctx) {
         ...(emit.note && { note: emit.note }),
       });
     } else if (c.drop) {
-      coverage.push({ variable: `$${v.name}`, slot: '—', class: c.drop.cls, note: c.drop.note });
+      coverage.push({
+        variable: `$${v.name}`,
+        slot: '—',
+        class: c.drop.cls,
+        note: c.drop.note,
+        ...(c.drop.meaning && { meaning: c.drop.meaning }),
+      });
     } else {
       const m = MECH[c.mech];
       coverage.push({

@@ -24,33 +24,35 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as prettier from 'prettier';
 import { EXAMPLES, TARGETS } from './lib/demos.mjs';
+import { compileExample, localExporter } from './lib/compile-examples.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outFile = join(repo, 'website/src/docs/slot-matrix.md');
 const check = process.argv.includes('--check');
 
-const { compile } = await import('../packages/core/src/index.js');
 const { recordingLoader, consumption, sections } = await import('../packages/cli/src/matrix.js');
 
 const SOURCE = 'acme';
 const targetIds = TARGETS.map((t) => t.id);
 
-async function matrixOf(example, targets) {
-  const { loadExporter, readSets } = recordingLoader(
-    async (name) => (await import(`../packages/exporter-${name}/src/index.js`)).default,
-  );
-  const result = await compile({ cwd: join(repo, 'examples', example), targets, emit: false, loadExporter });
-  if (result.diagnostics.errors.length > 0) {
-    console.error(`✖ matrix: examples/${example} does not compile:`);
-    for (const d of result.diagnostics.errors) console.error(`    ${d.code} ${d.message}`);
+/** The shared in-process compile (scripts/lib/compile-examples.mjs), failing with this page's prefix. */
+async function compiled(example, options) {
+  try {
+    return await compileExample(example, options);
+  } catch (error) {
+    console.error(`✖ matrix: ${error.message}`);
     process.exit(1);
   }
-  return consumption(result, readSets);
+}
+
+async function matrixOf(example, targets) {
+  const { loadExporter, readSets } = recordingLoader(localExporter);
+  return consumption(await compiled(example, { targets, loadExporter }), readSets);
 }
 
 /** The catalog slots an example resolves (no exporter needed for that). */
 async function catalogOf(example) {
-  const { normalized } = await compile({ cwd: join(repo, 'examples', example), emit: false, skipExporters: true });
+  const { normalized } = await compiled(example, { skipExporters: true });
   const out = new Set();
   for (const map of Object.values(normalized?.modes ?? {})) for (const k of map.keys()) out.add(k);
   return out;

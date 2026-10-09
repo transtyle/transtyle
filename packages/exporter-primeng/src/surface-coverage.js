@@ -26,13 +26,21 @@ export const INVENTORY = JSON.parse(
   readFileSync(new URL('../surface-inventory.json', import.meta.url), 'utf8'),
 );
 
+/** An IR colour value ({ l, c, h, … }): one emitted value, not a branch of the preset. */
+const isColorValue = (v) =>
+  typeof v.l === 'number' && typeof v.c === 'number' && typeof v.h === 'number';
+
 /** Collect every leaf path of the emitted preset object (`semantic.x.y`, `components.button.…`). */
 export function emittedPaths(preset) {
   const out = new Set();
   const walk = (obj, prefix) => {
     for (const [k, v] of Object.entries(obj ?? {})) {
       const path = prefix ? `${prefix}.${k}` : k;
-      if (v && typeof v === 'object' && !Array.isArray(v)) walk(v, path);
+      // A colour is still an object here (the serializer formats it later), so
+      // walking into it recorded `primary.500.l` instead of `primary.500`, and the
+      // eleven primary-ramp steps this exporter emits counted as left on Aura's
+      // default (issue #94 found it, reconciling against the emitted file).
+      if (v && typeof v === 'object' && !Array.isArray(v) && !isColorValue(v)) walk(v, path);
       else out.add(path);
     }
   };
@@ -67,8 +75,22 @@ export function drivenSemanticKeys(preset) {
 }
 
 /**
- * Classify one inventory slot. Returns { class, reason, note? } where `class`
- * is a coverage class from validation-and-coverage.md.
+ * Meaning keys (issue #94) for slots left on Aura's default: what the slot is,
+ * in the shared vocabulary scripts/gen-catalog-signals.mjs groups rows by
+ * across exporters (registered in docs/findings/catalog-meanings.json).
+ * Matched on the inventory path, never on note text. Only concepts another
+ * exporter also reports belong here; the rest of the surface stays unkeyed.
+ */
+const MEANINGS = [
+  // 50-odd icon sizes across the families (`icon.size`, `closeIcon.sm.size`,
+  // `image.action.iconSize`): the systematic model proposal 0004 measured.
+  { meaning: 'icon.size', test: (path) => /icon(?:\.(?:sm|lg))?\.size$|iconSize$/i.test(path) },
+];
+const meaningOf = (slot) => MEANINGS.find((m) => m.test(slot.path))?.meaning;
+
+/**
+ * Classify one inventory slot. Returns { class, reason, note?, meaning? } where
+ * `class` is a coverage class from validation-and-coverage.md.
  */
 export function classifySlot(slot, emitted, drivenKeys) {
   const fullPath = slot.group === 'semantic' ? `semantic.${slot.path}` : `components.${slot.path}`;
@@ -96,17 +118,22 @@ export function classifySlot(slot, emitted, drivenKeys) {
         note: `follows our theme through PrimeNG's own reference {${slot.ref}}`,
       };
     }
-    return {
+    return withMeaning(slot, {
       class: 'unsupported',
       reason: 'base',
       note: `Aura default references {${slot.ref}}, a semantic path this exporter does not drive`,
-    };
+    });
   }
-  return {
+  return withMeaning(slot, {
     class: 'unsupported',
     reason: 'base',
     note: `Aura's own literal (${slot.value}) kept — this exporter does not override this slot`,
-  };
+  });
+}
+
+function withMeaning(slot, row) {
+  const meaning = meaningOf(slot);
+  return meaning ? { ...row, meaning } : row;
 }
 
 /** Classify the whole inventory. Returns { rows, counts }. */

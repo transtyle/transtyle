@@ -123,7 +123,7 @@ function buildTheme(map, mode, ctx) {
   }
 
   // Honest unsupported: themable ECharts surfaces the IR does not cover yet
-  coverage.push({ variable: 'series-specific styles (candlestick, gauge, …)', slot: '—', class: 'unsupported', note: 'beyond catalog semantics; extend the emitted theme manually' });
+  coverage.push({ variable: 'series-specific styles (candlestick, gauge, …)', slot: '—', class: 'unsupported', note: 'beyond catalog semantics; extend the emitted theme manually', meaning: 'chart.series-style' });
 
   const axisCommon = {
     axisLine: { lineStyle: { color: border } },
