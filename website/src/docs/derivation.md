@@ -17,7 +17,7 @@ It's built on three promises, because a tool that silently invents brand values 
 
 1. **Deterministic.** Pure functions over OKLCH color math. Same inputs, same outputs, forever, on every machine. No ML, nothing environment-dependent.
 2. **Explainable.** Every derived value records the rule that made it and the inputs it used — visible in `report.json` and in the generated CSS comments (`· derived`).
-3. **Governable.** Authored values always win. `derivation.require` lets you forbid derivation for specific tokens. Rule packs are version-pinned in config.
+3. **Governable.** Authored values always win. `derivation.require` lets you forbid derivation for specific tokens, or for a whole [completeness level](#what-to-author-next-completeness-levels). Rule packs are version-pinned in config.
 
 ## Rules only fill holes
 
@@ -109,8 +109,40 @@ That asymmetry is the whole point. One line expresses either intent, and the exp
 - **Have taste.** Derivation guarantees _coherence_, not _art direction_. On the [Cathode terminal theme](/docs/examples/#cathode--the-hostile-example), derived `info` comes out conventionally blue — coherent, aesthetically wrong for a monochrome CRT, and fixed by one authored line. That boundary is by design.
 - **Run your code.** Rules are declarative and shipped in versioned packs; there is deliberately no JS escape hatch in token processing. If the rule language is insufficient, that's a spec conversation, not a plugin.
 
+## What to author next: completeness levels
+
+Three levels say which slots are worth authoring, in the order they pay off. Each one extends the one before. `build` and `check` print where you stand on one line (`authored 1/14 recommended`), and `transtyle check --completeness <level>` lists what is left, in this order:
+
+| Level         | Slots, in order                                                                                                                                                                                                                                 |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minimal`     | `color.primary.solid`: your brand, the one input the engine cannot invent                                                                                                                                                                       |
+| `recommended` | the neutrals `color.elevation.0.surface`, `color.elevation.1.surface`, `color.text.base`, `color.text.muted`, `color.border`; the same five again for each non-default color scheme (your dark neutrals); `radius.md`, `font.sans`, `font.mono` |
+| `complete`    | `color.secondary.solid`; the status colors `success`, `warning`, `danger`, `info` (each `.solid`); `color.ring`, `color.scrim`; the `space.*` and `type.*` scales; `component.control.*`                                                        |
+
+Every path is under `semantic.` except `component.control.*`. Authoring means a value of your own or an alias to one: binding a slot to your vocabulary counts. An item still to author is `missing` (nothing fills it), `derived`, `defaulted`, or `carried over`: a neutral whose dark value is its light one (the same test as [`TST1204`](/docs/diagnostics/)). A scale is one item, done once you author one of its steps: the engine fills the others.
+
+```
+npx transtyle check --completeness recommended
+#
+# Completeness recommended: 1/14 authored. To author next:
+#    1. semantic.color.elevation.0.surface  defaulted by default-canvas
+#       the page background: text, on-colors and contrast checks are measured against it
+#    2. semantic.color.elevation.1.surface  derived by alias(elevation.0.surface)
+#       cards and panels
+#    …
+#   13. semantic.font.mono  missing
+#       the code font: without it every target keeps its own
+```
+
+That is a design system with only `primary.solid`, in light and dark. Right after `transtyle init` (the `recommended` preset), `recommended` is done and `complete` is next. The levels are advice: the exit code doesn't change. To make one a rule for your team, require it: `"derivation": { "require": ["completeness:recommended"] }` fails the build with [`TST1202`](/docs/diagnostics/) for each item left. `check.completeness` picks the level the summary line reports on ([configuration](/docs/configuration/#check)).
+
+<!-- measured: acme.completeness.complete = 15 -->
+<!-- measured: acme.completeness.complete.total = 24 -->
+
+No example reaches `complete`, and that's honest: each one leaves `scrim`, `type.*` and `component.control.*` to the engine. Acme stops at 15 of 24 on purpose, leaving its second brand color, status colors and focus ring to derivation (its [README](https://github.com/transtyle/transtyle/tree/main/examples/acme) says why).
+
 ## Practical workflow
 
-1. Author the minimum you have opinions about (brand color, neutrals, dark neutrals, radius, fonts).
-2. Build; read `report.json` and the `· derived` comments in the output.
+1. Author the minimum you have opinions about: the `recommended` level above (brand color, neutrals, dark neutrals, radius, fonts).
+2. Build; read `report.json` and the `· derived` comments in the output. `transtyle check --completeness complete` lists what else is worth a decision.
 3. Where a derived value is wrong for you, author that token. Repeat. Your token file grows exactly as fast as your opinions do.

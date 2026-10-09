@@ -14,8 +14,12 @@ One binary, subcommands. Human logs go to **stderr**; requested data goes to std
 
 Runs the full pipeline and writes artifacts. With no arguments, builds every target instance in the config; with names, only those (`transtyle build shadcn shadcn-v3`).
 
+<!-- measured: acme.completeness.recommended = 14 -->
+
 ```bash
 npx transtyle build shadcn
+#
+# authored 14/14 recommended
 #
 # shadcn  42% native · 53% derived · 3% approximated · 3% dropped
 #   ↳ dist/shadcn/globals.transtyle.css
@@ -25,7 +29,7 @@ npx transtyle build shadcn
 # ✔ build complete
 ```
 
-Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
+The first line is the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`check.completeness`, default `recommended`) and how many of its items you author; it is printed once, whatever the number of targets. Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
 
 ### `--out <dir>`, `--dry-run`
 
@@ -51,17 +55,37 @@ The CLI never colors its output, so `NO_COLOR` changes nothing there; it is hono
 
 The pipeline minus EMIT — same code path, guaranteed to agree with real builds. Runs schema validation, alias/cycle detection, mode validation, WCAG contrast checks, and coverage computation, writing nothing.
 
+### `--completeness <level>`
+
+`check` only. Lists what is still worth authoring for a [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`minimal`, `recommended` or `complete`), in the order it pays off, on **stdout**: each slot with its state (`missing`, `derived by <rule>`, `defaulted by <rule>`, `carried over from the default scheme`, or for a scale `k/n authored`) and why it matters. The exit code doesn't change; `derivation.require: ["completeness:<level>"]` is how a team makes a level mandatory.
+
+```bash
+npx transtyle check --completeness complete --cwd examples/acme
+#
+# Completeness complete: 15/24 authored. To author next:
+#   1. semantic.color.secondary.solid  derived by desaturate-primary
+#      the second brand color, if your brand has one
+#   …
+#   8. semantic.type.*  defaulted, 0/36 authored
+#      the type scale
+#   9. component.control.*  derived, 0/3 authored
+#      the padding and radius buttons and fields share
+```
+
 ### `--json`
 
-`check`, `diff` and `catalog`. For `check`, prints the full diagnostics array, the `suppressed` list and per-target coverage to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
+`check`, `diff` and `catalog`. For `check`, prints the full diagnostics array, the `suppressed` list, per-target coverage and the completeness to-do to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
 
 ```bash
 npx transtyle check --json
 # { "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "...",
 #                         "path": "scratch", "file": "tokens/brand.tokens.json", "line": 74, "column": 3 }, ... ],
 #   "suppressed": [ ... ],
-#   "targets": [ { "target": "shadcn", "coverage": [ ... ], "reads": [ ... ] }, ... ] }
+#   "targets": [ { "target": "shadcn", "coverage": [ ... ], "reads": [ ... ] }, ... ],
+#   "completeness": { "level": "recommended", "authored": 14, "total": 14, "todo": [] } }
 ```
+
+`completeness.todo` lists the items left, in order: `{ "slot", "state", "mode"?, "rule"?, "reason" }`, where `state` is `missing`, `derived`, `defaulted` or `carried-over`, `mode` is `color-scheme=dark` on a dark neutral, and a scale carries `authoredMembers` and `members`. `--completeness` picks the level.
 
 ### `--matrix`
 
@@ -332,4 +356,4 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle import <source>`                    | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
 | `transtyle preview`                            | Local themed preview site across all targets                                            |
 
-Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `suggestBindings()`, `migrateStyleDictionary()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).
+Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `completenessStatus()`, `suggestBindings()`, `migrateStyleDictionary()`), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported).

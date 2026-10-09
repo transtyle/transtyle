@@ -133,7 +133,7 @@ Where a derived value contradicts your system, bind it — one alias, versioned,
 "derivation": { "require": ["semantic.color.primary", "semantic.color.danger"] }
 ```
 
-Now a build fails if someone deletes the binding and derivation silently takes over. Your migration is done when the report's authored/derived split matches your intent — not when it hits 100% authored. Most systems settle around 40–60% authored; the rest is coherent derivation that tracks your brand automatically.
+Now a build fails if someone deletes the binding and derivation silently takes over. Your migration is done when the report's authored/derived split matches your intent — not when it hits 100% authored. Most systems settle around 40–60% authored; the rest is coherent derivation that tracks your brand automatically. For which slots are worth a decision first, run `npx transtyle check --completeness complete`: it lists them in order ([completeness levels](/docs/derivation/#what-to-author-next-completeness-levels)), and `"require": ["completeness:recommended"]` makes a whole level policy.
 
 ## The two mistakes to avoid
 

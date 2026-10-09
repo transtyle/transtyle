@@ -245,6 +245,30 @@ const sameValue = (a, b) =>
   a === b || (a !== null && b !== null && typeof a === 'object' && typeof b === 'object' && JSON.stringify(a) === JSON.stringify(b));
 
 /**
+ * Whether `entry` (a slot in a combination where `color-scheme` is `scheme`, a
+ * non-default value) only carries over `baseline` (the same slot with
+ * `color-scheme` at its default). The rule TST1204 applies, shared with the
+ * completeness levels (completeness.js), which list a carried-over neutral as
+ * a to-do:
+ *
+ * - Only a slot the user supplied (`authored` or `aliased`) can carry over;
+ *   a derived one follows its inputs.
+ * - An explicit per-mode value on the slot itself is a decision, however it
+ *   compares, and is never second-guessed.
+ * - A slot that resolved to nothing in the default mode (dangling alias
+ *   TST1105, cycle TST1104, unparseable color TST1106, each reported on its
+ *   own) has no value to carry over. Without this, `undefined` equals
+ *   `undefined` and the note claims an unchanged colour that never existed.
+ * - Otherwise it carries over when the resolved values are equal: a bound slot
+ *   whose alias target has its own value in that scheme does not.
+ */
+export function carriesOver(entry, baseline, scheme) {
+  if (!['authored', 'aliased'].includes(entry?.provenance?.kind)) return false;
+  if (entry.provenance.mode === `color-scheme=${scheme}`) return false;
+  return baseline?.value !== undefined && sameValue(entry.value, baseline.value);
+}
+
+/**
  * TST1204: a role's `.solid` anchor drives its whole grid (~16 derived slots —
  * hover/active/tint/outline/on-colors), so when the default-mode color reaches
  * a non-default `color-scheme` value unchanged, the ENTIRE grid is that scheme's
@@ -301,17 +325,7 @@ export function reportModeCarryOver(normalized, config, diagnostics) {
       // for exactly one reason: the authored anchor did. Reporting them would
       // print eight consequences of one cause — the noise AL5 removed
       // everywhere else.
-      if (!['authored', 'aliased'].includes(entry.provenance?.kind)) continue;
-      // An explicit per-mode value on the slot itself is a decision, however it
-      // compares — never second-guessed here.
-      if (entry.provenance?.mode === `${DIM}=${scheme}`) continue;
-      const baseline = base.get(tokenPath);
-      // A slot that resolved to nothing in the default mode (dangling alias
-      // TST1105, cycle TST1104, unparseable color TST1106 — each already
-      // reported) has no value to carry over. Without this, `undefined` equals
-      // `undefined` and the note claims an unchanged colour that never
-      // existed: a consequence printed next to its cause.
-      if (baseline?.value === undefined || !sameValue(entry.value, baseline.value)) continue;
+      if (!carriesOver(entry, base.get(tokenPath), scheme)) continue;
 
       const dedupeKey = `${tokenPath}|${scheme}`;
       if (reported.has(dedupeKey)) continue;

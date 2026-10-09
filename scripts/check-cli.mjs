@@ -1485,8 +1485,110 @@ try {
   }
 }
 
+// ---------- #67: authoring completeness levels ----------
+// `check --completeness <level>` lists what to author next, in order, without
+// changing the exit code; build and check print one `authored n/m <level>`
+// line; `derivation.require: ["completeness:<level>"]` is the policy knob, and
+// `require` now refuses defaulted slots too (it used to let them through).
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-67-'));
+  const examples = join(root, 'examples');
+  const writeConfig = (extra = {}) => writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify({
+    name: 'one-token',
+    tokens: ['tokens/brand.tokens.json'],
+    modes: { 'color-scheme': { values: ['light', 'dark'], default: 'light' } },
+    derivation: { rules: 'standard@1', ...extra.derivation },
+    targets: { 'css-variables': { output: 'dist/css-variables' } },
+    ...(extra.check ? { check: extra.check } : {}),
+  }));
+  const todoOf = (cwd, level) => {
+    const r = run(['check', '--cwd', cwd, '--json', '--completeness', level]);
+    try { return { code: r.code, ...JSON.parse(r.stdout).completeness }; } catch { return { code: r.code, todo: [], out: r.out }; }
+  };
+  const keys = (todo) => todo.map((t) => `${t.slot}${t.mode ? ` (${t.mode})` : ''} ${t.state}`);
+  try {
+    mkdirSync(join(dir, 'tokens'));
+    writeFileSync(join(dir, 'tokens/brand.tokens.json'), JSON.stringify({ semantic: { color: { primary: { solid: { $type: 'color', $value: '#e8590c' } } } } }));
+    writeConfig();
+
+    // The acceptance order: brand, neutrals, dark neutrals, radius, fonts.
+    const NEUTRALS = ['elevation.0.surface defaulted', 'elevation.1.surface derived', 'text.base defaulted', 'text.muted derived', 'border missing'];
+    const want = [
+      ...NEUTRALS.map((n) => `semantic.color.${n}`),
+      ...NEUTRALS.map((n) => `semantic.color.${n.replace(' ', ' (color-scheme=dark) ')}`),
+      'semantic.radius.md missing', 'semantic.font.sans missing', 'semantic.font.mono missing',
+    ];
+    let c = todoOf(dir, 'recommended');
+    expect('completeness: check --completeness exits 0 with a to-do (the exit code is unchanged)', c.code === 0, c.out);
+    expect('completeness: one-token recommended to-do in the documented order', JSON.stringify(keys(c.todo)) === JSON.stringify(want), keys(c.todo).join('\n'));
+    expect('completeness: one-token counts 1/14 recommended', c.authored === 1 && c.total === 14, `${c.authored}/${c.total}`);
+    let r = run(['check', '--cwd', dir, '--completeness', 'recommended']);
+    expect('completeness: the human to-do goes to stdout, numbered', /^ +1\. semantic\.color\.elevation\.0\.surface {2}defaulted by default-canvas$/m.test(r.stdout), r.stdout);
+    expect('completeness: the per-scheme items name their mode', r.stdout.includes('semantic.color.text.base (color-scheme=dark)  defaulted by default-text'), r.stdout);
+    r = run(['check', '--cwd', dir]);
+    expect('completeness: check prints one summary line, with a pointer to the to-do', (r.out.match(/^authored 1\/14 recommended {2}· transtyle check --completeness recommended/gm) ?? []).length === 1, r.out);
+    expect('completeness: plain check prints no to-do', !r.stdout.includes('To author next'), r.stdout);
+    r = run(['check', '--cwd', dir, '--quiet']);
+    expect('completeness: --quiet drops the summary line', !/^authored /m.test(r.out), r.out);
+    r = run(['build', '--cwd', dir]);
+    expect('completeness: build prints the summary line before the coverage bars', /authored 1\/14 recommended[^\n]*\n\ncss-variables /.test(r.out), r.out);
+    r = run(['build', '--cwd', dir, '--completeness', 'complete']);
+    expect('completeness: --completeness is refused on build (exit 2)', r.code === 2, r.out);
+    r = run(['check', '--cwd', dir, '--completeness', 'everything']);
+    expect('completeness: an unknown level is a usage error (exit 2)', r.code === 2 && r.out.includes('minimal, recommended, complete'), r.out);
+
+    // check.completeness picks the default level; --completeness overrides it.
+    writeConfig({ check: { completeness: 'minimal' } });
+    r = run(['check', '--cwd', dir]);
+    expect('completeness: check.completeness sets the summary line\'s level', /^authored 1\/1 minimal$/m.test(r.out), r.out);
+    c = todoOf(dir, 'complete');
+    expect('completeness: --completeness overrides check.completeness', c.level === 'complete' && c.total === 24, `${c.level} ${c.total}`);
+
+    // derivation.require: a level expands to its items, each a TST1202.
+    writeConfig({ derivation: { require: ['completeness:recommended'] } });
+    let j = JSON.parse(run(['check', '--cwd', dir, '--json']).stdout);
+    const t1202 = j.diagnostics.filter((d) => d.code === 'TST1202');
+    expect('require completeness:recommended: one TST1202 per unauthored item (13)', t1202.length === 13, t1202.map((d) => d.message).join('\n'));
+    expect('require completeness:recommended: the per-scheme items say which scheme', t1202.some((d) => d.message.startsWith('Required token is not authored for color-scheme=dark: semantic.color.border')), t1202.map((d) => d.message).join('\n'));
+    // The defaulted bug: a defaulted slot passed `require` before.
+    writeConfig({ derivation: { require: ['semantic.space.4', 'semantic.color.elevation.0.surface', 'semantic.color.primary'] } });
+    j = JSON.parse(run(['check', '--cwd', dir, '--json']).stdout);
+    const req = j.diagnostics.filter((d) => d.code === 'TST1202').map((d) => d.message);
+    expect('require: a defaulted slot now fails TST1202', req.includes('Required token is not authored: semantic.space.4 (defaulted)') && req.includes('Required token is not authored: semantic.color.elevation.0.surface (defaulted)'), req.join('\n'));
+    expect('require: an authored role still passes', !req.some((m) => m.includes('semantic.color.primary')), req.join('\n'));
+    writeConfig({ derivation: { require: ['completeness:everything'] } });
+    r = run(['check', '--cwd', dir]);
+    expect('require: an unknown completeness level is a config error (TST1010)', r.code === 1 && /TST1010 [^\n]*derivation\.require\[0\]/.test(r.out), r.out);
+
+    // The examples: Acme's golden `complete` list, govuk's single gap.
+    c = todoOf(join(examples, 'acme'), 'complete');
+    expect('completeness: Acme complete lists exactly what it leaves to derivation', JSON.stringify(keys(c.todo)) === JSON.stringify([
+      'semantic.color.secondary.solid derived', 'semantic.color.success.solid derived', 'semantic.color.warning.solid derived',
+      'semantic.color.danger.solid derived', 'semantic.color.info.solid derived', 'semantic.color.ring derived',
+      'semantic.color.scrim derived', 'semantic.type.* defaulted', 'component.control.* derived',
+    ]), keys(c.todo).join('\n'));
+    expect('completeness: a family counts its authored members', c.todo.find((t) => t.slot === 'semantic.type.*')?.members > 0, JSON.stringify(c.todo.at(-2)));
+    c = todoOf(join(examples, 'govuk'), 'recommended');
+    expect('completeness: govuk recommended lists only font.mono, no per-scheme item', JSON.stringify(keys(c.todo)) === '["semantic.font.mono missing"]', keys(c.todo).join('\n'));
+
+    // A bound neutral with its own dark value on the alias target is authored
+    // for dark; one whose dark value is the light one is carried over.
+    writeFileSync(join(dir, 'tokens/brand.tokens.json'), JSON.stringify({
+      option: { $type: 'color', ink: { $value: '#111111', $extensions: { 'transtyle.modes': { 'color-scheme': { dark: '#eeeeee' } } } }, line: { $value: '#dddddd' } },
+      semantic: { color: { $type: 'color', primary: { solid: { $value: '#e8590c' } }, text: { base: { $value: '{option.ink}' } }, border: { $value: '{option.line}' } } },
+    }));
+    writeConfig();
+    c = todoOf(dir, 'recommended');
+    const dark = (slot) => c.todo.find((t) => t.slot === slot && t.mode === 'color-scheme=dark')?.state ?? 'authored';
+    expect('completeness: an alias whose target has a dark value is authored for dark', dark('semantic.color.text.base') === 'authored', keys(c.todo).join('\n'));
+    expect('completeness: an alias whose target has none is carried over', dark('semantic.color.border') === 'carried-over', keys(c.todo).join('\n'));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/bind --suggest/--out/--dry-run/--quiet/--verbose golden path and error cases all pass');
+console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--completeness/bind --suggest/--out/--dry-run/--quiet/--verbose golden path and error cases all pass');

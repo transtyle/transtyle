@@ -37,7 +37,11 @@ The `{option.color.blue.600}` references point at `tokens/option.tokens.json` �
 npx transtyle build shadcn
 ```
 
+<!-- measured: acme.completeness.recommended = 14 -->
+
 ```
+authored 14/14 recommended
+
 shadcn  42% native · 53% derived · 3% approximated · 3% dropped
   ↳ dist/shadcn/globals.transtyle.css
   ↳ dist/shadcn/usage.md
@@ -46,7 +50,7 @@ shadcn  42% native · 53% derived · 3% approximated · 3% dropped
 ✔ build complete
 ```
 
-That first line is the [coverage summary](/docs/concepts/#5-provenance-and-coverage): under half of shadcn's variable set came straight from Acme's decisions; most of the rest was computed _from_ them; a sliver was bent to fit; and one thing shadcn can't express was dropped — with a note, not silently.
+The first line says Acme authors every slot of the `recommended` [completeness level](/docs/derivation/#what-to-author-next-completeness-levels): brand, neutrals with their dark values, radius and fonts. The `shadcn` line is the [coverage summary](/docs/concepts/#5-provenance-and-coverage): under half of shadcn's variable set came straight from Acme's decisions; most of the rest was computed _from_ them; a sliver was bent to fit; and one thing shadcn can't express was dropped — with a note, not silently.
 
 ## 4. Read the output
 

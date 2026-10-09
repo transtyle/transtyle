@@ -139,7 +139,9 @@
         "require": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^(?!completeness:)|^completeness:(minimal|recommended|complete)$",
+            "description": "a token path, or one of completeness:minimal, completeness:recommended, completeness:complete"
           }
         }
       }
@@ -193,6 +195,14 @@
             "error",
             "warning",
             "approximation"
+          ]
+        },
+        "completeness": {
+          "type": "string",
+          "enum": [
+            "minimal",
+            "recommended",
+            "complete"
           ]
         },
         "suppress": {

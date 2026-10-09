@@ -21,6 +21,7 @@ import { recordingView } from './reads.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 import { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
 import { IR_SPEC } from '@transtyle/ir';
+import { completenessStatus, COMPLETENESS_REQUIRE_PREFIX } from './completeness.js';
 
 export { parseColor, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 export { Diagnostics } from './diagnostics.js';
@@ -31,6 +32,7 @@ export { catalog } from './catalog.js';
 export { loadConfig, expandTokenFiles } from './load.js';
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
 export { consumption } from './reads.js';
+export { completenessStatus, completenessLevels, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL } from './completeness.js';
 export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
 export { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
 export { suggestBindings, SUGGEST_THRESHOLDS } from './suggest.js';
@@ -137,14 +139,31 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
 
   runChecks(normalized, config, diagnostics);
 
-  // derivation.require: listed slots must be authored, not derived. Color
-  // roles require their `.solid` anchor cell (the role grid's authored anchor,
-  // was `.base` pre-revision); other requires (e.g. radius.md) are bare paths.
+  // derivation.require: listed slots must be authored (or aliased: a binding is
+  // a choice too), not derived, defaulted or absent. Color roles require their
+  // `.solid` anchor cell (the role grid's authored anchor, was `.base`
+  // pre-revision); other requires (e.g. radius.md) are bare paths.
+  // `completeness:<level>` expands to that level's items (completeness.js),
+  // per-scheme ones included.
+  const defaultMap = normalized.modes[normalized.defaultMode];
   for (const req of config.derivation?.require ?? []) {
-    const kind = normalized.modes[normalized.defaultMode].get(`${req}.solid`)?.provenance.kind
-      ?? normalized.modes[normalized.defaultMode].get(req)?.provenance.kind;
-    if (kind === 'derived' || kind === undefined) {
-      diagnostics.error('TST1202', `Required token is not authored: ${req}`, { path: req });
+    if (req.startsWith(COMPLETENESS_REQUIRE_PREFIX)) {
+      const level = req.slice(COMPLETENESS_REQUIRE_PREFIX.length);
+      for (const item of completenessStatus(normalized, level).todo) {
+        diagnostics.error(
+          'TST1202',
+          `Required token is not authored${item.mode ? ` for ${item.mode}` : ''}: ${item.slot} (${item.state}; required by ${req})`,
+          { path: item.slot, hint: `\`transtyle check --completeness ${level}\` lists every item still to author, and why each one matters.` },
+        );
+      }
+      continue;
+    }
+    const entry = defaultMap.has(`${req}.solid`) ? defaultMap.get(`${req}.solid`) : defaultMap.get(req);
+    // A token that is there but resolved to nothing (a dangling alias) already
+    // has its own error (TST1105); it counts by its provenance, as before.
+    const kind = entry?.provenance.kind;
+    if (kind !== 'authored' && kind !== 'aliased') {
+      diagnostics.error('TST1202', `Required token is not authored: ${req}${kind ? ` (${kind})` : ''}`, { path: req });
     }
   }
 
