@@ -154,6 +154,20 @@ A third layer form loads an export of [Tokens Studio for Figma](https://docs.tok
 
 Not covered: writing back to Tokens Studio ([#69](https://github.com/transtyle/transtyle/issues/69)), binding presets for Tokens Studio naming ([#63](https://github.com/transtyle/transtyle/issues/63)), the `$figma*` ids, applying color modifiers ([#182](https://github.com/transtyle/transtyle/issues/182)), and `composition` / `asset` tokens.
 
+**Combo layers** ([ADR-0015](../adr/0015-mode-combinations.md)). A mode-scoped layer may name several dimensions; its values apply only to that exact combination, and win there over the one-dimension values:
+
+```jsonc
+"tokens": [
+  "tokens/base.tokens.json",
+  { "files": "tokens/contrast-more.tokens.json", "mode": { "contrast": "more" } },                         // light, more contrast
+  { "files": "tokens/dark-contrast-more.tokens.json", "mode": { "color-scheme": "dark", "contrast": "more" } } // dark, more contrast
+]
+```
+
+Between two combo layers that both match, the one naming more dimensions wins, then the later one (`TST1108` when two name the same combination). Every dimension and value must be declared (`TST1109`), and a layer naming no dimension is `TST1110`. A token with values on two non-default dimensions and no combo value for that combination takes the later-declared dimension's value, and raises `TST1125` with the layer to add. The inline `$extensions["transtyle.modes"]` form has no combo syntax.
+
+**Reserved dimensions.** `contrast` (`standard|more`), `motion` (`full|reduced`) and `brand` (free-form) are bound by the exporters ([ir.md](../architecture/ir.md#reserved-mode-dimensions)). `brand` values must match `^[a-z0-9][a-z0-9-]*$` (`TST1010` otherwise), since they become file names, CSS attribute values and theme names. Like every dimension, they come after `color-scheme` (`TST1112`).
+
 ## Binding rules
 
 A binding is one alias from a catalog slot to a token of the design system's own vocabulary. For a regular vocabulary (a `brand.50…950` ramp per role, Material's `primary` / `on-primary` pairs) that is dozens of near-identical lines. The optional `bindings` array writes them as rules instead. It is data, like the rest of the manifest, and it adds nothing to the IR ([ADR-0012](../adr/0012-binding-rules.md)).

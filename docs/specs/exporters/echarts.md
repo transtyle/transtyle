@@ -39,6 +39,10 @@ The same rule feeds shadcn's `--chart-*` variables — one brand, one data-viz p
 - Radius → tooltip/dataZoom corner radii: `native`; shadows → `native` (px conversion).
 - `unsupported` reported honestly: series-type-specific styling (candlestick up/down colors, gauge bands…) beyond catalog semantics — left at theme defaults and listed, giving users a precise TODO list for manual theme extension (emitted theme includes an `// extend here` merge pattern in `usage.md`).
 
+## Reserved dimensions: contrast, motion, brand
+
+`brand` multiplies the themes like `color-scheme` does: one theme per brand and scheme, `theme.<project>-<brand>-<scheme>.json`, registered under that name, every brand named, the default one included ([ADR-0015](../../adr/0015-mode-combinations.md)). `contrast` and `motion` are `dropped`: a theme is picked at init with no media-query hook, and animation duration is a chart option.
+
 ## Ground-truth testing
 
 **Aspirational, in full.** The intended shape: headless (node-canvas or Puppeteer) render of a fixture dashboard (line/bar/pie + axes + tooltip) per theme; pixel-samples assert background/text/palette colors; perceptual-distance property test on generated palettes across a corpus of random brand colors.

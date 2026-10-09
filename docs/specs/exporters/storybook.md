@@ -32,6 +32,10 @@ Unique among exporters: Storybook options may reference other configured targets
 - ThemeVars is a small, flat surface — most of the design system is _inexpressible in chrome theming_ and that is fine; it flows through preview composition instead. Coverage honestly reports chrome-inexpressible tokens as `dropped (chrome)` while noting preview-path delivery, a case that validated the coverage model's need for per-artifact context.
 - `unsupported`: Storybook chrome vars without IR equivalents (e.g. `barSelectedColor` nuances) → sensible role defaults, reported.
 
+## Reserved dimensions: contrast, motion, brand
+
+Each declared `contrast`, `motion` or `brand` dimension gets a toolbar global (`globalTypes.contrast`, …) whose value the decorator sets as `data-<dimension>` on `<html>`, the attribute the previewed CSS targets select their blocks on ([ADR-0015](../../adr/0015-mode-combinations.md)). The daisyUI sibling's theme name includes the brand and contrast. The manager (sidebar) theme stays the default brand's, reported `approximated`. The `brand` dimension is not `options.brand` (the manager's own branding).
+
 ## Ground-truth testing
 
 `examples/*/demo/storybook/` builds a real Storybook (`@storybook/html-vite`) with the generated manager/preview/theme files, in CI, for all four examples — a build failure is how a bad `ThemeVars` shape surfaces. **Still aspirational:** booting each supported major rather than the pinned one ([issue #13](https://github.com/transtyle/transtyle/issues/13)), and screenshot probes on the manager UI ([issue #12](https://github.com/transtyle/transtyle/issues/12)), token stories render, and mode toolbar toggles sibling stylesheet behavior.

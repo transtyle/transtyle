@@ -8,7 +8,7 @@
  * Colors are hex (canvas rendering); OKLCH → hex may gamut-clamp (→ approximated).
  */
 
-import { droppedDimensions, fontNames } from '@transtyle/ir';
+import { droppedDimensions, fontNames, pinDimension } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
@@ -24,22 +24,33 @@ export default {
     const themeNames = [];
     const clampedAny = new Set(); // slots whose hex was clamped in any mode
 
-    for (const mode of normalized.modeValues) {
-      const map = normalized.modes[mode];
-      const themeName = `${ctx.projectName}-${mode}`;
-      themeNames.push(themeName);
-      const { theme, modeCoverage, clampedSlots } = buildTheme(map, mode, ctx);
-      // Coverage is identical across modes by construction; record once.
-      if (coverage.length === 0) coverage.push(...modeCoverage);
-      for (const slot of clampedSlots) clampedAny.add(slot);
+    // `brand` (#49): one theme per brand and scheme, `<project>-<brand>-<scheme>`
+    // (every brand named, the default one included, so a theme's name never
+    // depends on which brand is the default). Coverage comes from the default
+    // brand, which is rendered first.
+    const brandDim = normalized.dimensions?.brand;
+    const brands = (brandDim?.values.length ?? 0) > 1
+      ? [brandDim.default, ...brandDim.values.filter((b) => b !== brandDim.default)]
+      : [null];
+    for (const brand of brands) {
+      const view = brand ? pinDimension(normalized, { brand }) : normalized;
+      for (const mode of view.modeValues) {
+        const map = view.modes[mode];
+        const themeName = brand ? `${ctx.projectName}-${brand}-${mode}` : `${ctx.projectName}-${mode}`;
+        themeNames.push(themeName);
+        const { theme, modeCoverage, clampedSlots } = buildTheme(map, mode, ctx);
+        // Coverage is identical across modes by construction; record once.
+        if (coverage.length === 0) coverage.push(...modeCoverage);
+        for (const slot of clampedSlots) clampedAny.add(slot);
 
-      const json = JSON.stringify(theme, null, 2) + '\n';
-      files.push({ path: `theme.${themeName}.json`, contents: json, kind: 'theme' });
-      files.push({
-        path: `theme.${themeName}.js`,
-        contents: umdWrapper(themeName, theme, ctx),
-        kind: 'script',
-      });
+        const json = JSON.stringify(theme, null, 2) + '\n';
+        files.push({ path: `theme.${themeName}.json`, contents: json, kind: 'theme' });
+        files.push({
+          path: `theme.${themeName}.js`,
+          contents: umdWrapper(themeName, theme, ctx),
+          kind: 'script',
+        });
+      }
     }
 
     // A clamp in any mode makes that variable's row approximated (the row is
@@ -53,7 +64,10 @@ export default {
 
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
-    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', 'brand'], {
+      contrast: 'an ECharts theme is picked at init and has no media-query hook; one theme per contrast value is not emitted',
+      motion: "animation duration is a chart option in ECharts, not a theme value",
+    }));
 
     files.push({ path: 'usage.md', contents: renderUsage(ctx, themeNames, coverage), kind: 'doc' });
     return { files, coverage };

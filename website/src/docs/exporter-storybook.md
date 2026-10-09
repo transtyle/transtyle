@@ -82,3 +82,7 @@ All three are optional; `title` overrides the default, and `url` and `image` are
 Every example uses this: each one's Storybook demo serves `public/logo.png` and points `brand.image` at it, which is why the four demos carry a logo in the sidebar rather than Storybook's own.
 
 See it running — the demo _is_ Storybook's own chrome: `npm run dev -w acme-demo-storybook` (light corporate chrome) or `cathode-demo-storybook` (boots terminal-dark) in the [examples](/docs/examples/).
+
+## Contrast, motion and brand
+
+Each declared [`contrast`, `motion` or `brand`](/docs/configuration/#contrast-motion-and-brand) dimension adds a toolbar next to **Scheme**. Its value lands on `<html>` as `data-contrast`, `data-motion` or `data-brand`, the attributes the previewed CSS targets select their blocks on; the daisyUI preview switches to the matching theme name. The manager (sidebar) theme stays the default brand's (an `approximated` row), and this `brand` is not `options.brand` above.

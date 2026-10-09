@@ -541,7 +541,7 @@ async function cmdExplain(args) {
   }
 
   if (args.mode !== undefined && !normalized.modes[args.mode]) {
-    console.error(`✖ Unknown mode "${args.mode}" (available: ${normalized.modeValues.join(', ')})`);
+    console.error(`✖ Unknown mode "${args.mode}" (available: ${[...new Set([...normalized.modeValues, ...(normalized.allCombos ?? [])])].join(', ')})`);
     process.exit(2);
   }
 

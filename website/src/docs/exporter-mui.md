@@ -67,3 +67,7 @@ MUI's components already take `shape.borderRadius`, mapped to the control radius
 - **Elevation surfaces 4 and 5, three of the six text rungs, the categorical palette, border widths, control heights, density.** No matching slot; each is a `dropped` row with its reason.
 
 The full mapping is in the [exporter spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/exporters/mui.md). See it running on real MUI components: `npm run dev -w acme-demo-mui` (or `cathode-demo-mui`) in the [examples](/docs/examples/). The demo's build type-checks the emitted options against MUI's own `ThemeOptions` before bundling them.
+
+## Contrast, motion and brand
+
+[`brand`](/docs/configuration/#contrast-motion-and-brand) gives one theme file per brand, `theme.transtyle.acme.ts` and `theme.transtyle.globex.ts`: hand the brand's theme to `ThemeProvider`. `contrast` and `motion` are reported `dropped` with their reasons: no contrast scheme is emitted yet, and MUI's transition durations are one set per theme.

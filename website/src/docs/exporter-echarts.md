@@ -65,3 +65,7 @@ const chart = echarts.init(el, 'acme-light');
 ```
 
 Mode switching: dispose and re-init with the other theme name (ECharts fixes the theme at init). Both examples ship ECharts targets — [Cathode's](/docs/examples/#cathode--the-hostile-example) dark theme opens with phosphor green on tube-black, which is worth building just to look at.
+
+## Contrast, motion and brand
+
+[`brand`](/docs/configuration/#contrast-motion-and-brand) multiplies the themes the way `color-scheme` does: one theme per brand and scheme, named `<project>-<brand>-<scheme>` (`acme-globex-dark`), every brand named, the default one included. `contrast` and `motion` are reported `dropped`: a theme is chosen at `init` with no media query, and animation duration is a chart option.

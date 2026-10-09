@@ -76,3 +76,7 @@ The rows above say what the exporter maps. A checked-in inventory says what ther
 Component geometry goes through Mantine's data-only routes, `defaultProps` and `styles`: button and control radius, the default button's horizontal padding, and control heights mapped default size to default size. Inputs and buttons are height-driven, so vertical padding is dropped. The full mapping is in the [exporter spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/exporters/mantine.md).
 
 See it running on real Mantine components: `npm run dev -w acme-demo-mantine` (or `cathode-demo-mantine`) in the [examples](/docs/examples/). The demo's build type-checks the emitted theme against Mantine's own types before bundling it.
+
+## Contrast, motion and brand
+
+[`brand`](/docs/configuration/#contrast-motion-and-brand) gives one theme file per brand, `theme.transtyle.acme.ts` and `theme.transtyle.globex.ts`: hand the brand's theme to `MantineProvider`. `contrast` and `motion` are reported `dropped` with their reasons (Mantine's color-scheme manager knows light and dark only; transitions are component props).

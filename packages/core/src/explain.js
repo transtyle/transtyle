@@ -39,9 +39,12 @@ export function explainToken(normalized, slot, { mode } = {}) {
   const useMode = mode ?? normalized.defaultMode;
   const map = normalized.modes[useMode];
   if (!map) {
-    throw explainError('unknown-mode', `Unknown mode "${useMode}" (available: ${normalized.modeValues.join(', ')})`, {
+    // Every combo key is a mode `explain` accepts (`light+more+reduced`), so
+    // every one is listed, after the scheme names.
+    const available = [...new Set([...normalized.modeValues, ...(normalized.allCombos ?? [])])];
+    throw explainError('unknown-mode', `Unknown mode "${useMode}" (available: ${available.join(', ')})`, {
       mode: useMode,
-      available: [...normalized.modeValues],
+      available,
     });
   }
 

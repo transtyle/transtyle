@@ -1,0 +1,32 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "modes",
+  "tokens": [
+    "tokens/base.tokens.json",
+    { "files": "tokens/contrast-more.tokens.json", "mode": { "contrast": "more" } },
+    { "files": "tokens/dark-contrast-more.tokens.json", "mode": { "color-scheme": "dark", "contrast": "more" } },
+    { "files": "tokens/globex.tokens.json", "mode": { "brand": "globex" } },
+    { "files": "tokens/globex-dark.tokens.json", "mode": { "color-scheme": "dark", "brand": "globex" } }
+  ],
+  "modes": {
+    "color-scheme": { "values": ["light", "dark"], "default": "light" },
+    "contrast": { "values": ["standard", "more"], "default": "standard" },
+    "motion": { "values": ["full", "reduced"], "default": "full" },
+    "brand": { "values": ["acme", "globex"], "default": "acme" }
+  },
+  "derivation": { "rules": "standard@1", "autoDark": false },
+  "targets": {
+    "css-variables": { "output": "dist/css-variables" },
+    "shadcn": { "output": "dist/shadcn" },
+    "shadcn-v3": { "exporter": "shadcn", "output": "dist/shadcn-v3", "options": { "era": "tailwind-v3" } },
+    "radix": { "output": "dist/radix" },
+    "daisyui": { "output": "dist/daisyui" },
+    "bootstrap": { "output": "dist/bootstrap" },
+    "storybook": { "output": "dist/storybook", "options": { "previewTargets": ["shadcn", "daisyui", "bootstrap"] } },
+    "primeng": { "output": "dist/primeng" },
+    "echarts": { "output": "dist/echarts" },
+    "mantine": { "output": "dist/mantine" },
+    "chakra": { "output": "dist/chakra" },
+    "mui": { "output": "dist/mui" }
+  }
+}

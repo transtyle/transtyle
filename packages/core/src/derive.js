@@ -35,6 +35,7 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
   // ({ mode, path, role? }). Reported by reportUnderived() once every alias has
   // had its chance to resolve.
   const underived = [];
+  let primaryMissing = false;
   // Every combo in the expanded mode matrix (T8) gets a full pass — not just
   // the primary dimension's values — so a slot that only the *other*
   // dimension varies (e.g. `space.*` under `density`) still gets every
@@ -47,6 +48,22 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
     const ctx = { map, isDark, mode: combo, diagnostics, contrast };
     const mode = combo; // kept for diagnostic messages below — the full combo key, more informative than just the primary dimension's value
     const dl = isDark ? 1 : -1;
+    // The reserved `contrast` and `motion` dimensions (#50). In a `contrast:
+    // more` combo the contrast walks aim at 7:1 (WCAG AAA) instead of 4.5:1,
+    // and in a `motion: reduced` combo every unauthored duration is 0ms.
+    // Both rules only fill what DERIVE fills anyway: an authored value,
+    // including one carried over from the default mode, always wins (Julien's
+    // call on #50), and `check` measures the `more` combos at 7:1 so a
+    // carried-over value that falls short says so.
+    const dims = normalized.comboDims?.[combo] ?? {};
+    const contrastMore = dims.contrast === 'more';
+    const motionReduced = dims.motion === 'reduced';
+    // Targets in the derivation method's own unit: WCAG 7:1 (AAA) / 4.5:1, or
+    // APCA Lc 75 (its body-text level) / Lc 60, under `contrast: more`.
+    const apca = contrast.standard === 'apca';
+    const target = contrastMore ? (apca ? 75 : Math.max(contrast.threshold('content'), 7)) : contrast.threshold('content');
+    const subtleTarget = apca ? 60 : 4.5;
+    const cm = (rule) => (contrastMore ? `contrast-more(${rule})` : rule);
 
     // AL5: TST1201 is NOT raised here any more. This loop runs before deferred
     // aliases resolve, so a dangling `{semantic.color.brand}` had not been
@@ -55,7 +72,10 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
     // The check now lives in compile(), after all alias resolution, where it can
     // both see the root cause and stay silent when there is one.
     const primary = get(map, `${S}primary.solid`);
-    if (!primary) return { underived };
+    if (!primary) {
+      primaryMissing = true;
+      break;
+    }
     // Custom archetyped roles (T7, docs/architecture/ir.md §archetypes) join the
     // grid loop below exactly like a built-in role: resolveRoleSolid()'s fallback
     // branch requires their `.solid` authored, same as `primary`.
@@ -240,13 +260,13 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
       // on-tint: on-brand walk (F19) — start at solid-active, step away from tint until the target clears
       const tint = get(map, rp + 'tint');
       const fallbacks = [textBase, WHITE, NEARBLACK].filter(Boolean);
-      const onTint = onBrandWalk(contrast, tint, solidActive, fallbacks);
-      rc(ctx, rp + 'on-tint', () => ({ ...onTint }), rule('contrast-pick(subtle)'), [`${role}.tint`]);
+      const onTint = onBrandWalk(contrast, tint, solidActive, fallbacks, target);
+      rc(ctx, rp + 'on-tint', () => ({ ...onTint }), cm(rule('contrast-pick(subtle)')), [`${role}.tint`]);
 
       // text: on-brand walk of solid against the page background (elevation.0.surface)
       const s0 = surface(0);
-      const roleText = onBrandWalk(contrast, s0, solidActive, fallbacks);
-      rc(ctx, rp + 'text', () => ({ ...roleText }), rule('contrast-pick(text)'), [
+      const roleText = onBrandWalk(contrast, s0, solidActive, fallbacks, target);
+      rc(ctx, rp + 'text', () => ({ ...roleText }), cm(rule('contrast-pick(text)')), [
         `${role}.solid`,
         'elevation.0.surface',
       ]);
@@ -283,17 +303,35 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
 
     // --- Content hierarchy (X1): text.{strong,muted,subtle,disabled}; inverse is a cross-mode pass below ---
     if (textBase) {
-      rc(ctx, `${S}text.muted`, () => mix(textBase, surface(1), 0.35), 'mix-toward-surface(0.35)', [
-        'text.base',
-        'elevation.1.surface',
-      ]);
-      rc(
-        ctx,
-        `${S}text.subtle`,
-        () => mix(textBase, surface(1), 0.55),
-        'mix-toward-surface(0.55)',
-        ['text.base', 'elevation.1.surface'],
-      );
+      if (contrastMore && surface(0) && surface(1)) {
+        // The standard mixes (0.35, 0.55) give muted text about 4.6:1, short of
+        // AAA: under `contrast: more` each mixes only as far toward the surface
+        // as its target allows against both page surfaces (muted: 7:1, the
+        // body-text pair `check` measures; subtle: 4.5:1; Lc 75 / Lc 60 when
+        // the derivation picks by APCA).
+        const muted = towardSurface(contrast, textBase, surface(1), 0.35, target, [surface(0), surface(1)]);
+        rc(ctx, `${S}text.muted`, () => muted.color, `contrast-more(mix-toward-surface(${muted.t.toFixed(2)}))`, [
+          'text.base',
+          'elevation.1.surface',
+        ]);
+        const subtle = towardSurface(contrast, textBase, surface(1), 0.55, subtleTarget, [surface(0), surface(1)]);
+        rc(ctx, `${S}text.subtle`, () => subtle.color, `contrast-more(mix-toward-surface(${subtle.t.toFixed(2)}))`, [
+          'text.base',
+          'elevation.1.surface',
+        ]);
+      } else {
+        rc(ctx, `${S}text.muted`, () => mix(textBase, surface(1), 0.35), 'mix-toward-surface(0.35)', [
+          'text.base',
+          'elevation.1.surface',
+        ]);
+        rc(
+          ctx,
+          `${S}text.subtle`,
+          () => mix(textBase, surface(1), 0.55),
+          'mix-toward-surface(0.55)',
+          ['text.base', 'elevation.1.surface'],
+        );
+      }
       rc(ctx, `${S}text.disabled`, () => ({ ...textBase, alpha: 0.38 }), 'alpha(0.38)', [
         'text.base',
       ]);
@@ -436,10 +474,10 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
         ctx,
         `semantic.duration.${k}`,
         'duration',
-        () => v,
-        'catalog-default',
+        () => (motionReduced ? '0ms' : v),
+        motionReduced ? 'motion-reduced' : 'catalog-default',
         [],
-        PROVENANCE.DEFAULTED,
+        motionReduced ? PROVENANCE.DERIVED : PROVENANCE.DEFAULTED,
       );
     for (const [k, v] of Object.entries(EASING))
       resolve(
@@ -560,7 +598,7 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
   // component and holding every other dimension fixed: "dark+compact"'s
   // inverse is "light+compact", not the unrelated "light+comfortable".
   const primaryDim = normalized.modeDimension;
-  for (const combo of normalized.allCombos ?? normalized.modeValues) {
+  for (const combo of primaryMissing ? [] : normalized.allCombos ?? normalized.modeValues) {
     const values = normalized.comboDims?.[combo];
     const here = values?.[primaryDim] ?? combo;
     const flipped = here === 'dark' ? 'light' : here === 'light' ? 'dark' : null;
@@ -786,13 +824,13 @@ function raise(c, isDark) {
 
 /**
  * on-brand walk (F19): start at `active`, step lightness away from `bg` in
- * 0.01 increments until the pair clears the method's content level (WCAG AA
- * 4.5:1, or APCA Lc 60); fall back to the max-contrast pick among `fallbacks`
- * if the lightness clamp is reached first.
+ * 0.01 increments until the pair clears `target`: the method's content level
+ * (WCAG AA 4.5:1, or APCA Lc 60), or the `contrast: more` one (7:1, Lc 75);
+ * fall back to the max-contrast pick among `fallbacks` if the lightness clamp
+ * is reached first.
  */
-function onBrandWalk(contrast, bg, active, fallbacks) {
+function onBrandWalk(contrast, bg, active, fallbacks, target = contrast.threshold('content')) {
   const dir = bg.l >= 0.5 ? -1 : 1;
-  const target = contrast.threshold('content');
   for (let i = 0; ; i++) {
     const l = r3(active.l + dir * i * 0.01);
     if (l < 0 || l > 1) break;
@@ -810,6 +848,21 @@ function contrastPick(contrast, bg, candidates) {
     if (!best || score > best.score) best = { color: cand, score };
   }
   return best;
+}
+
+/**
+ * The `contrast: more` content ladder: mix `text` toward `surface` by `start`,
+ * or by less, in 0.01 steps, until the result clears `target` against every
+ * one of `against`. Returns the color and the mix amount used (0 = the text
+ * color itself, when even that falls short: `check` then says so).
+ */
+function towardSurface(contrast, text, surface, start, target, against) {
+  for (let i = Math.round(start * 100); i >= 0; i--) {
+    const t = i / 100;
+    const color = mix(text, surface, t);
+    if (against.every((bg) => contrast.score(contrast.measure(color, bg)) >= target)) return { color, t };
+  }
+  return { color: { ...text }, t: 0 };
 }
 
 // ---------- catalog-default tables ----------

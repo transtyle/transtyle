@@ -27,6 +27,10 @@ shadcn/ui is a copy-paste component collection, not a versioned library — "ver
 - Sidebar/chart variable families (`--sidebar-*`, `--chart-1…5`): mapped when present; `--chart-*` uses the same categorical-palette derivation as the [ECharts exporter](echarts.md) — deliberate cross-exporter consistency (same rule, same palette).
 - `--font-sans`/`--font-mono` map `native` from the font slots. There are no `unsupported` rows on this target today — an earlier draft predicted shadcn font/tracking variables beyond the typography catalog, and the variable set it ships does not have them.
 
+## Reserved dimensions: contrast, motion, brand
+
+`contrast` and `brand` are blocks after `.dark` ([ADR-0015](../../adr/0015-mode-combinations.md)): `[data-contrast="more"]`, `[data-brand="globex"]`, and a compound block (`.dark[data-contrast="more"]`) for each combination whose values the separate blocks would get wrong through the cascade, each holding only the variables that differ. `contrast: more` blocks are repeated inside `@media (prefers-contrast: more)` with `:not([data-contrast])`, so the OS setting applies until the page sets the attribute. The attributes go on the element with the `dark` class (`<html>`). The blocks are planned by `modeBlocks()` (`@transtyle/ir`); on Tailwind v3 they sit inside `@layer base`. `motion` is `dropped`: shadcn's theme has no duration or easing variable.
+
 ## Ground-truth testing
 
 `examples/*/demo/shadcn/` — a real Vite + Tailwind v4 app built from shadcn's own registry components (`@radix-ui/react-*` primitives), consuming only the emitted `globals.transtyle.css`. CI builds all four, which proves the emitted CSS parses under the era's toolchain and that Tailwind resolves every `@theme inline` token. **Still aspirational:** headless-rendering light and dark and asserting computed styles per component/variable pair — nothing today catches a theme that builds cleanly and looks wrong. Tracked as [issue #12](https://github.com/transtyle/transtyle/issues/12).

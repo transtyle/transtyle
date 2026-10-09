@@ -17,6 +17,9 @@
   "exports": {
     ".": "./src/index.js"
   },
+  "dependencies": {
+    "@transtyle/ir": "0.1.0-alpha.3"
+  },
   "transtyle": {
     "kind": "exporter",
     "name": "css-variables",

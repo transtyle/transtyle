@@ -149,6 +149,8 @@ A rule that reads the other color scheme (`text.inverse`, `swap-neutrals`) shows
 
 A color authored as a [DTCG color object](/docs/authoring-tokens/#colors) shows what was written, since the value line is OKLCH: `└─ authored as {"colorSpace":"display-p3","components":[0.85,0.1,0.12]}`.
 
+`--mode` takes a scheme name (`dark`) or the key of any combination of the declared modes, one value per dimension in declaration order (`dark+more+reduced`): that is how to see a `contrast-more` or `motion-reduced` rule. An unknown mode exits 2 and lists every name and key it accepts.
+
 A slot produced by a [`bindings` rule](/docs/configuration/#binding-rules) names it: `└─ aliased → option.color.primary.50  (from rule bindings[2]: semantic.color.{role}.tint)`.
 
 A token's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describing-and-deprecating-tokens) print under its value line, and under each input the walk shows; a deprecated token further down the alias chain is named with `via deprecated`:

@@ -16,6 +16,10 @@ Base ramp `base-100/200/300` ← `elevation.0.surface`/`elevation.1.surface`/`bo
 
 **Token metadata:** the slot's own `description` and `deprecated` (`entryNotes()` from `@transtyle/ir`) are written as `/* … */` lines above its declaration in the light theme block (custom roles included); the dark block doesn't repeat them. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
 
+## Reserved dimensions: contrast, motion, brand
+
+daisyUI selects a theme by name, so every other combination of `brand` and `contrast` is one more `@plugin "daisyui/theme"` block, named after its values with defaults left out: `<project>-<brand>-<scheme>-<contrast>` (`acme-globex-dark`, `acme-light-more`) ([ADR-0015](../../adr/0015-mode-combinations.md)). Only the default brand at standard contrast carries `default` / `prefersdark`. daisyUI has no `prefers-contrast` switch, so `(mode:contrast)` is `approximated`. `motion` is `dropped`: daisyUI themes carry no duration.
+
 ## Ground-truth testing
 
 `examples/*/demo/daisyui/` — a real Vite + Tailwind 4 + daisyUI app whose `@plugin "daisyui"` block names the generated themes, built in CI for all four examples. That proves the emitted blocks are accepted by daisyUI's own plugin and that both themes register. **Still aspirational:** asserting computed styles on a component sample. Tracked as [issue #12](https://github.com/transtyle/transtyle/issues/12).

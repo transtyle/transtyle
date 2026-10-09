@@ -17,6 +17,10 @@ import { droppedDimensions, fontStack } from '@transtyle/ir';
 const S = 'semantic.color.';
 const GAMUT_NOTE = 'sRGB gamut clamp during oklch → hex';
 
+/** Reserved dimensions the preview switches with a toolbar global and a `data-<dimension>` attribute. */
+const TOOLBAR_DIMENSIONS = ['contrast', 'motion', 'brand'];
+const TOOLBAR_ICONS = { contrast: 'contrast', motion: 'play', brand: 'paintbrush' };
+
 /** Per-exporter composition knowledge: main stylesheet + mode encoding. */
 const SIBLING_PROFILES = {
   shadcn: {
@@ -29,7 +33,12 @@ const SIBLING_PROFILES = {
   daisyui: {
     stylesheet: 'daisyui.transtyle.css',
     encoding: 'data-theme attribute',
-    decorator: (p) => `root.setAttribute('data-theme', \`${p}-\${scheme}\`);`,
+    // daisyUI names a theme after its values (`<project>-<brand>-<scheme>-<contrast>`,
+    // default values left out), so the brand and contrast globals are part of the name.
+    decorator: (p, extra = {}) =>
+      'brand' in extra || 'contrast' in extra
+        ? `root.setAttribute('data-theme', ['${p}', ${'brand' in extra ? `brand !== '${extra.brand}' && brand, ` : ''}scheme${'contrast' in extra ? `, contrast !== '${extra.contrast}' && contrast` : ''}].filter(Boolean).join('-'));`
+        : `root.setAttribute('data-theme', \`${p}-\${scheme}\`);`,
   },
   bootstrap: {
     stylesheet: 'bootstrap-theme.css',
@@ -66,13 +75,15 @@ export default {
     const variants = modes.map((mode) => buildThemeVars(normalized, mode, ctx, remBase, coverage));
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
-    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme']));
+    // `contrast`, `motion` and `brand` get a toolbar global each (#49, #50),
+    // which sets the attribute the previewed CSS targets select on.
+    coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', ...TOOLBAR_DIMENSIONS]));
 
     const files = [
       { path: 'theme.transtyle.ts', contents: renderTheme(variants, ctx), kind: 'config' },
       { path: 'manager.transtyle.ts', contents: renderManager(native, ctx), kind: 'config' },
       { path: 'preview.transtyle.ts', contents: renderPreview(normalized, ctx, coverage), kind: 'config' },
-      { path: 'usage.md', contents: renderUsage(ctx, coverage), kind: 'doc' },
+      { path: 'usage.md', contents: renderUsage(ctx, coverage, TOOLBAR_DIMENSIONS.filter((d) => (normalized.dimensions?.[d]?.values.length ?? 0) > 1)), kind: 'doc' },
     ];
     return { files, coverage };
   },
@@ -247,6 +258,9 @@ function renderPreview(normalized, ctx, coverage) {
   const modes = normalized.modeValues;
   const previewTargets = ctx.targetConfig.options?.previewTargets ?? [];
   const myOutput = ctx.targetConfig.output ?? 'dist/storybook';
+  // The extra dimensions this design system declares with more than one value.
+  const toolbarDims = TOOLBAR_DIMENSIONS.filter((d) => (normalized.dimensions?.[d]?.values.length ?? 0) > 1);
+  const extraDefaults = Object.fromEntries(toolbarDims.map((d) => [d, normalized.dimensions[d].default]));
 
   const importLines = [];
   const decoratorLines = [];
@@ -258,7 +272,7 @@ function renderPreview(normalized, ctx, coverage) {
       continue;
     }
     importLines.push(`import '${relPath(myOutput, sibling.output)}/${profile.stylesheet}';  // sibling: ${name} · mode encoding: ${profile.encoding}`);
-    decoratorLines.push(`    ${profile.decorator(ctx.projectName)}  // ${name}`);
+    decoratorLines.push(`    ${profile.decorator(ctx.projectName, extraDefaults)}  // ${name}`);
     if (profile.canvas && !decoratorLines.some((l) => l.includes('document.body.style'))) {
       decoratorLines.push(...profile.canvas.map((l) => `    ${l}  // canvas = DS canvas (F18), via ${name}'s variables`));
     }
@@ -270,6 +284,31 @@ function renderPreview(normalized, ctx, coverage) {
     return v ? ctx.formatHex(v).text : undefined;
   };
   coverage.push({ variable: 'globalTypes.colorScheme', slot: 'modes.color-scheme', class: 'native', note: 'mode dimension → SB global toolbar' });
+  for (const d of toolbarDims) {
+    coverage.push({ variable: `globalTypes.${d}`, slot: `modes.${d}`, class: 'native', note: `mode dimension → SB global toolbar, data-${d} on the preview root` });
+  }
+  if (toolbarDims.includes('brand')) {
+    coverage.push({ variable: '(manager theme: brand)', slot: 'modes.brand', class: 'approximated', note: "the manager (sidebar) theme is the default brand's; the brand toolbar switches the preview only" });
+  }
+  const title = (v) => `${v[0].toUpperCase()}${v.slice(1)}`;
+  const extraGlobals = toolbarDims.flatMap((d) => [
+    `  ${d}: {`,
+    `    description: 'Design-system ${d}',`,
+    '    toolbar: {',
+    `      title: '${title(d)}',`,
+    `      icon: '${TOOLBAR_ICONS[d]}',`,
+    '      items: [',
+    ...normalized.dimensions[d].values.map((v) => `        { value: '${v}', title: '${title(v)}' },`),
+    '      ],',
+    '      dynamicTitle: true,',
+    '    },',
+    '  },',
+  ]);
+  const extraInitial = toolbarDims.map((d) => `, ${d}: '${extraDefaults[d]}'`).join('');
+  const extraDecorator = toolbarDims.flatMap((d) => [
+    `    const ${d} = context.globals.${d} ?? '${extraDefaults[d]}';`,
+    `    root.setAttribute('data-${d}', ${d});`,
+  ]);
   coverage.push({ variable: 'backgrounds.options', slot: `${S}elevation.0.surface`, class: 'native' });
   coverage.push({ variable: 'backgrounds.grid.cellSize', slot: '—', class: 'approximated', note: 'space.4 → px (defaulted scale); cellAmount/opacity are exporter defaults' });
 
@@ -295,15 +334,17 @@ function renderPreview(normalized, ctx, coverage) {
     '      dynamicTitle: true,',
     '    },',
     '  },',
+    ...extraGlobals,
     '};',
     '',
-    `export const initialGlobals = { colorScheme: '${native}' };  // the DS's native mode`,
+    `export const initialGlobals = { colorScheme: '${native}'${extraInitial} };  // the DS's native mode`,
     '',
     '// One decorator drives every sibling\'s mode encoding',
     'export const decorators = [',
     '  (Story: any, context: any) => {',
     `    const scheme = context.globals.colorScheme ?? '${native}';`,
     '    const root = document.documentElement;',
+    ...extraDecorator,
     ...decoratorLines,
     '    return Story();',
     '  },',
@@ -333,7 +374,7 @@ function relPath(from, to) {
   return [...f.slice(i).map(() => '..'), ...t.slice(i)].join('/') || '.';
 }
 
-function renderUsage(ctx, coverage) {
+function renderUsage(ctx, coverage, toolbarDims = []) {
   const counts = {};
   for (const c of coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
   const summary = Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(' · ');
@@ -361,7 +402,9 @@ export * from '../path/to/dist/storybook/preview.transtyle';
 \`\`\`
 
 This imports the sibling targets' stylesheets (${previewTargets.join(', ') || 'none configured'}), adds a **Scheme** toolbar bound to the design system's \`color-scheme\` modes, and sets DS canvases as Storybook backgrounds. Configure siblings via \`options.previewTargets\` in \`transtyle.config.json\`.
-
+${toolbarDims.length ? `
+It also adds one toolbar per further mode dimension (${toolbarDims.map((d) => `**${d[0].toUpperCase()}${d.slice(1)}**`).join(', ')}), each setting \`data-<dimension>\` on \`<html>\`, the attribute the previewed CSS targets select their blocks on.${toolbarDims.includes('brand') ? ' The manager (sidebar) theme stays the default brand\'s. The `brand` mode dimension is not `options.brand`, which brands the Storybook manager itself (title, logo, url).' : ''}
+` : ''}
 ## Regenerating
 
 Never edit these files — change the design system tokens and run \`transtyle build storybook\`.

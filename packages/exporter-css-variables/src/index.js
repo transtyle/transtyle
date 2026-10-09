@@ -30,6 +30,8 @@
  * configured dimension, not just `color-scheme`.
  */
 
+import { modeBlocks, formatModeBlocks, MODE_MEDIA_QUERIES } from '@transtyle/ir';
+
 export default {
   name: 'css-variables',
 
@@ -41,6 +43,7 @@ export default {
       prefix: { type: 'string' },
       darkSelector: { type: 'string' },
       dimensionSelectors: { type: 'object', additionalProperties: { type: 'string' } },
+      mediaQueries: { type: 'boolean' },
     },
   },
 
@@ -96,37 +99,52 @@ export default {
 
     // Extra mode dimensions (T8): every dimension beyond the primary
     // (`color-scheme`, handled above) gets one selector block per non-default
-    // value, containing only the slots that actually differ from the
-    // all-defaults combo (`light`) — e.g. `density: compact` only touches
-    // `space.*`, so only those variables appear, not a full re-dump.
+    // value, containing only the variables that differ from the all-defaults
+    // combo (`light`) — e.g. `density: compact` only touches `space.*`, so only
+    // those variables appear, not a full re-dump. A combination of values
+    // (dark + more contrast, dark + another brand) gets its own compound block
+    // whenever the cascade of those blocks would not already give it the
+    // engine's values (#49, #50); `contrast` and `motion` values also get an
+    // `@media` copy so the OS setting applies (MODE_MEDIA_QUERIES), unless
+    // `options.mediaQueries` is false. The block planning is shared with the
+    // other CSS targets: modeBlocks() in @transtyle/ir.
     const dimNames = normalized.dimensionNames ?? [normalized.modeDimension];
-    const extraDimBlocks = [];
-    for (const dimName of dimNames) {
-      if (dimName === normalized.modeDimension) continue;
-      const dimDef = normalized.dimensions[dimName];
-      for (const value of dimDef.values) {
-        if (value === dimDef.default) continue;
-        const comboValues = Object.fromEntries(dimNames.map((d) => [d, normalized.dimensions[d].default]));
-        comboValues[dimName] = value;
-        const comboMap = normalized.modes[dimNames.map((d) => comboValues[d]).join('+')];
-        if (!comboMap) continue;
-        const lines = [];
-        for (const slot of [...comboMap.keys()].filter((k) => k.startsWith('semantic.'))) {
-          const comboEntry = comboMap.get(slot);
-          if (comboEntry?.value === undefined) continue;
-          const baseEntry = light.get(slot);
-          const rendered = renderEntry(comboEntry, ctx);
-          if (!rendered) continue;
-          const baseRendered = baseEntry ? renderEntry(baseEntry, ctx) : null;
-          if (baseRendered && JSON.stringify(baseRendered) === JSON.stringify(rendered)) continue; // unchanged under this dimension
-          for (const [suffix, val] of rendered) lines.push(cssLine(varName(slot, prefix) + suffix, val, comboEntry));
-        }
-        if (lines.length) {
-          const template = ctx.targetConfig.options?.dimensionSelectors?.[dimName] ?? `[data-${dimName}="{value}"]`;
-          extraDimBlocks.push('', `${template.replace('{value}', value)} {`, ...lines, '}');
+    const extraDims = dimNames.filter((d) => d !== normalized.modeDimension);
+    const mediaQueries = ctx.targetConfig.options?.mediaQueries !== false;
+    const render = (map, { dark: isDark }) => {
+      const out = [];
+      for (const slot of [...map.keys()].filter((k) => k.startsWith('semantic.'))) {
+        const entry = map.get(slot);
+        if (entry?.value === undefined) continue;
+        const isColor = slot.startsWith('semantic.color.') || entry.type === 'shadow' || entry.type === 'border';
+        // The dark block holds colors only; everything else is the :root value.
+        if (isDark && !isColor) continue;
+        for (const [suffix, value] of renderEntry(entry, ctx) ?? []) {
+          const name = varName(slot, prefix) + suffix;
+          out.push({ name, value, line: cssLine(name, value, entry) });
         }
       }
-    }
+      return out;
+    };
+    const blocks = modeBlocks(normalized, {
+      dims: extraDims,
+      render,
+      darkSelector: colorLines.dark.length ? darkSelector : undefined,
+      selector: (dim) => ctx.targetConfig.options?.dimensionSelectors?.[dim],
+      media: mediaQueries,
+    });
+    const extraDimBlocks = formatModeBlocks(blocks);
+    // What usage.md explains beyond the plain attribute blocks.
+    const mediaDims = mediaQueries
+      ? extraDims
+          .map((dim) => ({
+            dim,
+            fallback: normalized.dimensions[dim].default,
+            features: normalized.dimensions[dim].values.filter((v) => MODE_MEDIA_QUERIES[dim]?.[v]).map((v) => [v, MODE_MEDIA_QUERIES[dim][v]]),
+          }))
+          .filter((m) => m.features.length && blocks.some((b) => b.media))
+      : [];
+    const comboBlocks = blocks.some((b) => b.size > 1);
 
     const css = [
       '/*',
@@ -147,7 +165,7 @@ export default {
     return {
       files: [
         { path: 'variables.transtyle.css', contents: css, kind: 'stylesheet' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage.length, darkSelector, dimNames.filter((d) => d !== normalized.modeDimension), colorLines.dark.length > 0), kind: 'doc' },
+        { path: 'usage.md', contents: renderUsage(ctx, coverage.length, darkSelector, extraDims, colorLines.dark.length > 0, { mediaDims, comboBlocks }), kind: 'doc' },
       ],
       coverage,
     };
@@ -241,7 +259,7 @@ function noteLines(entry) {
 
 // ---------- usage ----------
 
-function renderUsage(ctx, count, darkSelector, extraDims, hasDark = true) {
+function renderUsage(ctx, count, darkSelector, extraDims, hasDark = true, { mediaDims = [], comboBlocks = false } = {}) {
   return `# Using these CSS variables
 
 The complete resolved semantic catalog of **${ctx.projectName}** (${count} custom properties), framework-free. This is transtyle's simplest target — and the reference projection of the IR: every other exporter's output is some mapping of what you see here.
@@ -283,7 +301,11 @@ document.documentElement.setAttribute('data-${extraDims[0]}', '<non-default-valu
 \`\`\`
 
 Default selector is \`[data-<dimension>="<value>"]\`; override per dimension via \`options.dimensionSelectors\` (e.g. \`{ "${extraDims[0]}": ".${extraDims[0]}-{value}" }\`, where \`{value}\` is replaced with the mode value).
-` : ''}
+${comboBlocks ? `
+A combination whose values the separate blocks would get wrong (the dark scheme together with another dimension that changes colors, say) has its own compound block, \`${darkSelector}[data-<dimension>="<value>"]\` or two attribute selectors together. Set every attribute on the same element (usually \`<html>\`) for those blocks to apply.
+` : ''}${mediaDims.length ? `
+${mediaDims.map((m) => `\`${m.dim}\``).join(' and ')} also follow${mediaDims.length === 1 ? 's' : ''} the user's system setting until the page sets the attribute itself: ${mediaDims.flatMap((m) => m.features.map(([v, q]) => `\`${q}\` applies \`${m.dim}: ${v}\``)).join(', ')}. Any explicit value wins over the system setting, the default one included (\`data-${mediaDims[0].dim}="${mediaDims[0].fallback}"\` keeps the default whatever the system says). Turn the media blocks off with \`options.mediaQueries: false\`.
+` : ''}` : ''}
 ## Naming
 
 Strip \`semantic.\`, dots become dashes: \`color.primary.solid\` → \`--color-primary-solid\`. The elevation ladder and \`scrim\` drop the \`color.\` segment (\`--elevation-1-surface\`, \`--scrim\`) since they're surfaces, not role colors. Composite typography roles (\`type.role.*\`) expand to \`-size\`/\`-weight\`/\`-leading\`/\`-family\`; elevation shadows collapse to one box-shadow-shaped value (\`--elevation-1-shadow\`).

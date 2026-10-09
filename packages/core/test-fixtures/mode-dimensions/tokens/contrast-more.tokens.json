@@ -1,0 +1,9 @@
+{
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "text": { "muted": { "$value": "{option.color.gray.700}" } },
+      "border": { "$value": "{option.color.gray.500}" }
+    }
+  }
+}

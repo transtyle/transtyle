@@ -82,16 +82,17 @@ export const COVERAGE = ['native', 'derived', 'approximated', 'dropped', 'unsupp
  * mode dimensions they can express; inexpressible dimensions surface in the
  * coverage report"). No-op (empty array) when the compile only has the
  * dimensions the exporter already expresses — e.g. a color-scheme-only
- * compile never gets a spurious "density dropped" line.
+ * compile never gets a spurious "density dropped" line. `reasons` maps a
+ * dimension to why this target can't express it, appended to the note.
  */
-export function droppedDimensions(dimensionNames, expressed) {
+export function droppedDimensions(dimensionNames, expressed, reasons = {}) {
   return (dimensionNames ?? [])
     .filter((d) => !expressed.includes(d))
     .map((d) => ({
       variable: `(mode:${d})`,
       slot: '—',
       class: 'dropped',
-      note: `${d} mode dimension not expressed by this target`,
+      note: reasons[d] ? `${d} mode dimension not expressed by this target: ${reasons[d]}` : `${d} mode dimension not expressed by this target`,
     }));
 }
 
@@ -232,13 +233,20 @@ export const COMPONENT_CATALOG = {
   },
 };
 
-/** Reserved mode dimension names (docs/architecture/ir.md §reserved-mode-dimensions) — names only, every dimension stays optional. */
+/**
+ * Reserved mode dimension names (docs/architecture/ir.md §reserved-mode-dimensions) — names only, every dimension stays optional.
+ * Exporters bind these names: `contrast` (`more`) and `motion` (`reduced`) to
+ * their CSS media features (MODE_MEDIA_QUERIES), `brand` to one block or one
+ * file set per brand. `brand` values are free-form within a file-name-safe
+ * pattern, checked by the config schema.
+ */
 export const RESERVED_MODE_DIMENSIONS = [
   'color-scheme',
   'density',
   'contrast',
   'motion',
   'platform',
+  'brand',
 ];
 
 /**
@@ -409,3 +417,14 @@ export function mergeTrees(trees, onConflict = () => {}, onDefine = () => {}) {
   for (; idx < trees.length; idx++) mergeInto(merged, trees[idx], []);
   return merged;
 }
+
+export {
+  MODE_MEDIA_QUERIES,
+  defaultDimensionSelector,
+  pinDimension,
+  withValueSuffix,
+  emitPerValue,
+  modeBlocks,
+  formatModeBlocks,
+  modeBlocksUsage,
+} from './modes.js';
