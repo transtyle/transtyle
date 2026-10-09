@@ -20,11 +20,15 @@ const tokenLayer = {
     { type: 'string' },
     {
       type: 'object',
-      required: ['files', 'mode'],
+      required: ['files'],
+      // A bare `{ files }` is just a string glob: the object form needs a
+      // reason to exist, a `mode` scope or an `override` flag.
+      anyOf: [{ required: ['mode'] }, { required: ['override'] }],
       additionalProperties: false,
       properties: {
         files: { anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
         mode: { type: 'object', additionalProperties: { type: 'string' } },
+        override: { enum: [true, 'extend'] },
       },
     },
   ],

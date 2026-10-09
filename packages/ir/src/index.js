@@ -253,24 +253,31 @@ export function collectRoleArchetypes(tree, diagnostics) {
   return out;
 }
 
-/** Deep-merge token trees (later wins; conflicts reported via onConflict(path)). */
-export function mergeTrees(trees, onConflict = () => {}) {
+/**
+ * Deep-merge token trees (later wins; conflicts reported via
+ * `onConflict(path, treeIndex)`). The optional `onDefine(path, treeIndex)` fires
+ * for every token a tree sets, after any conflict, so a caller can track which
+ * tree defined what (explicit override layers, ADR-0009).
+ */
+export function mergeTrees(trees, onConflict = () => {}, onDefine = () => {}) {
   const merged = {};
+  let idx = 0;
   const mergeInto = (dst, src, path) => {
     for (const [key, val] of Object.entries(src)) {
       if (val !== null && typeof val === 'object' && !Array.isArray(val) && !('$value' in val)) {
         if (!(key in dst)) dst[key] = {};
         else if ('$value' in dst[key]) {
-          onConflict([...path, key].join('.'));
+          onConflict([...path, key].join('.'), idx);
           dst[key] = {};
         }
         mergeInto(dst[key], val, [...path, key]);
       } else {
-        if (key in dst && !key.startsWith('$')) onConflict([...path, key].join('.'));
+        if (key in dst && !key.startsWith('$')) onConflict([...path, key].join('.'), idx);
+        if (!key.startsWith('$')) onDefine([...path, key].join('.'), idx);
         dst[key] = val;
       }
     }
   };
-  for (const t of trees) mergeInto(merged, t, []);
+  for (; idx < trees.length; idx++) mergeInto(merged, trees[idx], []);
   return merged;
 }

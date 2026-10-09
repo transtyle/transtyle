@@ -29,3 +29,13 @@ Precedence: later layers win; overriding an existing mode value emits a warning 
 **Why order does not matter here.** "Later layers win" is about values: which of two definitions of a token is kept. Whether a file is an overlay at all is a different question, and the config already answers it the moment one entry names the file with a `mode`. Making the answer depend on whether the glob comes before or after that entry would give the same manifest two meanings, one of them a bug. So the loader collects the files of every mode-scoped entry first, then loads the plain globs without them.
 
 **What is unchanged.** Precedence between layers, and every diagnostic: no new code fires for a skipped file, because loading it once, as the overlay, is what the config means. `TST1001` still means a glob matched nothing on disk (a glob whose only matches are overlays does not warn). A file matched by two mode-scoped entries still applies to both modes (`TST1108` where they collide), and a file matched by two plain globs is still merged twice (`TST1103`): both are spelled out in the config, unlike this case.
+
+## Amendment 2026-10-09: explicit override layers
+
+**What changed.** A layer may be written `{ "files": …, "override": true | "extend" }` (combinable with `mode`). `TST1103` stays the right default for accidental duplicates, but enterprise layering (core system, business-unit overlay, product overlay) redefines tokens on purpose in every layer, so with `check.failOn: warning` it was either ignored or forced `failOn: error`. A redefinition from a marked layer is silent. `true` also expects every token it defines to exist already: one that doesn't raises `TST1116` (an override that overrides nothing is usually a typo), once for the layer when it is the first one. `"extend"` allows new tokens. On a mode-scoped layer `override` suppresses `TST1108`.
+
+**Provenance.** Normalized provenance of an overridden token gains `layer` (the winning file) and `overrides` (the files it shadowed). `transtyle explain` prints `overrides <file>`. The report schema's provenance `kind` enum is unchanged.
+
+**Choices.** The merge in `packages/ir` stays dependency-free and backward compatible: `mergeTrees` gains an optional `onDefine` callback and passes the layer index to `onConflict`; the flags live in core. The object form now requires `mode` or `override` (a bare `{ files }` is a string glob). Rejected: a global `allowOverrides` switch (hides accidental duplicates again) and per-token markers (token files stay pure DTCG).
+
+**What is unchanged.** Precedence (later wins), and an unmarked duplicate warns exactly as before.

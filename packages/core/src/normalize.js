@@ -67,11 +67,58 @@ export function normalize(tokenTrees, config, diagnostics) {
   // Base layers merge into the token forest; mode-scoped layers inject values
   // into the same modeValues structure that inline $extensions produce — the
   // two authoring forms are equivalent by construction (ADR-0009).
+  //
+  // Explicit override layers (`"override": true | "extend"`, ADR-0009 addendum):
+  // a marked layer redefines earlier layers on purpose, so its redefinitions
+  // are silent (no TST1103). `true` also expects every token it defines to
+  // exist already (TST1116 when it doesn't; a typo is the usual cause);
+  // `"extend"` may add new tokens too. Each token remembers the layer that won
+  // and the files it shadowed, for `explain`.
+  const baseLayers = tokenTrees.filter((t) => !t.modeScope);
+  const definedBy = new Map(); // token path -> files that defined it, in order
+  const lastLayer = new Map(); // token path -> index of the layer that set it last
+  const firstLayerOrphans = new Set();
   const merged = mergeTrees(
-    tokenTrees.filter((t) => !t.modeScope).map((t) => t.tree),
-    (p) => diagnostics.warn('TST1103', `Token defined more than once (last wins): ${p}`),
+    baseLayers.map((t) => t.tree),
+    (p, i) => {
+      if (baseLayers[i].override) return;
+      diagnostics.warn('TST1103', `Token defined more than once (last wins): ${p}`);
+    },
+    (p, i) => {
+      const layer = baseLayers[i];
+      const earlier = definedBy.get(p) ?? [];
+      // A re-set inside the same file's own tree is not possible (one object),
+      // but a glob matching the same file twice is: it shadows itself, skip it.
+      if (layer.override === true && earlier.length === 0) {
+        if (i === 0) firstLayerOrphans.add(layer.file);
+        else {
+          diagnostics.warn(
+            'TST1116',
+            `${layer.file}: override layer defines ${p}, which no earlier layer defines`,
+            { hint: 'Fix the path if it is a typo, or mark the layer `"override": "extend"` when it may add tokens.' },
+          );
+        }
+      }
+      definedBy.set(p, [...earlier, layer.file]);
+      lastLayer.set(p, i);
+    },
   );
+  for (const file of firstLayerOrphans) {
+    diagnostics.warn(
+      'TST1116',
+      `${file}: override layer is the first token layer, so it has nothing to override`,
+      { hint: 'List the base layer before it, or drop `"override"`; use `"override": "extend"` if it is meant to define tokens.' },
+    );
+  }
   const raw = collectTokens(merged);
+  for (const [tokenPath, tok] of raw) {
+    const files = definedBy.get(tokenPath) ?? [];
+    const winner = files.at(-1);
+    const shadowed = files.slice(0, -1).filter((f) => f !== winner);
+    if (shadowed.length && baseLayers[lastLayer.get(tokenPath)].override) {
+      tok.layer = { file: winner, overrides: shadowed };
+    }
+  }
   const roleArchetypes = collectRoleArchetypes(merged, diagnostics);
 
   for (const layer of tokenTrees.filter((t) => t.modeScope)) {
@@ -92,7 +139,7 @@ export function normalize(tokenTrees, config, diagnostics) {
         continue;
       }
       base.modeValues[scopeDim] ??= {};
-      if (base.modeValues[scopeDim][scopeMode] !== undefined) {
+      if (base.modeValues[scopeDim][scopeMode] !== undefined && !layer.override) {
         diagnostics.warn('TST1108', `${tokenPath}: ${scopeDim}=${scopeMode} value overridden by later layer ${layer.file}`);
       }
       base.modeValues[scopeDim][scopeMode] = tok.value;
@@ -134,6 +181,7 @@ export function normalize(tokenTrees, config, diagnostics) {
           kind: autoDarkCarried ? PROVENANCE.DERIVED : PROVENANCE.AUTHORED,
           mode: overriddenMode ?? key,
           ...(autoDarkCarried ? { rule: 'auto-dark-carry(constant)@standard@1' } : {}),
+          ...(tok.layer ? { layer: tok.layer.file, overrides: tok.layer.overrides } : {}),
         },
       });
     }
@@ -354,7 +402,7 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     }
     entry.type = entry.type ?? resolved.type;
     entry.value = resolved.value;
-    entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode };
+    entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance) };
     return entry;
   }
   if (COMPOSITES[entry.type]) {
@@ -566,7 +614,7 @@ export function resolveIfReady(map, tokenPath, stack = []) {
   if (resolved?.value === undefined) return entry;
   entry.type = entry.type ?? resolved.type;
   entry.value = resolved.value;
-  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode };
+  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance) };
   delete entry.pendingAlias;
   return entry;
 }
@@ -605,6 +653,9 @@ function resolvePending(map, tokenPath, stack, diagnostics) {
   }
   entry.type = entry.type ?? resolved.type;
   entry.value = resolved.value;
-  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode };
+  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance) };
   return entry;
 }
+
+/** The override-layer keys of a provenance, kept when an authored entry becomes an alias. */
+const layerOf = (prov) => (prov.layer ? { layer: prov.layer, overrides: prov.overrides } : {});

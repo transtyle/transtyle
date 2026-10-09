@@ -112,10 +112,26 @@ A glob can cover the folder that holds the overlays. The overlay claims its file
 
 `dark.tokens.json` loads once, as the dark overlay; every other file in `tokens/` is a base layer.
 
+### Override layers
+
+A layer that redefines tokens from earlier layers on purpose (core system, then business unit, then product) is marked with `override`:
+
+```json
+{ "files": "tokens/product.tokens.json", "override": true }
+```
+
+- `true`: redefinitions are silent. A token the layer defines that no earlier layer defined warns `TST1116` (an override that overrides nothing is usually a typo). A first layer has nothing to override, and gets one `TST1116` for the layer.
+- `"extend"`: same, and the layer may also add new tokens.
+- Combinable with `mode`: an override mode-scoped layer does not raise `TST1108` when it replaces an earlier mode value.
+- An object entry needs `mode` or `override`; a bare `{ "files": … }` is just a string glob and fails schema validation (`TST1010`), like any other `override` value.
+- `transtyle explain` and the report's provenance record the winning layer and the files it shadowed.
+
 | Rule                                           | Diagnostic                                  |
 | ---------------------------------------------- | ------------------------------------------- |
 | Glob matches nothing                           | `TST1001` warning                           |
 | Token defined twice across base layers         | `TST1103` warning, last wins                |
+| Same, in a layer marked `"override"`           | Silent (intended override)                  |
+| `"override": true` layer defines a new token   | `TST1116` warning (`"extend"` allows it)    |
 | Mode value overrides an earlier one            | `TST1108` warning                           |
 | Mode value for a token with no default value   | `TST1107` warning, skipped                  |
 | Mode not declared in `modes`                   | `TST1109` error                             |

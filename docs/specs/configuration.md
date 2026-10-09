@@ -75,7 +75,7 @@ A `targets` key is an **instance name**, not necessarily an exporter name. The o
 
 ## Token layering
 
-The `tokens` array is an **ordered list of layers** ([ADR-0009](../adr/0009-token-layering.md)). A layer is either a glob (base layer) or a mode-scoped object:
+The `tokens` array is an **ordered list of layers** ([ADR-0009](../adr/0009-token-layering.md)). A layer is either a glob (base layer), a mode-scoped object, or an override object (`{ "files", "override": true | "extend" }`, below):
 
 ```jsonc
 "tokens": [
@@ -86,7 +86,7 @@ The `tokens` array is an **ordered list of layers** ([ADR-0009](../adr/0009-toke
 ]
 ```
 
-This is the **recommended layout for teams whose token files are generated or owned elsewhere**: every token file stays valid, tool-ingestible DTCG; transtyle-specific syntax is confined to this manifest. Inline `$extensions["transtyle.modes"]` remains fully supported (see the Acme example) — both forms produce the identical internal representation, and may be mixed. Precedence: later layers win; overriding an existing mode value warns (`TST1108`); a mode value for a token with no default-mode value is skipped with a warning (`TST1107`); an undeclared mode errors (`TST1109`). A file matched by a mode-scoped entry is never also loaded as a base layer, whatever the order of the entries, so `"tokens/*.tokens.json"` can cover the folder that holds the overlays ([ADR-0009, amended 2026-10-08](../adr/0009-token-layering.md#amendment-2026-10-08-an-overlay-claims-its-file)). Layer _order is semantic_ — treat the manifest's `tokens` array as carefully as an import order.
+This is the **recommended layout for teams whose token files are generated or owned elsewhere**: every token file stays valid, tool-ingestible DTCG; transtyle-specific syntax is confined to this manifest. Inline `$extensions["transtyle.modes"]` remains fully supported (see the Acme example) — both forms produce the identical internal representation, and may be mixed. Precedence: later layers win; overriding an existing mode value warns (`TST1108`); a mode value for a token with no default-mode value is skipped with a warning (`TST1107`); an undeclared mode errors (`TST1109`). A file matched by a mode-scoped entry is never also loaded as a base layer, whatever the order of the entries, so `"tokens/*.tokens.json"` can cover the folder that holds the overlays ([ADR-0009, amended 2026-10-08](../adr/0009-token-layering.md#amendment-2026-10-08-an-overlay-claims-its-file)). **Override layers.** `override: true` marks a layer that redefines earlier layers on purpose (core, business unit, product): a redefinition from it raises no `TST1103`, an unmarked layer still does. A token an `override: true` layer defines that no earlier layer defined raises `TST1116` (once for the layer when it is the first one); `override: "extend"` may add tokens silently. On a mode-scoped layer, `override` suppresses `TST1108`. Normalized provenance of an overridden token carries `layer` (the winning file) and `overrides` (the files it shadowed); `explain` prints them. The object form requires `mode` or `override`. See [ADR-0009, amended 2026-10-09](../adr/0009-token-layering.md#amendment-2026-10-09-explicit-override-layers). Layer _order is semantic_ — treat the manifest's `tokens` array as carefully as an import order.
 
 ## Token file conventions
 

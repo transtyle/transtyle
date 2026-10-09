@@ -41,9 +41,11 @@ async function expandGlob(cwd, pattern) {
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
- * Token entries are strings (globs) or objects `{ files, mode }` — the latter
- * declares a mode-scoped layer: a pure DTCG file whose values apply to one
- * mode of one dimension (docs/specs/configuration.md#token-layering).
+ * Token entries are strings (globs) or objects `{ files, mode?, override? }`:
+ * `mode` declares a mode-scoped layer (a pure DTCG file whose values apply to
+ * one mode of one dimension); `override` (`true` | `"extend"`) marks a layer
+ * that redefines earlier layers on purpose
+ * (docs/specs/configuration.md#token-layering).
  */
 export async function loadTokenTrees(cwd, entries, diagnostics) {
   const trees = [];
@@ -56,12 +58,13 @@ export async function loadTokenTrees(cwd, entries, diagnostics) {
   // token in it raised TST1103. So the overlays' files are collected first.
   const claimed = new Set();
   for (const entry of entries) {
-    if (typeof entry === 'string') continue;
+    if (typeof entry === 'string' || !entry.mode) continue;
     for (const g of [].concat(entry.files)) for (const f of await expandGlob(cwd, g)) claimed.add(f);
   }
   for (const entry of entries) {
     const globs = typeof entry === 'string' ? [entry] : [].concat(entry.files);
     const modeScope = typeof entry === 'string' ? undefined : entry.mode;
+    const override = typeof entry === 'string' ? undefined : entry.override;
     for (const g of globs) {
       const matched = await expandGlob(cwd, g);
       // TST1001 still means "matched nothing on disk": a glob whose only
@@ -78,7 +81,7 @@ export async function loadTokenTrees(cwd, entries, diagnostics) {
           const tree = JSON.parse(await readFile(f, 'utf8'));
           const rel = path.relative(cwd, f);
           validateTokenTree(tree, rel, diagnostics, seenExtensionNamespaces);
-          trees.push({ file: rel, tree, modeScope });
+          trees.push({ file: rel, tree, modeScope, ...(override ? { override } : {}) });
         } catch (e) {
           // Relative path (AL5): an absolute one buries the filename that
           // matters at the end of a long, uninformative prefix.

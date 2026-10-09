@@ -139,6 +139,44 @@ try {
   }
 }
 
+// ---------- #57: explicit override layers ----------
+// `{ files, override: true | "extend" }` marks a layer that redefines earlier
+// layers on purpose: no TST1103 for its redefinitions, TST1116 when `true`
+// defines a token nothing earlier defines, and `explain` names the file it
+// overrides. The unmarked variant is the control: it still warns once per token.
+{
+  const base = join(root, 'packages/core/test-fixtures/override-layers');
+  const codesOf = (cwd) => {
+    const r = run(['check', '--cwd', cwd, '--json']);
+    try { return JSON.parse(r.stdout).diagnostics.map((d) => d.code); } catch { return [`unparseable: ${r.out}`]; }
+  };
+  const marked = codesOf(base);
+  expect('override layer: redefinitions raise no TST1103 or TST1116', !marked.includes('TST1103') && !marked.includes('TST1116'), marked.join(', '));
+  const unmarked = codesOf(join(base, 'unmarked'));
+  expect('unmarked duplicate layer still warns TST1103 once per token', unmarked.filter((c) => c === 'TST1103').length === 2, unmarked.join(', '));
+  const typo = codesOf(join(base, 'typo'));
+  expect('override: true defining a new token warns TST1116', typo.filter((c) => c === 'TST1116').length === 1, typo.join(', '));
+  const extend = codesOf(join(base, 'extend'));
+  expect('override: "extend" may add tokens without TST1116', !extend.includes('TST1116'), extend.join(', '));
+  const first = codesOf(join(base, 'first'));
+  expect('override on the first layer reports one TST1116 for the layer', first.filter((c) => c === 'TST1116').length === 1, first.join(', '));
+  const ex = run(['explain', 'semantic.color.text.base', '--cwd', base]);
+  expect('explain names the file an override layer overrides', /overrides tokens\/base\.tokens\.json/.test(ex.out), ex.out);
+
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-57-'));
+  try {
+    cpSync(join(base, 'tokens'), join(dir, 'tokens'), { recursive: true });
+    const config = JSON.parse(readFileSync(join(base, 'transtyle.config.json'), 'utf8'));
+    for (const [label, entry] of [['a bare { files }', { files: 'tokens/product.tokens.json' }], ['an unknown override value', { files: 'tokens/product.tokens.json', override: 'yes' }]]) {
+      writeFileSync(join(dir, 'transtyle.config.json'), JSON.stringify({ ...config, tokens: ['tokens/base.tokens.json', entry] }));
+      const r = run(['check', '--cwd', dir]);
+      expect(`config schema rejects ${label}`, r.out.includes('TST1010'), r.out);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- TST1204 is not a consequence of a broken primary ----------
 // A role whose `.solid` never resolved has no light value to carry into dark,
 // so the carry-over note must not appear next to the error that explains it.
