@@ -59,7 +59,8 @@ slot, from the `reads` that `compile()` records on every target result and write
 `report.json`; what `transtyle check --matrix` prints), `buildReport` (the `report.json` object a
 build writes per target, from a compile's result), `suggestBindings({ cwd })` (the binding
 proposals behind `transtyle bind --suggest`, from a versioned name table, `SYNONYMS_VERSION`,
-and color measurements), `Diagnostics`,
+and color measurements), `loadConfigChain` and `mergeConfigChain` (a config's `extends` chain,
+read and merged; `compile({ configFile })` selects the config), `Diagnostics`,
 and the colour module — `parseColor` (any CSS color syntax a stylesheet holds, or a DTCG color object, to OKLCH), `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
 `mix` — which is OKLCH-native and has no dependencies. `makeUnits(config)` builds the `ctx.units` helpers
 (`toPx`, `toRem`, `remBase`) exporters get, from the config's `units.remBase`.

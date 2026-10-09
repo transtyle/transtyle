@@ -4,13 +4,15 @@
   "title": "Transtyle config (transtyle.config.json)",
   "description": "Schema for a Transtyle project configuration file. See https://transtyle.dev/docs/configuration/.",
   "type": "object",
-  "required": [
-    "tokens"
-  ],
   "additionalProperties": false,
   "properties": {
     "$schema": {
       "type": "string"
+    },
+    "extends": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A base config this one inherits from: a file path relative to this file (\"../design-system/transtyle.config.json\")."
     },
     "name": {
       "type": "string"

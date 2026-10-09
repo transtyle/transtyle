@@ -20,6 +20,13 @@
     "target": {
       "type": "string"
     },
+    "config": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
     "options": {
       "type": "object"
     },

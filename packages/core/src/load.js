@@ -5,17 +5,144 @@ import path from 'node:path';
 import { locateJson, parseErrorLocation } from './locate.js';
 import { loadTokensStudio } from './tokens-studio.js';
 
-export async function loadConfig(cwd) {
-  const file = path.join(cwd, 'transtyle.config.json');
-  let raw;
-  try {
-    raw = await readFile(file, 'utf8');
-  } catch {
-    throw new Error(`No transtyle.config.json found in ${cwd}`);
+export const DEFAULT_CONFIG_FILE = 'transtyle.config.json';
+
+/**
+ * Find the config and follow its `extends` chain to the root
+ * (docs/specs/configuration.md#inheritance-extends). `configFile` (the CLI's
+ * `--config`) is resolved against `cwd`; without it the config is
+ * `transtyle.config.json` in `cwd`, as before. The leaf's directory is the
+ * project directory: target outputs, exporter resolution and every file name
+ * in diagnostics are relative to it.
+ *
+ * Returns the chain in merge order, root base first and the leaf last, each
+ * file as `{ path, name, dir, config }` with `name` relative to the project
+ * directory (so output is the same on every machine). Nothing is validated or
+ * merged here: each file is checked against the schema on its own first, so a
+ * `TST1010` can name the file it is in (compile() → mergeConfigChain()).
+ *
+ * A missing or unparseable file, a cycle, or an `extends` that is not a file
+ * path throws, naming the chain: like a missing config today, the CLI exits 2.
+ *
+ * `redirect(absPath)` lets `transtyle diff` read a base that lives outside the
+ * snapshot it took of the repository from its current location instead.
+ */
+export async function loadConfigChain(cwd, { configFile = DEFAULT_CONFIG_FILE, redirect = (p) => p } = {}) {
+  const leafPath = path.resolve(cwd, configFile);
+  const projectDir = path.dirname(leafPath);
+  const nameOf = (p) => toPosix(path.relative(projectDir, p)) || path.basename(p);
+  const chain = []; // leaf first while walking
+  let current = leafPath;
+  for (;;) {
+    const trail = () => [...chain.map((f) => f.name), nameOf(current)].join(' → ');
+    if (chain.some((f) => f.path === current)) {
+      throw new Error(`Config error: "extends" loops back to ${nameOf(current)} (${trail()})`);
+    }
+    let raw;
+    try {
+      raw = await readFile(current, 'utf8');
+    } catch {
+      throw new Error(chain.length === 0
+        ? `No ${path.basename(current)} found in ${path.dirname(current)}`
+        : `Config error: "extends" points at a file that does not exist: ${nameOf(current)} (${trail()})`);
+    }
+    let config;
+    try {
+      config = JSON.parse(raw);
+    } catch (e) {
+      throw new Error(`Config error: ${nameOf(current)} is not valid JSON: ${e.message}${chain.length ? ` (${trail()})` : ''}`);
+    }
+    chain.push({ path: current, name: nameOf(current), dir: path.dirname(current), config });
+    // A malformed `extends` (not a string) is left to the schema, which names
+    // the file; the chain simply stops there.
+    const ext = config !== null && typeof config === 'object' ? config.extends : undefined;
+    if (typeof ext !== 'string') break;
+    if (!/^(\.{1,2}[\\/]|[\\/])/.test(ext) && !path.isAbsolute(ext)) {
+      throw new Error(`Config error: ${nameOf(current)}: "extends" must be a file path starting with "./" or "../" (got "${ext}"); package names are not supported yet`);
+    }
+    current = redirect(path.resolve(path.dirname(current), ext));
   }
-  const config = JSON.parse(raw);
+  return { chain: chain.reverse(), projectDir, configPath: leafPath };
+}
+
+const toPosix = (p) => p.split(path.sep).join('/');
+
+/**
+ * The merged config, for callers that only read it (`transtyle migrate`):
+ * the chain followed and merged, without the schema validation compile()
+ * runs. Token globs in `config.tokens` are relative to `projectDir`, the
+ * config's directory. Throws when no file of the chain lists a token layer.
+ */
+export async function loadConfig(cwd, { configFile = DEFAULT_CONFIG_FILE } = {}) {
+  const { chain, projectDir, configPath } = await loadConfigChain(cwd, { configFile });
+  const { config } = mergeConfigChain(chain, projectDir);
   if (!config.tokens?.length) throw new Error('Config error: "tokens" must list at least one glob.');
-  return { config, configPath: file };
+  return { config, configPath, projectDir, configChain: chain.map((f) => f.name) };
+}
+
+/**
+ * Merge a validated chain (root base first) into one config, the nearer file
+ * winning (docs/specs/configuration.md#merge-rules):
+ *
+ * - `tokens`: concatenated, base layers first (later layers win, so the
+ *   product's own layers come last). Each glob is rewritten relative to the
+ *   project directory, so it still points where the file that declared it said.
+ * - `bindings` and `check.suppress`: concatenated, the nearer file's entries
+ *   first (the first matching entry wins in both).
+ * - `modes`, `targets`: by key; an entry the nearer file names replaces the
+ *   base's whole entry (a dimension's `{ values, default }`, a target instance
+ *   with its `options` and `modes`).
+ * - `derivation`, `units`, `check` (and `check.contrast`, `check.hygiene`): by
+ *   key; a key the nearer file sets replaces the base's value, arrays
+ *   (`derivation.require`) included.
+ * - `name`: the nearest file that sets one. `$schema` and `extends` are never
+ *   inherited.
+ *
+ * Returns `{ config, origins }`: `origins.tokens[i]` is `{ file, dir, glob }`
+ * for each merged token layer (the file that declared it, its directory and the
+ * glob as written there), `origins.bindings[i]` / `origins.suppress[i]` are
+ * `{ file, index }`, the entry's file and its index in that file.
+ */
+export function mergeConfigChain(chain, projectDir) {
+  const config = {};
+  const origins = { tokens: [], bindings: [], suppress: [] };
+  for (const file of chain) {
+    const c = file.config;
+    const rebase = (glob) => toPosix(path.relative(projectDir, path.resolve(file.dir, glob))) || '.';
+    for (const [key, value] of Object.entries(c)) {
+      if (key === '$schema' || key === 'extends') continue;
+      if (key === 'tokens') {
+        config.tokens ??= [];
+        for (const entry of value) {
+          const glob = typeof entry === 'string' ? entry : entry.files ?? entry.tokensStudio;
+          origins.tokens.push({ file: file.name, dir: file.dir, glob });
+          if (file.dir === projectDir) config.tokens.push(entry);
+          else if (typeof entry === 'string') config.tokens.push(rebase(entry));
+          else if (entry.tokensStudio !== undefined) config.tokens.push({ ...entry, tokensStudio: rebase(entry.tokensStudio) });
+          else config.tokens.push({ ...entry, files: Array.isArray(entry.files) ? entry.files.map(rebase) : rebase(entry.files) });
+        }
+      } else if (key === 'bindings') {
+        config.bindings = [...value, ...(config.bindings ?? [])];
+        origins.bindings = [...value.map((_, index) => ({ file: file.name, index })), ...origins.bindings];
+      } else if (key === 'check') {
+        const prev = config.check ?? {};
+        const next = { ...prev, ...value };
+        for (const sub of ['contrast', 'hygiene']) {
+          if (prev[sub] && value[sub]) next[sub] = { ...prev[sub], ...value[sub] };
+        }
+        if (value.suppress) {
+          next.suppress = [...value.suppress, ...(prev.suppress ?? [])];
+          origins.suppress = [...value.suppress.map((_, index) => ({ file: file.name, index })), ...origins.suppress];
+        }
+        config.check = next;
+      } else if (['modes', 'targets', 'derivation', 'units'].includes(key)) {
+        config[key] = { ...config[key], ...value };
+      } else {
+        config[key] = value;
+      }
+    }
+  }
+  return { config, origins };
 }
 
 /** Minimal glob: supports literal paths and single-`*` segments (e.g. "tokens/*.tokens.json"). */
@@ -67,7 +194,7 @@ export async function expandTokenFiles(cwd, entries) {
  * sets? }` entry is a Tokens Studio export, lowered to the same base and
  * mode-scoped layers (tokens-studio.js). `config` gives it the declared modes.
  */
-export async function loadTokenTrees(cwd, entries, diagnostics, config = {}) {
+export async function loadTokenTrees(cwd, entries, diagnostics, config = {}, origins = []) {
   const trees = [];
   const seenExtensionNamespaces = new Set(); // compile-wide, so TST1304 fires once per namespace, not once per file
   // A file a mode-scoped entry matches is that mode's overlay, never also a
@@ -81,7 +208,7 @@ export async function loadTokenTrees(cwd, entries, diagnostics, config = {}) {
     if (typeof entry === 'string' || !entry.mode) continue;
     for (const g of [].concat(entry.files)) for (const f of await expandGlob(cwd, g)) claimed.add(f);
   }
-  for (const entry of entries) {
+  for (const [index, entry] of entries.entries()) {
     if (typeof entry !== 'string' && entry.tokensStudio !== undefined) {
       for (const layer of await loadTokensStudio(cwd, entry, config, diagnostics)) {
         validateTokenTree(layer.tree, layer.file, diagnostics, seenExtensionNamespaces, layer.positions);
@@ -92,16 +219,21 @@ export async function loadTokenTrees(cwd, entries, diagnostics, config = {}) {
     const globs = typeof entry === 'string' ? [entry] : [].concat(entry.files);
     const modeScope = typeof entry === 'string' ? undefined : entry.mode;
     const override = typeof entry === 'string' ? undefined : entry.override;
-    for (const g of globs) {
+    // The file that declared this layer (an `extends` base, or the project's
+    // own config) and the glob as written there: the hint must send the user
+    // to the line they wrote, not to the rewritten path.
+    const origin = origins[index];
+    const authoredGlobs = origin ? [].concat(origin.glob) : globs;
+    for (const [gi, g] of globs.entries()) {
       const matched = await expandGlob(cwd, g);
       // TST1001 still means "matched nothing on disk": a glob whose only
       // matches are overlays did its job.
       const files = modeScope ? matched : matched.filter((f) => !claimed.has(f));
       if (matched.length === 0)
-        diagnostics.warn('TST1001', `Token glob matched no files: ${g}`, {
+        diagnostics.warn('TST1001', `Token glob matched no files: ${authoredGlobs[gi] ?? g}`, {
           // AL5: this is usually the whole story behind every error that
           // follows, so it should be the one that tells you where it looked.
-          hint: `Resolved relative to ${cwd}. Check the path in "tokens" in transtyle.config.json.`,
+          hint: `Resolved relative to ${origin?.dir ?? cwd}. Check the path in "tokens" in ${origin?.file ?? 'transtyle.config.json'}.`,
         });
       for (const f of files) {
         const rel = path.relative(cwd, f);

@@ -65,7 +65,11 @@ for (const ex of examples) {
 // 3. known-bad configs are rejected (each must produce ≥1 error)
 const mustReject = [
   { why: 'unknown top-level key', cfg: { tokens: ['t/*.json'], wat: 1 } },
-  { why: 'missing required tokens', cfg: { name: 'x' } },
+  // A config without `tokens` is valid on its own (it may `extends` a base);
+  // compile() requires a layer after the merge (check:cli covers it).
+  { why: 'an empty tokens list', cfg: { tokens: [] } },
+  { why: 'extends that is not a string', cfg: { extends: ['../base/transtyle.config.json'] } },
+  { why: 'an empty extends', cfg: { extends: '' } },
   { why: 'wrong type for tokens', cfg: { tokens: 'not-an-array' } },
   { why: 'bad check.failOn enum', cfg: { tokens: ['t/*.json'], check: { failOn: 'sometimes' } } },
   { why: 'unknown key inside a target', cfg: { tokens: ['t/*.json'], targets: { shadcn: { outputt: 'x' } } } },

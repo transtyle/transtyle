@@ -17,6 +17,7 @@ export const REPORT_SCHEMA_ID = 'https://transtyle.dev/schemas/report/v0.json';
 /**
  * @param {object} report
  * @param {string} report.target the target instance name (the config key)
+ * @param {string[]} [report.config] the config files the build read, root base first (an `extends` chain); left out when not given
  * @param {object} [report.options] the instance's `options` from the config
  * @param {object[]} report.coverage the target's coverage rows
  * @param {string[]} [report.reads] the catalog slots the exporter read (a target result's `reads`);
@@ -30,13 +31,14 @@ export const REPORT_SCHEMA_ID = 'https://transtyle.dev/schemas/report/v0.json';
  * @param {string[]} [report.files] the written paths, relative to the project
  * @returns the report object, ready for `JSON.stringify`
  */
-export function buildReport({ target, options, coverage, reads, normalized, diagnostics = [], suppressed = [], files = [] }) {
+export function buildReport({ target, config, options, coverage, reads, normalized, diagnostics = [], suppressed = [], files = [] }) {
   const items = normalized ? withMetadata(coverage, normalized.modes[normalized.defaultMode]) : coverage;
   const counts = {};
   for (const item of items) counts[item.class] = (counts[item.class] ?? 0) + 1;
   return {
     $schema: REPORT_SCHEMA_ID,
     target,
+    ...(config !== undefined ? { config } : {}),
     options: options ?? {},
     generatedBy: 'transtyle 0.1.0 (walking skeleton)',
     coverage: { counts, items },

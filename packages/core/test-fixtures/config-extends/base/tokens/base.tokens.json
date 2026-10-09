@@ -1,0 +1,18 @@
+{
+  "option": {
+    "color": {
+      "$type": "color",
+      "primary": { "600": { "$value": "oklch(0.55 0.18 255)" } }
+    }
+  },
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "elevation": {
+        "0": { "surface": { "$value": "oklch(1 0 0)" } },
+        "1": { "surface": { "$value": "oklch(0.98 0.003 255)" } }
+      },
+      "text": { "base": { "$value": "oklch(0.2 0.01 255)" } }
+    }
+  }
+}

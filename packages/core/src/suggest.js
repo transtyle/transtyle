@@ -97,21 +97,24 @@ function treeOf(pairs) {
 }
 
 /**
- * @param {{ cwd: string }} options
+ * @param {{ cwd: string, configFile?: string }} options `configFile` as in compile();
+ *   with `extends`, the merged config's token layers, a base's included
  * @returns {Promise<{ diagnostics: Diagnostics, report: object|null }>} `report`
  *   is null when the config or a token file can't be loaded (the errors are in
  *   `diagnostics`). Otherwise `{ synonyms, rulePack, modes, defaultMode, slots,
  *   tokens, rules }`, JSON-safe and byte-stable.
  */
-export async function suggestBindings({ cwd }) {
+export async function suggestBindings({ cwd, configFile }) {
   const diagnostics = new Diagnostics();
-  const { config } = await loadConfig(cwd);
+  const { config, projectDir, configChain } = await loadConfig(cwd, { configFile });
+  const leaf = configChain[configChain.length - 1];
+  const where = configChain.length > 1 ? `${leaf} (merged with the configs it extends)` : leaf;
   for (const { path: p, message } of validate(config, configSchema)) {
-    diagnostics.error('TST1010', `transtyle.config.json: ${p === '(root)' ? '' : p + ' '}${message}`);
+    diagnostics.error('TST1010', `${where}: ${p === '(root)' ? '' : p + ' '}${message}`);
   }
   if (diagnostics.errors.length) return { diagnostics, report: null };
 
-  const loaded = await loadTokenTrees(cwd, config.tokens, diagnostics);
+  const loaded = await loadTokenTrees(projectDir, config.tokens, diagnostics);
   const trees = [...loaded];
   const ruled = expandBindings(loaded, config, diagnostics);
   if (ruled && ruled.aliases.length > 0) {

@@ -112,11 +112,12 @@ npx transtyle check --cwd examples/govuk
 
 ### `--json`
 
-`check`, `diff` and `catalog`. For `check`, prints the contrast standard the checks used, the full diagnostics array, the `suppressed` list, per-target coverage, the completeness to-do and the adoption report to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
+`check`, `diff` and `catalog`. For `check`, prints the config files read (`config`), the contrast standard the checks used, the full diagnostics array, the `suppressed` list, per-target coverage, the completeness to-do and the adoption report to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
 
 ```bash
 npx transtyle check --json
-# { "contrast": { "standard": "wcag21-aa", "algorithm": "WCAG 2.1 contrast ratio" },
+# { "config": [ "transtyle.config.json" ],
+#   "contrast": { "standard": "wcag21-aa", "algorithm": "WCAG 2.1 contrast ratio" },
 #   "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "...",
 #                         "path": "scratch", "file": "tokens/brand.tokens.json", "line": 74, "column": 3 }, ... ],
 #   "suppressed": [ ... ],
@@ -151,6 +152,17 @@ With `--json`, the table is not printed and the JSON report gains a `matrix` key
 ### `--cwd <dir>`
 
 Run against a project directory from anywhere: `transtyle build --cwd examples/cathode`.
+
+### `--config <file>`
+
+Use another config than `transtyle.config.json`, on every command: `transtyle build --config apps/web/transtyle.config.json`. The path is resolved against `--cwd` (`--cwd` says where to look, `--config` which file), and the config's own directory is the project directory: outputs, exporters, file names in messages, and where `init` and `add` write. Combined with [`extends`](/docs/configuration/#extends--several-products-one-design-system), it is how one repository holds several design systems or several products:
+
+```bash
+npx transtyle build --config apps/marketing/transtyle.config.json
+npx transtyle init --config packages/brand-b/transtyle.config.json   # writes it, with tokens/ next to it
+```
+
+When the config extends a base, `explain` prints `config: transtyle.config.json ← ../design-system/transtyle.config.json` on stderr, `check --json` and every `report.json` list the chain as `config`, `add` refuses a target the base already declares, and `diff` also reports a change made only in the base.
 
 ### `transtyle explain <slot> [--mode <name>]`
 
@@ -369,7 +381,7 @@ Validates the target against the CLI's known exporters and inserts `"<target>": 
 
 ### `transtyle migrate --from style-dictionary [--write]`
 
-Rewrites [Style Dictionary](https://styledictionary.com/) v3 token files (`value`/`type` without the `$`) to DTCG, the format Transtyle reads. It is what the [`TST1307`](/docs/diagnostics/#diagnostic-code-reference) error points you to. Without `--write` it prints a diff per file and changes nothing; with it, the files are rewritten in place. It reads the files your config's `tokens` list matches, and leaves any file that is not Style Dictionary v3 alone, so running it twice changes nothing the second time.
+Rewrites [Style Dictionary](https://styledictionary.com/) v3 token files (`value`/`type` without the `$`) to DTCG, the format Transtyle reads. It is what the [`TST1307`](/docs/diagnostics/#diagnostic-code-reference) error points you to. Without `--write` it prints a diff per file and changes nothing; with it, the files are rewritten in place. It reads the files your config's `tokens` list matches (a base's too, when the config [`extends`](/docs/configuration/#extends--several-products-one-design-system) one), and leaves any file that is not Style Dictionary v3 alone, so running it twice changes nothing the second time.
 
 ```bash
 npx transtyle migrate --from style-dictionary          # diff only

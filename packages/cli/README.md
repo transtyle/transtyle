@@ -43,6 +43,10 @@ npx transtyle build              # compile every configured target
 command takes `--json` where a machine might be reading, and diagnostics carry stable
 `TST`-prefixed codes — the CLI is meant to be driven by agents as well as people.
 
+`--cwd <dir>` runs against another directory and `--config <file>` picks another config file
+there. A config can `extends` a shared base, so several products or design systems live in one
+repository without copying it ([configuration](https://transtyle.github.io/transtyle/docs/configuration/#extends--several-products-one-design-system)).
+
 ## Targets
 
 `shadcn`, `daisyui`, `bootstrap`, `echarts`, `storybook`, `css-variables`, `radix`, `primeng`.

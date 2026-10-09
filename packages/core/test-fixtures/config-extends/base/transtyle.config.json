@@ -1,0 +1,21 @@
+{
+  "$schema": "https://transtyle.dev/schemas/config/v0.json",
+  "name": "shared-design-system",
+  "tokens": [
+    "tokens/*.tokens.json",
+    { "files": "tokens/dark.tokens.json", "mode": { "color-scheme": "dark" } }
+  ],
+  "modes": {
+    "color-scheme": { "values": ["light", "dark"], "default": "light" }
+  },
+  "bindings": [
+    { "slot": "semantic.color.{role}.solid", "from": "{option.color.{role}.600}" }
+  ],
+  "derivation": {
+    "rules": "standard@1",
+    "autoDark": false,
+    "require": ["semantic.color.primary"]
+  },
+  "units": { "remBase": "16px" },
+  "check": { "failOn": "error" }
+}

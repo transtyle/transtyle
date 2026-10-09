@@ -1723,6 +1723,148 @@ try {
   }
 }
 
+// ---------- #56: `extends` and `--config` ----------
+// One base (tokens, modes, a bindings rule, derivation, units, check) and two
+// products that extend it with different target sets. Each product builds
+// exactly its own targets from the shared tokens, a product's own token layer
+// is bound by the base's rule, file names are relative to the product, and
+// the chain is named in report.json, check --json and explain. Built in a
+// temporary copy, so the fixture never gets a dist/.
+{
+  const fixture = join(root, 'packages/core/test-fixtures/config-extends');
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-56-'));
+  const at = (...p) => join(dir, ...p);
+  const json = (r) => { try { return JSON.parse(r.stdout); } catch { return { unparseable: r.out }; } };
+  const chain = ['../base/transtyle.config.json', 'transtyle.config.json'];
+  const sameChain = (c) => JSON.stringify(c) === JSON.stringify(chain);
+  try {
+    cpSync(fixture, dir, { recursive: true });
+    const baseConfig = readFileSync(at('base/transtyle.config.json'), 'utf8');
+
+    let r = run(['build', '--cwd', at('product-a')]);
+    expect('extends: product-a builds clean (exit 0)', r.code === 0, r.out);
+    expect('extends: product-a emits exactly its own targets', readdirSync(at('product-a/dist')).sort().join() === 'css-variables,shadcn', readdirSync(at('product-a/dist')).join());
+    r = run(['build', '--cwd', at('product-b')]);
+    expect('extends: product-b builds clean (exit 0)', r.code === 0, r.out);
+    expect('extends: product-b emits exactly its own targets', readdirSync(at('product-b/dist')).sort().join() === 'bootstrap,css-variables', readdirSync(at('product-b/dist')).join());
+    expect('extends: nothing is written next to the base', !existsSync(at('base/dist')));
+
+    // The shared slots are byte-identical: the products differ only in their
+    // names and in the danger role, which product-b's own layer authors.
+    const css = (p) => readFileSync(at(p, 'dist/css-variables/variables.transtyle.css'), 'utf8').split('\n').filter((l) => !/danger|source:/.test(l));
+    const [a, b] = [css('product-a'), css('product-b')];
+    expect('extends: the slots both products share are byte-identical', a.length > 100 && a.join('\n') === b.join('\n'), a.filter((l, i) => l !== b[i]).slice(0, 3).join(' | '));
+
+    // targets.<t>.modes narrows a dimension the product inherits.
+    const bs = readdirSync(at('product-b/dist/bootstrap')).filter((f) => f.endsWith('.scss') || f.endsWith('.css')).map((f) => readFileSync(at('product-b/dist/bootstrap', f), 'utf8')).join('\n');
+    expect('extends: targets.<t>.modes narrows an inherited dimension (no dark block)', bs.length > 0 && !bs.includes('data-bs-theme="dark"'));
+
+    // The chain, in merge order, relative to the product.
+    const report = JSON.parse(readFileSync(at('product-a/dist/shadcn/report.json'), 'utf8'));
+    expect('extends: report.json names the config chain', sameChain(report.config), JSON.stringify(report.config));
+    r = run(['check', '--cwd', at('product-b'), '--json']);
+    const out = json(r);
+    expect('extends: check --json names the config chain', sameChain(out.config), JSON.stringify(out.config));
+    expect('extends: check.suppress in the product applies (TST1204 on its own token)', out.suppressed?.length === 1 && out.suppressed[0].code === 'TST1204', JSON.stringify(out.suppressed));
+    r = run(['build', '--cwd', at('base')]);
+    expect('extends: a config without extends keeps a one-file chain', r.code === 0, r.out);
+
+    r = run(['explain', 'semantic.color.danger.solid', '--cwd', at('product-b')]);
+    expect('extends: explain names the chain on stderr', r.out.includes('config: transtyle.config.json ← ../base/transtyle.config.json') && !r.stdout.includes('config:'), r.out);
+    expect('extends: a base\'s binding rule binds the product\'s token, labelled with its file', r.stdout.includes('from rule bindings[0] in ../base/transtyle.config.json'), r.stdout);
+    r = run(['explain', 'semantic.color.primary.solid', '--cwd', at('product-a')]);
+    expect('extends: a single-product explain shows the base value', /= oklch\(0\.55 0\.18 255\)/.test(r.stdout), r.stdout);
+
+    // Diagnostics name the file a problem is in.
+    writeFileSync(at('product-b/tokens/campaign.tokens.json'), '{ "option": ');
+    r = run(['check', '--cwd', at('product-b'), '--json']);
+    expect('extends: a product token file is named relative to the product', json(r).diagnostics?.some((d) => d.code === 'TST1002' && d.file === 'tokens/campaign.tokens.json'), r.out);
+    cpSync(join(fixture, 'product-b/tokens'), at('product-b/tokens'), { recursive: true });
+    writeFileSync(at('base/tokens/dark.tokens.json'), '{ "semantic": ');
+    r = run(['check', '--cwd', at('product-a'), '--json']);
+    expect('extends: a base token file is named relative to the product', json(r).diagnostics?.some((d) => d.code === 'TST1002' && d.file === '../base/tokens/dark.tokens.json'), r.out);
+    cpSync(join(fixture, 'base/tokens'), at('base/tokens'), { recursive: true });
+    writeFileSync(at('base/transtyle.config.json'), baseConfig.replace('"units"', '"unitz"'));
+    r = run(['check', '--cwd', at('product-a')]);
+    expect('extends: an unknown key in the base is TST1010 naming the base file', r.code === 1 && /TST1010 \.\.\/base\/transtyle\.config\.json: .*unitz/.test(r.out), r.out);
+    writeFileSync(at('base/transtyle.config.json'), baseConfig.replace('"tokens/*.tokens.json"', '"tokenz/*.tokens.json"'));
+    r = run(['check', '--cwd', at('product-a')]);
+    expect('extends: TST1001 shows the glob as written and the file that declares it', /TST1001 Token glob matched no files: tokenz\/\*\.tokens\.json/.test(r.out) && r.out.includes('in ../base/transtyle.config.json'), r.out);
+    writeFileSync(at('base/transtyle.config.json'), baseConfig);
+
+    // A broken chain is a usage error (exit 2) that names it.
+    const leaf = readFileSync(at('product-a/transtyle.config.json'), 'utf8');
+    writeFileSync(at('product-a/transtyle.config.json'), leaf.replace('../base/', '../nowhere/'));
+    r = run(['check', '--cwd', at('product-a')]);
+    expect('extends: a missing base exits 2 naming the chain', r.code === 2 && r.out.includes('transtyle.config.json → ../nowhere/transtyle.config.json'), r.out);
+    writeFileSync(at('product-a/transtyle.config.json'), leaf);
+    writeFileSync(at('base/transtyle.config.json'), baseConfig.replace('"name"', '"extends": "../product-a/transtyle.config.json",\n  "name"'));
+    r = run(['check', '--cwd', at('product-a')]);
+    expect('extends: a two-file cycle exits 2 naming the chain', r.code === 2 && r.out.includes('loops back') && r.out.includes('transtyle.config.json → ../base/transtyle.config.json → transtyle.config.json'), r.out);
+    writeFileSync(at('base/transtyle.config.json'), baseConfig);
+    writeFileSync(at('product-a/transtyle.config.json'), leaf.replace('../base/transtyle.config.json', 'shared-ds'));
+    r = run(['check', '--cwd', at('product-a')]);
+    expect('extends: a bare name is refused (package specifiers are not supported yet)', r.code === 2 && r.out.includes('must be a file path'), r.out);
+    writeFileSync(at('product-a/transtyle.config.json'), leaf);
+    writeFileSync(at('base/transtyle.config.json'), baseConfig.replace(/"tokens": \[[^\]]*\],/, ''));
+    writeFileSync(at('product-x.json'), JSON.stringify({ extends: './base/transtyle.config.json', targets: {} }));
+    r = run(['check', '--cwd', dir, '--config', 'product-x.json']);
+    expect('extends: no token layer anywhere in the chain exits 2', r.code === 2 && r.out.includes('"tokens" must list at least one glob'), r.out);
+    writeFileSync(at('base/transtyle.config.json'), baseConfig);
+
+    // A target a base declares: built into the product's own folder, and
+    // `add` refuses it, leaving the base untouched.
+    writeFileSync(at('base/transtyle.config.json'), baseConfig.replace('"check"', '"targets": { "echarts": { "output": "dist/echarts" } },\n  "check"'));
+    const withTarget = readFileSync(at('base/transtyle.config.json'), 'utf8');
+    r = run(['build', 'echarts', '--cwd', at('product-a')]);
+    expect('extends: a base\'s target output resolves against the product', r.code === 0 && existsSync(at('product-a/dist/echarts/report.json')) && !existsSync(at('base/dist')), r.out);
+    r = run(['add', 'echarts', '--cwd', at('product-a')]);
+    expect('add: refuses a target inherited from the base, naming it', r.code === 2 && r.out.includes('inherited from ../base/transtyle.config.json'), r.out);
+    r = run(['add', 'radix', '--cwd', at('product-a')]);
+    const added = JSON.parse(readFileSync(at('product-a/transtyle.config.json'), 'utf8'));
+    expect('add: writes into the product config only, never flattening the chain', r.code === 0 && added.targets.radix && !('tokens' in added) && added.extends === '../base/transtyle.config.json', JSON.stringify(added));
+    expect('add: leaves the base file byte-identical', readFileSync(at('base/transtyle.config.json'), 'utf8') === withTarget);
+    writeFileSync(at('base/transtyle.config.json'), baseConfig);
+    writeFileSync(at('product-a/transtyle.config.json'), leaf);
+
+    // Override layers (#57) compose: a product redefines a base token on purpose.
+    writeFileSync(at('product-a/rebrand.tokens.json'), JSON.stringify({ option: { color: { $type: 'color', primary: { 600: { $value: 'oklch(0.6 0.2 300)' } } } } }));
+    writeFileSync(at('product-a/rebrand.json'), JSON.stringify({ extends: './transtyle.config.json', tokens: [{ files: 'rebrand.tokens.json', override: true }] }));
+    r = run(['check', '--cwd', at('product-a'), '--config', 'rebrand.json', '--json']);
+    expect('extends + override layer: redefining a base token raises no TST1103', r.code === 0 && !json(r).diagnostics?.some((d) => d.code === 'TST1103'), r.out);
+    expect('extends + override layer: three files in the chain', JSON.stringify(json(r).config) === JSON.stringify(['../base/transtyle.config.json', 'transtyle.config.json', 'rebrand.json']), JSON.stringify(json(r).config));
+    r = run(['explain', 'semantic.color.primary.solid', '--cwd', at('product-a'), '--config', 'rebrand.json']);
+    expect('extends + override layer: the product\'s value wins', /= oklch\(0\.6 0\.2 300\)/.test(r.stdout), r.out);
+
+    // --config with another file name, from the product or from above it.
+    cpSync(at('product-a/transtyle.config.json'), at('product-a/web.transtyle.json'));
+    rmSync(at('product-a/dist'), { recursive: true, force: true });
+    r = run(['build', '--cwd', at('product-a'), '--config', 'web.transtyle.json']);
+    expect('--config: build reads the named file', r.code === 0 && existsSync(at('product-a/dist/shadcn/report.json')), r.out);
+    const named = JSON.parse(readFileSync(at('product-a/dist/shadcn/report.json'), 'utf8')).config;
+    expect('--config: report.json names the file it read', JSON.stringify(named) === JSON.stringify([chain[0], 'web.transtyle.json']), JSON.stringify(named));
+    rmSync(at('product-a/dist'), { recursive: true, force: true });
+    r = run(['build', 'css-variables', '--cwd', dir, '--config', 'product-a/web.transtyle.json']);
+    expect('--config: outputs resolve against the config\'s directory, not --cwd', r.code === 0 && existsSync(at('product-a/dist/css-variables/report.json')) && !existsSync(at('dist')), r.out);
+    r = run(['check', '--cwd', dir, '--config', 'product-a/web.transtyle.json']);
+    expect('--config: check', r.code === 0, r.out);
+    r = run(['explain', 'primary.solid', '--cwd', dir, '--config', 'product-a/web.transtyle.json']);
+    expect('--config: explain', r.code === 0 && r.out.includes('config: web.transtyle.json ← ../base/transtyle.config.json'), r.out);
+    r = run(['add', 'radix', '--cwd', dir, '--config', 'product-a/web.transtyle.json']);
+    expect('--config: add writes the named file', r.code === 0 && 'radix' in JSON.parse(readFileSync(at('product-a/web.transtyle.json'), 'utf8')).targets && !('radix' in JSON.parse(readFileSync(at('product-a/transtyle.config.json'), 'utf8')).targets), r.out);
+    r = run(['check', '--cwd', at('product-a'), '--config', 'missing.json']);
+    expect('--config: a missing file exits 2 naming it', r.code === 2 && r.out.includes('No missing.json found'), r.out);
+    r = run(['migrate', '--from', 'style-dictionary', '--cwd', dir, '--config', 'product-a/web.transtyle.json']);
+    expect('--config: migrate walks every token file the chain reads, a base\'s included', r.code === 0 && r.out.includes('../base/tokens/base.tokens.json'), r.out);
+    r = run(['bind', '--suggest', '--cwd', dir, '--config', 'product-a/web.transtyle.json']);
+    expect('--config: bind --suggest reads the chain', r.code === 0 && json(r).$schema !== undefined, r.out.slice(0, 400));
+    r = run(['init', 'named-ds', '--cwd', dir, '--config', 'ds/brand.transtyle.json', '--yes']);
+    expect('--config: init writes the named file with tokens/ next to it', r.code === 0 && existsSync(at('ds/brand.transtyle.json')) && existsSync(at('ds/tokens/brand.tokens.json')) && !existsSync(at('ds/transtyle.config.json')), r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- BL-15 (#92): the contrast standard, WCAG 2.1 or APCA ----------
 // Cathode is the dark-native example: AA-clean under WCAG, and the case APCA
 // exists for. Each run copies it, changes only the config, and reads
@@ -2032,8 +2174,80 @@ try {
   }
 }
 
+// ---------- #56: the merge rules, one key at a time ----------
+{
+  const { mergeConfigChain } = await import('../packages/core/src/load.js');
+  const file = (name, dir, config) => ({ name, dir, config });
+  const { config: m, origins } = mergeConfigChain([
+    file('../base/t.json', '/r/base', {
+      $schema: 'x', name: 'base', tokens: ['tokens/*.json', { files: ['dark/a.json', 'dark/b.json'], mode: { s: 'dark' } }],
+      modes: { s: { values: ['light', 'dark'], default: 'light' }, d: { values: ['c', 'r'], default: 'c' } },
+      bindings: [{ slot: 'a', from: '{b}' }],
+      derivation: { rules: 'standard@1', autoDark: true, require: ['x', 'y'] },
+      units: { remBase: '10px' },
+      targets: { shadcn: { output: 'out/s', options: { era: 'tailwind-v3' } }, echarts: {} },
+      check: { failOn: 'warning', hygiene: { unusedOption: 'warning', duplicateOption: 'off' }, suppress: [{ code: 'TST1305', reason: 'base' }] },
+    }),
+    file('t.json', '/r/app', {
+      extends: '../base/t.json', tokens: ['own.json'],
+      modes: { s: { values: ['light'] } },
+      bindings: [{ slot: 'c', from: '{d}' }],
+      derivation: { require: ['z'] },
+      targets: { shadcn: { output: 'dist/s' } },
+      check: { hygiene: { unusedOption: 'info' }, suppress: [{ code: 'TST1204', reason: 'app' }] },
+    }),
+  ], '/r/app');
+  const eq = (label, got, want) => expect(`merge: ${label}`, JSON.stringify(got) === JSON.stringify(want), JSON.stringify(got));
+  eq('$schema and extends are never inherited', ['$schema' in m, 'extends' in m], [false, false]);
+  eq('name: the base\'s when the product sets none', m.name, 'base');
+  eq('tokens: base layers first, rewritten relative to the product', m.tokens, ['../base/tokens/*.json', { files: ['../base/dark/a.json', '../base/dark/b.json'], mode: { s: 'dark' } }, 'own.json']);
+  eq('tokens: each layer remembers its file and glob as written', origins.tokens.map((o) => `${o.file}:${o.glob}`), ['../base/t.json:tokens/*.json', '../base/t.json:dark/a.json,dark/b.json', 't.json:own.json']);
+  eq('modes: a dimension the product names replaces the base\'s whole entry', m.modes, { s: { values: ['light'] }, d: { values: ['c', 'r'], default: 'c' } });
+  eq('bindings: the product\'s rules first (the first rule wins)', m.bindings.map((b) => b.slot), ['c', 'a']);
+  eq('derivation: by key, require replaced not concatenated', m.derivation, { rules: 'standard@1', autoDark: true, require: ['z'] });
+  eq('units: inherited', m.units, { remBase: '10px' });
+  eq('targets: by instance, a redefined instance replaces the whole object', m.targets, { shadcn: { output: 'dist/s' }, echarts: {} });
+  eq('check: by key, hygiene by key, suppress concatenated product first', m.check, { failOn: 'warning', hygiene: { unusedOption: 'info', duplicateOption: 'off' }, suppress: [{ code: 'TST1204', reason: 'app' }, { code: 'TST1305', reason: 'base' }] });
+  eq('origins: suppress entries keep their file and index', origins.suppress, [{ file: 't.json', index: 0 }, { file: '../base/t.json', index: 0 }]);
+}
+
+// ---------- #56: diff sees a change made only in the base ----------
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-56-diff-'));
+  const git = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' });
+  try {
+    cpSync(join(root, 'packages/core/test-fixtures/config-extends'), dir, { recursive: true });
+    git('init', '-q');
+    git('config', 'user.email', 't@t.test');
+    git('config', 'user.name', 'test');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'initial');
+    let r = run(['diff', '--cwd', join(dir, 'product-a')]);
+    expect('extends diff: no changes vs HEAD (exit 0)', r.code === 0, r.out);
+    const tp = join(dir, 'base/tokens/base.tokens.json');
+    writeFileSync(tp, readFileSync(tp, 'utf8').replace('oklch(0.55 0.18 255)', 'oklch(0.55 0.19 25)'));
+    r = run(['diff', '--cwd', join(dir, 'product-a')]);
+    expect('extends diff: an uncommitted base change shows in the product (exit 1)', r.code === 1 && r.out.includes('primary.solid'), r.out);
+    r = run(['diff', '--cwd', dir, '--config', 'product-b/transtyle.config.json', '--json']);
+    expect('extends diff: with --config too', r.code === 1 && (() => { try { return JSON.parse(r.stdout).hasChanges === true; } catch { return false; } })(), r.out);
+
+    // A base outside the repository has no state at the ref: it is read as it
+    // is now on both sides, and the diff says so.
+    rmSync(join(dir, '.git'), { recursive: true, force: true });
+    const pa = join(dir, 'product-a');
+    spawnSync('git', ['init', '-q'], { cwd: pa });
+    spawnSync('git', ['-c', 'user.email=t@t.test', '-c', 'user.name=test', 'commit', '-q', '--allow-empty', '-m', 'empty'], { cwd: pa });
+    spawnSync('git', ['add', '-A'], { cwd: pa });
+    spawnSync('git', ['-c', 'user.email=t@t.test', '-c', 'user.name=test', 'commit', '-q', '-m', 'product'], { cwd: pa });
+    r = run(['diff', '--cwd', pa]);
+    expect('extends diff: a base outside the repository is read as it is now, and said so', r.code === 0 && r.out.includes('ℹ ../base/transtyle.config.json is outside the git repository'), r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);
 }
-console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--completeness/bind --suggest/--out/--dry-run/--quiet/--verbose/drift golden path, WCAG and APCA contrast standards, and error cases all pass');
+console.log('\n✔ check-cli: init (flags, presets, prompts)/add/build/explain (--target, --variable)/diff/check --matrix/--completeness/bind --suggest/--out/--dry-run/--quiet/--verbose/drift + extends + --config golden path, WCAG and APCA contrast standards, and error cases all pass');
