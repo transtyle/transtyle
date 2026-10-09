@@ -9,7 +9,9 @@
  * truth, two consumers — `scripts/check-schemas.mjs` asserts they never diverge.
  *
  * Supported keywords: type, enum, const, required, properties,
- * additionalProperties (boolean | schema), items, minItems, anyOf. That is
+ * additionalProperties (boolean | schema), items, minItems, anyOf, and local
+ * `$ref` ("#/$defs/<name>", resolved against the root schema, so a recursive
+ * token-file schema can be written). That is
  * exactly what our schemas need and no more — extend deliberately.
  */
 
@@ -33,7 +35,13 @@ function typeMatches(value, type) {
  * Validate `value` against `schema`. Returns an array of { path, message }
  * (empty = valid). `path` is a dotted JSON path from the document root.
  */
-export function validate(value, schema, path = '') {
+export function validate(value, schema, path = '', root = schema) {
+  if (schema.$ref !== undefined) {
+    const m = /^#\/\$defs\/([^/]+)$/.exec(schema.$ref);
+    const target = m && root.$defs?.[m[1]];
+    if (!target) return [{ path: path || '(root)', message: `unresolvable $ref ${schema.$ref}` }];
+    return validate(value, target, path, root);
+  }
   const errors = [];
   const push = (p, message) => errors.push({ path: p || '(root)', message });
 
@@ -50,7 +58,7 @@ export function validate(value, schema, path = '') {
   }
 
   if (schema.anyOf) {
-    const branchErrors = schema.anyOf.map((s) => validate(value, s, path));
+    const branchErrors = schema.anyOf.map((s) => validate(value, s, path, root));
     if (!branchErrors.some((e) => e.length === 0)) {
       push(path, `does not match any allowed shape`);
     }
@@ -65,7 +73,7 @@ export function validate(value, schema, path = '') {
     for (const [key, v] of Object.entries(value)) {
       const childPath = path ? `${path}.${key}` : key;
       if (props[key]) {
-        errors.push(...validate(v, props[key], childPath));
+        errors.push(...validate(v, props[key], childPath, root));
       } else if (addl === false) {
         // AL5: pushed at the PARENT path, not childPath — the message already
         // names the key, and prefixing the child path rendered as
@@ -75,7 +83,7 @@ export function validate(value, schema, path = '') {
         const near = nearestName(key, Object.keys(props));
         push(path, `unknown property "${key}"${near ? ` — did you mean "${near}"?` : ''}`);
       } else if (addl && typeof addl === 'object') {
-        errors.push(...validate(v, addl, childPath));
+        errors.push(...validate(v, addl, childPath, root));
       }
     }
   }
@@ -85,7 +93,7 @@ export function validate(value, schema, path = '') {
       push(path, `must have at least ${schema.minItems} item${schema.minItems === 1 ? '' : 's'}`);
     }
     if (schema.items) {
-      value.forEach((item, i) => errors.push(...validate(item, schema.items, `${path}[${i}]`)));
+      value.forEach((item, i) => errors.push(...validate(item, schema.items, `${path}[${i}]`, root)));
     }
   }
 

@@ -458,6 +458,7 @@ async function cmdInit(args) {
 
   const td = (value, description) => ({ $value: value, $description: description });
   const tokens = {
+    $schema: 'https://transtyle.dev/schemas/tokens/v0.json',
     option: {
       color: { $type: 'color', brand: { 500: { $value: 'oklch(0.55 0.18 255)' } } },
     },

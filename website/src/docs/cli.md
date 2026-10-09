@@ -92,7 +92,7 @@ Exits `0` when the compiled themes are identical, `1` when there are changes (co
 
 ### `transtyle init [name]`
 
-Scaffolds `transtyle.config.json` + `tokens/brand.tokens.json` (a minimal example: one brand color, elevation levels 0–1, text, border, radius, fonts — each with a `$description: "TODO: ..."` placeholder) and a `css-variables` target so the first build works immediately. Refuses (exit 2) if a config already exists.
+Scaffolds `transtyle.config.json` + `tokens/brand.tokens.json` (with a `$schema` line for [editor autocomplete](/docs/configuration/#token-files-in-your-editor); a minimal example: one brand color, elevation levels 0–1, text, border, radius, fonts — each with a `$description: "TODO: ..."` placeholder) and a `css-variables` target so the first build works immediately. Refuses (exit 2) if a config already exists.
 
 ### `transtyle add <target>`
 
