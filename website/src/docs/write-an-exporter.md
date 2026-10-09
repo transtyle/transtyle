@@ -58,6 +58,8 @@ Your `package.json` carries a `transtyle` manifest — static metadata that tool
 
 The `transtyle-exporter` keyword is how community exporters are discoverable.
 
+`irSpec` and `pluginApi` say which core your exporter is built for, and the CLI checks them before it runs your code. `pluginApi` is a semver range that must accept the plugin API version core implements: `"0"` (or `"^0"`) accepts the current `0.x` line. `irSpec` must be exactly `"v0-draft"`, the IR spec core produces until the freeze gives it a version number. A value core doesn't accept stops the build with [`TST1309`](/docs/diagnostics/), naming your package and its version; a package with no manifest still loads, with a `TST1310` warning. The conformance kit's `manifest-compatible` check catches a wrong value in your own CI first.
+
 ## 2. Write the mapping table
 
 Keep the mapping as **data**, separate from the code that renders it. Yours is the only code that reads it, so the shape is up to you — but a flat table is what makes an exporter reviewable by someone who knows the target and not the compiler.
@@ -230,10 +232,10 @@ node conformance.test.mjs
 ```
 
 ```
-86/86 checks pass
+87/87 checks pass
 ```
 
-The kit runs your plugin against nine small fixture design systems, each twice: the canonical one, then the shapes that broke exporters before the kit could see them (one token, three tokens, `color-scheme` × `density`, light only, an authored component tier, a custom role, authored composites, DTCG object forms). On each it checks the contract: that you didn't mutate the IR, that two runs are byte-identical, that no `undefined`, `NaN` or `[object Object]` reached a file, that no `native` row names a slot the design system never filled, and that a `density` mode you can't express has its `dropped` row. Each failure names the fixture, so `one-token: emit-runs` means your plugin crashed on a design system with nothing but a brand color. Open `node_modules/@transtyle/plugin-kit/fixtures/<name>/` to see exactly what it received. A plugin that returns `diagnostics` also gets `emit-diagnostics-valid` on each. Passing it is what "official" means, and community exporters can advertise it.
+The kit runs your plugin against nine small fixture design systems, each twice: the canonical one, then the shapes that broke exporters before the kit could see them (one token, three tokens, `color-scheme` × `density`, light only, an authored component tier, a custom role, authored composites, DTCG object forms). On each it checks the contract: that you didn't mutate the IR, that two runs are byte-identical, that no `undefined`, `NaN` or `[object Object]` reached a file, that no `native` row names a slot the design system never filled, and that a `density` mode you can't express has its `dropped` row. Each failure names the fixture, so `one-token: emit-runs` means your plugin crashed on a design system with nothing but a brand color. Open `node_modules/@transtyle/plugin-kit/fixtures/<name>/` to see exactly what it received. With `{ manifest }`, `manifest-valid` and `manifest-compatible` check the manifest once. A plugin that returns `diagnostics` also gets `emit-diagnostics-valid` on each. Passing it is what "official" means, and community exporters can advertise it.
 
 ## 5. Use it in a real project
 

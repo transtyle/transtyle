@@ -1,11 +1,12 @@
 # Validation, diagnostics, and coverage
 
-<!-- measured: codes = 42 -->
+<!-- measured: codes = 44 -->
 
-> **Status (re-verified 2026-10-09):** the diagnostics collector, the 42 shipped
+> **Status (re-verified 2026-10-09):** the diagnostics collector, the 44 shipped
 > `TST` codes, DTCG structural validation, contrast checking, the coverage
-> classes, `report.json`, `check --json`, per-diagnostic source locations and
-> config suppressions (`check.suppress`) are **implemented**. Still specced:
+> classes, `report.json`, `check --json`, per-diagnostic source locations,
+> config suppressions (`check.suppress`) and the exporter compatibility check
+> are **implemented**. Still specced:
 > tier-violation checks,
 > exporter-declared mode support, the emitted-file drift manifest, and
 > `--frozen`. Each is marked below rather than left for the reader to guess —
@@ -94,6 +95,17 @@ Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — ca
 ## Exporter diagnostics
 
 Some findings only an exporter can make, because they depend on its target's own conventions: shadcn subtracts 4px and 2px from `--radius` for its `sm` and `md` rungs, so a 2px `radius.md` ships square `rounded-sm` and `rounded-md` (`TST2104`). An exporter returns them next to `files` and `coverage` as `diagnostics: [{ severity, code, message, hint? }]` ([plugins.md](../architecture/plugins.md#the-exporter-interface-v0-as-implemented)). Core accepts `info` and `warning` only (an exporter cannot stop a build from inside `emit`), prefixes the message with the target instance name, sets `target`, and adds them to the run's diagnostics; a malformed list is a contract violation and becomes `TST3001`. `plugin-kit` checks the same shape (`emit-diagnostics-valid`).
+
+## Exporter compatibility
+
+When the caller's loader knows an exporter's `package.json` (the CLI's does), core checks its `transtyle` manifest right after loading it, before the options schema and `emit` ([versioning.md](../architecture/versioning.md#load-time-compatibility-check)): `pluginApi` is a semver range that must accept a plugin API version core implements, and `irSpec` must equal the IR spec core produces (`v0-draft`).
+
+| Code      | Severity | Meaning                                                                                                                                                                | Remediation                                                                                                             |
+| --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `TST1309` | error    | An exporter's `irSpec` or `pluginApi` doesn't accept this core; one per field, naming the target, the package and its version, what it declares and what core provides | Use a release of the exporter built for this core's IR spec and plugin API, or a core release that matches the exporter |
+| `TST1310` | warning  | An exporter package has no `transtyle` manifest, or it lacks `irSpec` or `pluginApi`, so its compatibility was not checked                                             | Declare the manifest in the exporter's `package.json`; the exporter still loads                                         |
+
+An incompatible exporter doesn't stop later targets from being loaded and checked, so one run reports every incompatible exporter, and nothing is written. A caller that hands core the bare plugin (the repository's scripts, the website) gets no check and no warning.
 
 ## Exporter failures (`TST3xxx`)
 

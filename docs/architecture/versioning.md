@@ -1,24 +1,32 @@
 # Versioning and compatibility model
 
-> **Status (re-verified 2026-08-29):** the four-surface split is real — every
+> **Status (re-verified 2026-10-09):** the four-surface split is real — every
 > exporter ships a `transtyle` manifest declaring `irSpec`, `pluginApi`,
-> `targets` ranges and `modes`, and `plugin-kit` validates its shape in CI.
-> What does **not** exist yet is core reading any of it: no range is checked at
-> load time, no version can be requested, no profile is selected, and no
-> lockfile is written. [ADR-0011](../adr/0011-v0-freeze-readiness.md) recorded
-> that gap as the reason the plugin API freeze is deferred; this page now marks
-> it inline instead of describing the whole model in the present tense.
+> `targets` ranges and `modes`, `plugin-kit` validates its shape and its
+> compatibility in CI, and core checks `irSpec` and `pluginApi` at load time
+> (`TST1309`). What does **not** exist yet: no target version can be
+> requested, no profile is selected, and no lockfile is written. This page
+> marks those inline instead of describing the whole model in the present tense.
 
 Four independently-versioned surfaces. Conflating them is how ecosystems end up with "plugin works only with CLI 3.2.1" misery; separating them is how Babel and ESLint survived a decade of plugins.
 
-| Surface                 | Versioned as                     | Stability promise                                                                                                                                                                               |
-| ----------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **IR spec**             | `ir/v0`, `ir/v1`… (major.minor)  | The slowest-moving artifact. Minor = additive only (new optional slots/types). Major = migration guide + `transtyle migrate` codemod. Token files written by users are covered by this promise. |
-| **Plugin API**          | its own semver (`pluginApi: ^0`) | Interfaces + `plugin-kit`. Core supports ≥2 adjacent majors during deprecation windows so the plugin ecosystem never has to move in lockstep.                                                   |
-| **CLI / core packages** | normal npm semver                | UX may evolve fast; `report.json` and other machine outputs get schema fields so CI consumers survive changes.                                                                                  |
-| **Each exporter**       | its own npm semver               | Independent release cadence — a Bootstrap 5.4 release must be shippable the same week without touching core.                                                                                    |
+| Surface                 | Versioned as                      | Stability promise                                                                                                                                                                               |
+| ----------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **IR spec**             | `ir/v0`, `ir/v1`… (major.minor)   | The slowest-moving artifact. Minor = additive only (new optional slots/types). Major = migration guide + `transtyle migrate` codemod. Token files written by users are covered by this promise. |
+| **Plugin API**          | its own semver (`pluginApi: "0"`) | Interfaces + `plugin-kit`. Core supports ≥2 adjacent majors during deprecation windows so the plugin ecosystem never has to move in lockstep.                                                   |
+| **CLI / core packages** | normal npm semver                 | UX may evolve fast; `report.json` and other machine outputs get schema fields so CI consumers survive changes.                                                                                  |
+| **Each exporter**       | its own npm semver                | Independent release cadence — a Bootstrap 5.4 release must be shippable the same week without touching core.                                                                                    |
 
-**Specced:** core checking those declared ranges at load time and refusing a mismatch with an actionable diagnostic ("exporter-bootstrap 2.x requires IR spec v1; you are on v0 — upgrade the exporter or pin core"). The manifests exist and are shape-checked by `plugin-kit`; nothing in the compile path reads them, which [ADR-0011](../adr/0011-v0-freeze-readiness.md) §2 identifies as the concrete blocker on freezing plugin API v0. Until it lands, an incompatible exporter fails in whatever way its code happens to fail. Tracked as [issue #14](https://github.com/transtyle/transtyle/issues/14).
+### Load-time compatibility check
+
+Core checks each exporter's declared `irSpec` and `pluginApi` when it loads it, before the exporter's options schema or `emit` is trusted (`packages/core/src/compat.js`):
+
+- **`pluginApi`** is a semver range (`"0"`, `"^0"`, `">=0 <2"`, `"0 || 1"`) that must accept one of the plugin API versions core implements (`PLUGIN_API_VERSIONS`, exported by `@transtyle/core`: `0.0.0` today, the pre-freeze line). A list rather than one version is how "≥2 adjacent majors during deprecation windows" is kept: core lists both, and an exporter declaring either range loads. `"0"` is the range every official exporter declares: any `0.x`.
+- **`irSpec`** is compared against `IR_SPEC` from `@transtyle/ir`. The IR spec has no version number before the freeze (`v0-draft`), so it is a marker and must match exactly: an exporter declares `"irSpec": "v0-draft"`. Once the IR spec carries a version, a range-valued `irSpec` is checked as a range by the same code; a marker stays an exact match.
+
+A mismatch is `TST1309` (error), one per field, naming the target, the exporter package and its version, what it declares and what this core provides, with the fix: _`Exporter "bootstrap" (@transtyle/exporter-bootstrap 0.1.0-alpha.3) is built for IR spec "v1"; this @transtyle/core produces "v0-draft"`_. Every target is checked in the same run and nothing is written. An exporter package with no `transtyle` manifest, or one without either field, raises `TST1310` (warning) and loads as before. The range syntax is a zero-dependency subset of node-semver (partial and x-ranges, `^`, `~`, comparators, hyphen ranges, `||`; no prerelease tags) in `packages/core/src/semver.js`.
+
+The check needs the manifest, so it runs when the caller's `loadExporter` returns `{ plugin, manifest, package }` (the CLI's loader does, reading the exporter's `package.json`); a caller that returns the bare plugin, as the repository's scripts do, skips it. `plugin-kit`'s `manifest-compatible` check runs the same function, so an exporter's own CI fails on a wrong value first.
 
 ## Target framework versions ([ADR-0006](../adr/0006-version-ranges.md))
 

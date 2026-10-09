@@ -18,6 +18,8 @@ import { nearestName } from './nearest.js';
 import { makeUnits } from './units.js';
 import { validateTargetModes, targetView, narrowedDimensions, withModesNote } from './target-modes.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
+import { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
+import { IR_SPEC } from '@transtyle/ir';
 
 export { parseColor, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 export { Diagnostics } from './diagnostics.js';
@@ -28,6 +30,7 @@ export { catalog } from './catalog.js';
 export { loadConfig, expandTokenFiles } from './load.js';
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
 export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
+export { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
 
 /**
  * Run the pipeline. `emit: false` = `transtyle check` (pipeline minus EMIT —
@@ -51,6 +54,13 @@ export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
  * the CLI's OFFICIAL_EXPORTERS keys. Core stays exporter-agnostic (it never
  * imports one), but TST1301 can then tell "you typo'd" apart from "that
  * exporter exists, you just haven't configured it", which are opposite fixes.
+ *
+ * `loadExporter(name)` returns the plugin (`{ name, emit, optionsSchema? }`),
+ * or `{ plugin, manifest, package: { name, version } }` when the caller found
+ * the exporter's package.json: `manifest` is its `transtyle` key (`null` when
+ * it has none), checked against this core's IR spec and plugin API (TST1309,
+ * TST1310). A bare plugin means the caller doesn't know the manifest, and
+ * nothing is checked.
  */
 export async function compile({ cwd, targets, emit = true, loadExporter, knownExporters = [], skipExporters = false, debug = false, outRoot, dryRun = false }) {
   const diagnostics = new Diagnostics();
@@ -145,9 +155,10 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
 
   const targetNames = skipExporters ? [] : targets?.length ? targets : Object.keys(config.targets ?? {});
   const results = [];
-  // Exporter crashes (TST3001/TST3002) are recorded per target and must not
-  // trip the "never emit with errors present" guards below: a throwing exporter
-  // is not a pipeline error, and stopping at it would hide every later target.
+  // Exporter crashes (TST3001/TST3002) and incompatible exporters (TST1309) are
+  // recorded per target and must not trip the "never emit with errors present"
+  // guards below: they are not pipeline errors, and stopping at the first one
+  // would hide every later target. The commit below still writes nothing.
   let crashes = 0;
   const pipelineErrors = () => diagnostics.errors.length - crashes;
   const crash = (code, name, stage, e, hint) => {
@@ -197,12 +208,26 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
     // the plugin (defaults to the key), so one exporter can be configured twice
     // with different options (docs/specs/configuration.md#target-instances).
     let exporter;
+    let loaded;
     try {
-      exporter = await loadExporter(targetConfig.exporter ?? name);
+      loaded = await loadExporter(targetConfig.exporter ?? name);
     } catch (e) {
       crash('TST3002', name, 'load', e, 'Install the exporter package in this project, or fix its `exporter` field in transtyle.config.json. Re-run with --verbose (or TRANSTYLE_DEBUG=1) for the stack.');
       results.push({ target: name, files: [], coverage: [], emitted: [] });
       continue;
+    }
+    const withManifest = loaded && typeof loaded.emit !== 'function' && 'plugin' in loaded;
+    exporter = withManifest ? loaded.plugin : loaded;
+
+    // Compatibility (issue #14): an exporter built for another IR spec or
+    // plugin API is refused before its options schema or emit is trusted.
+    if (withManifest && loaded.manifest !== undefined) {
+      const incompatible = reportCompat(name, loaded, diagnostics);
+      if (incompatible > 0) {
+        crashes += incompatible;
+        results.push({ target: name, files: [], coverage: [], emitted: [] });
+        continue;
+      }
     }
 
     // Validate this instance's options against the exporter's own schema (audit
@@ -298,6 +323,40 @@ export async function compile({ cwd, targets, emit = true, loadExporter, knownEx
   }
 
   return { config, diagnostics, results, normalized, bindings };
+}
+
+/**
+ * TST1309 for each manifest field that doesn't accept this core, TST1310 when
+ * the manifest is missing or leaves a field out. Returns the number of errors.
+ */
+function reportCompat(name, { manifest, package: pkg }, diagnostics) {
+  const pkgName = pkg?.name ?? `the "${name}" exporter`;
+  const label = pkg?.name ? `${pkg.name}${pkg.version ? ` ${pkg.version}` : ''}` : 'unknown package';
+  const { missing, mismatches } = checkPluginCompat(manifest);
+  for (const { field, declared, provided } of mismatches) {
+    const quoted = provided.map((v) => `"${v}"`).join(', ');
+    if (field === 'irSpec') {
+      diagnostics.error('TST1309', `Exporter "${name}" (${label}) is built for IR spec "${declared}"; this @transtyle/core produces ${quoted}`, {
+        target: name,
+        hint: `Use a release of ${pkgName} built for IR spec ${quoted}, or a @transtyle/core release that produces "${declared}".`,
+      });
+    } else {
+      diagnostics.error('TST1309', `Exporter "${name}" (${label}) requires plugin API "${declared}"; this @transtyle/core implements ${quoted}`, {
+        target: name,
+        hint: `Use a release of ${pkgName} whose "pluginApi" accepts ${quoted}, or a @transtyle/core release that implements "${declared}".`,
+      });
+    }
+  }
+  if (missing.length > 0) {
+    const what = manifest == null
+      ? 'has no "transtyle" manifest in its package.json'
+      : `declares no ${missing.map((f) => `"${f}"`).join(' or ')} in its "transtyle" manifest`;
+    diagnostics.warn('TST1310', `Exporter "${name}" (${label}) ${what}, so its compatibility with this @transtyle/core was not checked`, {
+      target: name,
+      hint: `The exporter's package.json should declare "transtyle": { "irSpec": "${IR_SPEC}", "pluginApi": "${PLUGIN_API_VERSIONS[0].split('.')[0]}", … } (see the "Write an exporter" guide).`,
+    });
+  }
+  return mismatches.length;
 }
 
 const EXPORTER_SEVERITIES = ['info', 'warning'];

@@ -23,7 +23,7 @@
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { compile, checkExporterDiagnostics, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
+import { compile, checkExporterDiagnostics, checkPluginCompat, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures');
 const COVERAGE_CLASSES = new Set(['native', 'derived', 'approximated', 'dropped', 'unsupported']);
@@ -188,6 +188,16 @@ export async function conformance(plugin, opts = {}) {
       ['exporter', 'importer'].includes(m.kind) && typeof m.name === 'string' && 'irSpec' in m && 'pluginApi' in m && Array.isArray(m.capabilities),
       'plugins.md#packaging',
       'transtyle manifest needs kind (exporter|importer), name, irSpec, pluginApi, capabilities[]');
+    // The check core runs at load time (TST1309): a wrong marker fails the
+    // author's CI here before any user's build refuses the exporter.
+    const { missing, mismatches } = checkPluginCompat(m);
+    add('manifest-compatible',
+      missing.length === 0 && mismatches.length === 0,
+      'versioning.md, plugins.md#packaging',
+      [
+        ...mismatches.map(({ field, declared, provided }) => `${field} "${declared}" does not accept ${provided.map((v) => `"${v}"`).join(', ')}, what this @transtyle/core provides`),
+        ...missing.map((field) => `${field} is missing or not a string`),
+      ].join('; '));
   }
 
   if (plugin.optionsSchema) {

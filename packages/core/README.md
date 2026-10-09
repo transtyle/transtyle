@@ -41,6 +41,10 @@ back, over a compile's coverage rows), `coverageSlots` (what one coverage row re
 and the colour module — `parseColor` (any CSS color syntax a stylesheet holds, to OKLCH), `formatColor`, `formatHex`, `formatHslTriplet`, `contrastRatio`,
 `mix` — which is OKLCH-native and has no dependencies. `makeUnits(config)` builds the `ctx.units` helpers
 (`toPx`, `toRem`, `remBase`) exporters get, from the config's `units.remBase`.
+`checkPluginCompat(manifest)` and `PLUGIN_API_VERSIONS` are the exporter compatibility check
+`compile()` runs when your `loadExporter` returns `{ plugin, manifest, package }` instead of the
+bare plugin: the manifest's `irSpec` must be this core's IR spec, its `pluginApi` a semver range
+accepting one of `PLUGIN_API_VERSIONS` (`TST1309` otherwise).
 
 **Zero external dependencies**, deliberately.
 
