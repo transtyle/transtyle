@@ -48,6 +48,16 @@ const MERGED_POSTS = {
 const { version } = JSON.parse(readFileSync(new URL('../packages/cli/package.json', import.meta.url), 'utf8'));
 const root = base.replace(/\/$/, '');
 
+// The site's navigation, declared once: the header and the docs top bar both
+// read it. The compare view belongs to Demos (Base.astro maps it), and "For AI
+// agents" is a first-class way in.
+const nav = [
+  { label: 'Docs', href: `${root}/docs/` },
+  { label: 'Demos', href: `${root}/demo/` },
+  { label: 'Blog', href: `${root}/blog/` },
+  { label: 'For AI agents', href: `${root}/docs/ai-agents/` },
+];
+
 export default defineConfig({
   site,
   base,
@@ -87,12 +97,32 @@ export default defineConfig({
         // the repository above. The author stays the meta author and copyright.
         identity: { type: 'Organization' },
       },
-      nav: [
-        { label: 'Docs', href: `${root}/docs/` },
-        { label: 'Demos', href: `${root}/demo/` },
-        { label: 'Blog', href: `${root}/blog/` },
-        { label: 'For AI agents', href: `${root}/docs/ai-agents/` },
-      ],
+      nav,
+      // The footer: Footer reads it, so Base.astro passes nothing. `copyright`
+      // and `meta` stay the package defaults.
+      footer: {
+        blurb: 'A design system compiler. MIT licensed.',
+        columns: [
+          {
+            title: 'Project',
+            links: [
+              { label: 'Documentation', href: `${root}/docs/` },
+              { label: 'Demos', href: `${root}/demo/` },
+              { label: 'Compare', href: `${root}/compare/` },
+              { label: 'GitHub', href: 'https://github.com/transtyle/transtyle' },
+            ],
+          },
+          {
+            title: 'Read',
+            links: [
+              { label: 'Blog', href: `${root}/blog/` },
+              { label: 'RSS', href: `${root}/blog/rss.xml` },
+              { label: 'AI agents', href: `${root}/docs/ai-agents/` },
+              { label: 'llms.txt', href: `${root}/llms.txt` },
+            ],
+          },
+        ],
+      },
       // The author's other tools, in a quiet row of the docs footer; the same
       // list on each of them, each leaving itself out. "More by Julien
       // Déramond" (the default) ends the row.
@@ -120,12 +150,7 @@ export default defineConfig({
       docs: {
         route: false,
         tool: { version: `v${version}` },
-        tabs: [
-          { label: 'Docs', href: `${root}/docs/` },
-          { label: 'Demos', href: `${root}/demo/` },
-          { label: 'Blog', href: `${root}/blog/` },
-          { label: 'For AI agents', href: `${root}/docs/ai-agents/` },
-        ],
+        tabs: nav,
         edit: { repo: 'transtyle/transtyle', dir: 'website/src/docs' },
       },
     }),

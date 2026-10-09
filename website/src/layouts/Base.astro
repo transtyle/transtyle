@@ -24,38 +24,10 @@ const {
   author,
 } = Astro.props;
 
-// The same entries, in the same order, as before the move: the compare view
-// is part of the demos, and "For AI agents" is a first-class way in.
-const nav = [
-  { label: 'Docs', href: withBase('/docs/') },
-  { label: 'Demos', href: withBase('/demo/') },
-  { label: 'Blog', href: withBase('/blog/') },
-  { label: 'For AI agents', href: withBase('/docs/ai-agents/') },
-];
-const currentHref = { docs: nav[0].href, demo: nav[1].href, compare: nav[1].href, blog: nav[2].href }[current];
-const footer = {
-  blurb: 'A design system compiler. MIT licensed.',
-  columns: [
-    {
-      title: 'Project',
-      links: [
-        { label: 'Documentation', href: withBase('/docs/') },
-        { label: 'Demos', href: withBase('/demo/') },
-        { label: 'Compare', href: withBase('/compare/') },
-        { label: 'GitHub', href: 'https://github.com/transtyle/transtyle' },
-      ],
-    },
-    {
-      title: 'Read',
-      links: [
-        { label: 'Blog', href: withBase('/blog/') },
-        { label: 'RSS', href: withBase('/blog/rss.xml') },
-        { label: 'AI agents', href: withBase('/docs/ai-agents/') },
-        { label: 'llms.txt', href: withBase('/llms.txt') },
-      ],
-    },
-  ],
-};
+// The nav and the footer are declared once, in astro.config.mjs; Header and
+// Footer read them. Only the active item is named here: the compare view is
+// part of the demos.
+const currentLabel = { docs: 'Docs', demo: 'Demos', compare: 'Demos', blog: 'Blog' }[current];
 ---
 <BaseLayout
   title={title}
@@ -77,13 +49,13 @@ const footer = {
       <a href={withBase('/docs/roadmap/')}>What is built vs. planned →</a>
     </span>
   </div>
-  <Header nav={nav} current={currentHref}>
+  <Header current={currentLabel}>
     <a slot="actions" class="gh" href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
   </Header>
 
   <slot />
 
-  <Footer {...footer} />
+  <Footer />
 
   <script is:inline>
     // Copy button on every code block — markdown (Shiki) and hand-built alike.

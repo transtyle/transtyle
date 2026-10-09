@@ -106,8 +106,9 @@ for (const t of TARGETS) {
     );
   }
 }
-if (!read('website/src/layouts/Base.astro').includes("withBase('/demo/')")) {
-  fail('website/src/layouts/Base.astro does not link to /demo/ — the gallery is unreachable from the site header');
+// The nav is declared once, in the integration config, and the header reads it.
+if (!read('website/astro.config.mjs').includes('${root}/demo/')) {
+  fail('website/astro.config.mjs does not link to /demo/ in its nav — the gallery is unreachable from the site header');
 }
 
 // ---------- 5. demo READMEs ----------
