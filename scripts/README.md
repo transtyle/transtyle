@@ -14,7 +14,7 @@ already made once.
 | `check-doc-numbers.mjs`       | Every number the docs copy out of a build, re-derived                                                                                                                                                                                      |
 | `check-encoding.mjs`          | Tracked text files are clean UTF-8 — no NUL bytes, no BOM                                                                                                                                                                                  |
 | `check-color.mjs`             | The colour engine against reference values: parsing (all DTCG spaces), round-trips, contrast, mixing                                                                                                                                       |
-| `check-plugins.mjs`           | Every official exporter passes the published plugin conformance suite                                                                                                                                                                      |
+| `check-plugins.mjs`           | Every official exporter and two declarative mappings pass the conformance suite; the reference mapping reproduces css-variables byte for byte                                                                                              |
 | `check-grid.mjs`              | Catalog completeness against `catalog()`, both ways; the frozen Phase 0 values; bound roles get grids                                                                                                                                      |
 | `check-fixtures.mjs`          | A fresh build against the Phase 0 acceptance fixtures, key by key                                                                                                                                                                          |
 | `check-rem-base.mjs`          | The config-level rem base (`units.remBase`): a custom base reaches ECharts and Storybook, the default is byte-identical, a bad base is `TST1010`                                                                                           |
@@ -22,7 +22,7 @@ already made once.
 | `check-atomic-emit.mjs`       | A failed build leaves every output directory byte-for-byte as it was, with no staging directory left behind                                                                                                                                |
 | `check-browser.mjs`           | Core's browser entry and every exporter load with no Node; each example compiles in memory as on disk                                                                                                                                      |
 | `check-schemas.mjs`           | Published JSON schemas match their source objects; every config, report and manifest validates                                                                                                                                             |
-| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` / `catalog` / `bind --suggest` / drift golden paths and errors                                                                                                                               |
+| `check-cli.mjs`               | `init` / `add` / `build` / `explain` / `diff` / `catalog` / `bind --suggest` golden paths and errors, drift; declarative mappings (local and `npm pack`ed) and version profiles                                                            |
 | `check-explain.mjs`           | `explainToken()` golden paths: authored, aliased and derived slots, plus the walk's edge cases                                                                                                                                             |
 | `check-component-tier.mjs`    | The empty tier defaults; an authored tier reaches both targets; a semantic alias into it is `TST1113`                                                                                                                                      |
 | `check-tokens-studio.mjs`     | A Tokens Studio export (folder, single file, legacy) compiles byte-identical to its plain DTCG twin                                                                                                                                        |
@@ -88,7 +88,7 @@ pipeline stage and each exporter, and the peak memory. Nothing reads its
 output; [docs/findings/performance.md](../docs/findings/performance.md) records
 a run with its machine and date.
 
-Nine scripts here render rather than check:
+Ten scripts here render rather than check:
 
 - `gen-schemas.mjs` and `gen-brand.mjs` render what `check-schemas.mjs` and
   `check-brand.mjs` then prove are current — the published JSON schemas, and
@@ -112,6 +112,11 @@ Nine scripts here render rather than check:
   on a stale page, an unregistered key, or a registered key nothing reports any more. It compiles
   through `lib/compile-examples.mjs`, the in-process compile any generated view of the examples
   should share.
+- `gen-reference-mapping.mjs` renders the declarative runtime's reference mapping
+  (`packages/core/test-fixtures/declarative/reference.mapping.json`): `exporter-css-variables`'
+  output on plugin-kit's canonical fixture, one row per variable in the order its stylesheet writes
+  them, read off its own coverage. `check-plugins.mjs` regenerates it in memory, fails on a stale
+  file, and requires the runtime's stylesheet byte-identical to css-variables'.
 - `gen-social-card.mjs` renders the card a launch post carries, with every value
   on it read from a fresh compile of `examples/acme` rather than drawn by hand.
   Its output is gitignored (`brand/social/`) and has no checker, which is the

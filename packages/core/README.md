@@ -102,7 +102,17 @@ and the colour module — `parseColor` (any CSS color syntax a stylesheet holds,
 `checkPluginCompat(manifest)` and `PLUGIN_API_VERSIONS` are the exporter compatibility check
 `compile()` and `compileProject()` run when your `loadExporter` (or an `exporters` value) returns `{ plugin, manifest, package }` instead of the
 bare plugin: the manifest's `irSpec` must be this core's IR spec, its `pluginApi` a semver range
-accepting one of `PLUGIN_API_VERSIONS` (`TST1309` otherwise).
+accepting one of `PLUGIN_API_VERSIONS` (`TST1309` otherwise). The manifest's `targets` ranges
+also serve a target's `version`: `declaredProfiles(manifest)` and `selectProfile(ranges, version)`
+are the selection `compile()` makes (`ctx.targetProfile`, `TST1313`), on `satisfies` and
+`parseRange`, the zero-dependency semver matcher.
+
+The **declarative runtime**: `createDeclarativeExporter(mapping)` turns a JSON mapping table into a
+plain `{ name, emit }` exporter, `validateMapping` and `unknownMappingSlots` are the checks
+`compile()` runs on it (`TST1014`, `TST1015`), `readMappingFile` and `loadDeclarativePackage(dir)`
+read one from a file or from an installed package without importing any of its code, and
+`mappingSchema` is the published format. A target whose `exporter` is a path to a `.json` file
+is read by `compile()` itself.
 
 **Zero external dependencies**, deliberately. The one opt-in exception: `check.contrast.standard: "apca"` loads the
 `apca-w3` package, an optional peer dependency you install yourself (`npm install --save-dev apca-w3`), because

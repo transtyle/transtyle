@@ -109,6 +109,13 @@ const target = {
   properties: {
     output: { type: 'string' },
     exporter: { type: 'string' },
+    // The framework version the project uses (ADR-0006): core selects the
+    // exporter's manifest range covering it (TST1313 when none does).
+    version: {
+      type: 'string',
+      pattern: '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$',
+      description: 'The framework version this target is for, as major.minor.patch (e.g. "5.3.8").',
+    },
     options: { type: 'object' }, // validated per-exporter at load time; see note above
     // Per-target subset of the project's mode matrix: { <dimension>: [<value>, ...] }.
     // Dimension/value names are checked against the project's `modes` in compile()

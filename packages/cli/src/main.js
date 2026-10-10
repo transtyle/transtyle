@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca, loadConfigChain, DEFAULT_CONFIG_FILE, isCustomRow, customVocabularySentence } from '@transtyle/core';
+import { compile, loadDeclarativePackage, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca, loadConfigChain, DEFAULT_CONFIG_FILE, isCustomRow, customVocabularySentence } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
@@ -47,13 +47,18 @@ const OFFICIAL_EXPORTERS = {
  */
 function makeLoadExporter(cwd) {
   const requireFromProject = createRequire(path.join(cwd, 'noop.js'));
+  const requireFromCli = createRequire(import.meta.url);
   return async function loadExporter(name) {
     const pkg = OFFICIAL_EXPORTERS[name] ?? name;
     const tried = [];
-    for (const [where, resolve] of [
-      [`from the project (${cwd})`, () => requireFromProject.resolve(pkg)],
-      ['from the transtyle install', () => fileURLToPath(import.meta.resolve(pkg))],
+    for (const [where, resolve, req] of [
+      [`from the project (${cwd})`, () => requireFromProject.resolve(pkg), requireFromProject],
+      ['from the transtyle install', () => fileURLToPath(import.meta.resolve(pkg)), requireFromCli],
     ]) {
+      // A declarative package (#82) is read, never imported: its manifest
+      // points at a mapping file, and its `main`, if any, never runs.
+      const dir = packageDir(req, pkg);
+      if (dir && isDeclarative(dir)) return loadDeclarativePackage(dir);
       let entry;
       try {
         entry = resolve();
@@ -67,6 +72,31 @@ function makeLoadExporter(cwd) {
       `Cannot load exporter for target "${name}" (package "${pkg}"):\n  - ${tried.join('\n  - ')}\n` +
       `  Third-party exporters must be installed in this project: npm install ${pkg}`);
   };
+}
+
+/**
+ * The directory of an installed package, found through the same node_modules
+ * lookup `require` uses but without resolving its entry: `exports` may hide
+ * `package.json`, and a declarative package needs no entry at all. Null for a
+ * relative path or a package that isn't installed there.
+ */
+function packageDir(req, specifier) {
+  if (specifier.startsWith('.') || path.isAbsolute(specifier)) return null;
+  const parts = specifier.split('/');
+  const pkgName = specifier.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0];
+  for (const base of req.resolve.paths(pkgName) ?? []) {
+    const dir = path.join(base, pkgName);
+    if (existsSync(path.join(dir, 'package.json'))) return dir;
+  }
+  return null;
+}
+
+function isDeclarative(dir) {
+  try {
+    return typeof JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf8')).transtyle?.declarative === 'string';
+  } catch {
+    return false;
+  }
 }
 
 /**

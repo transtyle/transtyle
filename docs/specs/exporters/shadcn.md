@@ -1,12 +1,12 @@
 # Exporter spec: shadcn/ui
 
-> **Status: implemented** (`@transtyle/exporter-shadcn`), both eras — `tailwind-v4` (OKLCH values, `@theme inline`) and `tailwind-v3` (HSL channel triplets), selected via `options.era`. Verified against the emitted coverage rows 2026-08-29.
+> **Status: implemented** (`@transtyle/exporter-shadcn`), both eras — `tailwind-v4` (OKLCH values, `@theme inline`) and `tailwind-v3` (HSL channel triplets), selected by the target's Tailwind `version` (ranges `>=3 <4`, `>=4 <5`) or `options.era`. Verified against the emitted coverage rows 2026-08-29.
 
 **Why it's a reference exporter:** the semantic-token-native target — shadcn's theme _is_ a set of semantic CSS variables (`--background`, `--primary`, `--muted`, `--destructive`, `--radius`…), so it exercises the IR's semantic catalog almost 1:1 and is the cleanest test of mode handling (light/dark classes). Also the most-demanded target in the current ecosystem.
 
 ## Moving-target caveat
 
-shadcn/ui is a copy-paste component collection, not a versioned library — "versions" are CLI/registry eras, and its variable set shifted with the Tailwind v3→v4 transition (HSL channel triplets vs OKLCH values, `tailwind.config` vs CSS `@theme`). Profiles therefore track **eras, not semver**: a `tailwind-v3` profile and a `tailwind-v4` profile, selected via target option (`"options": { "era": "tailwind-v4" }`). The exporter README documents this deviation from normal version selection. Verify the current variable set against shadcn's theming docs at implementation time.
+shadcn/ui is a copy-paste component collection, not a versioned library — "versions" are CLI/registry eras, and its variable set shifted with the Tailwind v3→v4 transition (HSL channel triplets vs OKLCH values, `tailwind.config` vs CSS `@theme`). Both of its profiles follow Tailwind CSS, so the manifest declares them as **Tailwind ranges**: `"shadcn": [">=3 <4", ">=4 <5"]`, the `tailwind-v3` and `tailwind-v4` profiles. A project selects one with its Tailwind version (`"version": "3.4.17"`, [configuration.md](../configuration.md#target-versions)), which core matches to a range and hands the exporter as `ctx.targetProfile`; `"options": { "era": "tailwind-v4" }` stays as an explicit override, and when both are set and disagree the era wins with a `TST2105` warning. With neither, the profile is `tailwind-v4`. Verify the current variable set against shadcn's theming docs at implementation time.
 
 ## Emitted artifacts (tailwind-v4 profile)
 
@@ -45,6 +45,6 @@ The slot's own `description` and `deprecated` (`entryNotes()` from `@transtyle/i
 
 ## Notes
 
-Both era profiles are implemented in the walking skeleton (`@transtyle/exporter-shadcn`), selected via target `options.era` using [target instances](../configuration.md#target-instances). In the tailwind-v3 profile, OKLCH → HSL conversion may clamp out-of-sRGB-gamut colors; clamped variables are classified `approximated` with a gamut note.
+Both era profiles are implemented in the walking skeleton (`@transtyle/exporter-shadcn`), selected by the target's Tailwind `version` or its `options.era`, one per [target instance](../configuration.md#target-instances). In the tailwind-v3 profile, OKLCH → HSL conversion may clamp out-of-sRGB-gamut colors; clamped variables are classified `approximated` with a gamut note.
 
 No `transtyle doc` capability planned (shadcn's site documents the collection, not a themable build). Tier 1 preview covers the need with component samples. This exporter is also the primary showcase inside the [Storybook exporter](storybook.md)'s preview integration.

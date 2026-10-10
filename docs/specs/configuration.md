@@ -45,7 +45,7 @@ Every key below is accepted by the shipped schema — this block validates clean
   },
 
   "targets": {
-    "bootstrap": { "output": "dist/bootstrap" },
+    "bootstrap": { "output": "dist/bootstrap", "version": "5.3.8" }, // optional: the framework version (see Target versions)
     "shadcn": { "output": "dist/shadcn", "options": { "era": "tailwind-v4" } },
     "echarts": { "output": "dist/echarts" },
     "storybook": {
@@ -68,10 +68,9 @@ Every key below is accepted by the shipped schema — this block validates clean
 
 `derivation.require` lists tokens that must be authored or aliased; one that is derived, defaulted or absent fails with `TST1202`. A color role named at the role (`semantic.color.primary`) checks its `.solid` cell. An entry `completeness:<level>` (`minimal`, `recommended`, `complete`) expands to that [completeness level](../architecture/derivation.md#completeness-levels)'s items, per-scheme ones included, and fails each unauthored one; another `completeness:` name is a `TST1010` error. `check.completeness` only picks the level `build`/`check` summarize and `check --json` reports on (default `recommended`); it never changes the exit code ([cli.md](cli.md#check---completeness--what-to-author-next)).
 
-Two keys an earlier draft of this page showed are **specced, and rejected today** — a config carrying either fails to load with `TST1010: unknown property`:
+One key an earlier draft of this page showed is **specced, and rejected today** — a config carrying it fails to load with `TST1010: unknown property`:
 
 - `derivation.overrides` — per-slot rule overrides ([derivation.md](../architecture/derivation.md#user-defined-rules-specced--not-implemented)). Author the token instead; authored always wins.
-- `targets.<t>.version` — requesting a framework version so core can select a compat profile ([versioning.md](../architecture/versioning.md)). Where a target has more than one shape, it is an explicit option today: shadcn's `era`.
 
 Target-specific `options` are defined and schema-validated by each exporter (the exporter ships its options schema; unknown options are errors, not silent ignores). An exporter that declares none — Bootstrap, ECharts, css-variables — rejects any `options` object at all.
 
@@ -104,6 +103,23 @@ A `targets` key is an **instance name**, not necessarily an exporter name. The o
 ```
 
 `transtyle build shadcn-v3` selects by instance name. Variant selection lives here — in reviewed, locked config — never in CLI flags, for the reproducibility reasons in [cli.md](cli.md). (Gap found while implementing the walking skeleton; the original spec assumed one instance per exporter.)
+
+`exporter` may also be a path ending in `.json` (`"./ourlib.mapping.json"`, relative to the project directory): a [declarative mapping](declarative-mapping.md), a table that is an exporter without code ([ADR-0017](../adr/0017-declarative-exporters.md)). Core reads it itself; a malformed one is `TST1014`, a row naming an unknown slot `TST1015`.
+
+### Target versions
+
+`version` on a target is the framework version the project uses, as `major.minor.patch` (`"5.3.8"`; a partial `"5.3"` or a prerelease is `TST1010`). Core matches it against the exporter manifest's `targets` ranges ([versioning.md](../architecture/versioning.md#target-framework-versions-adr-0006), [ADR-0006](../adr/0006-version-ranges.md)), selects the covering profile and passes both to the exporter (`ctx.targetVersion`, `ctx.targetProfile`). The build's `report.json` records `version: { requested, profile }`.
+
+```jsonc
+"targets": {
+  "bootstrap": { "output": "dist/bootstrap", "version": "5.3.8" }, // profile ">=5.3 <6"
+  "shadcn":    { "output": "dist/shadcn", "version": "3.4.17" }    // shadcn follows Tailwind: profile ">=3 <4", era tailwind-v3
+}
+```
+
+- A version outside every declared range is `TST1313` (error) naming the ranges; so is a version asked of an exporter that declares none. Nothing is written for that target.
+- Without `version`, the exporter gets its newest profile (the last range its manifest lists) and the report has no `version`: output is byte-identical to a config that never had the key.
+- shadcn has no version of its own; its two profiles follow Tailwind CSS, so its `version` is the project's Tailwind version. `options.era` stays as an explicit override: when both are set and disagree, the era wins and the build warns (`TST2105`).
 
 ## Token layering
 
@@ -294,6 +310,6 @@ This file, with the manifest above and the standard rule pack, is a _complete, c
 
 ## Validation & DX
 
-- Published JSON Schemas for manifest and token files (`https://transtyle.dev/schemas/config/v0.json`, `https://transtyle.dev/schemas/tokens/v0.json`; served today from the docs site under `/schemas/`) → editor autocomplete and red squiggles with zero custom tooling. The token-file schema is generated from the catalog by `npm run gen:schemas`, never hand-edited; `check:schemas` proves it current. It completes catalog slot paths and the alias strings that point at them, closes every catalog group except the ones users extend (`semantic`, `semantic.color`, `semantic.font`, `component`), and leaves custom tokens valid.
+- Published JSON Schemas for manifest, token and mapping files (`https://transtyle.dev/schemas/config/v0.json`, `https://transtyle.dev/schemas/tokens/v0.json`, `https://transtyle.dev/schemas/mapping/v0.json`; served today from the docs site under `/schemas/`) → editor autocomplete and red squiggles with zero custom tooling. The token-file schema is generated from the catalog by `npm run gen:schemas`, never hand-edited; `check:schemas` proves it current. It completes catalog slot paths and the alias strings that point at them, closes every catalog group except the ones users extend (`semantic`, `semantic.color`, `semantic.font`, `component`), and leaves custom tokens valid.
 - `transtyle init` scaffolds a manifest and token files like the pair above: on a terminal it asks for the brand color, color schemes, targets, preset and layout (each also a flag), and checks the result before it exits ([cli.md](cli.md#init)).
 - Diagnostics about authored tokens carry `file`, `line`, `column` and the token `path` (source maps from LOAD; derived values and config-level codes have none, see [validation-and-coverage.md](validation-and-coverage.md#source-locations)), and every diagnostic carries a stable code (`TST1042`) for suppression (`check.suppress`) and docs deep-links.

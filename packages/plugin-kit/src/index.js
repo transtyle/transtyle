@@ -23,7 +23,7 @@
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { compile, checkExporterDiagnostics, checkPluginCompat, customTokens, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
+import { compile, checkExporterDiagnostics, checkPluginCompat, parseRange, customTokens, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures');
 const COVERAGE_CLASSES = new Set(['native', 'derived', 'approximated', 'dropped', 'unsupported']);
@@ -142,6 +142,8 @@ function makeCtx(config, ir, options = {}) {
     projectName: config.name ?? 'design-system',
     siblings: [],
     customTokens: customTokens(ir),
+    targetVersion: null,
+    targetProfile: null,
   };
 }
 
@@ -204,6 +206,19 @@ export async function conformance(plugin, opts = {}) {
         ...mismatches.map(({ field, declared, provided }) => `${field} "${declared}" does not accept ${provided.map((v) => `"${v}"`).join(', ')}, what this @transtyle/core provides`),
         ...missing.map((field) => `${field} is missing or not a string`),
       ].join('; '));
+    // Version profiles (ADR-0006): core matches a target's requested version
+    // against these ranges, so one it can't parse (an era name, a prerelease)
+    // would never match and every `version` would fail with TST1313.
+    const targets = m.targets;
+    const badRanges = targets === undefined ? []
+      : !targets || typeof targets !== 'object' || Array.isArray(targets) ? ['targets must be an object of { <framework>: [<range>, …] }']
+        : Object.entries(targets).flatMap(([fw, ranges]) => (Array.isArray(ranges) && ranges.length > 0
+          ? ranges.filter((r) => parseRange(r) === null).map((r) => `${fw}: ${JSON.stringify(r)} is not a version range`)
+          : [`${fw}: must be a non-empty array of version ranges`]));
+    add('manifest-targets-ranges',
+      badRanges.length === 0,
+      'versioning.md#target-framework-versions-adr-0006',
+      `${list(badRanges)} (ranges use node-semver syntax without prerelease tags: "*", ">=5.3 <6", "^4", "1 - 2", "3 || 4")`);
   }
 
   if (plugin.optionsSchema) {

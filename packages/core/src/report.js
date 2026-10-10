@@ -26,13 +26,14 @@ export const REPORT_SCHEMA_ID = 'https://transtyle.dev/schemas/report/v0.json';
  *   `normalized`, or the target's own mode view): when given, each row whose `slot` has a DTCG
  *   `$description` or reaches a `$deprecated` token carries it (`description`, `deprecated`,
  *   `deprecatedBy`), read from the default mode
+ * @param {{ requested: string, profile: string }|null} [report.version] what the target asked for and the profile that decided the output (ADR-0006); left out when null
  * @param {object[]} [report.diagnostics] the build's diagnostics (`Diagnostics#items`)
  * @param {object[]} [report.suppressed] what `check.suppress` silenced (`Diagnostics#suppressed`)
  * @param {string[]} [report.files] the written paths, relative to the project
  * @param {object} [report.customVocabulary] the custom-vocabulary summary (issue #51), under `coverage`
  * @returns the report object, ready for `JSON.stringify`
  */
-export function buildReport({ target, config, options, coverage, reads, normalized, diagnostics = [], suppressed = [], files = [], customVocabulary }) {
+export function buildReport({ target, config, options, version, coverage, reads, normalized, diagnostics = [], suppressed = [], files = [], customVocabulary }) {
   const items = normalized ? withMetadata(coverage, normalized.modes[normalized.defaultMode]) : coverage;
   const counts = {};
   for (const item of items) counts[item.class] = (counts[item.class] ?? 0) + 1;
@@ -41,6 +42,7 @@ export function buildReport({ target, config, options, coverage, reads, normaliz
     target,
     ...(config !== undefined ? { config } : {}),
     options: options ?? {},
+    ...(version ? { version } : {}),
     generatedBy: 'transtyle 0.1.0 (walking skeleton)',
     coverage: { counts, items, ...(customVocabulary && { customVocabulary }) },
     ...(reads !== undefined ? { reads } : {}),

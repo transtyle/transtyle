@@ -86,7 +86,10 @@ Eleven exporters ship today:
 | [css-variables](docs/specs/exporters/css-variables.md) | plain custom properties — also the reference plugin implementation           |
 
 The core knows nothing about any of them: every one is a plugin on the same public API, so a
-third-party exporter is a package name in your config.
+third-party exporter is a package name in your config. A target that is only a list of variables
+needs no code at all: a [mapping table](docs/specs/declarative-mapping.md) of variable → catalog
+slot is an exporter on its own. Targets can also pin the framework version they're built for
+(`"version": "5.3.8"`), and the build refuses one the exporter doesn't cover.
 
 Modes go beyond light and dark. `density`, `contrast`, `motion` and `brand` (or any dimension you
 declare) compile to attribute blocks in the CSS targets, with `prefers-contrast` and
@@ -194,13 +197,13 @@ guide to [driving Transtyle with AI agents](website/src/docs/ai-agents.md), and 
 
 Engineering documentation lives in [docs/](docs/):
 
-| Area           | Documents                                                                                                                                                                                                                                                                    |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Why / what     | [VISION.md](VISION.md), [prior art](docs/prior-art.md), [naming](docs/naming.md)                                                                                                                                                                                             |
-| Architecture   | [overview](docs/architecture/overview.md), [pipeline](docs/architecture/pipeline.md), [IR](docs/architecture/ir.md), [derivation](docs/architecture/derivation.md), [plugins](docs/architecture/plugins.md), [versioning](docs/architecture/versioning.md)                   |
-| Specifications | [configuration](docs/specs/configuration.md), [CLI](docs/specs/cli.md), [validation & coverage](docs/specs/validation-and-coverage.md), [doc generation](docs/specs/doc-generation.md), [component layer](docs/specs/component-layer.md), [exporters](docs/specs/exporters/) |
-| Decisions      | [docs/adr/](docs/adr/)                                                                                                                                                                                                                                                       |
-| Process        | [CONTRIBUTING.md](CONTRIBUTING.md), [RELEASING.md](RELEASING.md)                                                                                                                                                                                                             |
+| Area           | Documents                                                                                                                                                                                                                                                                                                                               |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Why / what     | [VISION.md](VISION.md), [prior art](docs/prior-art.md), [naming](docs/naming.md)                                                                                                                                                                                                                                                        |
+| Architecture   | [overview](docs/architecture/overview.md), [pipeline](docs/architecture/pipeline.md), [IR](docs/architecture/ir.md), [derivation](docs/architecture/derivation.md), [plugins](docs/architecture/plugins.md), [versioning](docs/architecture/versioning.md)                                                                              |
+| Specifications | [configuration](docs/specs/configuration.md), [CLI](docs/specs/cli.md), [validation & coverage](docs/specs/validation-and-coverage.md), [doc generation](docs/specs/doc-generation.md), [component layer](docs/specs/component-layer.md), [declarative mappings](docs/specs/declarative-mapping.md), [exporters](docs/specs/exporters/) |
+| Decisions      | [docs/adr/](docs/adr/)                                                                                                                                                                                                                                                                                                                  |
+| Process        | [CONTRIBUTING.md](CONTRIBUTING.md), [RELEASING.md](RELEASING.md)                                                                                                                                                                                                                                                                        |
 
 ## Naming
 
