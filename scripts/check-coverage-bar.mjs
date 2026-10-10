@@ -11,10 +11,11 @@
  *      (657); PrimeNG reports per-family counts whose sums must equal the
  *      inventory's per-family totals (2759 slots across 98 families), so a
  *      dropped slot shows up as an arithmetic mismatch, not a silent gap.
- *      Mantine and Chakra are between the two (graph-shaped surfaces, one
- *      rule for both, GRAPH_TARGETS below): their families (Mantine's theme
- *      object and resolver blocks; Chakra's tokens, semantic tokens, styles
- *      and recipes) are reconciled by arithmetic like PrimeNG's, and every
+ *      Mantine, Chakra and MUI are between the two (graph-shaped surfaces,
+ *      one rule for all three, GRAPH_TARGETS below): their families
+ *      (Mantine's theme object and resolver blocks; Chakra's tokens, semantic
+ *      tokens, styles and recipes; MUI's theme leaves and CSS-variable
+ *      blocks) are reconciled by arithmetic like PrimeNG's, and every
  *      entry left on the target's default gets its own named row like
  *      Bootstrap's, so the count of those rows must equal the family's
  *      "on <target>'s default" count. A derived family (Chakra's recipes)
@@ -68,6 +69,7 @@ const { SURFACE_FAMILY_ROW, surfaceCounts } = await import(join(root, 'packages/
 const GRAPH_TARGETS = [
   { key: 'mantine', label: 'Mantine', pkg: '@mantine/core', versionKey: 'mantineVersion' },
   { key: 'chakra', label: 'Chakra', pkg: '@chakra-ui/react', versionKey: 'chakraVersion' },
+  { key: 'mui', label: 'MUI', pkg: '@mui/material', versionKey: 'muiVersion' },
 ];
 
 // Drift guard for the PrimeNG inventory (Bootstrap's lives in
@@ -90,7 +92,8 @@ const GRAPH_TARGETS = [
 
 // The same drift guard for the graph-shaped inventories, each extracted from
 // the installed package (Mantine's DEFAULT_THEME and defaultCssVariablesResolver,
-// Chakra's defaultConfig resolved through defaultSystem).
+// Chakra's defaultConfig resolved through defaultSystem, MUI's createTheme in
+// CSS-variables mode).
 for (const t of GRAPH_TARGETS) {
   const dir = join(root, `packages/exporter-${t.key}`);
   t.inventory = JSON.parse(readFileSync(join(dir, 'surface-inventory.json'), 'utf8'));
@@ -190,7 +193,7 @@ for (const example of EXAMPLES) {
     summary.push([example, 'primeng', pnInventory.counts.total, tally(items), totals?.slot]);
   }
 
-  // ---- Mantine, Chakra: per-family arithmetic, plus a named row per entry on the target's default ----
+  // ---- Mantine, Chakra, MUI: per-family arithmetic, plus a named row per entry on the target's default ----
   for (const t of GRAPH_TARGETS) reconcileGraph(example, t);
 }
 
@@ -290,8 +293,8 @@ for (const [example, target, surfaceSize, counts, note] of summary) {
 console.log(
   '\n  Not a ranking — the surfaces have different ceilings. PrimeNG resolves refs at\n' +
     '  runtime (one semantic binding cascades to many slots), Bootstrap binds per variable,\n' +
-    '  Mantine computes most of its variables from a small theme object, and Chakra\'s\n' +
-    '  recipes read its tokens by name.\n' +
+    '  Mantine and MUI compute most of their variables from a small theme object, and\n' +
+    '  Chakra\'s recipes read its tokens by name.\n' +
     '  Bootstrap is at its floor (~0 slots reachable without new catalog vocabulary); PrimeNG\n' +
     '  has ~221. Compare each target to its own history, not to another one.',
 );
@@ -302,5 +305,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `\n✔ coverage bar: every slot of the bootstrap, primeng, mantine and chakra surfaces is accounted for on all ${EXAMPLES.length} examples; no silent unsupported\n`,
+  `\n✔ coverage bar: every slot of the bootstrap, primeng, mantine, chakra and mui surfaces is accounted for on all ${EXAMPLES.length} examples; no silent unsupported\n`,
 );

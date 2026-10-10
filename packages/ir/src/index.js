@@ -119,7 +119,7 @@ export function droppedDimensions(dimensionNames, expressed, reasons = {}) {
     }));
 }
 
-/** AL3 for graph-shaped target surfaces (Mantine, Chakra): see surface.js. */
+/** AL3 for graph-shaped target surfaces (Mantine, Chakra, MUI): see surface.js. */
 export { SURFACE_FAMILY_ROW, surfaceCounts, surfaceRows, surfaceStatus } from './surface.js';
 
 /**

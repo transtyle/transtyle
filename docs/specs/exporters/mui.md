@@ -63,20 +63,20 @@ No numbered ramps are emitted, and `palette.grey` stays MUI's. It feeds a handfu
 
 ### Page colours
 
-| MUI                                       | Catalog                                        | Class        | Notes                                                                                                                      |
-| ----------------------------------------- | ---------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `background.default` / `background.paper` | `elevation.0.surface` / `elevation.1.surface`  | native       | every Paper starts from `paper`; the overlays below lift it per elevation                                                  |
-| `text.primary` / `secondary` / `disabled` | `text.base` / `text.muted` / `text.disabled`   | native       | `text.strong`, `subtle` and `inverse` have no MUI rung: dropped                                                            |
-| `action.disabled`                         | `text.disabled`                                | native       | the text of a disabled button                                                                                              |
-| `action.disabledOpacity`                  | `opacity.disabled`                             | native       |                                                                                                                            |
-| `action.hover` / `action.selected`        | `neutral.tint-hover` / `neutral.tint-selected` | approximated | MUI's are 4% and 8% veils over any surface; the neutral washes are opaque                                                  |
-| `divider`, `TableCell.border`             | `border.base`                                  | native       | `TableCell.border` replaces MUI's lightened divider                                                                        |
-| `ring` (extra key)                        | `ring`                                         | native       | read by the focus ring (below)                                                                                             |
-| `transtyle.scrim` (extra key)             | `scrim`                                        | native       | read by `MuiDialog`'s backdrop; Menu and Popover backdrops stay invisible                                                  |
-| `link.*`                                  | —                                              | dropped      | MUI's Link reads `palette[color].main`: links follow the colour they are given                                             |
-| `palette.categorical.*`, `border-width.*` | —                                              | dropped      | no chart slot; MUI writes `1px` borders literally                                                                          |
-| `border.{subtle,strong,field}`            | —                                              | dropped      | `divider` is MUI's one border colour (`border.base`); the outlined input's border is a fixed alpha in its component styles |
-| `inverse.{surface,text}`                  | —                                              | dropped      | the Tooltip is a fixed grey 700 at 92% in both schemes, in its component styles                                            |
+| MUI                                       | Catalog                                        | Class        | Notes                                                                                                                                                    |
+| ----------------------------------------- | ---------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `background.default` / `background.paper` | `elevation.0.surface` / `elevation.1.surface`  | native       | every Paper starts from `paper`; the overlays below lift it per elevation                                                                                |
+| `text.primary` / `secondary` / `disabled` | `text.base` / `text.muted` / `text.disabled`   | native       | `text.strong`, `subtle` and `inverse` have no MUI rung: dropped                                                                                          |
+| `action.disabled`                         | `text.disabled`                                | native       | the text of a disabled button                                                                                                                            |
+| `action.disabledOpacity`                  | `opacity.disabled`                             | native       |                                                                                                                                                          |
+| `action.hover` / `action.selected`        | `neutral.tint-hover` / `neutral.tint-selected` | approximated | MUI's are 4% and 8% veils over any surface; the neutral washes are opaque                                                                                |
+| `divider`, `TableCell.border`             | `border.base`                                  | native       | `TableCell.border` replaces MUI's lightened divider                                                                                                      |
+| `ring` (extra key)                        | `ring`                                         | native       | read by the focus ring (below)                                                                                                                           |
+| `transtyle.scrim` (extra key)             | `scrim`                                        | native       | read by `MuiDialog`'s backdrop; Menu and Popover backdrops stay invisible                                                                                |
+| `link.*`                                  | —                                              | dropped      | MUI's Link reads `palette[color].main`: links follow the colour they are given                                                                           |
+| `palette.categorical.*`, `border-width.*` | —                                              | dropped      | no chart slot; MUI writes `1px` borders literally                                                                                                        |
+| `border.{subtle,strong,field}`            | —                                              | dropped      | `divider` is MUI's one border colour (`border.base`); the outlined input's border is a fixed alpha in its component styles                               |
+| `inverse.{surface,text}`                  | —                                              | dropped      | the tooltip reads `palette.Tooltip.bg`, a grey 700 at 92% in both schemes, with `common.white` text; not written yet (the inventory's `Tooltip-bg` rows) |
 
 ## Elevation
 
@@ -112,7 +112,7 @@ MUI's `shadows` is not per scheme. Each shadow is therefore written into the pal
 | `size.control.*`                                       | —                                                             | dropped                | MUI's buttons and inputs are padding-driven: no size sets a height                                                                    |
 | `density` (and any mode dimension but `color-scheme`)  | —                                                             | dropped                | `droppedDimensions(…, ['color-scheme'])`, as for every exporter except css-variables                                                  |
 
-`opacity.inputPlaceholder`, `inputUnderline`, `switchTrackDisabled` and `switchTrack` (per scheme) are themable and have no catalog slot: one `unsupported` row with the `opacity.component` meaning ([catalog signals](../../findings/catalog-signals.md)).
+`opacity.inputPlaceholder`, `inputUnderline`, `switchTrackDisabled` and `switchTrack` (per scheme) are themable and have no catalog slot: each is an `unsupported` row of the surface inventory (below) with the `opacity.component` meaning ([catalog signals](../../findings/catalog-signals.md)).
 
 ## Focus ring
 
@@ -132,9 +132,45 @@ MUI's components already read `shape.borderRadius` (here `radius.control`) and p
 
 Acme authors only the button layer, so its buttons are pills with its own padding while its inputs keep `shape.borderRadius`; Cathode, GOV.UK and Carbon author no tier and keep MUI's proportions. `check:component-tier` asserts all three cases and the tooltip measure on its fixture.
 
-## Not yet measured against MUI's whole surface
+## Measured against MUI's whole surface
 
-Bootstrap, PrimeNG and Mantine carry a checked-in surface inventory that `check:coverage-bar` reconciles against every report. MUI's equivalent is a follow-up, as Chakra's is ([#166](https://github.com/transtyle/transtyle/issues/166)): extract it at runtime from the installed `@mui/material`, the way `exporter-mantine/tools/extract-surface.mjs` reads Mantine's defaults ([#173](https://github.com/transtyle/transtyle/pull/173)) (`createTheme({ cssVariables: …, colorSchemes: { light: true, dark: true } }).generateStyleSheets()` lists 231 variables in 9.4), plus the theme leaves that are not variables (`transitions`, `breakpoints`, the typography variants, `focusVisible`), recording for each per-component palette token whether MUI's default is a reference to another palette variable or a literal. `components.*.styleOverrides` is open-ended and stays out of the denominator, apart from the slots in the table above. Until it lands, the rows above are what the report classifies, and nothing proves the list is the whole surface.
+Like Bootstrap, PrimeNG, Mantine and Chakra, MUI carries a checked-in surface inventory, `packages/exporter-mui/surface-inventory.json`, that `check:coverage-bar` reconciles against every report.
+
+<!-- measured: mui.surface.total = 491 -->
+<!-- measured: mui.surface.families = 4 -->
+<!-- measured: mui.surface.variables = 387 -->
+<!-- measured: mui.surface.theme = 104 -->
+
+**What it holds.** `tools/extract-surface.mjs` calls `createTheme()` from the installed `@mui/material` (a demo dependency, never a package dependency) the way this exporter does, in CSS-variables mode with both colour schemes, and writes 491 entries in 4 families, Mantine's. Three are the CSS variables `generateStyleSheets()` writes, per block, 387 in all (232 distinct names in 9.5.0; the mapping study counted 231 in 9.4): `variables` for `:root` (spacing, shape, the 25 shadows, z-index, the typography shorthands), `light` and `dark` for the palette, the per-component palette tokens, `opacity` and the dark scheme's 25 `overlays`. The fourth, `theme`, holds the 104 leaves no variable carries that `createTheme()` reads anyway: the typography variants field by field, the transitions, the breakpoints, the opt-in `focusVisible` ring as MUI resolves it when turned on, `motion.reducedMotion`, and the two palette parameters of each scheme (`tonalOffset`, `contrastThreshold`). `components.*.styleOverrides` is open-ended and stays out of the denominator: the slots of it the exporter writes have their rows in the tables above. Nothing is folded; MUI's surface is small enough for the grey ramp's fourteen steps to be fourteen entries.
+
+**How an entry depends on the theme.** Each entry records `path`, the `ThemeOptions` leaf that sets it (`colorSchemes.light.palette.primary.main`, `shadows.3`, `typography.h1.fontSize`), and `from`, what MUI computes it from. It is measured, as Mantine's is: the extractor changes one leaf at a time in the options (a colour twice, once dark and once light, because MUI picks contrast text by luminance), creates the theme again and records which entries moved. A dependency that reaches an entry only through another settable leaf is probed once more with that leaf pinned, and dropped if the entry no longer moves, so `from` lists what an entry reads directly: `--mui-font-h1` reads the four `typography.h1` fields, not `typography.fontSize`. The `var(--mui-…)` a value references are added, and each variable records `kind`: `reference` when MUI points it at another palette variable (`--mui-palette-AppBar-defaultBg` is `var(--mui-palette-grey-100)`), `literal` when MUI writes the value out, computed (`--mui-palette-Slider-primaryTrack` is `primary.main` lightened at creation) or constant (`--mui-palette-FilledInput-bg`). A palette colour MUI ships is a literal ramp, while one passed in the options gets its missing shades from `main`; a probe of one shade passes MUI's other shades as they are, so each shade is its own settable entry. The extraction is deterministic: sorted, one entry per line.
+
+**Classification** (`src/surface-coverage.js`; the three-way walk and the report rows are `@transtyle/ir`'s `surfaceStatus()` and `surfaceRows()`, shared with Mantine and Chakra). An entry is **set** when its `path` is a leaf of the emitted options; it **follows** when it is not written but everything in its `from` is set or follows, so MUI derives it from this theme: every `*Channel` variable, the typography shorthands, the Slider, LinearProgress and Switch tracks MUI lightens from each role's `main`, the Snackbar it inverts from `background.default`. Otherwise it keeps **MUI's default**, with a reason from the module's `REASONS` table, matched by id pattern, and its catalog-signals `meaning` (`color.named-palette`, `opacity.component`, `target.config`, `scale.extra-rung`, `type.text-transform`, `focus.ring-composite`). An entry on MUI's default only because something it reads is gets a note naming that, with the same class and meaning; one the exporter writes from a catalog slot the design system does not define names the slot. A design system with no dark scheme (GOV.UK) has one reason for the dark block, which MUI then does not write at all. An entry with no reason gets a catch-all the check refuses on the four examples, so an entry new in a MUI upgrade needs a reason of its own.
+
+**The reconciliation rule** is Mantine's: one summary row per family, `light.* (155 entries)` with `n set · n follow · n on MUI's default`, whose counts must add up to the family's size, and a named row with its note for every entry on MUI's default. The check fails when a fresh extraction differs from the checked-in file (a MUI upgrade, or a hand edit), with `node packages/exporter-mui/tools/extract-surface.mjs --write` in the message. The named rows replace the single `colorSchemes.*.opacity.*` row the report carried before.
+
+<!-- measured: acme.mui.set = 240 -->
+<!-- measured: acme.mui.follow = 119 -->
+<!-- measured: acme.mui.default = 132 -->
+<!-- measured: cathode.mui.default = 132 -->
+<!-- measured: carbon.mui.default = 132 -->
+<!-- measured: govuk.mui.set = 160 -->
+<!-- measured: govuk.mui.follow = 65 -->
+<!-- measured: govuk.mui.default = 266 -->
+
+| Example                 | Set | Follow | MUI's default |
+| ----------------------- | --- | ------ | ------------- |
+| Acme, Cathode, Carbon   | 240 | 119    | 132           |
+| GOV.UK (no dark scheme) | 160 | 65     | 266           |
+
+On Acme, the 132 defaults are MUI's own colour vocabulary (the grey ramp and the `common` constants in both schemes, and the per-component tokens that read them: Avatar, Chip, AppBar, the Stepper lines, the inherit Button, the Switch thumb), its state veils and their strengths (`action.hoverOpacity` and its kin, `action.focus`, `action.disabledBackground`, the filled input's backgrounds) and the four per-component opacities, the z layers of the mobile stepper, the FAB and the speed dial, the light weight, the `pxToRem` base, the uppercase button and overline, the `inherit` variant, the ring's style, width and offset, `reducedMotion`, the two palette parameters, and four findings of their own:
+
+- **Letter spacing.** No example's type roles carry a `letterSpacing`, so MUI's Roboto tracking (`h1` −0.01562em to `overline` 0.08333em) stays on all thirteen variants, each reported against its type role.
+- **The outlined input's border.** MUI draws the outlined input's border, the input underline, the switch track and ButtonGroup's dividers from `common.onBackground` at a fixed alpha (`alpha(onBackground, 0.23)`), so neither the design system's field border nor its base border, set on `divider`, reaches them: `dropped` against `semantic.color.border.field`.
+- **The icon colour.** `action.active` and the dark scheme's `text.icon` keep MUI's values. [Proposal 0005](../../proposals/0005-border-ladder-inverse-pair.md) binds icon colours to the text ladder rather than giving them vocabulary of their own, so they are `dropped` against `semantic.color.text.{base,muted}`: this exporter does not write them yet.
+- **The tooltip.** MUI's tooltip reads `palette.Tooltip.bg`, a grey 700 at 92% in both schemes, with `common.white` text. The catalog's inverse pair could reach the background, but this exporter does not write it yet: `dropped` against `semantic.color.inverse.surface`.
+
+GOV.UK adds every dark entry the other examples set or derive, under one reason: with no dark scheme, MUI writes no dark block. The dark entries already on MUI's default elsewhere (the grey ramp and what reads it, the veils, the palette parameters) keep their own reasons.
 
 ## Reserved dimensions: contrast, motion, brand
 

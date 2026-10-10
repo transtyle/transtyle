@@ -2,7 +2,8 @@
  * Surface classification shared by the exporters whose target's theming
  * surface is a graph: entries that read other entries (Mantine's CSS
  * variables computed from its theme object, Chakra's semantic tokens and
- * recipes reading its tokens). docs/specs/validation-and-coverage.md, "AL3".
+ * recipes reading its tokens, MUI's variables computed by createTheme()).
+ * docs/specs/validation-and-coverage.md, "AL3".
  *
  * Each exporter extracts its target's surface into a checked-in
  * `surface-inventory.json` whose entries carry `{ id, block, from? }`:
