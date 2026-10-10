@@ -17,7 +17,7 @@
     "@angular/core": "^22.0.0",
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
-    "@angular/router": "^22.0.0",
+    "@angular/router": "^22.2.0",
     "@primeuix/themes": "^3.0.0",
     "primeng": "^22.0.0",
     "rxjs": "~7.8.0",
