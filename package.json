@@ -93,5 +93,8 @@
     "playwright": "1.63.0",
     "prettier": "3.9.6",
     "satori": "0.33.4"
+  },
+  "overrides": {
+    "fflate": "0.7.5"
   }
 }
