@@ -400,15 +400,18 @@ export function mergeTrees(trees, onConflict = () => {}, onDefine = () => {}) {
   let idx = 0;
   const mergeInto = (dst, src, path) => {
     for (const [key, val] of Object.entries(src)) {
+      // JSON.parse keeps `__proto__` as a plain key, but assigning it would
+      // replace the object's prototype instead: it is never a token name.
+      if (key === '__proto__') continue;
       if (val !== null && typeof val === 'object' && !Array.isArray(val) && !('$value' in val)) {
-        if (!(key in dst)) dst[key] = {};
+        if (!Object.hasOwn(dst, key)) dst[key] = {};
         else if ('$value' in dst[key]) {
           onConflict([...path, key].join('.'), idx);
           dst[key] = {};
         }
         mergeInto(dst[key], val, [...path, key]);
       } else {
-        if (key in dst && !key.startsWith('$')) onConflict([...path, key].join('.'), idx);
+        if (Object.hasOwn(dst, key) && !key.startsWith('$')) onConflict([...path, key].join('.'), idx);
         if (!key.startsWith('$')) onDefine([...path, key].join('.'), idx);
         dst[key] = val;
       }
