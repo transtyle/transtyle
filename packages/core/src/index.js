@@ -12,7 +12,7 @@
 import path from 'node:path';
 import { loadConfigChain, mergeConfigChain, readTokenFiles, requireTokens, DEFAULT_CONFIG_FILE } from './load.js';
 import { writeResults } from './emit.js';
-import { MANIFEST_FILE, readManifests, renderManifest, reportDrift, staleFiles } from './manifest.js';
+import { MANIFEST_FILE, readManifests, renderManifest, reportDrift, reportOutOfDate, staleFiles } from './manifest.js';
 import { compileProject } from './pipeline.js';
 import { createDeclarativeExporter } from './declarative.js';
 import { readMappingFile } from './declarative-fs.js';
@@ -74,7 +74,10 @@ export { suggestBindings, SUGGEST_THRESHOLDS } from './suggest.js';
  * `drift: true` compares each selected target's output directory (under
  * `outRoot` when set) with the `transtyle-manifest.json` its last build wrote,
  * before anything is written, and warns (TST1312) about files changed or
- * removed outside transtyle (src/manifest.js). Off by default: only
+ * removed outside transtyle (src/manifest.js). Without `emit` (`check`) it
+ * also warns once per target (TST1315) when files that still match their
+ * manifest differ from what a fresh compile produces: the tokens moved on and
+ * nobody rebuilt. Off by default: only
  * `transtyle build` and `check` ask for it, so `explain`, `diff` and other API
  * callers never report on whatever output happens to sit next to the project.
  *
@@ -134,6 +137,15 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
         return found.items;
       }
     : undefined;
+  // Check only: a build rewrites the files at once, so telling the user they
+  // are out of date would be noise (TST1315, manifest.js).
+  const checkEmitted = drift && !emit
+    ? async (built) => {
+        const found = new Diagnostics();
+        await reportOutOfDate(manifests, built, projectDir, found);
+        return found.items;
+      }
+    : undefined;
 
   // A mapping file next to the config is an exporter too (#82, ADR-0017): read
   // here, so every caller of compile() gets it, and nothing is imported.
@@ -147,7 +159,7 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
     config, files, targets, loadExporter: loadWithMappings, knownExporters, skipExporters, debug, outRoot,
     apcaLoader: apcaLoader ?? (() => loadApca(projectDir)),
     root: path.resolve(projectDir).split(path.sep).join('/'),
-    configChain, origins, checkOutputs,
+    configChain, origins, checkOutputs, checkEmitted,
     // Without `emit`, nothing reads report.json: don't build it.
     reports: emit,
   });
