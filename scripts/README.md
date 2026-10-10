@@ -1,8 +1,8 @@
 # The checkers
 
-Twenty-nine scripts, one job each — twenty-six chained by `npm run check:all` and
-run individually by CI, plus three that guard a release, a deploy, and the
-history itself.
+Thirty scripts, one job each — twenty-six chained by `npm run check:all` and
+run individually by CI, plus four that guard a release, a deploy, the history
+itself, and the compiler's speed at scale.
 Every one exists because something real broke or could have: they are not a
 test suite grown for coverage, they are a list of mistakes this project has
 already made once.
@@ -39,9 +39,10 @@ already made once.
 | `check-release-tag.mjs`       | The dist-tag a release resolves to, and that a stable one can't arm the freeze by reflex                                                                                                                                                   |
 | `check-site-links.mjs`        | Every link in the built site sits under the Pages base path                                                                                                                                                                                |
 | `check-secrets.mjs`           | No credential or personal data in any blob, commit message or identity, ever                                                                                                                                                               |
+| `check-perf.mjs`              | 10,000 tokens, four mode combos, 10,000-link alias chains: compiles clean, in time and in memory                                                                                                                                           |
 
-The last three are not in `check:all`, because none of them grades a working
-tree.
+The last four are not in `check:all`: the first three do not grade a working
+tree, and the fourth grades it with a stopwatch.
 `check-release-tag` runs in the release workflow: on an ordinary tree it is
 _supposed_ to refuse, so chaining it into the everyday suite would make the
 suite red for being ordinary. `check-site-links` is a **post-build
@@ -58,6 +59,18 @@ routes (`withBase()`, the Sätteri plugin, its raw-node pass, the markdown text
 rewrite, absolute URLs assembled by hand in the sitemap and feed), and a
 source-level rule would have to know all five. The output knows none of them.
 
+`check-perf` compiles a generated 10,000-token design system with every
+exporter and holds it to a time and a memory budget, plus the same project at
+1,000 tokens to catch anything that grows faster than linearly on any machine
+(issue #97). Its budgets sit an order of magnitude above a normal run, but a
+timing can still fail for a reason that is not the tree (a laptop on battery, a
+busy runner), and `check:all` must be red only for the tree. So CI runs it as
+its own step, and so can you: `npm run check:perf`. Its deterministic half (the
+project compiles without an error, and long alias chains resolve) does not
+depend on the clock; the alias-chain part of it is also in `check-cli`, so
+`check:all` still catches a resolver that recurses per link. When it fails,
+`npm run bench` (below) shows which stage moved.
+
 `check-secrets` audits every blob that has ever existed in any ref, which does
 not change when you edit a file — running it on every `check:all` would re-scan
 167 commits to learn nothing. It belongs before a release, or after anything
@@ -65,6 +78,14 @@ unusual, and RELEASING.md says so. It also self-tests: each detector is checked
 against a synthetic positive before the scan, because a scanner whose regexes
 quietly stopped matching reports "clean" forever and reads exactly like a repo
 with nothing to find.
+
+`bench.mjs` (`npm run bench`) neither checks nor renders: it measures. It
+compiles generated design systems from 1,000 to 100,000 tokens (from
+`lib/large-ds.mjs`, the same generator `check-perf` uses), each in its own
+process, and prints a table of the median compile time, the time of each
+pipeline stage and each exporter, and the peak memory. Nothing reads its
+output; [docs/findings/performance.md](../docs/findings/performance.md) records
+a run with its machine and date.
 
 Nine scripts here render rather than check:
 

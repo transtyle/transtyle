@@ -2246,6 +2246,54 @@ try {
   }
 }
 
+// ---------- #97: a 10,000-link alias chain ----------
+// The resolver recursed once per link, so a chain of ~4,500 aliases overflowed
+// the stack: `check` printed `Maximum call stack size exceeded`, exit 2, no
+// code and no token. Two chains, one ending on an authored token (resolved in
+// NORMALIZE) and one on a slot DERIVE fills (resolved after it), must check
+// clean; closed into a loop, the long chain is one TST1104 and no TST1105.
+// Timing at this size is check:perf's job, not this one's.
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-97-'));
+  const tp = join(dir, 'tokens/brand.tokens.json');
+  const LINKS = 10000;
+  // `check` prints the adoption report (#61), one entry per custom token:
+  // 20,000 of them overrun spawnSync's default 1 MB buffer, so these runs get more.
+  const runBig = (args) => {
+    const r = spawnSync('node', [cli, ...args], { encoding: 'utf8', maxBuffer: 1 << 30 });
+    return { code: r.status ?? 1, out: (r.stdout ?? '') + (r.stderr ?? ''), stdout: r.stdout ?? '' };
+  };
+  const check = () => {
+    const r = runBig(['check', '--cwd', dir, '--json']);
+    try { return { code: r.code, diagnostics: JSON.parse(r.stdout).diagnostics }; } catch { return { code: r.code, diagnostics: [], out: r.out.slice(0, 500) }; }
+  };
+  try {
+    run(['init', 'chain-ds', '--cwd', dir]);
+    const scaffold = JSON.parse(readFileSync(tp, 'utf8'));
+    const withChains = (authoredEnd, derivedEnd) => {
+      const tree = structuredClone(scaffold);
+      tree.semantic.chain = { $type: 'color', authored: {}, derived: {} };
+      for (const [kind, end] of [['authored', authoredEnd], ['derived', derivedEnd]]) {
+        for (let i = 0; i < LINKS; i++) {
+          tree.semantic.chain[kind][`l${i}`] = { $value: i === LINKS - 1 ? end : `{semantic.chain.${kind}.l${i + 1}}` };
+        }
+      }
+      writeFileSync(tp, JSON.stringify(tree));
+    };
+    withChains('{option.color.brand.500}', '{semantic.color.primary.solid-hover}');
+    let r = runBig(['check', '--cwd', dir]);
+    expect(`#97: two ${LINKS}-link alias chains check clean (exit 0)`, r.code === 0 && r.out.includes('✔ check passed'), r.out.slice(0, 500));
+
+    withChains('{semantic.chain.authored.l0}', '{semantic.color.primary.solid-hover}');
+    r = check();
+    const cycles = r.diagnostics.filter((d) => d.code === 'TST1104');
+    expect(`#97: a ${LINKS}-link loop is one TST1104 (exit 1)`, r.code === 1 && cycles.length === 1, r.out ?? `${cycles.length} TST1104`);
+    expect(`#97: the loop's TST1104 lists all ${LINKS} links and no TST1105 follows`, cycles[0]?.message.split(' → ').length === LINKS + 1 && !r.diagnostics.some((d) => d.code === 'TST1105'), r.diagnostics.map((d) => d.code).join(', '));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 if (failures) {
   console.error(`\n✖ check-cli: ${failures} failure(s)`);
   process.exit(1);

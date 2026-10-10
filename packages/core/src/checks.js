@@ -36,10 +36,11 @@ function nearClusters(items, map) {
   const parent = items.map((_, i) => i);
   const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
   const dist = new Map();
+  const memo = new Map();
+  const roots = items.map((item) => aliasRoot(map, item.path, memo));
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
-      const ra = aliasRoot(map, items[i].path);
-      if (ra !== null && ra === aliasRoot(map, items[j].path)) continue;
+      if (roots[i] !== null && roots[i] === roots[j]) continue;
       const d = deltaEOK(items[i].value, items[j].value);
       if (d >= DISTINGUISHABLE_DELTA_E) continue;
       dist.set(`${i}|${j}`, d);
@@ -295,9 +296,54 @@ function sameColor(a, b) {
   return Math.min(d, 360 - d) <= EPS.h;
 }
 
-function sameOptionValue(a, b) {
-  if (isColor(a) || isColor(b)) return isColor(a) && isColor(b) && sameColor(a, b);
-  return JSON.stringify(a) === JSON.stringify(b);
+/**
+ * Option tokens grouped by value, in first-seen order: a token joins the first
+ * group of its type whose first value it matches, or starts its own. Other
+ * values match exactly, so they are keyed; colours match within EPS
+ * (sameColor), so they sit on a grid of L × C cells 2 × EPS wide, and a colour
+ * is compared only with the groups in its own and the eight neighbouring cells,
+ * which hold every group it can match. The plain scan over every group this
+ * replaces was quadratic: at 10,000 tokens it cost ~130 ms, more than the rest
+ * of the checks together (issue #97).
+ */
+function duplicateGroups(options) {
+  const groups = [];
+  const exact = new Map();
+  const cells = new Map();
+  const at = (l, c) => `${l}|${c}`;
+  for (const [path, entry] of options) {
+    const value = entry.value;
+    if (value === undefined) continue;
+    let group;
+    if (isColor(value)) {
+      const l = Math.floor(value.l / (2 * EPS.l));
+      const c = Math.floor(value.c / (2 * EPS.c));
+      for (let dl = -1; dl <= 1; dl++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          for (const g of cells.get(at(l + dl, c + dc)) ?? []) {
+            if (g.type === entry.type && (!group || g.index < group.index) && sameColor(g.value, value)) group = g;
+          }
+        }
+      }
+      if (!group) {
+        group = { index: groups.length, type: entry.type, value, paths: [] };
+        groups.push(group);
+        const key = at(l, c);
+        if (!cells.has(key)) cells.set(key, []);
+        cells.get(key).push(group);
+      }
+    } else {
+      const key = `${entry.type}\u0000${JSON.stringify(value)}`;
+      group = exact.get(key);
+      if (!group) {
+        group = { index: groups.length, type: entry.type, value, paths: [] };
+        groups.push(group);
+        exact.set(key, group);
+      }
+    }
+    group.paths.push(path);
+  }
+  return groups;
 }
 
 const HYGIENE_LEVELS = ['info', 'warning', 'off'];
@@ -351,14 +397,7 @@ function checkHygiene(normalized, config, diagnostics) {
   }
 
   if (dupLevel !== 'off') {
-    const groups = [];
-    for (const [path, entry] of options) {
-      if (entry.value === undefined) continue;
-      const g = groups.find((x) => x.type === entry.type && sameOptionValue(x.value, entry.value));
-      if (g) g.paths.push(path);
-      else groups.push({ type: entry.type, value: entry.value, paths: [path] });
-    }
-    for (const g of groups.filter((x) => x.paths.length > 1)) {
+    for (const g of duplicateGroups(options).filter((x) => x.paths.length > 1)) {
       const [first, ...rest] = g.paths;
       emit(
         dupLevel,

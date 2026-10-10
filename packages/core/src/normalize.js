@@ -507,48 +507,91 @@ function reportCycle(diagnostics, chain) {
   });
 }
 
+/** Per combo map, the tokens on an alias loop resolveEntry() has reported. */
+const loopMembers = new WeakMap();
+
+/**
+ * Resolve one token in a combo map, and every alias on the way to a literal:
+ * returns the entry (with `.value`), DEFERRED (the chain ends on a slot DERIVE
+ * may still fill), CYCLE (already reported as TST1104), or undefined (failed,
+ * already reported). `stack` is the path that led here from outside the chain,
+ * i.e. the composites whose member this is; a token on it closes a cycle.
+ *
+ * The alias chain is walked in a loop and settled on the way back, not by one
+ * recursive call per hop (issue #97). The recursive version copied the path at
+ * every hop and searched it linearly, so a chain cost O(depth²) and a stack
+ * frame per link: about 4,500 links overflowed the stack, and the CLI printed
+ * `Maximum call stack size exceeded` with no code and no token named. Every
+ * link still gets exactly what the recursion gave it: the value and an
+ * `aliased` provenance, `pendingAlias` when the end is deferred, nothing on a
+ * cycle, and TST1105 when the end failed, innermost link first.
+ */
 function resolveEntry(map, tokenPath, stack, diagnostics) {
-  const entry = map.get(tokenPath);
-  if (!entry) return undefined;
-  if (entry.value !== undefined) return entry;
-  if (entry.pendingAlias || entry.pendingMembers) return DEFERRED;
-  if (stack.includes(tokenPath)) {
-    reportCycle(diagnostics, [...stack, tokenPath]);
-    // AL5: a distinct sentinel, not `undefined`. Returning `undefined` made the
-    // caller report TST1105 "dangling alias" on top of the cycle — which is
-    // false (the target exists; it just loops) and doubled the output on the
-    // exact error where the chain is already printed in full.
-    return CYCLE;
-  }
-  let raw = entry.rawValue;
-  if (isExpression(raw)) return resolveExpression(map, entry, tokenPath, stack, diagnostics);
-  const target = aliasTarget(raw);
-  if (target) {
+  // A token on a loop already reported as itself: walking it again would only
+  // go round the same loop, find the same member set, and report nothing (see
+  // reportCycle). Skipping it keeps a long loop linear instead of one full lap
+  // per member, which made a 10,000-link loop take minutes.
+  if (stack.length === 0 && loopMembers.get(map)?.has(tokenPath)) return CYCLE;
+  const chain = []; // the alias tokens walked, in order
+  const targets = []; // targets[i] is what chain[i] points at
+  const onPath = new Set(stack);
+  let path = tokenPath;
+  let outcome;
+  for (;;) {
+    const entry = map.get(path);
+    if (!entry) { outcome = undefined; break; }
+    if (entry.value !== undefined) { outcome = entry; break; }
+    if (entry.pendingAlias || entry.pendingMembers) { outcome = DEFERRED; break; }
+    if (onPath.has(path)) {
+      const walked = [...stack, ...chain];
+      reportCycle(diagnostics, [...walked, path]);
+      // Only a walk that started on the loop reported the loop's own member
+      // set; one that came in from a tail reported tail + loop, and each loop
+      // member still reports the loop alone on its own walk, as before.
+      if (walked[0] === path) {
+        if (!loopMembers.has(map)) loopMembers.set(map, new Set());
+        for (const member of walked) loopMembers.get(map).add(member);
+      }
+      // AL5: a distinct sentinel, not `undefined`. Returning `undefined` made the
+      // caller report TST1105 "dangling alias" on top of the cycle — which is
+      // false (the target exists; it just loops) and doubled the output on the
+      // exact error where the chain is already printed in full.
+      outcome = CYCLE;
+      break;
+    }
+    if (isExpression(entry.rawValue)) { outcome = resolveExpression(map, entry, path, [...stack, ...chain], diagnostics); break; }
+    const target = aliasTarget(entry.rawValue);
+    if (!target) { outcome = resolveLiteral(map, entry, path, [...stack, ...chain], diagnostics); break; }
+    chain.push(path);
+    targets.push(target);
+    onPath.add(path);
     // Absent target: possibly derived later — defer rather than erroring.
     // A target that IS present but failed to resolve (bad color syntax, cycle)
     // is a genuine failure now, exactly as before.
-    if (!map.has(target)) {
-      entry.pendingAlias = target;
-      return DEFERRED;
-    }
-    const resolved = resolveEntry(map, target, [...stack, tokenPath], diagnostics);
-    if (resolved === DEFERRED) {
-      entry.pendingAlias = target;
-      return DEFERRED;
-    }
-    if (resolved === CYCLE) return CYCLE; // already reported as TST1104
-    if (!resolved) {
-      diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`, {
-        path: tokenPath,
+    if (!map.has(target)) { outcome = DEFERRED; break; }
+    path = target;
+  }
+  for (let i = chain.length - 1; i >= 0; i--) {
+    const linkPath = chain[i];
+    const target = targets[i];
+    const entry = map.get(linkPath);
+    if (outcome === DEFERRED) { entry.pendingAlias = target; continue; }
+    if (outcome === CYCLE) continue; // already reported as TST1104
+    if (!outcome) {
+      diagnostics.error('TST1105', `Dangling alias in ${linkPath}: {${target}}`, {
+        path: linkPath,
         hint: `Nothing resolves to "${target}". Check the tier prefix (option./semantic./component.) and the spelling.`,
       });
-      return undefined;
+      continue;
     }
-    entry.type = entry.type ?? resolved.type;
-    entry.value = resolved.value;
-    entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance), ...(entry.bindingRule ? { rule: entry.bindingRule } : {}) };
-    return entry;
+    settleAlias(entry, target, outcome);
+    outcome = entry;
   }
+  return outcome;
+}
+
+/** The end of a chain: a composite's members, or a literal parsed by its type. */
+function resolveLiteral(map, entry, tokenPath, stack, diagnostics) {
   if (COMPOSITES[entry.type]) {
     const memberStack = [...stack, tokenPath];
     return resolveComposite(entry, tokenPath, diagnostics, (memberTarget) =>
@@ -556,12 +599,19 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     );
   }
   try {
-    entry.value = parseValue(entry.type, raw, warnAt(diagnostics, tokenPath, tokenPath));
+    entry.value = parseValue(entry.type, entry.rawValue, warnAt(diagnostics, tokenPath, tokenPath));
   } catch (e) {
     diagnostics.error('TST1106', `${tokenPath}: ${e.message}`, { path: tokenPath, ...(e.hint ? { hint: e.hint } : {}) });
     return undefined;
   }
   return entry;
+}
+
+/** An alias takes its target's value, and says where it came from. */
+function settleAlias(entry, target, resolved) {
+  entry.type = entry.type ?? resolved.type;
+  entry.value = resolved.value;
+  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance), ...(entry.bindingRule ? { rule: entry.bindingRule } : {}) };
 }
 
 /**
@@ -827,56 +877,80 @@ export function resolveDeferredAliases(normalized, diagnostics) {
  * and no provenance. Whole-token aliases only: a composite waiting on a member
  * (`pendingMembers`) is still settled after DERIVE.
  */
-export function resolveIfReady(map, tokenPath, stack = []) {
-  const entry = map.get(tokenPath);
-  if (!entry?.pendingAlias || stack.includes(tokenPath)) return entry;
-  const target = entry.pendingAlias;
-  const resolved = resolveIfReady(map, target, [...stack, tokenPath]);
-  if (resolved?.value === undefined) return entry;
-  entry.type = entry.type ?? resolved.type;
-  entry.value = resolved.value;
-  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance), ...(entry.bindingRule ? { rule: entry.bindingRule } : {}) };
-  delete entry.pendingAlias;
-  return entry;
+export function resolveIfReady(map, tokenPath) {
+  const first = map.get(tokenPath);
+  // Walked in a loop for the same reason as resolveEntry(): a recursive call per
+  // link overflowed the stack on a long chain.
+  const chain = [];
+  const onPath = new Set();
+  let path = tokenPath;
+  let end = first;
+  while (end?.pendingAlias && !onPath.has(path)) {
+    chain.push(path);
+    onPath.add(path);
+    path = end.pendingAlias;
+    end = map.get(path);
+  }
+  if (end?.value === undefined) return first;
+  for (let i = chain.length - 1; i >= 0; i--) {
+    const link = map.get(chain[i]);
+    settleAlias(link, link.pendingAlias, end);
+    delete link.pendingAlias;
+    end = link;
+  }
+  return first;
 }
 
 function resolvePending(map, tokenPath, stack, diagnostics) {
-  const entry = map.get(tokenPath);
-  if (!entry || !(entry.pendingAlias || entry.pendingMembers)) return entry;
-  if (stack.includes(tokenPath)) {
-    reportCycle(diagnostics, [...stack, tokenPath]);
+  // A loop over the chain, settled on the way back, like resolveEntry().
+  const chain = [];
+  const onPath = new Set(stack);
+  let path = tokenPath;
+  let outcome;
+  for (;;) {
+    const entry = map.get(path);
+    if (!entry || !(entry.pendingAlias || entry.pendingMembers)) { outcome = entry; break; }
+    if (onPath.has(path)) {
+      reportCycle(diagnostics, [...stack, ...chain, path]);
+      delete entry.pendingAlias;
+      delete entry.pendingMembers;
+      outcome = CYCLE;
+      break;
+    }
+    if (entry.pendingMembers) {
+      // A composite with a member aliasing a derived slot (`"color":
+      // "{semantic.color.scrim}"`). Same rule as a whole-token alias: a target
+      // that still doesn't exist is dangling now.
+      const memberStack = [...stack, ...chain, path];
+      outcome = resolveComposite(entry, path, diagnostics, (memberTarget) =>
+        map.has(memberTarget) ? resolvePending(map, memberTarget, memberStack, diagnostics) : undefined,
+      );
+      delete entry.pendingMembers;
+      break;
+    }
+    chain.push(path);
+    onPath.add(path);
+    if (!map.has(entry.pendingAlias)) { outcome = undefined; break; }
+    path = entry.pendingAlias;
+  }
+  for (let i = chain.length - 1; i >= 0; i--) {
+    const linkPath = chain[i];
+    const entry = map.get(linkPath);
+    const target = entry.pendingAlias;
     delete entry.pendingAlias;
-    delete entry.pendingMembers;
-    return CYCLE;
+    if (outcome === CYCLE) continue; // already reported as TST1104
+    if (!outcome || outcome.value === undefined) {
+      diagnostics.error('TST1105', `Dangling alias in ${linkPath}: {${target}}`, {
+        path: linkPath,
+        hint: `Nothing resolves to "${target}" — not authored, and not produced by derivation. Check the tier prefix (option./semantic./component.) and the spelling.`,
+      });
+      outcome = undefined;
+      continue;
+    }
+    settleAlias(entry, target, outcome);
+    outcome = entry;
   }
-  if (entry.pendingMembers) {
-    // A composite with a member aliasing a derived slot (`"color":
-    // "{semantic.color.scrim}"`). Same rule as a whole-token alias: a target
-    // that still doesn't exist is dangling now.
-    const memberStack = [...stack, tokenPath];
-    const resolved = resolveComposite(entry, tokenPath, diagnostics, (memberTarget) =>
-      map.has(memberTarget) ? resolvePending(map, memberTarget, memberStack, diagnostics) : undefined,
-    );
-    delete entry.pendingMembers;
-    return resolved;
-  }
-  const target = entry.pendingAlias;
-  const resolved = map.has(target)
-    ? resolvePending(map, target, [...stack, tokenPath], diagnostics)
-    : undefined;
-  delete entry.pendingAlias;
-  if (resolved === CYCLE) return CYCLE; // already reported as TST1104
-  if (!resolved || resolved.value === undefined) {
-    diagnostics.error('TST1105', `Dangling alias in ${tokenPath}: {${target}}`, {
-      path: tokenPath,
-      hint: `Nothing resolves to "${target}" — not authored, and not produced by derivation. Check the tier prefix (option./semantic./component.) and the spelling.`,
-    });
-    return undefined;
-  }
-  entry.type = entry.type ?? resolved.type;
-  entry.value = resolved.value;
-  entry.provenance = { kind: 'aliased', target, mode: entry.provenance.mode, ...layerOf(entry.provenance), ...(entry.bindingRule ? { rule: entry.bindingRule } : {}) };
-  return entry;
+  return outcome;
 }
 
 /** The override-layer and source keys of a provenance, kept when an authored entry becomes an alias. */

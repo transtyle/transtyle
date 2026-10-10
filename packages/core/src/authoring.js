@@ -8,16 +8,30 @@ import { formatColor, formatHex } from './color.js';
 import { ORDERED_SCALES } from './derive.js';
 import { remBaseOf } from './units.js';
 
-/** The token an aliased entry ends up pointing at, following the chain to its end. */
-export function aliasRoot(map, path) {
+/**
+ * The token an aliased entry ends up pointing at, following the chain to its end.
+ *
+ * Pass the same `memo` (a Map) for every call on one map: each path walked is
+ * recorded with its root, so asking for every token of a map costs one walk per
+ * link instead of one per token per link. Without it, a 10,000-link chain made
+ * the out-of-gamut check walk ~50 million links, for 50 s (issue #97).
+ */
+export function aliasRoot(map, path, memo) {
+  if (memo?.has(path)) return memo.get(path);
+  const walked = [];
   const seen = new Set();
   let target = null;
+  let at = path;
   let entry = map.get(path);
   while (entry?.provenance?.kind === 'aliased' && entry.provenance.target && !seen.has(entry.provenance.target)) {
+    if (memo?.has(at)) { target = memo.get(at); break; }
+    walked.push(at);
     target = entry.provenance.target;
     seen.add(target);
+    at = target;
     entry = map.get(target);
   }
+  if (memo) for (const p of walked) memo.set(p, target);
   return target;
 }
 
@@ -40,10 +54,11 @@ const sample = (items, n = 3) => (items.length > n ? `${items.slice(0, n).join('
 export function checkOutOfGamut(normalized, diagnostics) {
   const found = new Map();
   for (const [, map] of comboMaps(normalized)) {
+    const roots = new Map();
     for (const [path, entry] of map) {
       if (!path.startsWith('semantic.') && !path.startsWith('component.')) continue;
       if (!AUTHORED.has(entry.provenance?.kind) || !isColor(entry.value)) continue;
-      const source = entry.provenance.kind === 'aliased' ? aliasRoot(map, path) : path;
+      const source = entry.provenance.kind === 'aliased' ? aliasRoot(map, path, roots) : path;
       const src = source && map.get(source);
       if (src?.provenance?.kind !== 'authored' || !isColor(src.value)) continue;
       const { text: hex, clamped } = formatHex(src.value);
