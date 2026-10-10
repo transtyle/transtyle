@@ -57,6 +57,7 @@ Statuses:
 - **rejected**: tested by a proposal and turned down.
 - **target-specific**: the target's own surface, not token semantics.
 - **promoted**: now a catalog slot.
+- **custom**: the design system's own vocabulary, which a target carries or drops.
 
 ### What each meaning holds
 
@@ -263,3 +264,36 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 | `semantic.type.role.display.*`                                                                                                                             | Mantine                                                                                                          |
 
 The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): Bootstrap 71, Storybook 2, Mantine 37, Chakra UI 1, Material UI 1. Each one's reason is in that target's `report.json`.
+
+## Custom vocabulary (`dropped`)
+
+A design system's custom tokens are its own `semantic.*` vocabulary, outside the catalog. Core accounts for every one on every target: a target writes it under its own name (css-variables, daisyUI), or reads it through a catalog slot bound to it, or core adds a `dropped` row with the meaning `custom.vocabulary` (status custom). Per example, the tokens without a path and the targets that drop them:
+
+| Example | Custom tokens | Token                                      | Dropped by                                                                                              |
+| ------- | ------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| acme    | 0             | none                                       |                                                                                                         |
+| cathode | 7             | `semantic.color.crt.amber`                 | shadcn/ui, Apache ECharts, Storybook                                                                    |
+|         |               | `semantic.color.crt.ink-dim`               | Radix Themes                                                                                            |
+|         |               | `semantic.color.crt.meltdown`              | Apache ECharts, Storybook                                                                               |
+|         |               | `semantic.color.crt.scanline`              | Radix Themes, PrimeNG                                                                                   |
+| govuk   | 14            | `semantic.color.govuk.border`              | Radix Themes, PrimeNG                                                                                   |
+|         |               | `semantic.color.govuk.error`               | Apache ECharts, Storybook                                                                               |
+|         |               | `semantic.color.govuk.focus`               | Apache ECharts, Radix Themes, PrimeNG, Mantine                                                          |
+|         |               | `semantic.color.govuk.focus-text`          | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI |
+|         |               | `semantic.color.govuk.link`                | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Chakra UI, Material UI          |
+|         |               | `semantic.color.govuk.link-hover`          | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI |
+|         |               | `semantic.color.govuk.link-visited`        | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI |
+|         |               | `semantic.color.govuk.secondary-text`      | Radix Themes                                                                                            |
+|         |               | `semantic.color.govuk.success`             | shadcn/ui, Apache ECharts, Storybook                                                                    |
+|         |               | `semantic.font.transport`                  | Radix Themes                                                                                            |
+| carbon  | 15            | `semantic.color.carbon.border-subtle-00`   | Radix Themes, PrimeNG                                                                                   |
+|         |               | `semantic.color.carbon.button-secondary`   | shadcn/ui, Apache ECharts, Storybook                                                                    |
+|         |               | `semantic.color.carbon.focus`              | Apache ECharts, Radix Themes, PrimeNG, Mantine                                                          |
+|         |               | `semantic.color.carbon.link-primary`       | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Chakra UI, Material UI          |
+|         |               | `semantic.color.carbon.link-primary-hover` | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI |
+|         |               | `semantic.color.carbon.link-visited`       | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI |
+|         |               | `semantic.color.carbon.support-error`      | Apache ECharts, Storybook                                                                               |
+|         |               | `semantic.color.carbon.support-info`       | shadcn/ui, Apache ECharts, Storybook                                                                    |
+|         |               | `semantic.color.carbon.support-success`    | shadcn/ui, Apache ECharts, Storybook                                                                    |
+|         |               | `semantic.color.carbon.support-warning`    | shadcn/ui, Apache ECharts, Storybook                                                                    |
+|         |               | `semantic.color.carbon.text-secondary`     | Radix Themes                                                                                            |

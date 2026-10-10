@@ -23,7 +23,7 @@
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { compile, checkExporterDiagnostics, checkPluginCompat, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
+import { compile, checkExporterDiagnostics, checkPluginCompat, customTokens, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures');
 const COVERAGE_CLASSES = new Set(['native', 'derived', 'approximated', 'dropped', 'unsupported']);
@@ -72,6 +72,11 @@ export const FIXTURES = Object.freeze([
     name: 'custom-role',
     exercises: 'a custom `promo` role joining the grid through `$extensions.transtyle.role` (archetype `brand`)',
     spec: 'ir.md#color-the-role-grid',
+  },
+  {
+    name: 'custom-vocabulary',
+    exercises: 'custom `semantic.*` tokens outside the catalog: a color the brand binds to `primary.solid`, an unbound color, a dimension and a shadow',
+    spec: 'validation-and-coverage.md#custom-vocabulary (an open-vocabulary exporter carries every one or says why)',
   },
   {
     name: 'composites',
@@ -128,14 +133,15 @@ export async function fixtureIR(name = 'canonical') {
 }
 
 /** Build a TargetContext equivalent to the one core passes exporters at emit time. */
-function makeCtx(config) {
+function makeCtx(config, ir, options = {}) {
   return {
     config,
-    targetConfig: { output: 'dist', options: {} },
+    targetConfig: { output: 'dist', options },
     units: makeUnits(config),
     formatColor, formatHslTriplet, formatHex, contrastRatio, mix,
     projectName: config.name ?? 'design-system',
     siblings: [],
+    customTokens: customTokens(ir),
   };
 }
 
@@ -207,6 +213,18 @@ export async function conformance(plugin, opts = {}) {
       'optionsSchema must be a JSON-Schema object ({ type: "object", ... })');
   }
 
+  // `openVocabulary: true` says the target has a place for any `semantic.*`
+  // token, so a design system's custom tokens are written, not dropped; it
+  // comes with the `customTokens: "emit" | "omit"` option (issue #51).
+  if (plugin.openVocabulary !== undefined) {
+    const option = plugin.optionsSchema?.properties?.customTokens;
+    add('open-vocabulary-shape',
+      plugin.openVocabulary === false
+        || (plugin.openVocabulary === true && Array.isArray(option?.enum) && option.enum.includes('emit') && option.enum.includes('omit')),
+      'plugins.md#open-vocabulary-targets',
+      'openVocabulary must be a boolean; an exporter that sets it to true declares a `customTokens` option with the values "emit" and "omit"');
+  }
+
   if (opts.ir) {
     runFixture(plugin, { ir: opts.ir, config: { name: 'conformance-fixture', targets: {} } }, { name: 'custom' }, null, add);
     return done();
@@ -221,7 +239,7 @@ export async function conformance(plugin, opts = {}) {
 /** Every per-IR check, against one fixture. */
 function runFixture(plugin, { ir, config }, fixture, twin, addCheck) {
   const add = (name, pass, spec, detail) => addCheck(name, pass, spec, detail, fixture.name);
-  const ctx = makeCtx(config);
+  const ctx = makeCtx(config, ir);
   const before = snapshotIR(ir);
 
   let out1, threw;
@@ -306,6 +324,27 @@ function runFixture(plugin, { ir, config }, fixture, twin, addCheck) {
     'docs/specs/validation-and-coverage.md#structured-fields-slots-and-via',
     `coverage slots name paths that are not in the IR: ${list(unknownSlots)}`);
 
+  // Custom vocabulary (issue #51): an open-vocabulary exporter names every
+  // custom token in a row, native when it writes it or with the reason it
+  // can't; with `customTokens: "omit"` none of them is written. A closed-set
+  // exporter has nothing to do (core accounts for the tokens after emit).
+  if (plugin.openVocabulary === true && ctx.customTokens.length > 0) {
+    const named = new Set(coverage.flatMap((c) => (Array.isArray(c.slots) ? c.slots : [c.slot])));
+    const silent = ctx.customTokens.filter((t) => !named.has(t));
+    add('custom-vocabulary-carried', !silent.length,
+      'docs/specs/validation-and-coverage.md#custom-vocabulary',
+      `open-vocabulary exporter says nothing about custom token(s): ${list(silent)}`);
+    let omitted;
+    try { omitted = plugin.emit(ir, makeCtx(config, ir, { customTokens: 'omit' })).coverage; } catch (e) { omitted = null; }
+    const written = (omitted ?? [])
+      .filter((c) => ['native', 'derived', 'approximated'].includes(c.class))
+      .flatMap((c) => (Array.isArray(c.slots) ? c.slots : [c.slot]))
+      .filter((s) => ctx.customTokens.includes(s));
+    add('custom-vocabulary-omit', Array.isArray(omitted) && !written.length,
+      'docs/specs/validation-and-coverage.md#custom-vocabulary',
+      omitted ? `customTokens: "omit" still writes: ${list([...new Set(written)])}` : 'emit() threw with customTokens: "omit"');
+  }
+
   if (fixture.marks) {
     const silent = Object.entries(fixture.marks)
       .filter(([dim]) => ir.dimensionNames?.includes(dim))
@@ -320,7 +359,7 @@ function runFixture(plugin, { ir, config }, fixture, twin, addCheck) {
 
   if (twin) {
     let twinFiles;
-    try { twinFiles = plugin.emit(twin.ir, makeCtx(twin.config)).files; } catch (e) { twinFiles = []; }
+    try { twinFiles = plugin.emit(twin.ir, makeCtx(twin.config, twin.ir)).files; } catch (e) { twinFiles = []; }
     const differ = files
       .filter((f) => twinFiles?.find?.((g) => g.path === f.path)?.contents !== f.contents)
       .map((f) => f.path);

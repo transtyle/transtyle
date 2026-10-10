@@ -65,6 +65,7 @@ const STATUSES = {
   rejected: 'Rejected: tested by a proposal and turned down',
   'target-specific': "Target-specific: the target's own surface, not token semantics",
   promoted: 'Promoted: now a catalog slot',
+  custom: "Custom: the design system's own vocabulary, which a target carries or drops",
 };
 for (const [key, entry] of Object.entries(registry)) {
   if (!STATUSES[entry.status])
@@ -84,6 +85,23 @@ try {
 } catch (error) {
   console.error(`✖ catalog signals: ${error.message}`);
   process.exit(1);
+}
+
+// A custom token core reports `dropped` must not be the alias target of a slot
+// the exporter reads (the `reads` compile() records): then its value does
+// reach the target, and only a coverage row that names the reading slot is
+// missing (core follows rows, so a row labelled in prose hides the binding).
+for (const [example, result] of results) {
+  const map = result.normalized.modes[result.normalized.defaultMode];
+  for (const target of result.results) {
+    const reads = new Set(target.reads);
+    for (const row of target.coverage) {
+      if (row.meaning !== 'custom.vocabulary') continue;
+      const binders = [...map].filter(([p, e]) => e.provenance.kind === 'aliased' && e.provenance.target === row.slot && reads.has(p)).map(([p]) => p);
+      if (binders.length)
+        errors.push(`${example}/${target.target}: ${row.slot} is reported dropped, but the exporter reads ${binders.join(', ')}, which aliases it — add a coverage row naming that slot`);
+    }
+  }
 }
 const exampleIds = EXAMPLES.map((e) => e.id);
 const exporterTitle = (id) => TARGETS.find((t) => t.id === id)?.title ?? id;
@@ -147,7 +165,7 @@ for (const [example, result] of results) {
       if (row.class === 'unsupported' && exporter !== 'primeng') {
         see(example, { direction: 'unsupported', kind: 'row', exporter, id: row.variable, meaning: row.meaning, note: row.note });
       } else if (row.class === 'dropped') {
-        see(example, { direction: 'dropped', kind: 'row', exporter, id: `${target.target}|${row.variable}`, variable: row.variable, slot: row.slot });
+        see(example, { direction: 'dropped', kind: 'row', exporter, id: `${target.target}|${row.variable}`, variable: row.variable, slot: row.slot, meaning: row.meaning });
       }
     }
   }
@@ -157,11 +175,12 @@ const all = [...units.values()];
 const unsupported = all.filter((u) => u.direction === 'unsupported');
 const keyed = unsupported.filter((u) => u.meaning);
 
-for (const u of keyed) {
+// Every key is registered, on `dropped` rows too (core's `custom.vocabulary`).
+for (const u of all.filter((x) => x.meaning)) {
   if (!registry[u.meaning])
     errors.push(`${u.exporter}: ${u.id} declares meaning "${u.meaning}", which ${REGISTRY} doesn't list`);
 }
-const used = new Set(keyed.map((u) => u.meaning));
+const used = new Set(all.filter((x) => x.meaning).map((u) => u.meaning));
 for (const [key, entry] of Object.entries(registry)) {
   if (!used.has(key) && entry.status !== 'promoted')
     errors.push(`${REGISTRY}: "${key}" is reported by no exporter any more — remove it, or mark it promoted`);
@@ -340,7 +359,8 @@ if (unkeyed.length === 0) {
 }
 
 // ---- dropped ----
-const dropped = all.filter((u) => u.direction === 'dropped');
+const CUSTOM = 'custom.vocabulary';
+const dropped = all.filter((u) => u.direction === 'dropped' && u.meaning !== CUSTOM);
 const isCatalogSide = (u) => /^(semantic|component)\./.test(u.slot) || u.variable.startsWith('(mode:');
 const catalogSide = groupBy(dropped.filter(isCatalogSide), (u) => (u.slot === '—' ? u.variable : u.slot));
 lines.push(
@@ -363,6 +383,37 @@ lines.push(
   `The other \`dropped\` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): ${[...surfaceSide].sort(([a], [b]) => exporterOrder(a, b)).map(([e, l]) => `${exporterTitle(e)} ${l.length}`).join(', ')}. Each one's reason is in that target's \`report.json\`.`,
   '',
 );
+
+// ---- custom vocabulary ----
+// Core's `dropped` rows for custom semantic tokens no emitted slot binds to
+// (issue #51). They describe a design system, not a target, so they are listed
+// per example: which of its own tokens each target leaves without a path.
+const customRows = all.filter((u) => u.direction === 'dropped' && u.meaning === CUSTOM);
+const customTotals = new Map(
+  [...results].map(([example, result]) => [example, result.results.find((r) => r.customVocabulary)?.customVocabulary.total ?? 0]),
+);
+lines.push(
+  '## Custom vocabulary (`dropped`)',
+  '',
+  `A design system's custom tokens are its own \`semantic.*\` vocabulary, outside the catalog. Core accounts for every one on every target: a target writes it under its own name (css-variables, daisyUI), or reads it through a catalog slot bound to it, or core adds a \`dropped\` row with the meaning ${code(CUSTOM)} (status ${registry[CUSTOM].status}). Per example, the tokens without a path and the targets that drop them:`,
+  '',
+  '| Example | Custom tokens | Token | Dropped by |',
+  '| --- | --- | --- | --- |',
+);
+for (const example of exampleIds) {
+  const total = customTotals.get(example);
+  const mine = customRows.filter((u) => u.examples.has(example));
+  if (mine.length === 0) {
+    lines.push(`| ${example} | ${total} | ${total === 0 ? 'none' : 'every one reaches every target'} | |`);
+    continue;
+  }
+  const byToken = [...groupBy(mine, (u) => u.slot)].sort(([a], [b]) => byText(a, b));
+  byToken.forEach(([slot, list], i) => {
+    const exporters = [...new Set(list.map((u) => u.exporter))].sort(exporterOrder).map(exporterTitle);
+    lines.push(`| ${i === 0 ? example : ''} | ${i === 0 ? total : ''} | ${code(slot)} | ${exporters.join(', ')} |`);
+  });
+}
+lines.push('');
 
 const config = await prettier.resolveConfig(outFile);
 const page = await prettier.format(lines.join('\n'), { ...config, filepath: outFile });

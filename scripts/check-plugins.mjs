@@ -3,7 +3,7 @@
  * Plugin conformance gate (ROADMAP P1). Runs @transtyle/plugin-kit's
  * `conformance()` against every official exporter, over every fixture the kit
  * ships (#96: one-token, three-token, two-dimension, single-mode, component
- * tier, custom role, composites, object form), and asserts each passes every
+ * tier, custom role, custom vocabulary, composites, object form), and asserts each passes every
  * check — so the plugin contract is enforced executably, not just described in
  * plugins.md. Also runs it against a tiny inline "third-party" plugin the kit
  * has never seen, proving the suite works on an arbitrary plugin object and not
@@ -189,6 +189,23 @@ if (wrongRanges.length || wrongMarkers.length) {
 const thirdPartyManifest = { kind: 'exporter', name: 'acme-custom', irSpec: 'v0-draft', pluginApi: '0', capabilities: ['build'] };
 await mustFail('a manifest built for IR spec "v1"', thirdParty, 'manifest-compatible', 'canonical', { ...thirdPartyManifest, irSpec: 'v1' });
 await mustFail('a manifest requiring plugin API "^1"', thirdParty, 'manifest-compatible', 'canonical', { ...thirdPartyManifest, pluginApi: '^1' });
+
+// Custom vocabulary (issue #51): an exporter that declares `openVocabulary`
+// must carry the design system's custom tokens, and honour `customTokens: "omit"`.
+const openOptions = { type: 'object', additionalProperties: false, properties: { customTokens: { type: 'string', enum: ['emit', 'omit'] } } };
+const writeCustom = (ir, ctx) => {
+  const out = thirdParty.emit(ir, ctx);
+  const tokens = ctx.targetConfig.options?.customTokens === 'omit' ? [] : ctx.customTokens ?? [];
+  return { ...out, coverage: [...out.coverage, ...tokens.map((t) => ({ variable: `--acme-${t}`, slot: t, class: 'native' }))] };
+};
+await mustFail('an open-vocabulary plugin without a `customTokens` option', { ...thirdParty, openVocabulary: true, emit: writeCustom }, 'open-vocabulary-shape', 'custom-vocabulary');
+await mustFail('an open-vocabulary plugin that ignores the custom tokens', { ...thirdParty, optionsSchema: openOptions, openVocabulary: true }, 'custom-vocabulary-carried', 'custom-vocabulary');
+await mustFail(
+  'an open-vocabulary plugin that ignores `customTokens: "omit"`',
+  { ...thirdParty, optionsSchema: openOptions, openVocabulary: true, emit: (ir, ctx) => writeCustom(ir, { ...ctx, targetConfig: { ...ctx.targetConfig, options: {} } }) },
+  'custom-vocabulary-omit',
+  'custom-vocabulary',
+);
 
 if (failures.length) {
   console.error(`\n✖ check-plugins: ${failures.length} conformance failure(s)`);

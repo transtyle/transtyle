@@ -166,20 +166,51 @@ Produced per target in RESOLVE ([pipeline.md](../architecture/pipeline.md#4-reso
 
 A row can say what it is missing in an optional **`meaning`** field: a key of dot-separated kebab-case segments (`icon.size`, `type.display-ladder`), the same key on every exporter that reports the same concept. Rows are grouped across exporters by that key, never by their note text — two exporters' prose never matches, and a grouping no exporter declared is a claim nobody made. Every key is registered, with a status, in [`docs/findings/catalog-meanings.json`](../findings/catalog-meanings.json):
 
-| Status            | Meaning                                                                     |
-| ----------------- | --------------------------------------------------------------------------- |
-| `open`            | a candidate waiting for evidence from another exporter                      |
-| `watch`           | deferred by a proposal, reopens on a named trigger (BL-19, proposal 0004)   |
-| `disagreement`    | both sides have the concept and model it incompatibly — not a growth signal |
-| `rejected`        | tested by a proposal and turned down                                        |
-| `target-specific` | the target's own surface, not design-token semantics                        |
-| `promoted`        | now a catalog slot; kept so the history stays readable                      |
+| Status            | Meaning                                                                           |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `open`            | a candidate waiting for evidence from another exporter                            |
+| `watch`           | deferred by a proposal, reopens on a named trigger (BL-19, proposal 0004)         |
+| `disagreement`    | both sides have the concept and model it incompatibly — not a growth signal       |
+| `rejected`        | tested by a proposal and turned down                                              |
+| `target-specific` | the target's own surface, not design-token semantics                              |
+| `promoted`        | now a catalog slot; kept so the history stays readable                            |
+| `custom`          | a design system's own vocabulary that a target drops (`custom.vocabulary`, below) |
 
 `disagreement` answers the open question the [2026-07-27 worklog](../worklog/2026-07-27-coverage-bar-asymmetry.md) left: `unsupported` keeps covering both a gap and a disagreement, and the status tells them apart without a sixth coverage class.
 
 `npm run gen:catalog-signals` compiles every example against every official exporter and writes [`docs/findings/catalog-signals.md`](../findings/catalog-signals.md): totals per exporter, every meaning with the exporters and rows behind it and the proposal that settled it, PrimeNG's slots that wait on an undriven Aura path, the rows with no meaning yet, and the catalog slots targets `dropped`. PrimeNG reports one row per family, so for it the page reads the slots one by one (the exporter's own `classifySurface()` over its emitted preset) and reconciles the total with the report; Mantine and Chakra report one summary row per family and a named row per entry they leave on the target's default, and the page counts the named rows (Chakra's recipe families have the summary row only: their defaults are the named rows of the tokens they read). `check:catalog-signals`, part of `check:all`, fails when the page is stale, when a row declares a key the registry doesn't list, and when the registry keeps a key nothing reports (other than `promoted`).
 
 **Absence is not coverage.** A row classed `native` or `derived` names a slot that has a value. When a design system leaves a slot out, the exporter skips it, or reports it `dropped` or `unsupported`; it never claims it, and never crashes for want of it. A mode dimension the target cannot express is one `dropped` row named `(mode:<dimension>)`, never silence. The plugin kit checks both on every plugin (`coverage-honest`, `mode-dimensions-accounted`).
+
+### Custom vocabulary
+
+<!-- measured: acme.custom = 0 -->
+<!-- measured: cathode.custom = 7 -->
+<!-- measured: govuk.custom = 14 -->
+<!-- measured: carbon.custom = 15 -->
+
+A design system keeps its own names as **custom semantic tokens** and binds the catalog to them ([adoption guide](../../website/src/docs/adopt-existing.md)). A custom token is defined once, in the [adoption report](#adoption-report): a `semantic.*` path that `isCatalogSlot()` rejects and that is not a cell of a custom role. The adoption report says which of them a catalog slot reads; this section says what each target does with them. The four examples have 0 custom tokens (Acme), 7 (Cathode), 14 (GOV.UK) and 15 (Carbon).
+
+Core accounts for every custom token on every target, after `emit` and before `report.json` ([issue #51](https://github.com/transtyle/transtyle/issues/51)), so no exporter has to. Each token is one of three:
+
+- **emitted**: a row that emits (`native`, `derived`, `approximated`) names the token itself: an open-vocabulary target ([plugins.md](../architecture/plugins.md#open-vocabulary-targets): css-variables, daisyUI) writes it under its own name;
+- **reached**: not written itself, but on the chain of a slot an emitting row names, following aliases to their target, rules to their inputs and composites to their members, in the default mode. Cathode's `semantic.color.primary.solid` aliases `semantic.color.crt.ink`, so `crt.ink` reaches every target that emits `primary.solid` or a cell derived from it;
+- **no path**: neither. Core appends `{ variable: "(custom:<path>)", slot: "<path>", class: "dropped", note, meaning: "custom.vocabulary" }`, unless the exporter already has a row naming it. The note says why: `custom semantic token; no catalog slot binds to it and this target has no open vocabulary`, or, on an open-vocabulary target, `omitted by options.customTokens`.
+
+The `(custom:…)` form follows the `(mode:<dimension>)` rows. These rows describe the design system, not the target's surface: the CLI's coverage percentages and every number `check:doc-numbers` measures leave them out, and the build prints a line of its own under the target's bar, the same sentence `usage.md` gains in a "Custom vocabulary" section:
+
+<!-- example: govuk -->
+<!-- measured: govuk.bootstrap.custom.reached = 10 -->
+<!-- measured: govuk.bootstrap.custom.dropped = 4 -->
+
+```
+bootstrap  2% native · 75% derived · 5% approximated · 10% dropped · 8% unsupported
+  custom vocabulary: 14 tokens, 10 reach this target via bindings, 4 have no path
+```
+
+<!-- example: acme -->
+
+`report.json` carries the counts as `coverage.customVocabulary` (`{ total, emitted, reached, dropped }`, absent when the design system has no custom token). Reaching is read off coverage rows, so a row labelled in prose (`via driven roots`, a summary row) hides the slots behind it; `gen-catalog-signals` holds the rows to the target's `reads` and fails when a token reported `dropped` is aliased by a slot the exporter reads. The custom tokens each target drops are listed per example in [catalog signals](../findings/catalog-signals.md). Which of them deserve a catalog slot is a source-side question this page doesn't answer: `dropped` says what a target can't carry, not what the catalog lacks.
 
 ### Structured fields: `slots` and `via`
 
@@ -198,8 +229,8 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 <!-- measured: bootstrap.surface.component = 657 -->
 <!-- measured: primeng.surface.total = 2759 -->
 <!-- measured: primeng.surface.families = 98 -->
-<!-- measured: acme.bootstrap.native = 59 -->
-<!-- measured: acme.bootstrap.derived = 489 -->
+<!-- measured: acme.bootstrap.native = 60 -->
+<!-- measured: acme.bootstrap.derived = 491 -->
 <!-- measured: acme.bootstrap.approximated = 39 -->
 <!-- measured: acme.bootstrap.dropped = 71 -->
 <!-- measured: acme.bootstrap.unsupported = 56 -->
@@ -210,7 +241,7 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 |                                          | Bootstrap                                                               | PrimeNG                                                                                             |
 | ---------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                                                       |
-| Driven                                   | 59 native + 489 derived = 548 of 714 rows (77%), plus 39 `approximated` | 89 driven + 1566 inherited = 1655 (60%), 1104 left on Aura's default                                |
+| Driven                                   | 60 native + 491 derived = 551 of 717 rows (77%), plus 39 `approximated` | 89 driven + 1566 inherited = 1655 (60%), 1104 left on Aura's default                                |
 | Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | the family rows in `report.json`; slot by slot in [catalog signals](../findings/catalog-signals.md) |
 | Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                                                             |
 
@@ -251,7 +282,7 @@ The coverage report answers "what did each target get"; the adoption report answ
 - **Unbound**: listed in path order, with hints. A **name** hint first, when the token is a catalog slot with a middle part left out, of the same type (`semantic.color.surface` → `elevation.0.surface`, `semantic.color.base` → `text.base`): most likely a slot authored at the wrong path, whatever its value, so it is named even when the value is nowhere near the slot's. Then **value** hints: catalog slots whose default-mode value is within ΔE<sub>OK</sub> 0.05 (other types: equal), at most three, closest first, each saying how the slot gets its value (`authored`, `bound` with the token it aliases, `derived`, `defaulted`). Slots the engine filled are listed only when no slot the project set matches and there is no name hint, since they mostly repeat a decision. Hints go by value, not by name: a name-based "nearest slot" would suggest exactly the binding the false-friends table warns against. Ranked binding suggestions are `bind --suggest`'s job (#60).
 - **Roles**: custom roles declared with `$extensions.transtyle.role`, as `{ role, archetype, cells }`. Their grid is derived like a built-in role's and reaches the targets that take open role sets, so they are not "unbound".
 
-An unbound token still reaches css-variables, which emits every `semantic.*` path verbatim, and no other official target; the per-target side of that loss (a `dropped` row per custom token on closed-set targets) is #51. Measured on the examples: Acme authors catalog paths only (no block); Cathode has 7 custom tokens, all bound, and the custom role `crt-amber`; GOV.UK has 14, one unbound (`govuk.focus-text`, "same value as `text.base` (bound via `govuk.text`)": the catalog has `ring` but no foreground for it); Carbon has 15, all bound.
+An unbound token still reaches the open-vocabulary targets, css-variables and daisyUI, which write every custom token under its own name, and no other official target; the per-target side of that loss, a `dropped` row per custom token a target can't carry, is the coverage report's [custom vocabulary](#custom-vocabulary). Measured on the examples: Acme authors catalog paths only (no block); Cathode has 7 custom tokens, all bound, and the custom role `crt-amber`; GOV.UK has 14, one unbound (`govuk.focus-text`, "same value as `text.base` (bound via `govuk.text`)": the catalog has `ring` but no foreground for it); Carbon has 15, all bound.
 
 ## Report format
 
@@ -281,7 +312,7 @@ The website's [report viewer](https://transtyle.github.io/transtyle/report/) (`w
 
 ## Testing strategy (project-level)
 
-- **Conformance fixtures:** `@transtyle/plugin-kit` ships nine small design systems and runs every plugin against each, asserting the contract rather than a snapshot: the `emit(ir, ctx)` shape, determinism across two runs, IR immutability, honest coverage classes, no JavaScript value leaked into a file, no coverage claim for a slot without a value, a `density` mode either emitted or reported `dropped`, DTCG structured values indistinguishable from their CSS strings, and a valid options schema. Beside the canonical one (14 authored tokens, light and dark), they are the shapes that broke exporters before the kit could see them ([#96](https://github.com/transtyle/transtyle/issues/96)): one token, three tokens, two mode dimensions, a single mode, an authored component tier, a custom archetyped role, authored composites, DTCG object forms. `check:plugins` gates all eleven official exporters plus an inline third-party plugin with them, with a broken plugin per check proving it fails, and third parties run the same function. They stay small; catalog completeness is `check:grid`'s job (every slot `catalog()` says a rule fills, in both modes, and no slot filled outside it), and the engine-level assertions over sparse systems (every mode shape, `autoDark`, TST1112, malformed composites) live in `check:minimal-ds`.
+- **Conformance fixtures:** `@transtyle/plugin-kit` ships ten small design systems and runs every plugin against each, asserting the contract rather than a snapshot: the `emit(ir, ctx)` shape, determinism across two runs, IR immutability, honest coverage classes, no JavaScript value leaked into a file, no coverage claim for a slot without a value, a `density` mode either emitted or reported `dropped`, DTCG structured values indistinguishable from their CSS strings, and a valid options schema. Beside the canonical one (14 authored tokens, light and dark), they are the shapes that broke exporters before the kit could see them ([#96](https://github.com/transtyle/transtyle/issues/96)): one token, three tokens, two mode dimensions, a single mode, an authored component tier, a custom archetyped role, custom semantic tokens, authored composites, DTCG object forms. `check:plugins` gates all eleven official exporters plus an inline third-party plugin with them, with a broken plugin per check proving it fails, and third parties run the same function. They stay small; catalog completeness is `check:grid`'s job (every slot `catalog()` says a rule fills, in both modes, and no slot filled outside it), and the engine-level assertions over sparse systems (every mode shape, `autoDark`, TST1112, malformed composites) live in `check:minimal-ds`.
 - **Determinism gate:** `check:determinism` builds all four examples twice and byte-compares the trees, manifests included; CI runs it on every push. A `report.json` also records drift (`TST1312`) found in the output it replaced, which is an input of the build like the tokens: the second build starts from the first one's untouched output, so the gate compares like with like. Determinism is what makes every other check here meaningful — a coverage number is only evidence if the same input yields it again.
 - **Ground-truth tests per exporter:** generated output is loaded by the _actual target toolchain_ — snapshot tests catch our regressions; ground-truth tests catch the framework moving underneath us. What exists: 44 demo projects (11 targets × 4 examples) build in CI on every push, which compiles the emitted Sass through Bootstrap's own build, type-checks the PrimeNG preset against PrimeNG's `DesignTokens` types, the Mantine theme against Mantine's own types, the Chakra config against Chakra's and the Material UI theme against MUI's `ThemeOptions`, and boots the themed Storybook. What is still manual: looking at the result. Nothing yet asserts on a headless render — a demo that builds green can still be visually wrong, which is why the T11 review checklist is a human pass. Tracked as [issue #12](https://github.com/transtyle/transtyle/issues/12).
 - **Property tests on derivation:** e.g. contrast-pick over a plain candidate list (`<role>.on-solid`) returns the max-contrast candidate; the `<role>.on-tint` on-brand walk returns a candidate passing the derivation method's content level (AA 4.5:1, or APCA Lc 60 under `derivation.contrast: "apca"`) whenever one exists inside the lightness clamp and is monotone in its step count (this line previously overclaimed "always max-contrast", contradicting the rule's on-brand intent — caught and fixed by [exercise F19](../exercises/phase0-shadcn-rerun.md)); scales are monotonic; OKLCH ramps stay in gamut after clamping.

@@ -44,8 +44,17 @@ export default {
   optionsSchema: {
     type: 'object',
     additionalProperties: false,
-    properties: { era: { type: 'string', enum: ['v5'] } },
+    properties: {
+      era: { type: 'string', enum: ['v5'] },
+      // Custom semantic tokens (issue #51): written into the theme blocks by
+      // default; `omit` leaves them out, and core reports each one `dropped`.
+      customTokens: { type: 'string', enum: ['emit', 'omit'] },
+    },
   },
+
+  // A theme block is an open set of custom properties: the design system's
+  // own `semantic.*` tokens get one each (docs/architecture/plugins.md).
+  openVocabulary: true,
 
   emit(normalized, ctx) {
     const era = ctx.targetConfig.options?.era ?? 'v5';
@@ -58,6 +67,7 @@ export default {
     const coverage = [];
     const radius = light.get('semantic.radius.md');
     const blocks = [];
+    const custom = ctx.targetConfig.options?.customTokens === 'omit' ? [] : ctx.customTokens ?? [];
 
     const themeBlock = (map, mode, flags, name = `${ctx.projectName}-${mode}`, first = mode === 'light') => {
       const lines = [
@@ -97,6 +107,29 @@ export default {
           if (first) coverage.push({ variable: `--color-${name}-content`, slot: `${S}${name}.on-solid`, class: 'native' });
           lines.push(`  --color-${name}-content: ${ctx.formatColor(onSolid.value)}; /* ${name}.on-solid */`);
         }
+      }
+      // Custom semantic tokens (issue #51): the same open set, named the way
+      // css-variables names them (`semantic.color.crt.ink` → `--color-crt-ink`).
+      // A name the block already uses (a custom role `crt-amber` and a token
+      // `color.crt.amber`) is not written twice: the earlier one stands, with
+      // no row of its own, and core accounts for the token (reached when the
+      // earlier variable reads it, as Cathode's role does, else dropped).
+      const taken = new Set(lines.map((l) => /^\s*(--[\w-]+):/.exec(l)?.[1]).filter(Boolean));
+      for (const slot of custom) {
+        const entry = map.get(slot);
+        if (entry?.value === undefined) continue;
+        const name = customName(slot);
+        const value = plainValue(entry, ctx);
+        if (taken.has(name)) continue;
+        if (mode === 'light') {
+          coverage.push(
+            value === undefined
+              ? { variable: name, slot, class: 'dropped', note: `custom semantic token of type ${entry.type}; a theme block holds plain values, not composites` }
+              : { variable: name, slot, class: 'native', provenance: entry.provenance.kind, note: 'custom semantic token (open vocabulary)' },
+          );
+        }
+        if (value === undefined) continue;
+        lines.push(`  ${name}: ${value}; /* ${slot.replace('semantic.', '')} */`);
       }
       if (radius) {
         // daisyUI splits radius by component family; one authored radius feeds all three
@@ -174,14 +207,28 @@ export default {
     return {
       files: [
         { path: 'daisyui.transtyle.css', contents: css, kind: 'stylesheet' },
-        { path: 'usage.md', contents: renderUsage(ctx, coverage, Boolean(dark), extraThemes), kind: 'doc' },
+        { path: 'usage.md', contents: renderUsage(ctx, coverage, Boolean(dark), extraThemes, custom.length > 0), kind: 'doc' },
       ],
       coverage,
     };
   },
 };
 
-function renderUsage(ctx, coverage, hasDark = true, extraThemes = []) {
+/** css-variables' naming: strip `semantic.`, dots become dashes. */
+const customName = (slot) => `--${slot.replace(/^semantic\./, '').replace(/\./g, '-')}`;
+
+const fontList = (value) => value.map((f) => (/[^a-z-]/.test(f) ? `"${f}"` : f)).join(', ');
+
+/** A custom token as one CSS value, or undefined for a composite a custom property can't hold whole. */
+function plainValue(entry, ctx) {
+  const { type, value } = entry;
+  if (type === 'color') return ctx.formatColor(value);
+  if (Array.isArray(value)) return value.every((v) => typeof v === 'string') ? fontList(value) : undefined;
+  if (value === null || typeof value === 'object') return undefined;
+  return String(value);
+}
+
+function renderUsage(ctx, coverage, hasDark = true, extraThemes = [], hasCustom = false) {
   const counts = {};
   for (const c of coverage) counts[c.class] = (counts[c.class] ?? 0) + 1;
   const summary = Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(' · ');
@@ -209,7 +256,7 @@ ${hasDark
 
 - daisyUI's \`secondary\`/\`accent\` are mapped from your **brand** secondary/accent — in shadcn the same words mean subtle surfaces. Same design system, correct meaning in each ecosystem.
 - \`--color-base-300\` is approximated from your border tone (daisyUI wants a third background-ramp step the IR doesn't define; see report.json).
-- Regenerate with \`transtyle build daisyui\`; never edit this file.
+${hasCustom ? '- Your own `semantic.*` tokens outside the catalog are written into each theme block too, named like the css-variables target names them (`semantic.color.brand.ink` → `--color-brand-ink`). Set `options.customTokens: "omit"` to leave them out.\n' : ''}- Regenerate with \`transtyle build daisyui\`; never edit this file.
 ${extraThemes.length ? `
 ## Other brands and contrast levels
 

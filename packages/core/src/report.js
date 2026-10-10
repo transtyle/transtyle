@@ -29,9 +29,10 @@ export const REPORT_SCHEMA_ID = 'https://transtyle.dev/schemas/report/v0.json';
  * @param {object[]} [report.diagnostics] the build's diagnostics (`Diagnostics#items`)
  * @param {object[]} [report.suppressed] what `check.suppress` silenced (`Diagnostics#suppressed`)
  * @param {string[]} [report.files] the written paths, relative to the project
+ * @param {object} [report.customVocabulary] the custom-vocabulary summary (issue #51), under `coverage`
  * @returns the report object, ready for `JSON.stringify`
  */
-export function buildReport({ target, config, options, coverage, reads, normalized, diagnostics = [], suppressed = [], files = [] }) {
+export function buildReport({ target, config, options, coverage, reads, normalized, diagnostics = [], suppressed = [], files = [], customVocabulary }) {
   const items = normalized ? withMetadata(coverage, normalized.modes[normalized.defaultMode]) : coverage;
   const counts = {};
   for (const item of items) counts[item.class] = (counts[item.class] ?? 0) + 1;
@@ -41,7 +42,7 @@ export function buildReport({ target, config, options, coverage, reads, normaliz
     ...(config !== undefined ? { config } : {}),
     options: options ?? {},
     generatedBy: 'transtyle 0.1.0 (walking skeleton)',
-    coverage: { counts, items },
+    coverage: { counts, items, ...(customVocabulary && { customVocabulary }) },
     ...(reads !== undefined ? { reads } : {}),
     diagnostics,
     suppressed,

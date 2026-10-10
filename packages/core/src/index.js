@@ -23,6 +23,8 @@ import { nearestName } from './nearest.js';
 import { makeUnits } from './units.js';
 import { validateTargetModes, targetView, narrowedDimensions, withModesNote } from './target-modes.js';
 import { recordingView } from './reads.js';
+import { customTokens, accountCustomTokens, withCustomVocabularyNote } from './custom.js';
+import { coverageSlots } from './explain.js';
 import { formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from './color.js';
 import { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
 import { IR_SPEC } from '@transtyle/ir';
@@ -43,6 +45,7 @@ export { loadConfig, expandTokenFiles, loadConfigChain, mergeConfigChain, DEFAUL
 export { migrateStyleDictionary, needsStyleDictionaryMigration, STYLE_DICTIONARY_NAMESPACE } from './migrate-style-dictionary.js';
 export { consumption } from './reads.js';
 export { completenessStatus, completenessLevels, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL } from './completeness.js';
+export { customTokens, isCustomRow, accountCustomTokens, customVocabularySentence, CUSTOM_MEANING } from './custom.js';
 export { expandBindings, BINDING_PLACEHOLDERS } from './bindings.js';
 export { checkPluginCompat, PLUGIN_API_VERSIONS } from './compat.js';
 export { suggestBindings, SUGGEST_THRESHOLDS } from './suggest.js';
@@ -329,6 +332,12 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
     }
     if (pipelineErrors() > 0) break; // don't emit with invalid options
 
+    // Exporters see only the target's declared slice of the matrix (derivation and
+    // checks above already ran once on the full one); a deliberate exclusion is
+    // not a loss, so it gets no `dropped` coverage row.
+    const view = targetConfig.modes ? targetView(normalized, targetConfig.modes) : normalized;
+    const narrowed = targetConfig.modes ? narrowedDimensions(normalized, view) : new Set();
+
     // RESOLVE + EMIT: exporter returns file descriptions; only core touches the filesystem.
     const rel = (p) => path.relative(projectDir, p).split(path.sep).join('/') || '.';
     const outputOf = (n, t) => (outRoot ? rel(path.resolve(outRoot, n)) : t.output ?? `dist/${n}`);
@@ -343,16 +352,16 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
       siblings: Object.entries(config.targets ?? {}).map(([n, t]) => ({
         name: n, exporter: t.exporter ?? n, output: outputOf(n, t),
       })),
+      // The design system's own `semantic.*` vocabulary (issue #51), for the
+      // exporters that can carry it (`openVocabulary`); the rest ignore it and
+      // core accounts for every token after emit.
+      customTokens: customTokens(view),
     };
-    // Exporters see only the target's declared slice of the matrix (derivation and
-    // checks above already ran once on the full one); a deliberate exclusion is
-    // not a loss, so it gets no `dropped` coverage row.
-    const view = targetConfig.modes ? targetView(normalized, targetConfig.modes) : normalized;
-    const narrowed = targetConfig.modes ? narrowedDimensions(normalized, view) : new Set();
     // The exporter gets a recording copy of its view (src/reads.js): `reads`
     // lists the catalog slots it looked up while emitting.
     const recording = recordingView(view);
     let files, coverage, notes, reads;
+    let crashed = false;
     try {
       ({ files, coverage, diagnostics: notes = [] } = exporter.emit(recording.view, ctx));
       checkExporterDiagnostics(notes);
@@ -367,6 +376,7 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
       coverage = [];
       notes = [];
       reads = [];
+      crashed = true;
     }
     // Exporter diagnostics (optional `diagnostics` in emit's return value): what
     // a target's own conventions do to a value, which only the exporter knows.
@@ -388,6 +398,22 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
       coverage = coverage.filter((c) => !(c.class === 'dropped' && [...narrowed].some((d) => c.variable === `(mode:${d})`)));
     }
 
+    // Custom vocabulary (issue #51): every custom semantic token is emitted,
+    // reaches the target through a binding, or gets a `dropped` row. Not for a
+    // crashed exporter, whose report lists no coverage at all.
+    let customVocabulary;
+    if (!crashed && Array.isArray(coverage)) {
+      const custom = accountCustomTokens(view, coverage, (row) => coverageSlots(row, view), {
+        open: exporter.openVocabulary === true,
+        omitted: targetConfig.options?.customTokens === 'omit',
+      });
+      if (custom.summary.total > 0) {
+        customVocabulary = custom.summary;
+        coverage = [...coverage, ...custom.rows];
+        files = files.map((f) => (f.path === 'usage.md' ? { ...f, contents: withCustomVocabularyNote(f.contents, custom.summary, custom.unreached) } : f));
+      }
+    }
+
     // Outputs resolve against the project directory, wherever the target was
     // declared: a target a base declares is built by each product into its
     // own folder (docs/specs/configuration.md#paths-in-a-chain).
@@ -404,13 +430,13 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
       const staged = files.map((f) => ({ path: f.path, contents: f.contents }));
       for (const f of files) written.push(path.relative(projectDir, path.join(outDir, f.path)));
       stale = await staleFiles(manifests.get(name), files, projectDir);
-      plans.push({ outDir, files: staged, name, targetConfig, coverage, view, reads, written, planned });
+      plans.push({ outDir, files: staged, name, targetConfig, coverage, view, reads, written, planned, customVocabulary });
     }
     // `emitted` carries the file *specs* (path + contents) even when emit is
     // off — `transtyle diff` re-emits both sides in-memory to compute per-target
     // impact without writing anything. `files` stays the written paths.
     // `reads` is what `consumption()` (src/reads.js) builds the slot matrix from.
-    results.push({ target: name, files: dryRun ? [] : written, stale, planned, outDir, exporter: targetConfig.exporter ?? name, coverage, emitted: files, reads });
+    results.push({ target: name, files: dryRun ? [] : written, stale, planned, outDir, exporter: targetConfig.exporter ?? name, coverage, emitted: files, reads, ...(customVocabulary && { customVocabulary }) });
   }
 
   // Source locations first (so the suppressed list carries them too), then
@@ -426,9 +452,9 @@ export async function compile({ cwd, configFile = DEFAULT_CONFIG_FILE, redirect,
   // warning from a later target's exporter was missing from every earlier
   // target's report.json (issue #186).
   for (const plan of plans) {
-    const { name, targetConfig, coverage, view, reads, written, planned } = plan;
+    const { name, targetConfig, coverage, view, reads, written, planned, customVocabulary } = plan;
     const report = buildReport({
-      target: name, config: configChain, options: targetConfig.options, coverage, reads, normalized: view,
+      target: name, config: configChain, options: targetConfig.options, coverage, reads, normalized: view, customVocabulary,
       diagnostics: diagnostics.items, suppressed: diagnostics.suppressed, files: [...written],
     });
     const manifest = renderManifest(name, plan.files);

@@ -40,6 +40,8 @@ A file that an earlier build wrote in the output directory and this one no longe
 
 Delete it if nothing uses it. The new manifest no longer lists it.
 
+When the design system has custom semantic tokens (its own `semantic.*` names outside the catalog), each target gets one more line under its bar, `custom vocabulary: 14 tokens, 10 reach this target via bindings, 4 have no path`, and the tokens without a path are `dropped` rows named `(custom:<path>)`. They stay out of the percentages: they describe your vocabulary, not the target ([coverage spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/validation-and-coverage.md#custom-vocabulary)).
+
 ### `--out <dir>`, `--dry-run`
 
 `build` only. `--out <dir>` writes every target to `<dir>/<instance name>` instead of its configured `output`, `report.json` and `transtyle-manifest.json` included (a relative `<dir>` is relative to your shell, like `--cwd`). A Storybook target's imports of its sibling stylesheets follow the redirect. `--dry-run` runs the whole build and stops before writing: it prints the coverage and the files it **would** write, `report.json` and sizes included, and leaves the disk untouched. Both compose, and a dry run fails exactly like the real build would (exit 1 on a diagnostic at or above `failOn`), so it works as a CI gate.
@@ -121,7 +123,7 @@ npx transtyle check --json
 #   "diagnostics": [ { "severity": "warning", "code": "TST1305", "message": "...",
 #                         "path": "scratch", "file": "tokens/brand.tokens.json", "line": 74, "column": 3 }, ... ],
 #   "suppressed": [ ... ],
-#   "targets": [ { "target": "shadcn", "coverage": [ ... ], "reads": [ ... ] }, ... ],
+#   "targets": [ { "target": "shadcn", "coverage": [ ... ], "reads": [ ... ], "customVocabulary": { ... } }, ... ],
 #   "completeness": { "level": "recommended", "authored": 14, "total": 14, "todo": [] },
 #   "adoption": { "custom": 14, "bound": 13,
 #                 "unbound": [ { "path": "semantic.color.govuk.focus-text", "type": "color",

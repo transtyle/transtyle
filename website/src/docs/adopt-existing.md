@@ -60,7 +60,7 @@ In a [real run against a product with no tokens](https://github.com/transtyle/tr
 
 ## 2. Express your existing semantics — with _your_ names
 
-If your system already has meaning-level names ("flame is our action color", "sand is our canvas"), write them as **custom semantic tokens**. They're first-class: carried, resolved per mode, provenance-tracked:
+If your system already has meaning-level names ("flame is our action color", "sand is our canvas"), write them as **custom semantic tokens**. They're first-class: carried, resolved per mode, provenance-tracked, and accounted for on every target (the build prints how many reach it through your bindings, and `report.json` lists the rest as `dropped`):
 
 ```json
 {

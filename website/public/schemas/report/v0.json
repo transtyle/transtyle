@@ -119,6 +119,34 @@
               }
             }
           }
+        },
+        "customVocabulary": {
+          "type": "object",
+          "required": [
+            "total",
+            "emitted",
+            "reached",
+            "dropped"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "total": {
+              "type": "integer",
+              "description": "custom semantic tokens: authored or aliased `semantic.*` paths outside the catalog"
+            },
+            "emitted": {
+              "type": "integer",
+              "description": "written under their own name (an open-vocabulary target)"
+            },
+            "reached": {
+              "type": "integer",
+              "description": "not written themselves, but read through a catalog slot the target emits"
+            },
+            "dropped": {
+              "type": "integer",
+              "description": "no path to the target; each has a `dropped` row"
+            }
+          }
         }
       }
     },

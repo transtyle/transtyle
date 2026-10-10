@@ -13,9 +13,9 @@ order: 11
 
 <!-- measured: acme.bootstrap.sass = 144 -->
 <!-- measured: acme.bootstrap.decls = 215 -->
-<!-- measured: acme.bootstrap.rows = 714 -->
+<!-- measured: acme.bootstrap.rows = 717 -->
 
-Emits a **Bootstrap ≥5.3** theme along both consumption paths the Bootstrap community actually uses — on [Acme](/docs/examples/), 144 Sass variables and 215 CSS custom properties, over 714 classified rows:
+Emits a **Bootstrap ≥5.3** theme along both consumption paths the Bootstrap community actually uses — on [Acme](/docs/examples/), 144 Sass variables and 215 CSS custom properties, over 717 classified rows:
 
 | File                        | Path          | Fidelity                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

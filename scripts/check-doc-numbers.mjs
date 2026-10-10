@@ -138,8 +138,14 @@ async function compiledExample(example) {
   return examples.get(example);
 }
 
-const targetResult = async (example, target) =>
-  (await compiledExample(example)).results.find((r) => r.target === target) ?? null;
+// The rows core adds for custom semantic tokens (issue #51) describe the
+// design system, not the target's surface: the CLI keeps them out of its
+// percentages, and every coverage number here does the same.
+const { isCustomRow } = await import('../packages/core/src/index.js');
+const targetResult = async (example, target) => {
+  const result = (await compiledExample(example)).results.find((r) => r.target === target);
+  return result ? { ...result, coverage: result.coverage.filter((c) => !isCustomRow(c)) } : null;
+};
 
 /**
  * Percentages exactly as the CLI prints them (packages/cli/src/main.js): count
@@ -471,6 +477,19 @@ async function measure(metric) {
     const m = /(\d+) set · (\d+) follow · (\d+) on (\w+)'s default/.exec(row?.slot ?? '');
     if (!m) return null;
     return Number({ set: m[1], follow: m[2], default: m[3] }[parts[2]]);
+  }
+
+  // <example>.custom — the custom semantic tokens of an example (issue #51) —
+  // and <example>.<target>.custom.<emitted|reached|dropped>, what became of
+  // them on one target, read off core's own `customVocabulary` counts.
+  if (parts.length === 2 && parts[1] === 'custom' && exampleNames().includes(parts[0])) {
+    const { customTokens } = await import('../packages/core/src/index.js');
+    return customTokens((await compiledExample(parts[0])).normalized).length;
+  }
+  if (parts.length === 4 && parts[2] === 'custom' && ['emitted', 'reached', 'dropped'].includes(parts[3])) {
+    if (!exampleNames().includes(parts[0])) return null;
+    const result = await targetResult(parts[0], parts[1]);
+    return result ? result.customVocabulary?.[parts[3]] ?? 0 : null;
   }
 
   const [example, ...rest] = parts;
