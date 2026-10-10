@@ -178,6 +178,8 @@ await mustFail('a plugin with an invalid coverage class', { name: 'broken', emit
 await mustFail('a plugin returning an error-severity diagnostic', { name: 'loud', emit: () => ({ files: [], coverage: [], diagnostics: [{ severity: 'error', code: 'X0001', message: 'stop' }] }) }, 'emit-diagnostics-valid', 'canonical');
 await mustFail('a plugin writing `[object Object]` into a value', withFiles(':root { --acme-radius: [object Object]; }\n'), 'no-leaked-values', 'canonical');
 await mustFail('a plugin writing `undefined` after a colon', withFiles(':root { --acme-radius: undefined; }\n'), 'no-leaked-values', 'canonical');
+await mustFail('a plugin emitting a file named report.json', { ...thirdParty, emit: (ir, ctx) => { const out = thirdParty.emit(ir, ctx); return { ...out, files: [...out.files, { path: 'report.json', contents: '{}\n', kind: 'data' }] }; } }, 'no-reserved-file-names', 'canonical');
+await mustFail('a plugin emitting a file named transtyle-manifest.json', { ...thirdParty, emit: (ir, ctx) => { const out = thirdParty.emit(ir, ctx); return { ...out, files: [...out.files, { path: './transtyle-manifest.json', contents: '{}\n', kind: 'data' }] }; } }, 'no-reserved-file-names', 'canonical');
 await mustFail('a plugin emitting an empty file', withFiles('\n'), 'files-non-empty', 'canonical');
 await mustFail(
   'a plugin claiming `native` for a slot the one-token system never resolves',

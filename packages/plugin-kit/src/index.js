@@ -26,6 +26,8 @@ import { dirname, join } from 'node:path';
 import { compile, checkExporterDiagnostics, checkPluginCompat, parseRange, customTokens, makeUnits, formatColor, formatHslTriplet, formatHex, contrastRatio, mix } from '@transtyle/core';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures');
+/** Files core writes itself in every target's output directory, after the exporter's own. */
+export const RESERVED_FILES = Object.freeze(['report.json', 'transtyle-manifest.json']);
 const COVERAGE_CLASSES = new Set(['native', 'derived', 'approximated', 'dropped', 'unsupported']);
 
 /**
@@ -306,6 +308,16 @@ function runFixture(plugin, { ir, config }, fixture, twin, addCheck) {
   add('files-non-empty', !empty.length,
     'plugins.md#the-exporter-interface',
     `emitted empty file(s): ${list(empty)}`);
+
+  // Core appends `report.json` and `transtyle-manifest.json` at the root of the
+  // target's output directory after the exporter's files, so an exporter file
+  // with either path is silently overwritten.
+  const reserved = files
+    .filter((f) => RESERVED_FILES.includes(f.path.replace(/\\/g, '/').replace(/^(\.\/)+/, '')))
+    .map((f) => f.path);
+  add('no-reserved-file-names', !reserved.length,
+    'plugins.md#the-exporter-interface (core writes report.json and transtyle-manifest.json itself)',
+    `emitted file(s) named like the ones core writes in every output directory (${RESERVED_FILES.join(', ')}), which would be overwritten: ${list(reserved)}`);
 
   const leaked = files.flatMap((f) =>
     f.contents.split('\n').flatMap((line, i) => (leaks(line) ? [`${f.path}:${i + 1} ${line.trim()}`] : [])));
