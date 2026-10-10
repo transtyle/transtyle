@@ -5,7 +5,7 @@
 
 import { NAMED_COLORS } from './css-colors.js';
 
-const FUNC_RE = /^([a-z][a-z0-9-]*)\(\s*([^)]*)\s*\)$/i;
+const FUNC_RE = /^([a-z][a-z0-9-]*)\(([^)]*)\)$/i;
 
 /**
  * The fourteen DTCG color spaces (DTCG 2025.10, Color module), and the
@@ -116,7 +116,7 @@ function parseColorFunction(inner, s) {
   return spaceToOklch(space, components, parseAlpha(alpha));
 }
 
-const NUMBER_RE = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+const NUMBER_RE = /^[+-]?(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?$/i;
 
 /** One CSS component: `none` (→ 0), a number, a percentage of `ref`, or an <angle> when ref is 'hue'. */
 function cssComponent(v, ref) {
