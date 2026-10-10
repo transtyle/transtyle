@@ -61,10 +61,11 @@ const markSvg = (root) =>
  * `</script>` inside a string literal ends the element — the browser is
  * parsing HTML, not JavaScript, and does not care that it is quoted. The demo
  * blurbs are prose written by hand, so this is a real hazard rather than a
- * ritual, and `<!--` closes the same hole from the other side.
+ * ritual. Escaping every `<` and `>` leaves no tag and no comment marker in
+ * the script text, whichever way it is spelled.
  */
 const embed = (value) =>
-  JSON.stringify(value).replace(/</g, '\\u003c').replace(/-->/g, '--\\u003e');
+  JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
 
 /**
  * The markup to inject before </body>.
