@@ -110,3 +110,18 @@ export async function commitOutputs(plans) {
     }
   }
 }
+
+/**
+ * Write what `compileProject()` returned (pipeline.js) under `cwd`: each
+ * result's `files` into its `output` directory, all targets at once through
+ * `commitOutputs`, so a failed write leaves every directory as it was. It
+ * writes exactly the files it is given and does not look at diagnostics:
+ * `compile()` only calls it for a run without errors, and adds each target's
+ * `transtyle-manifest.json` (manifest.js) to its files first.
+ */
+export async function writeResults(results, cwd) {
+  const plans = results
+    .filter((r) => r.files.length > 0)
+    .map((r) => ({ outDir: path.resolve(cwd, r.output), files: r.files }));
+  if (plans.length > 0) await commitOutputs(plans);
+}

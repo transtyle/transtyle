@@ -88,7 +88,7 @@ Pick an OSS product with a hand-rolled design language (no token files, no seman
 ### P5 — Browser playground (audit E1 + E4)
 
 **Depends:** R4, R5. **Files:** new `website/src/playground/` (Astro island); a browser entry export in `packages/core`; nav.
-Core is zero-dep ESM — it runs client-side unchanged. Paste tokens → live css-variables + shadcn output, coverage bar, `explain`-on-hover; doubles as the report.json viewer.
+~~Core is zero-dep ESM — it runs client-side unchanged.~~ It did not: core read its config and tokens itself and imported `node:fs` at module top, and two exporters read `surface-inventory.json` from disk at import time. Since [#87](https://github.com/transtyle/transtyle/issues/87) (2026-10-09), `@transtyle/core/browser` exports `compileProject({ config, files, exporters })`, every official exporter imports without Node, and `check:browser` proves both on every run. Paste tokens → live css-variables + shadcn output, coverage bar, `explain`-on-hover; doubles as the report.json viewer.
 **Acceptance:** playground works on the deployed site with no server round-trip, importing the _published_ npm ESM; Acme's tokens pasted in reproduce `examples/acme/dist/` output byte-identically.
 
 ### P6 — `transtyle diff` (semantic DS diff, per-target impact)

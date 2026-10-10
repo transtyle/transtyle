@@ -23,13 +23,13 @@
  *             counts them and the token's own row says why.
  */
 
-import { readFileSync } from 'node:fs';
+// A JSON module, not a file read: exporters never touch a filesystem, so the
+// exporter also runs in a browser bundle (@transtyle/core/browser).
+import inventory from '../surface-inventory.json' with { type: 'json' };
 import { surfaceRows as rowsFor, surfaceStatus } from '@transtyle/ir';
 
-let inventory;
-/** The checked-in inventory, read on first use. */
+/** The checked-in inventory. */
 export function INVENTORY() {
-  inventory ??= JSON.parse(readFileSync(new URL('../surface-inventory.json', import.meta.url), 'utf8'));
   return inventory;
 }
 

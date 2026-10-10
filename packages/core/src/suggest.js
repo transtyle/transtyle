@@ -30,7 +30,8 @@
  */
 
 import { COLOR_ROLES, TEXT_RUNGS, PROVENANCE, collectTokens, mergeTrees } from '@transtyle/ir';
-import { loadConfig, loadTokenTrees } from './load.js';
+import { loadProject } from './load.js';
+import { readTokenTrees, toFileMap } from './project.js';
 import { validate } from './schema/validate.js';
 import { configSchema } from './schema/config.schema.js';
 import { expandBindings } from './bindings.js';
@@ -106,7 +107,7 @@ function treeOf(pairs) {
  */
 export async function suggestBindings({ cwd, configFile }) {
   const diagnostics = new Diagnostics();
-  const { config, projectDir, configChain } = await loadConfig(cwd, { configFile });
+  const { config, files, projectDir, configChain } = await loadProject(cwd, { configFile });
   const leaf = configChain[configChain.length - 1];
   const where = configChain.length > 1 ? `${leaf} (merged with the configs it extends)` : leaf;
   for (const { path: p, message } of validate(config, configSchema)) {
@@ -114,7 +115,7 @@ export async function suggestBindings({ cwd, configFile }) {
   }
   if (diagnostics.errors.length) return { diagnostics, report: null };
 
-  const loaded = await loadTokenTrees(projectDir, config.tokens, diagnostics);
+  const loaded = readTokenTrees(toFileMap(files), config.tokens, diagnostics, projectDir);
   const trees = [...loaded];
   const ruled = expandBindings(loaded, config, diagnostics);
   if (ruled && ruled.aliases.length > 0) {

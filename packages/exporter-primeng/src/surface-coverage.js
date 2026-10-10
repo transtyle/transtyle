@@ -20,11 +20,11 @@
  *                always with a note. Never silent — that is the AL3 bar.
  */
 
-import { readFileSync } from 'node:fs';
+// A JSON module, not a file read: exporters never touch a filesystem, so the
+// exporter also runs in a browser bundle (@transtyle/core/browser).
+import INVENTORY from '../surface-inventory.json' with { type: 'json' };
 
-export const INVENTORY = JSON.parse(
-  readFileSync(new URL('../surface-inventory.json', import.meta.url), 'utf8'),
-);
+export { INVENTORY };
 
 /** An IR colour value ({ l, c, h, … }): one emitted value, not a branch of the preset. */
 const isColorValue = (v) =>

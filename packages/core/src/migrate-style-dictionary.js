@@ -5,7 +5,7 @@
  * with the keys in the order the file had them.
  */
 
-import { DTCG_TYPES, TIERS, isStyleDictionaryLeaf } from './load.js';
+import { DTCG_TYPES, TIERS, isStyleDictionaryLeaf } from './project.js';
 
 /**
  * Style Dictionary `type` / category names → DTCG `$type`. Anything else is

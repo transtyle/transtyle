@@ -9,12 +9,10 @@
  * mechanically chained — replacing the old single blanket line
  * "component tier reserved for v2".
  */
-import { readFileSync } from 'node:fs';
+// A JSON module, not a file read: exporters never touch a filesystem, so the
+// exporter also runs in a browser bundle (@transtyle/core/browser).
+import INVENTORY from '../surface-inventory.json' with { type: 'json' };
 import { DESCRIPTORS, coverageForVariable } from './descriptors.js';
-
-const INVENTORY = JSON.parse(
-  readFileSync(new URL('../surface-inventory.json', import.meta.url), 'utf8'),
-);
 
 const MECH = {
   chained: {
