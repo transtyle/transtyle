@@ -137,17 +137,18 @@ export function expandBindings(trees, config, diagnostics, labels) {
   return { tree, rules: ruleOf, aliases, skipped };
 }
 
-/** Put an alias token at a dotted path; false when it would sit inside a token or replace a group. */
+/** Put an alias token at a dotted path; false when it would sit inside a token, replace a group, or use `__proto__` as a name. */
 function place(tree, slot, value) {
   const parts = slot.split('.');
+  if (parts.includes('__proto__')) return false;
   let node = tree;
   for (const part of parts.slice(0, -1)) {
-    if (node[part] === undefined) node[part] = {};
+    if (!Object.hasOwn(node, part)) node[part] = {};
     node = node[part];
     if ('$value' in node) return false;
   }
   const leaf = parts.at(-1);
-  if (leaf in node) return false;
+  if (Object.hasOwn(node, leaf)) return false;
   node[leaf] = { $value: value };
   return true;
 }

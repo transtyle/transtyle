@@ -75,6 +75,25 @@ export default {
   },
 };
 
+/**
+ * Where a line's trailing comment starts, the whitespace before it included:
+ * the first `//`, or a block comment that closes the line, either one after
+ * whitespace. -1 when the line has none. One pass over the line.
+ */
+function trailingComment(line) {
+  const isSpace = (ch) => ch !== undefined && /\s/.test(ch);
+  for (let i = line.indexOf('/'); i !== -1; i = line.indexOf('/', i + 1)) {
+    if (!isSpace(line[i - 1])) continue;
+    const next = line[i + 1];
+    if (next === '/' || (next === '*' && line.length - i >= 4 && line.endsWith('*/'))) {
+      let start = i - 1;
+      while (isSpace(line[start - 1])) start--;
+      return start;
+    }
+  }
+  return -1;
+}
+
 function emitAll(normalized, ctx) {
   // Mode polarity: bind mode NAMES (ir.md#modes) — :root/[data-bs-theme=light]
   // is always the light map, even for dark-native design systems.
@@ -130,8 +149,9 @@ function emitAll(normalized, ctx) {
       .flatMap((l) => {
         if (!/:\s*undefined\s*;/.test(l)) return [l];
         const indent = /^\s*/.exec(l)[0];
-        const comment = /\s+(\/\/.*|\/\*.*\*\/)$/.exec(l);
-        const body = comment ? l.slice(0, comment.index) : l;
+        const at = trailingComment(l);
+        const body = at === -1 ? l : l.slice(0, at);
+        const comment = at === -1 ? '' : l.slice(at);
         const kept = body
           .trim()
           .split(/(?<=;)\s+/)
@@ -141,7 +161,7 @@ function emitAll(normalized, ctx) {
             drop(m[1], `not emitted in ${file}: this design system provides no value for it, so Bootstrap's own default stands`);
             return false;
           });
-        return kept.length ? [indent + kept.join('  ') + (comment ? comment[0] : '')] : [];
+        return kept.length ? [indent + kept.join('  ') + comment] : [];
       })
       .join('\n');
 
