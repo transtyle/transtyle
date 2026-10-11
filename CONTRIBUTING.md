@@ -56,15 +56,14 @@ context:
 - No unexplained internal jargon or unresolved references to "the current change" — the issue must
   stand on its own once the session that created it is gone.
 
-Every agent-filed issue gets exactly two labels at creation: **`ai-submitted`** and one type label
-(**`bug`** / **`feature`** / **`enhancement`** — see the table below for the distinction).
+Every agent-filed issue gets exactly one type label at creation: **`bug`**, **`feature`** or
+**`enhancement`** (see the table below for the distinction).
 
 **Picking up work.** If an issue turns out to be ambiguous or under-specified once work begins,
 stop and ask rather than guessing at the missing intent.
 
 | Label            | Meaning                                                                            | Who applies it |
 | ---------------- | ---------------------------------------------------------------------------------- | -------------- |
-| `ai-submitted`   | Opened by an AI agent rather than a human                                          | the agent      |
 | `bug`            | Something isn't working                                                            | —              |
 | `feature`        | New capability that does not exist yet                                             | —              |
 | `enhancement`    | Improvement to something that already exists                                       | —              |
