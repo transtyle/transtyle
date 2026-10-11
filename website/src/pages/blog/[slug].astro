@@ -1,8 +1,16 @@
 ---
-import Prose from '@deramond.dev/astro/components/Prose.astro';
-import Base from '../../layouts/Base.astro';
+import BlogPostLayout from '@deramond.dev/astro/layouts/BlogPostLayout.astro';
+import '../../styles/global.css';
 import { posts, postPath, formatDate } from '../../blog.js';
 import { withBase } from '../../url.js';
+
+// A post is @deramond.dev/astro's BlogPostLayout: the site header and footer,
+// the centred head (breadcrumb, date, title, lead, meta row), the text and
+// figure columns, the table of contents and the schema.org data. It renders
+// through the package's SiteLayout, so it doesn't go through Base.astro; what
+// Base gives every other page goes in the layout's slots: the RSS link, the
+// header's GitHub link, the alpha notice (as the docs pages show it) and the
+// Markdown link. The author is the brand author the integration already knows.
 
 export async function getStaticPaths() {
   const mods = import.meta.glob('../../blog/*.md', { eager: true });
@@ -12,125 +20,61 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const post = posts.find((p) => p.slug === slug);
 const { Content } = post.mod;
-const headings = post.mod.getHeadings().filter((h) => h.depth === 2);
 const older = posts.filter((p) => p.date < post.date).slice(0, 2);
 ---
 
-<Base
-  title={`${post.title} · Transtyle`}
+<BlogPostLayout
+  title={post.title}
   description={post.description}
-  current="blog"
-  image={`/og/blog-${slug}.png`}
-  publishedDate={post.date}
-  author={post.author}
+  date={post.date}
+  image={withBase(`/og/blog-${slug}.png`)}
+  headings={post.mod.getHeadings()}
+  index={{ label: 'Blog', href: withBase('/blog/') }}
 >
-  <div class="post-layout">
-    <main class="post" id="main">
-      <p class="crumb"><a href={withBase('/blog/')}>← Blog</a></p>
-      <h1>{post.title}</h1>
-      <p class="byline">
-        <time datetime={post.date}>{formatDate(post.date)}</time>
-        <span aria-hidden="true">·</span>
-        <span>{post.author}</span>
-        <span aria-hidden="true">·</span>
-        <a href={withBase(`/blog/${slug}.md`)} title="This post as raw markdown">Markdown</a>
-      </p>
-      <p class="lede">{post.description}</p>
+  <link slot="head" rel="alternate" type="application/rss+xml" title="Transtyle blog" href={withBase('/blog/rss.xml')} />
+  <a slot="actions" class="gh" href="https://github.com/transtyle/transtyle" rel="noopener">GitHub</a>
+  <p slot="before" class="alpha-note">
+    <strong>Alpha</strong> — breaking changes ship without a deprecation cycle.
+    <a href={withBase('/docs/roadmap/')}>What is built vs. planned</a>
+  </p>
+  <a slot="meta" href={withBase(`/blog/${slug}.md`)} title="This post as raw markdown">Markdown</a>
 
-      <Prose><Content /></Prose>
+  <Content />
 
-      <footer class="post-foot">
-        <p>
-          Transtyle is open source (MIT) and pre-1.0. If this post got something wrong, or if your
-          design system breaks it, that is the most useful thing you can send us —
-          <a href="https://github.com/transtyle/transtyle" rel="noopener">the repository</a> is where that
-          conversation happens.
-        </p>
-        {
-          older.length > 0 && (
-            <ul class="more-posts">
-              {older.map((p) => (
-                <li>
-                  <a href={postPath(p.slug)}>{p.title}</a>
-                  <time datetime={p.date}>{formatDate(p.date)}</time>
-                </li>
-              ))}
-            </ul>
-          )
-        }
-      </footer>
-    </main>
-
+  <div slot="after" class="post-foot">
+    <p>
+      Transtyle is open source (MIT) and pre-1.0. If this post got something wrong, or if your
+      design system breaks it, that is the most useful thing you can send us —
+      <a href="https://github.com/transtyle/transtyle" rel="noopener">the repository</a> is where that
+      conversation happens.
+    </p>
     {
-      headings.length > 2 && (
-        <aside class="toc" aria-label="On this page">
-          <div class="toc-title">On this page</div>
-          {headings.map((h) => (
-            <a class="toc-link" href={`#${h.slug}`}>
-              {h.text}
-            </a>
+      older.length > 0 && (
+        <ul class="more-posts">
+          {older.map((p) => (
+            <li>
+              <a href={postPath(p.slug)}>{p.title}</a>
+              <time datetime={p.date}>{formatDate(p.date)}</time>
+            </li>
           ))}
-        </aside>
+        </ul>
       )
     }
   </div>
+</BlogPostLayout>
 
-  <script>
-    // Same scrollspy contract as the docs pages: highlight the entry of the
-    // last heading above the reading line (25% down the viewport).
-    const links = [...document.querySelectorAll('.toc-link')];
-    const targets = links
-      .map((a) => [document.getElementById(decodeURIComponent(a.hash.slice(1))), a])
-      .filter(([h]) => h);
-    if (targets.length) {
-      let active = null;
-      const update = () => {
-        const line = window.scrollY + window.innerHeight * 0.25;
-        let current = targets[0][1];
-        for (const [h, a] of targets) if (h.offsetTop <= line) current = a;
-        if (current !== active) {
-          active?.classList.remove('active');
-          active = current;
-          current.classList.add('active');
-        }
-      };
-      addEventListener('scroll', update, { passive: true });
-      update();
-    }
-  </script>
-
-  <style>
-    .post-layout { display: flex; gap: 3rem; max-width: 76rem; margin: 0 auto; padding: 0 clamp(1rem, 3vw, 2rem); }
-    main { padding: 1.8rem 0 3rem; flex: 1; min-width: 0; }
-    .crumb { font-size: 0.85rem; margin: 0 0 1rem; }
-    .crumb a { color: var(--text-muted); }
-    .post h1 { font-size: clamp(var(--font-size-2xl), 5vw, var(--font-size-4xl)); margin-bottom: var(--space-4); }
-    .byline {
-      display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
-      font-size: 0.85rem; color: var(--text-muted); margin: -0.4rem 0 1.2rem;
-      font-family: var(--mono);
-    }
-    .lede {
-      font-size: 1.12rem; line-height: 1.6; color: var(--text-muted);
-      border-left: 3px solid var(--primary); padding-left: 1rem; margin: 0 0 2rem;
-    }
-    .post-foot { margin-top: 3rem; padding-top: 1.4rem; border-top: 1px solid var(--border-soft); font-size: 0.9rem; color: var(--text-muted); }
-    .more-posts { list-style: none; padding: 0; margin: 1rem 0 0; display: flex; flex-direction: column; gap: 0.4rem; }
-    .more-posts time { font-size: 0.78rem; margin-left: 0.6rem; }
-
-    .toc {
-      width: 14rem; flex-shrink: 0; padding: 2.6rem 0 1rem;
-      position: sticky; top: 3.4rem; height: calc(100vh - 3.4rem); overflow-y: auto;
-      font-size: 0.82rem;
-    }
-    .toc-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-muted); font-weight: 650; margin-bottom: 0.5rem; }
-    .toc-link { display: block; padding: 0.18rem 0 0.18rem 0.7rem; color: var(--text-muted); border-left: 2px solid var(--border-soft); }
-    .toc-link:hover { color: var(--text); text-decoration: none; }
-    .toc-link.active { color: var(--primary-strong); border-left-color: var(--primary); }
-
-    @media (max-width: 1080px) {
-      .toc { display: none; }
-      .post-layout { max-width: 52rem; }
-    }
-  </style>
-</Base>
+<style>
+  /* Base.astro's header link and the docs pages' alpha note, on a post. */
+  .gh { font: var(--type-mono-label); letter-spacing: var(--type-mono-label-letter-spacing); color: var(--color-muted); }
+  .gh:hover { color: var(--color-fg); }
+  .alpha-note { margin: 0 0 var(--space-4); font-size: 0.85rem; color: var(--color-muted); }
+  .alpha-note strong { color: var(--color-warning); }
+  /* At 17 px on a phone, a long slash-joined word in the post
+     (native/derived/approximated/dropped/unsupported) is wider than the text
+     column and pushed the page sideways: it breaks instead, and only when it
+     can't fit on a line of its own. */
+  :global(.d-article .d-prose) { overflow-wrap: break-word; }
+  .post-foot { border-top: var(--stroke-hairline) solid var(--color-line); padding-top: 22px; font-size: 0.9rem; color: var(--color-muted); }
+  .more-posts { list-style: none; padding: 0; margin: var(--space-4) 0 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .more-posts time { font-size: 0.78rem; margin-left: 0.6rem; }
+</style>
