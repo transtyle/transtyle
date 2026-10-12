@@ -164,7 +164,8 @@ function emitOne(normalized, ctx) {
   });
   coverage.push({
     variable: 'semantic.content.*',
-      slot: 'semantic.color.elevation.1.surface + border.base + text.base',
+    slot: 'semantic.color.elevation.1.surface + border.base + text.base',
+    slots: ['semantic.color.elevation.1.surface', 'semantic.color.border.base', 'semantic.color.text.base'],
     class: 'native',
   });
   // The content text pair every component reads by reference

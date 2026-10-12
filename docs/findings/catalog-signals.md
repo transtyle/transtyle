@@ -276,8 +276,8 @@ A design system's custom tokens are its own `semantic.*` vocabulary, outside the
 | cathode | 7             | `semantic.color.crt.amber`                 | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.color.crt.ink-dim`               | Radix Themes                                                                                            |
 |         |               | `semantic.color.crt.meltdown`              | Apache ECharts, Storybook                                                                               |
-|         |               | `semantic.color.crt.scanline`              | Radix Themes, PrimeNG                                                                                   |
-| govuk   | 14            | `semantic.color.govuk.border`              | Radix Themes, PrimeNG                                                                                   |
+|         |               | `semantic.color.crt.scanline`              | Radix Themes                                                                                            |
+| govuk   | 14            | `semantic.color.govuk.border`              | Radix Themes                                                                                            |
 |         |               | `semantic.color.govuk.error`               | Apache ECharts, Storybook                                                                               |
 |         |               | `semantic.color.govuk.focus`               | Apache ECharts, Radix Themes, PrimeNG, Mantine                                                          |
 |         |               | `semantic.color.govuk.focus-text`          | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI |
@@ -287,7 +287,8 @@ A design system's custom tokens are its own `semantic.*` vocabulary, outside the
 |         |               | `semantic.color.govuk.secondary-text`      | Radix Themes                                                                                            |
 |         |               | `semantic.color.govuk.success`             | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.font.transport`                  | Radix Themes                                                                                            |
-| carbon  | 15            | `semantic.color.carbon.border-subtle-00`   | Radix Themes, PrimeNG                                                                                   |
+| carbon  | 17            | `semantic.color.carbon.background-inverse` | shadcn/ui, Apache ECharts, Storybook, Radix Themes, Mantine, Material UI                                |
+|         |               | `semantic.color.carbon.border-subtle-00`   | Radix Themes                                                                                            |
 |         |               | `semantic.color.carbon.button-secondary`   | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.color.carbon.focus`              | Apache ECharts, Radix Themes, PrimeNG, Mantine                                                          |
 |         |               | `semantic.color.carbon.link-primary`       | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Chakra UI, Material UI          |
@@ -297,4 +298,5 @@ A design system's custom tokens are its own `semantic.*` vocabulary, outside the
 |         |               | `semantic.color.carbon.support-info`       | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.color.carbon.support-success`    | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.color.carbon.support-warning`    | shadcn/ui, Apache ECharts, Storybook                                                                    |
+|         |               | `semantic.color.carbon.text-inverse`       | shadcn/ui, Apache ECharts, Storybook, Radix Themes, Mantine, Material UI                                |
 |         |               | `semantic.color.carbon.text-secondary`     | Radix Themes                                                                                            |

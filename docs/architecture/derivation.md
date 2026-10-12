@@ -81,11 +81,11 @@ Derivation never picks the nearest authored token for a hole (the `secondary` ro
 
 A design system is complete when it authors what it has opinions about; the engine fills the rest. Three levels say which slots matter most, in the order they pay off ([issue #67](https://github.com/transtyle/transtyle/issues/67)). Each extends the one before:
 
-| Level         | Adds                                                                                                                                                                                            |
+| Level         | Adds                                                                                                                                                                                                 |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `minimal`     | `color.primary.solid`, the one input the engine cannot invent                                                                                                                                   |
+| `minimal`     | `color.primary.solid`, the one input the engine cannot invent                                                                                                                                        |
 | `recommended` | the neutrals (`color.elevation.0.surface`, `elevation.1.surface`, `text.base`, `text.muted`, `border.base`), their values for each non-default `color-scheme`, `radius.md`, `font.sans`, `font.mono` |
-| `complete`    | `color.secondary.solid`, the four status `.solid`s, `color.ring`, `color.scrim`, and the `space.*`, `type.*` and `component.control.*` families                                                 |
+| `complete`    | `color.secondary.solid`, the four status `.solid`s, `color.ring`, `color.scrim`, and the `space.*`, `type.*` and `component.control.*` families                                                      |
 
 - **Authored** means `authored` or `aliased`: binding a slot to a team's own vocabulary is a decision, and every example adopts that way. The same predicate `check-doc-numbers.mjs` counts as written.
 - **States of an unauthored item:** `missing` (no rule fills it and nobody authored it: `radius.md`, the fonts), `derived`, `defaulted`, or `carried-over`.

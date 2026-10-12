@@ -1,8 +1,8 @@
 # Validation, diagnostics, and coverage
 
-<!-- measured: codes = 63 -->
+<!-- measured: codes = 65 -->
 
-> **Status (re-verified 2026-10-09):** the diagnostics collector, the 63 shipped
+> **Status (re-verified 2026-10-09):** the diagnostics collector, the 65 shipped
 > `TST` codes, DTCG structural validation, contrast checking, the coverage
 > classes, `report.json`, `check --json`, per-diagnostic source locations,
 > config suppressions (`check.suppress`), the exporter compatibility check,
@@ -71,16 +71,18 @@ Specced, not implemented:
 
 Runs per token file at LOAD, before merging (`packages/core/src/load.js`) — catches authoring mistakes the tree-walk that builds the IR would otherwise silently swallow (an empty group, an unrecognized `$type`, a stray `$extensions` namespace) rather than surfacing them only as a missing slot three stages later.
 
-| Code      | Severity | Meaning                                                                                                                                                                            | Remediation                                                                                                                                      |
-| --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `TST1302` | error    | A node declares `$type` but has neither `$value` nor child tokens                                                                                                                  | Add the missing `$value`, or remove the node if it was a leftover placeholder                                                                    |
-| `TST1303` | —        | Alias to a non-existent path — this _is_ `TST1105` (dangling alias), not a new code; listed here because it's part of the same authoring-mistake family                            | Fix the `{...}` reference to point at a real token path                                                                                          |
-| `TST1304` | info     | An `$extensions` namespace this IR doesn't reserve (i.e. not `transtyle.*`)                                                                                                        | Nothing to fix — it's carried through untouched for the tool that owns it; informational only                                                    |
-| `TST1305` | warning  | A top-level group isn't `option`, `semantic`, or `component`                                                                                                                       | Move the tokens under the right tier, or confirm the typo in the group name                                                                      |
-| `TST1306` | warning  | A token's `$value` has an unrecognized `$type`                                                                                                                                     | Use one of the DTCG types the IR understands, or accept that this token is carried opaque (no parsing, no derivation eligibility)                |
-| `TST1113` | error    | A `semantic.*` token aliases a `component.*` token — the alias points the wrong way up the tiers (direct edge only; a chain reports the token that points into the component tier) | Alias the component token's own source instead, or move the token under `component.`                                                             |
-| `TST1307` | error    | A token file looks like Style Dictionary v3 (`value`/`type` without `$`), so it has no DTCG tokens                                                                                 | Convert it to DTCG (`$value`/`$type`/`$description`, references without `.value`); `transtyle migrate --from style-dictionary` does this for you |
-| `TST1311` | warning  | A token's or group's `$description` isn't a string, or its `$deprecated` isn't `true`, `false` or a string                                                                         | Fix the value; the field is ignored and the token still compiles (see [Token metadata](#token-metadata-description-and-deprecated))              |
+| Code      | Severity | Meaning                                                                                                                                                                                                                               | Remediation                                                                                                                                      |
+| --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `TST1302` | error    | A node declares `$type` but has neither `$value` nor child tokens                                                                                                                                                                     | Add the missing `$value`, or remove the node if it was a leftover placeholder                                                                    |
+| `TST1303` | —        | Alias to a non-existent path — this _is_ `TST1105` (dangling alias), not a new code; listed here because it's part of the same authoring-mistake family                                                                               | Fix the `{...}` reference to point at a real token path                                                                                          |
+| `TST1304` | info     | An `$extensions` namespace this IR doesn't reserve (i.e. not `transtyle.*`)                                                                                                                                                           | Nothing to fix — it's carried through untouched for the tool that owns it; informational only                                                    |
+| `TST1305` | warning  | A top-level group isn't `option`, `semantic`, or `component`                                                                                                                                                                          | Move the tokens under the right tier, or confirm the typo in the group name                                                                      |
+| `TST1306` | warning  | A token's `$value` has an unrecognized `$type`                                                                                                                                                                                        | Use one of the DTCG types the IR understands, or accept that this token is carried opaque (no parsing, no derivation eligibility)                |
+| `TST1113` | error    | A `semantic.*` token aliases a `component.*` token — the alias points the wrong way up the tiers (direct edge only; a chain reports the token that points into the component tier)                                                    | Alias the component token's own source instead, or move the token under `component.`                                                             |
+| `TST1307` | error    | A token file looks like Style Dictionary v3 (`value`/`type` without `$`), so it has no DTCG tokens                                                                                                                                    | Convert it to DTCG (`$value`/`$type`/`$description`, references without `.value`); `transtyle migrate --from style-dictionary` does this for you |
+| `TST1126` | error    | A token sits at a catalog path renamed in place before the first stable release (`RENAMED_SLOTS` in `@transtyle/ir`; today `semantic.color.border` → `semantic.color.border.base`, proposal 0005). Raised at NORMALIZE, after merging | Move the token to the new path and update every reference to the old one                                                                         |
+| `TST1311` | warning  | A token's or group's `$description` isn't a string, or its `$deprecated` isn't `true`, `false` or a string                                                                                                                            | Fix the value; the field is ignored and the token still compiles (see [Token metadata](#token-metadata-description-and-deprecated))              |
+| `TST1314` | error    | A token has both a `$value` and child tokens (DTCG 2025.10 §6.1: a token can't also be a group); the loader stops at `$value`, so the children were silently dropped before this code existed                                         | Move the `$value` into a child (often `base`), or move the children elsewhere                                                                    |
 
 ## Token metadata: `$description` and `$deprecated`
 
@@ -189,9 +191,9 @@ A row can say what it is missing in an optional **`meaning`** field: a key of do
 <!-- measured: acme.custom = 0 -->
 <!-- measured: cathode.custom = 7 -->
 <!-- measured: govuk.custom = 14 -->
-<!-- measured: carbon.custom = 15 -->
+<!-- measured: carbon.custom = 17 -->
 
-A design system keeps its own names as **custom semantic tokens** and binds the catalog to them ([adoption guide](../../website/src/docs/adopt-existing.md)). A custom token is defined once, in the [adoption report](#adoption-report): a `semantic.*` path that `isCatalogSlot()` rejects and that is not a cell of a custom role. The adoption report says which of them a catalog slot reads; this section says what each target does with them. The four examples have 0 custom tokens (Acme), 7 (Cathode), 14 (GOV.UK) and 15 (Carbon).
+A design system keeps its own names as **custom semantic tokens** and binds the catalog to them ([adoption guide](../../website/src/docs/adopt-existing.md)). A custom token is defined once, in the [adoption report](#adoption-report): a `semantic.*` path that `isCatalogSlot()` rejects and that is not a cell of a custom role. The adoption report says which of them a catalog slot reads; this section says what each target does with them. The four examples have 0 custom tokens (Acme), 7 (Cathode), 14 (GOV.UK) and 17 (Carbon).
 
 Core accounts for every custom token on every target, after `emit` and before `report.json` ([issue #51](https://github.com/transtyle/transtyle/issues/51)), so no exporter has to. Each token is one of three:
 
@@ -231,23 +233,23 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 <!-- measured: bootstrap.surface.component = 657 -->
 <!-- measured: primeng.surface.total = 2759 -->
 <!-- measured: primeng.surface.families = 98 -->
-<!-- measured: acme.bootstrap.native = 60 -->
-<!-- measured: acme.bootstrap.derived = 491 -->
-<!-- measured: acme.bootstrap.approximated = 39 -->
+<!-- measured: acme.bootstrap.native = 61 -->
+<!-- measured: acme.bootstrap.derived = 489 -->
+<!-- measured: acme.bootstrap.approximated = 40 -->
 <!-- measured: acme.bootstrap.dropped = 71 -->
 <!-- measured: acme.bootstrap.unsupported = 56 -->
 <!-- measured: acme.primeng.driven = 89 -->
-<!-- measured: acme.primeng.inherited = 1566 -->
-<!-- measured: acme.primeng.base = 1104 -->
+<!-- measured: acme.primeng.inherited = 1600 -->
+<!-- measured: acme.primeng.base = 1070 -->
 
 |                                          | Bootstrap                                                               | PrimeNG                                                                                             |
 | ---------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                                                       |
-| Driven                                   | 60 native + 491 derived = 551 of 717 rows (77%), plus 39 `approximated` | 89 driven + 1566 inherited = 1655 (60%), 1104 left on Aura's default                                |
+| Driven                                   | 61 native + 489 derived = 550 of 717 rows (77%), plus 40 `approximated` | 89 driven + 1600 inherited = 1689 (61%), 1070 left on Aura's default                                |
 | Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | the family rows in `report.json`; slot by slot in [catalog signals](../findings/catalog-signals.md) |
 | Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                                                             |
 
-The 60% is the target with room to grow; the 77% is the one that has converged. The reason is architectural:
+The 61% is the target with room to grow; the 77% is the one that has converged. The reason is architectural:
 
 <!-- measured: acme.bootstrap.undriven = 127 -->
 
@@ -297,7 +299,7 @@ Terminal rendering:
 What the CLI actually prints, from `npx transtyle build shadcn --cwd examples/acme`:
 
 ```
-shadcn  42% native · 53% derived · 3% approximated · 3% dropped
+shadcn  42% native · 56% derived · 3% dropped
   ↳ dist/shadcn/globals.transtyle.css
   ↳ dist/shadcn/usage.md
   ↳ dist/shadcn/report.json

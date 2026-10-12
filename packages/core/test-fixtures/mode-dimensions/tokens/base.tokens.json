@@ -52,8 +52,10 @@
         }
       },
       "border": {
-        "$value": "{option.color.gray.200}",
-        "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.800}" } } }
+        "base": {
+          "$value": "{option.color.gray.200}",
+          "$extensions": { "transtyle.modes": { "color-scheme": { "dark": "{option.color.gray.800}" } } }
+        }
       },
       "ring": {
         "$value": "{option.color.blue.600}",

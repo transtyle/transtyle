@@ -748,8 +748,20 @@
           "slot": "semantic.color.accent.tint-selected"
         },
         {
-          "variable": "--color-border",
-          "slot": "semantic.color.border"
+          "variable": "--color-border-base",
+          "slot": "semantic.color.border.base"
+        },
+        {
+          "variable": "--color-border-field",
+          "slot": "semantic.color.border.field"
+        },
+        {
+          "variable": "--color-border-strong",
+          "slot": "semantic.color.border.strong"
+        },
+        {
+          "variable": "--color-border-subtle",
+          "slot": "semantic.color.border.subtle"
         },
         {
           "variable": "--color-danger-on-solid",
@@ -878,6 +890,14 @@
         {
           "variable": "--color-info-tint-selected",
           "slot": "semantic.color.info.tint-selected"
+        },
+        {
+          "variable": "--color-inverse-surface",
+          "slot": "semantic.color.inverse.surface"
+        },
+        {
+          "variable": "--color-inverse-text",
+          "slot": "semantic.color.inverse.text"
         },
         {
           "variable": "--color-link-base",

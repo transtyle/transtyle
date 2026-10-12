@@ -11,11 +11,11 @@ order: 11
   <p><a href="/demo/acme/bootstrap/">Acme</a> · <a href="/demo/cathode/bootstrap/">Cathode</a> · <a href="/demo/govuk/bootstrap/">GOV.UK</a> · <a href="/demo/carbon/bootstrap/">Carbon</a> — one page, four design systems, compiled to Bootstrap. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
-<!-- measured: acme.bootstrap.sass = 144 -->
+<!-- measured: acme.bootstrap.sass = 146 -->
 <!-- measured: acme.bootstrap.decls = 215 -->
 <!-- measured: acme.bootstrap.rows = 717 -->
 
-Emits a **Bootstrap ≥5.3** theme along both consumption paths the Bootstrap community actually uses — on [Acme](/docs/examples/), 144 Sass variables and 215 CSS custom properties, over 717 classified rows:
+Emits a **Bootstrap ≥5.3** theme along both consumption paths the Bootstrap community actually uses — on [Acme](/docs/examples/), 146 Sass variables and 215 CSS custom properties, over 717 classified rows:
 
 | File                        | Path          | Fidelity                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

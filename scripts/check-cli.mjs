@@ -72,9 +72,9 @@ try {
   const fixture = join(root, 'packages/core/test-fixtures/dtcg-validation');
   const r = run(['check', '--cwd', fixture, '--json']);
   expect('check --json: fails on the fixture\'s deliberate errors (exit 1)', r.code === 1, `exit ${r.code}`);
-  // TST1312: a token with child tokens (the half-done `border` → `border.base`
-  // migration); TST1125: the same token sits at the renamed catalog path.
-  for (const code of ['TST1305', 'TST1302', 'TST1306', 'TST1304', 'TST1105', 'TST1312', 'TST1125']) {
+  // TST1314: a token with child tokens (the half-done `border` → `border.base`
+  // migration); TST1126: the same token sits at the renamed catalog path.
+  for (const code of ['TST1305', 'TST1302', 'TST1306', 'TST1304', 'TST1105', 'TST1314', 'TST1126']) {
     expect(`check --json: reports ${code}`, r.out.includes(`"${code}"`), r.out);
   }
   expect('check --json: prints a parseable JSON report', (() => {
