@@ -25,23 +25,68 @@ const CLASS_RANK = ['native', 'derived', 'approximated'];
 /** Tiers that make up the catalog. `option.*` is the raw scale, not a slot. */
 const isCatalogSlot = (slot) => slot.startsWith('semantic.') || slot.startsWith('component.');
 
+/**
+ * A mode map that records reads. It extends `Map` so `instanceof Map` holds,
+ * but it doesn't copy the source: every method reads the source map directly
+ * (copying every entry of every mode map for every target showed in every
+ * large compile, issue #203). The `Map` it extends stays empty, so a caller
+ * that bypasses the overrides (`Map.prototype.get.call(view, key)`) sees
+ * nothing; no exporter does that.
+ *
+ * An exporter that writes to its view (`set`, `delete`, `clear`) writes to
+ * its own copy, made on the first write, as when the recording copied the map
+ * up front: the IR is never changed, and no other target sees the write. The
+ * plugin contract forbids it anyway (plugin-kit's `ir-immutable` check).
+ */
 class RecordingMap extends Map {
+  #source;
+  #copied = false;
   #reads;
   #entries = new Map();
 
   constructor(source, reads) {
-    super(source);
+    super();
+    this.#source = source;
     this.#reads = reads;
+  }
+
+  get size() {
+    return this.#source.size;
   }
 
   get(key) {
     this.#reads.add(key);
-    return super.get(key);
+    return this.#source.get(key);
   }
 
   has(key) {
     this.#reads.add(key);
-    return super.has(key);
+    return this.#source.has(key);
+  }
+
+  /** Copy-on-write: the first write copies the source, so the IR stays as it was. */
+  #own() {
+    if (!this.#copied) {
+      this.#source = new Map(this.#source);
+      this.#copied = true;
+    }
+    return this.#source;
+  }
+
+  set(key, value) {
+    this.#own().set(key, value);
+    this.#entries.delete(key);
+    return this;
+  }
+
+  delete(key) {
+    this.#entries.delete(key);
+    return this.#own().delete(key);
+  }
+
+  clear() {
+    this.#entries.clear();
+    this.#own().clear();
   }
 
   /** An entry handed out by iteration records its slot the first time it's opened. */
@@ -61,12 +106,17 @@ class RecordingMap extends Map {
     return proxy;
   }
 
+  /** Listing keys is not a read: the source's own iterator. */
+  keys() {
+    return this.#source.keys();
+  }
+
   *entries() {
-    for (const [k, v] of super.entries()) yield [k, this.#entry(k, v)];
+    for (const [k, v] of this.#source.entries()) yield [k, this.#entry(k, v)];
   }
 
   *values() {
-    for (const [k, v] of super.entries()) yield this.#entry(k, v);
+    for (const [k, v] of this.#source.entries()) yield this.#entry(k, v);
   }
 
   [Symbol.iterator]() {
@@ -94,11 +144,9 @@ export function recordingView(view) {
     if (!proxies.has(map)) proxies.set(map, new RecordingMap(map, seen));
     modes[name] = proxies.get(map);
   }
-  const reads = () => {
-    const present = new Set();
-    for (const map of proxies.keys()) for (const k of map.keys()) present.add(k);
-    return [...seen].filter((s) => isCatalogSlot(s) && present.has(s)).sort();
-  };
+  // Only the slots looked up are tested against the view's maps, not every key of every map.
+  const sources = [...proxies.keys()];
+  const reads = () => [...seen].filter((s) => isCatalogSlot(s) && sources.some((map) => map.has(s))).sort();
   return { view: { ...view, modes }, reads };
 }
 

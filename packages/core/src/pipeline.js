@@ -371,8 +371,8 @@ export async function compileProject({
       // core accounts for every token after emit.
       customTokens: customTokens(view),
     };
-    // The exporter gets a recording copy of its view (src/reads.js): `reads`
-    // lists the catalog slots it looked up while emitting.
+    // The exporter gets a recording view (src/reads.js): `reads` lists the
+    // catalog slots it looked up while emitting.
     const recording = recordingView(view);
     let files, coverage, notes, reads;
     let crashed = false;

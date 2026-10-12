@@ -804,6 +804,35 @@ try {
     JSON.stringify(values) === JSON.stringify(['4px', '#00f']) && JSON.stringify(reads()) === '["semantic.radius.md"]', JSON.stringify(reads()));
   view.modes.light.get('semantic.color.accent.solid');
   expect('recording: a lookup of a slot the design system lacks is not a read', JSON.stringify(reads()) === '["semantic.radius.md"]', JSON.stringify(reads()));
+  // The view reads the IR's maps instead of copying them (#203), so a write
+  // must go to the view's own copy: the IR, and every other target, keep theirs.
+  expect('recording: a Map that reads the IR without copying it',
+    view.modes.light instanceof Map && Map.prototype.get.call(view.modes.light, 'semantic.radius.md') === undefined,
+    'the recording map should extend an empty Map');
+  const light = view.modes.light;
+  light.set('semantic.radius.md', { type: 'dimension', value: '8px' });
+  light.set('semantic.radius.lg', { type: 'dimension', value: '16px' });
+  light.delete('option.blue.500');
+  expect('recording: a write to the view changes the view (the next get sees it)',
+    light.get('semantic.radius.md')?.value === '8px' && light.has('semantic.radius.lg') && !light.has('option.blue.500') && light.size === 2 &&
+      JSON.stringify([...light.values()].map((e) => e.value)) === '["8px","16px"]',
+    JSON.stringify([...light.entries()]));
+  expect('recording: a write to the view leaves the IR as it was',
+    shared.size === 2 && shared.get('semantic.radius.md').value === '4px' && shared.has('option.blue.500') && !shared.has('semantic.radius.lg'),
+    JSON.stringify([...shared.entries()]));
+  expect('recording: a slot only the view added is not a read of the design system', JSON.stringify(reads()) === '["semantic.radius.md"]', JSON.stringify(reads()));
+  light.clear();
+  expect('recording: clear() empties the view, not the IR', light.size === 0 && [...light.keys()].length === 0 && shared.size === 2, `${light.size} / ${shared.size}`);
+
+  // customTokens() is computed once per mode map (#203), but every caller
+  // (each target's ctx.customTokens) still gets its own array.
+  const { customTokens } = await import('../packages/core/src/custom.js');
+  const ds = { defaultMode: 'light', modes: { light: new Map([['semantic.brand.ink', {}], ['semantic.color.primary.solid', {}], ['semantic.brand.paper', {}]]) } };
+  const first = customTokens(ds);
+  first.push('semantic.mutated');
+  const second = customTokens(ds);
+  expect('customTokens: each call returns its own array, in path order',
+    first !== second && JSON.stringify(second) === '["semantic.brand.ink","semantic.brand.paper"]', JSON.stringify(second));
 }
 
 // ---------- explain --target / --variable: slot ↔ target variable (#98) ----------
