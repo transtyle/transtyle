@@ -35,7 +35,9 @@
         }
       },
       "border": {
-        "$value": "{semantic.color.line.default}"
+        "base": {
+          "$value": "{semantic.color.line.default}"
+        }
       },
       "scrim": {
         "$value": "{semantic.color.backdrop}"

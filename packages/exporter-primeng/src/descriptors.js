@@ -303,6 +303,13 @@ export function buildRating() {
 
 // ---------- archetype-consumer components (§4/§5, C5) ----------
 
+// The semantic `list.option.icon` and `navigation.item.icon.activeColor`
+// (proposal 0005) have no counterpart in Listbox's option or Menu's item type:
+// those components read them through Aura's references instead, so the
+// component-level copies leave them out (PrimeNG's types reject the keys).
+const listboxOption = ({ icon, ...option }) => option;
+const menuIcon = ({ color, focusColor }) => ({ color, focusColor });
+
 export function buildListbox(light, dark) {
   const fl = field(light),
     fd = field(dark);
@@ -324,7 +331,7 @@ export function buildListbox(light, dark) {
             color: fl.colorScheme.color,
             disabledColor: fl.colorScheme.disabledColor,
           },
-          option: ll.colorScheme.option,
+          option: listboxOption(ll.colorScheme.option),
         },
         dark: {
           root: {
@@ -335,7 +342,7 @@ export function buildListbox(light, dark) {
             color: fd.colorScheme.color,
             disabledColor: fd.colorScheme.disabledColor,
           },
-          option: ld.colorScheme.option,
+          option: listboxOption(ld.colorScheme.option),
         },
       },
       list: {
@@ -378,7 +385,7 @@ export function buildMenu(light, dark, ctx) {
             focusBackground: nl.colorScheme.item.focusBackground,
             color: nl.colorScheme.item.color,
             focusColor: nl.colorScheme.item.focusColor,
-            icon: nl.colorScheme.item.icon,
+            icon: menuIcon(nl.colorScheme.item.icon),
           },
           submenuLabel: nl.colorScheme.submenuLabel,
         },
@@ -392,7 +399,7 @@ export function buildMenu(light, dark, ctx) {
             focusBackground: nd.colorScheme.item.focusBackground,
             color: nd.colorScheme.item.color,
             focusColor: nd.colorScheme.item.focusColor,
-            icon: nd.colorScheme.item.icon,
+            icon: menuIcon(nd.colorScheme.item.icon),
           },
           submenuLabel: nd.colorScheme.submenuLabel,
         },

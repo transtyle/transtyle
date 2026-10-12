@@ -45,16 +45,16 @@ export * from '../dist/storybook/preview.transtyle';
 
 ## Mapping highlights
 
-| ThemeVars                                         | Comes from                                                | Note                                                                                                  |
-| ------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `colorPrimary` / `colorSecondary`                 | `primary.solid` / `accent.solid`                          | `colorSecondary` is SB's actual highlight color                                                       |
-| `appBg`, `barBg` / `appContentBg`, `appPreviewBg` | `elevation.1.surface` / `elevation.0.surface`             | the canvas is _your_ canvas, not chrome                                                               |
-| `textColor`, `textMutedColor`, `textInverseColor` | `text.base`, `text.muted`, `text.inverse`                 | `text.inverse` is the content ladder's own cross-mode rung — the engine's job now, not the exporter's |
-| `barHoverColor`, `barSelectedColor`               | `primary.solid-hover`, `ring`                             | first chrome consumers of role states                                                                 |
-| `buttonBg`, `booleanBg` / `booleanSelectedBg`     | `neutral.tint` / `elevation.2.surface`                    |                                                                                                       |
-| `input*`                                          | `elevation.0.surface`, `border`, `text.base`, `radius.sm` | radii `approximated` (rem→px at `units.remBase`, or `options.remBase`)                                |
-| `brandTitle`                                      | config `name` (override via `options.brand`)              | not a token                                                                                           |
-| everything chrome can't express                   | —                                                         | `dropped (chrome)`, delivered through preview composition instead                                     |
+| ThemeVars                                         | Comes from                                                      | Note                                                                                                  |
+| ------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `colorPrimary` / `colorSecondary`                 | `primary.solid` / `accent.solid`                                | `colorSecondary` is SB's actual highlight color                                                       |
+| `appBg`, `barBg` / `appContentBg`, `appPreviewBg` | `elevation.1.surface` / `elevation.0.surface`                   | the canvas is _your_ canvas, not chrome                                                               |
+| `textColor`, `textMutedColor`, `textInverseColor` | `text.base`, `text.muted`, `text.inverse`                       | `text.inverse` is the content ladder's own cross-mode rung — the engine's job now, not the exporter's |
+| `barHoverColor`, `barSelectedColor`               | `primary.solid-hover`, `ring`                                   | first chrome consumers of role states                                                                 |
+| `buttonBg`, `booleanBg` / `booleanSelectedBg`     | `neutral.tint` / `elevation.2.surface`                          |                                                                                                       |
+| `input*`                                          | `elevation.0.surface`, `border.field`, `text.base`, `radius.sm` | radii `approximated` (rem→px at `units.remBase`, or `options.remBase`)                                |
+| `brandTitle`                                      | config `name` (override via `options.brand`)                    | not a token                                                                                           |
+| everything chrome can't express                   | —                                                               | `dropped (chrome)`, delivered through preview composition instead                                     |
 
 Most of a design system is inexpressible in chrome theming — that's fine and honestly reported; it flows through the preview path.
 

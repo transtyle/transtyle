@@ -205,6 +205,18 @@ export const DESCRIPTORS = {
     },
   },
   'btn-close': {
+    emit: {
+      // #36: the close glyph is base-rung content (Bootstrap draws it $black and
+      // dims it with $btn-close-opacity, so a muted rung would dim it twice).
+      // The colour is baked into the glyph's SVG data URI, so it is Sass-time:
+      // dark mode keeps Bootstrap's $btn-close-filter-dark over this light glyph.
+      'btn-close-color': {
+        sem: 'color.text.base',
+        part: 'opaque',
+        cls: 'approximated',
+        note: "Sass path only (baked into the glyph's SVG data URI); in dark mode Bootstrap inverts the light glyph with $btn-close-filter-dark instead of reading a dark colour",
+      },
+    },
     drop: {
       'btn-close-width': { cls: 'unsupported', note: N_ICON + ' (close glyph)', meaning: M_ICON },
       'btn-close-padding-x': { cls: 'unsupported', note: N_BESPOKE + ' ' + N_EM, meaning: M_BESPOKE },
@@ -276,6 +288,17 @@ export const DESCRIPTORS = {
     },
   },
   'form-select': {
+    emit: {
+      // #36: the select chevron, base-rung content next to $body-color (Bootstrap's
+      // own $gray-800 against $gray-900 text). Baked into the SVG data URI, so
+      // Sass path only; the dark chevron is $form-select-indicator-color-dark,
+      // which Bootstrap already defaults to the driven $body-color-dark.
+      'form-select-indicator-color': {
+        sem: 'color.text.base',
+        part: 'opaque',
+        note: "Sass path only (baked into the indicator's SVG data URI); the dark chevron follows the driven $body-color-dark through Bootstrap's own default",
+      },
+    },
     drop: {
       'form-select-bg-size': { cls: 'dropped', note: N_STRUCT + ' (indicator geometry)' },
       'form-select-indicator': { cls: 'unsupported', note: N_ASSET, meaning: M_ASSET },

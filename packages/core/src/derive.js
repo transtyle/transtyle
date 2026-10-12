@@ -11,7 +11,7 @@
  */
 
 import { COLOR_ROLES, PROVENANCE, comboKey, COMPONENT_CATALOG } from '@transtyle/ir';
-import { mix, clampChromaToGamut } from './color.js';
+import { mix, clampChromaToGamut, contrastRatio } from './color.js';
 import { wcagContrast } from './contrast.js';
 import { resolveIfReady } from './normalize.js';
 
@@ -340,6 +340,52 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
     if (neutralTextStrong) {
       rc(ctx, `${S}text.strong`, () => ({ ...neutralTextStrong }), 'alias(neutral.text-strong)', [
         'neutral.text-strong',
+      ]);
+    }
+
+    // --- Border ladder (proposal 0005): content borders by strength + the field border ---
+    // `base` sits where the examples' authored borders do (text.base mixed
+    // 0.79-0.92 toward the surface); `subtle` and `strong` read `base`, not
+    // text.base, so the ladder stays ordered when only `base` is authored.
+    // `strong` is a contrast target (WCAG 2.2 SC 1.4.11, 3:1 for a component
+    // boundary) rather than a ratio, like the on-tint walk. The role grid's
+    // `<role>.outline` cells stay the role-tinted borders.
+    const borderBase = textBase
+      ? rc(ctx, `${S}border.base`, () => mix(textBase, surface(1), 0.88), 'mix-toward-surface(0.88)', [
+          'text.base',
+          'elevation.1.surface',
+        ])
+      : get(map, `${S}border.base`);
+    if (borderBase) {
+      rc(
+        ctx,
+        `${S}border.subtle`,
+        () => mix(borderBase, surface(1), 0.5),
+        'mix-toward-surface(0.50)',
+        ['border.base', 'elevation.1.surface'],
+      );
+      if (textBase) {
+        rc(
+          ctx,
+          `${S}border.strong`,
+          () => contrastWalk(ctx.contrast, borderBase, textBase, [surface(0), surface(1)].filter(Boolean), 3),
+          'contrast-walk(3:1)',
+          ['border.base', 'text.base', 'elevation.0.surface', 'elevation.1.surface'],
+        );
+      }
+      rc(ctx, `${S}border.field`, () => ({ ...borderBase }), 'alias(border.base)', ['border.base']);
+    }
+
+    // --- Inverse pair (proposal 0005): the pair Bootstrap's tooltip and PrimeNG's
+    // `contrast` severity already paint, promoted from two private conventions ---
+    if (neutralTextStrong) {
+      rc(ctx, `${S}inverse.surface`, () => ({ ...neutralTextStrong }), 'alias(neutral.text-strong)', [
+        'neutral.text-strong',
+      ]);
+    }
+    if (elev[0]) {
+      rc(ctx, `${S}inverse.text`, () => ({ ...elev[0] }), 'alias(elevation.0.surface)', [
+        'elevation.0.surface',
       ]);
     }
 
@@ -751,7 +797,7 @@ export function reportUnderived(normalized, underived, diagnostics) {
     } else {
       diagnostics.warn(
         'TST1205',
-        `${slot} aliases {${target}}, which is derived after text.base is read — text.muted, text.subtle, text.disabled, text.strong and every role's text-strong are not derived ${where}`,
+        `${slot} aliases {${target}}, which is derived after text.base is read — text.muted, text.subtle, text.disabled, text.strong, the border ladder, inverse.surface and every role's text-strong are not derived ${where}`,
         {
           path,
           hint: 'Alias an authored token (a role\'s cells are derived after text.base is read), or author text.base as a color.',
@@ -863,6 +909,22 @@ function towardSurface(contrast, text, surface, start, target, against) {
     if (against.every((bg) => contrast.score(contrast.measure(color, bg)) >= target)) return { color, t };
   }
   return { color: { ...text }, t: 0 };
+}
+
+/**
+ * The border ladder's contrast walk (proposal 0005, `border.strong`): the smallest step from
+ * `from` toward `toward` (mix in 0.01 increments, cartesian OKLab) that reaches
+ * `target`:1 against every color in `backgrounds`. `toward` itself when no
+ * step does — the strongest the ladder can get. Always the WCAG 2.x ratio,
+ * whatever `check.contrast.standard` says: 3:1 is SC 1.4.11's non-text
+ * threshold (a component boundary), which APCA's text-size lookup doesn't model.
+ */
+function contrastWalk(contrast, from, toward, backgrounds, target) {
+  for (let i = 0; i <= 100; i++) {
+    const cand = mix(from, toward, i / 100);
+    if (backgrounds.every((bg) => contrast.score(contrast.measure(cand, bg)) >= target)) return cand;
+  }
+  return { ...toward };
 }
 
 // ---------- catalog-default tables ----------

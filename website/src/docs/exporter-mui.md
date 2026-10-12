@@ -13,10 +13,10 @@ order: 18
 
 [Material UI](https://mui.com/material-ui/) themes through one `createTheme()` call. In CSS-variables mode it writes every palette colour of every colour scheme as a custom property, and its components read those properties, so switching schemes swaps variables instead of rebuilding the theme. This exporter emits one TypeScript module, `theme.transtyle.ts`, with two exports: `themeOptions`, a plain `ThemeOptions` object with no function in it, and `theme`, MUI's own `createTheme(themeOptions)`.
 
-<!-- measured: acme.mui.rows = 165 -->
+<!-- measured: acme.mui.rows = 167 -->
 <!-- measured: acme.mui.native = 91 -->
 
-On [Acme](/docs/examples/) that is 165 classified rows in `report.json`, 91 of them native.
+On [Acme](/docs/examples/) that is 167 classified rows in `report.json`, 91 of them native.
 
 ```json
 "targets": { "mui": { "output": "dist/mui" } }

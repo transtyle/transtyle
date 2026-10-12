@@ -13,7 +13,7 @@
 
 ## Naming
 
-Strip the `semantic.` prefix, dots become dashes. Color-role grid cells and the content hierarchy keep their `color.` segment (`--color-primary-solid`, `--color-primary-on-solid`, `--color-text-base`, `--color-border`, `--color-ring`); the elevation ladder and `scrim` drop it, since they read as surfaces rather than role colors (`--elevation-1-surface`, `--elevation-1-shadow`, `--scrim`). Every other catalog area keeps its own top group unprefixed: `--radius-md` (+ `--radius-control`/`-field`/`-container`), `--space-4`, `--size-control-md`, `--border-width-thin`, `--breakpoint-md`, `--z-modal`, `--type-size-md`, `--duration-normal`, `--easing-standard`.
+Strip the `semantic.` prefix, dots become dashes. Color-role grid cells and the content hierarchy keep their `color.` segment (`--color-primary-solid`, `--color-primary-on-solid`, `--color-text-base`, `--color-border-base`, `--color-ring`); the elevation ladder and `scrim` drop it, since they read as surfaces rather than role colors (`--elevation-1-surface`, `--elevation-1-shadow`, `--scrim`). Every other catalog area keeps its own top group unprefixed: `--radius-md` (+ `--radius-control`/`-field`/`-container`), `--space-4`, `--size-control-md`, `--border-width-thin`, `--breakpoint-md`, `--z-modal`, `--type-size-md`, `--duration-normal`, `--easing-standard`.
 
 ## Composite values
 

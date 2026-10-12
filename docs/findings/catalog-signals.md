@@ -16,12 +16,12 @@ PrimeNG reports one row per component family, so for PrimeNG the unit is the slo
 | Apache ECharts | 1 row         | 1              | 0       |
 | Bootstrap      | 56 rows       | 56             | 0       |
 | Radix Themes   | 1 row         | 1              | 0       |
-| PrimeNG        | 1105 slots    | 57             | 1048    |
+| PrimeNG        | 1071 slots    | 57             | 1014    |
 | Mantine        | 28 rows       | 26             | 2       |
-| Chakra UI      | 118 rows      | 116            | 2       |
+| Chakra UI      | 117 rows      | 116            | 1       |
 | Material UI    | 1 row         | 1              | 0       |
 
-Every row and slot below is reported by all the examples, except Chakra UI `semanticTokens.colors.fg.inverted` (govuk only), Chakra UI `tokens.fonts.mono` (govuk only), Mantine `theme.fontFamilyMonospace` (govuk only), Mantine `variables.--mantine-font-family-monospace` (govuk only), PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
+Every row and slot below is reported by all the examples, except Chakra UI `tokens.fonts.mono` (govuk only), Mantine `theme.fontFamilyMonospace` (govuk only), Mantine `variables.--mantine-font-family-monospace` (govuk only), PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
 
 shadcn/ui, Storybook, CSS variables report no `unsupported` row: only exporters that inventory their target's whole surface can say what they leave undriven.
 
@@ -184,18 +184,18 @@ Series-type styling (candlestick colours, gauge bands): chart configuration, not
 
 ## Undriven Aura paths
 
-414 PrimeNG slots keep Aura's default because Aura points them at a semantic path this exporter does not drive. These are exporter work before they are catalog evidence: driving the path cascades to every slot that references it, and some of these paths are reachable with vocabulary the catalog already ships (see the [coverage spec](../specs/validation-and-coverage.md), "Coverage percentages are not comparable across targets").
+380 PrimeNG slots keep Aura's default because Aura points them at a semantic path this exporter does not drive. These are exporter work before they are catalog evidence: driving the path cascades to every slot that references it, and some of these paths are reachable with vocabulary the catalog already ships (see the [coverage spec](../specs/validation-and-coverage.md), "Coverage percentages are not comparable across targets").
 
 | Aura path                                                                                                                                    | Slots | Families |
 | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- | -------- |
 | Aura's primitive palette (`{amber.*}`, `{blue.*}`, `{green.*}`, `{orange.*}`, `{purple.*}`, `{red.*}`, `{sky.*}`, `{slate.*}`, `{yellow.*}`) | 193   | 9        |
-| `form.field.*`                                                                                                                               | 125   | 19       |
-| `navigation.item.*`                                                                                                                          | 30    | 9        |
-| `list.option.*`                                                                                                                              | 21    | 6        |
-| `navigation.submenu.*`                                                                                                                       | 19    | 6        |
+| `form.field.*`                                                                                                                               | 113   | 16       |
+| `navigation.item.*`                                                                                                                          | 26    | 9        |
+| `list.option.*`                                                                                                                              | 19    | 6        |
 | `border.radius.*`                                                                                                                            | 11    | 11       |
 | `datatable.border.*`                                                                                                                         | 7     | 1        |
 | `treetable.border.*`                                                                                                                         | 5     | 1        |
+| `navigation.submenu.*`                                                                                                                       | 3     | 3        |
 | A CSS expression, not a token path                                                                                                           | 3     | 3        |
 
 ## Without a meaning
@@ -213,7 +213,6 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 
 ### Chakra UI
 
-- `semanticTokens.colors.fg.inverted` (govuk only): set whenever the design system defines semantic.color.text.inverse; this one does not, so Chakra's value stays
 - `tokens.fonts.mono` (govuk only): set whenever the design system defines semantic.font.mono; this one does not, so Chakra's value stays
 
 ## Target limits (`dropped`)
@@ -227,8 +226,10 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 | `semantic.border-width.*`                                                                                                                                  | Chakra UI, Material UI                                                                                           |
 | `semantic.z.*`                                                                                                                                             | Mantine                                                                                                          |
 | `semantic.type.tracking.*`                                                                                                                                 | Chakra UI                                                                                                        |
+| `semantic.color.inverse.{surface,text}`                                                                                                                    | PrimeNG, Mantine, Material UI                                                                                    |
 | `semantic.breakpoint.2xl`                                                                                                                                  | Mantine, Material UI                                                                                             |
 | `semantic.breakpoint.xs`                                                                                                                                   | Chakra UI, Material UI                                                                                           |
+| `semantic.color.border.{subtle,strong,field}`                                                                                                              | Mantine, Material UI                                                                                             |
 | `semantic.color.link.{base,hover,visited}`                                                                                                                 | Chakra UI, Material UI                                                                                           |
 | `semantic.palette.categorical.*`                                                                                                                           | Chakra UI, Material UI                                                                                           |
 | `component.control.{padding-x,padding-y}, component.button.padding-y`                                                                                      | Mantine                                                                                                          |
@@ -275,8 +276,8 @@ A design system's custom tokens are its own `semantic.*` vocabulary, outside the
 | cathode | 7             | `semantic.color.crt.amber`                 | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.color.crt.ink-dim`               | Radix Themes                                                                                            |
 |         |               | `semantic.color.crt.meltdown`              | Apache ECharts, Storybook                                                                               |
-|         |               | `semantic.color.crt.scanline`              | Radix Themes, PrimeNG                                                                                   |
-| govuk   | 14            | `semantic.color.govuk.border`              | Radix Themes, PrimeNG                                                                                   |
+|         |               | `semantic.color.crt.scanline`              | Radix Themes                                                                                            |
+| govuk   | 14            | `semantic.color.govuk.border`              | Radix Themes                                                                                            |
 |         |               | `semantic.color.govuk.error`               | Apache ECharts, Storybook                                                                               |
 |         |               | `semantic.color.govuk.focus`               | Apache ECharts, Radix Themes, PrimeNG, Mantine                                                          |
 |         |               | `semantic.color.govuk.focus-text`          | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI |
@@ -286,7 +287,8 @@ A design system's custom tokens are its own `semantic.*` vocabulary, outside the
 |         |               | `semantic.color.govuk.secondary-text`      | Radix Themes                                                                                            |
 |         |               | `semantic.color.govuk.success`             | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.font.transport`                  | Radix Themes                                                                                            |
-| carbon  | 15            | `semantic.color.carbon.border-subtle-00`   | Radix Themes, PrimeNG                                                                                   |
+| carbon  | 17            | `semantic.color.carbon.background-inverse` | shadcn/ui, Apache ECharts, Storybook, Radix Themes, Mantine, Material UI                                |
+|         |               | `semantic.color.carbon.border-subtle-00`   | Radix Themes                                                                                            |
 |         |               | `semantic.color.carbon.button-secondary`   | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.color.carbon.focus`              | Apache ECharts, Radix Themes, PrimeNG, Mantine                                                          |
 |         |               | `semantic.color.carbon.link-primary`       | shadcn/ui, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Chakra UI, Material UI          |
@@ -296,4 +298,5 @@ A design system's custom tokens are its own `semantic.*` vocabulary, outside the
 |         |               | `semantic.color.carbon.support-info`       | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.color.carbon.support-success`    | shadcn/ui, Apache ECharts, Storybook                                                                    |
 |         |               | `semantic.color.carbon.support-warning`    | shadcn/ui, Apache ECharts, Storybook                                                                    |
+|         |               | `semantic.color.carbon.text-inverse`       | shadcn/ui, Apache ECharts, Storybook, Radix Themes, Mantine, Material UI                                |
 |         |               | `semantic.color.carbon.text-secondary`     | Radix Themes                                                                                            |

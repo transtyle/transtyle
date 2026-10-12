@@ -26,7 +26,7 @@ Open `tokens/semantic.tokens.json`. Acme's decision layer is deliberately tiny �
 "elevation": { "0": { "surface": { "$value": "{option.color.white}" } },
                "1": { "surface": { "$value": "{option.color.gray.50}" } } },
 "text":      { "base":  { "$value": "{option.color.gray.900}" } },
-"border":    { "$value": "{option.color.gray.200}" }
+"border":    { "base":  { "$value": "{option.color.gray.200}" } }
 ```
 
 The `{option.color.blue.600}` references point at `tokens/option.tokens.json` — the raw palette, under Acme's own names. Dark-mode values live alongside (Acme uses the inline form; [separate mode files](/docs/authoring-tokens/#modes) are the recommended layout for real teams).
@@ -42,7 +42,7 @@ npx transtyle build shadcn
 ```
 authored 14/14 recommended
 
-shadcn  42% native · 53% derived · 3% approximated · 3% dropped
+shadcn  42% native · 56% derived · 3% dropped
   ↳ dist/shadcn/globals.transtyle.css
   ↳ dist/shadcn/usage.md
   ↳ dist/shadcn/report.json
@@ -96,14 +96,14 @@ Read bottom-up: Acme authored a blue and a surface; a named, versioned rule (`mi
 { "variable": "--accent", "slot": "semantic.color.accent.tint",
   "class": "derived", "provenance": "derived" }
 
-{ "variable": "--input", "slot": "semantic.color.border",
-  "class": "approximated", "provenance": "aliased" }
+{ "variable": "--input", "slot": "semantic.color.border.field",
+  "class": "derived", "provenance": "derived" }
 
 { "variable": "(mode:density)", "slot": "—", "class": "dropped",
   "note": "density mode dimension not expressed by this target" }
 ```
 
-The middle one is honesty at work: shadcn wants a dedicated input-border color, Acme only has the one border — the mapping works but bends the meaning, so it's graded `approximated`, not passed off as native. The last one: Acme declares a `density` mode, shadcn has no such axis — dropped, with the reason.
+The middle one is honesty at work: shadcn wants a dedicated input-border color, and the catalog has one, `border.field`, but Acme doesn't author it — so it defaults to Acme's own border and is graded `derived`, not passed off as native. Author `border.field` and it flips. The last one: Acme declares a `density` mode, shadcn has no such axis — dropped, with the reason.
 
 To read the whole file as a page, open it in the [report viewer](/report/): the coverage bar with the same percentages as the terminal, the build's diagnostics with their `file:line`, what `check.suppress` silenced, and every row, filterable by class. It runs in your browser and uploads nothing.
 

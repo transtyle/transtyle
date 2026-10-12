@@ -45,7 +45,7 @@ const loadExporter = async () => ({ name: 'noop', optionsSchema: { type: 'object
 // a rule fills must resolve on Acme in both modes, and every slot the engine
 // fills on Acme must be in the catalog, so a new rule in derive.js cannot land
 // without `transtyle catalog` knowing it. Authored-only slots (primary.solid,
-// border, radius.md, the fonts, tooltip.max-width) have no rule to
+// radius.md, the fonts, tooltip.max-width) have no rule to
 // check; Acme authoring them is the examples' business.
 const CATALOG = catalog();
 const REQUIRED_SLOTS = CATALOG.slots.filter((s) => s.kind !== 'authored-only').map((s) => s.path);
@@ -58,6 +58,11 @@ const FROZEN_HEX = {
   'semantic.color.primary.on-tint': '#005bb6', // = old text-on-<role>.subtle / -text-emphasis
   'semantic.color.neutral.tint': '#edeff1', // = old Bootstrap $light
   'semantic.color.neutral.text-strong': '#171b20', // = old Bootstrap $dark / neutral.contrast
+  // Proposal 0005: the border ladder's contrast walk (3:1 against elevation.0 and .1)
+  // and the inverse pair's default (the pair Bootstrap's tooltip already paints).
+  'semantic.color.border.strong': '#8d9195',
+  'semantic.color.border.subtle': '#edeff2',
+  'semantic.color.inverse.surface': '#171b20',
 };
 
 // (d) A two-mode design system with only the engine's required anchor, a page

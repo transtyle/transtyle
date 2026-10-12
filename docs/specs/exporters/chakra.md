@@ -53,10 +53,10 @@ No `tokens.colors.<role>.{50…950}` ramps are emitted. Chakra's tokens take no 
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------- |
 | `bg` (`DEFAULT`), `bg.panel`                               | `elevation.0.surface`, `elevation.1.surface`                                                      | native       | Chakra has two surfaces; `elevation.2–5.surface` are dropped                                       |
 | `bg.subtle` / `muted` / `emphasized`                       | `neutral.tint` / `tint-hover` / `tint-active`                                                     | approximated | Chakra's are gray 50 / 100 / 200                                                                   |
-| `bg.inverted`                                              | `text.strong`                                                                                     | approximated | no inverted surface in the catalog; Chakra's is near-black in light (tooltips)                     |
-| `fg` (`DEFAULT`), `fg.muted`, `fg.subtle`, `fg.inverted`   | `text.base`, `text.muted`, `text.subtle`, `text.inverse`                                          | native       |                                                                                                    |
-| `border` (`DEFAULT`)                                       | `border`                                                                                          | native       | also feeds `--global-color-border`                                                                 |
-| `border.subtle` / `muted` / `emphasized` / `inverted`      | `neutral.tint` / `neutral.tint-hover` / `neutral.outline` / `text.strong`                         | approximated | Chakra's are gray 50 / 100 / 300 / 800                                                             |
+| `bg.inverted`                                              | `inverse.surface`                                                                                 | native       | Chakra's tooltip surface ([proposal 0005](../../proposals/0005-border-ladder-inverse-pair.md))     |
+| `fg` (`DEFAULT`), `fg.muted`, `fg.subtle`, `fg.inverted`   | `text.base`, `text.muted`, `text.subtle`, `inverse.text`                                          | native       | `fg.inverted` is the text on `bg.inverted`, the inverse pair, not `text.inverse`                   |
+| `border` (`DEFAULT`), `border.subtle`                      | `border.base`, `border.subtle`                                                                    | native       | also feeds `--global-color-border`                                                                 |
+| `border.muted` / `emphasized` / `inverted`                 | `neutral.tint-hover` / `neutral.outline` / `text.strong`                                          | approximated | Chakra's are gray 100 / 300 / 800; `border.strong` is a 3:1 boundary, far darker than gray 300     |
 | `bg.<status>`, `fg.<status>`, `border.<status>`            | `<role>.tint`, `<role>.text`, `<role>.solid` for `error` ← `danger`, `warning`, `success`, `info` | native       | `border.error` is also the invalid-field border, as PrimeNG's `invalidBorderColor` is              |
 | `scrim` (new) + `dialog` / `drawer` `base.backdrop.bg`     | `scrim`                                                                                           | native       | replaces Chakra's `blackAlpha.500` on both backdrops                                               |
 | `link.*`                                                   | —                                                                                                 | dropped      | Chakra's Link reads `colorPalette.fg`: links follow the palette they sit in                        |
@@ -139,15 +139,15 @@ Like Bootstrap, PrimeNG and Mantine, Chakra carries a checked-in surface invento
 <!-- measured: acme.chakra.default = 773 -->
 <!-- measured: cathode.chakra.default = 774 -->
 <!-- measured: carbon.chakra.default = 774 -->
-<!-- measured: govuk.chakra.set = 122 -->
-<!-- measured: govuk.chakra.follow = 1524 -->
-<!-- measured: govuk.chakra.default = 780 -->
+<!-- measured: govuk.chakra.set = 123 -->
+<!-- measured: govuk.chakra.follow = 1525 -->
+<!-- measured: govuk.chakra.default = 778 -->
 
 | Example                 | Set | Follow | Chakra's default |
 | ----------------------- | --- | ------ | ---------------- |
 | Acme                    | 127 | 1526   | 773              |
 | Cathode, Carbon         | 124 | 1528   | 774              |
-| GOV.UK (no dark scheme) | 122 | 1524   | 780              |
+| GOV.UK (no dark scheme) | 123 | 1525   | 778              |
 
 Acme sets three more entries than Cathode and Carbon because it authors its button layer and its tooltip measure (the component tier, above). On Acme, 140 of the defaults are token-tier entries, each on its own row: Chakra's hue palettes and ramps (kept by design), the rungs its scales have beyond the catalog's (half and large spacing steps, the thin to black weights, `faster` and `slowest`, `docked`, `skipNav` and `max`, shadows `xs` and `2xl`), its measure scale (`sizes.xs` … `8xl`), constants (`transparent`, fractions, viewport sizes, cursors, aspect ratios), the text styles' literal line heights, blurs and animations. The other 633 are recipe leaves that read one of those; most read a `sizes` step, the icon and control sizes Chakra writes as literal steps rather than through `spacing`, or a half spacing step. GOV.UK adds its missing `font.mono` and `text.inverse`; having no dark scheme changes nothing here, because a semantic token with one value is still set.
 

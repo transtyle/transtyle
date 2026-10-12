@@ -72,7 +72,9 @@ try {
   const fixture = join(root, 'packages/core/test-fixtures/dtcg-validation');
   const r = run(['check', '--cwd', fixture, '--json']);
   expect('check --json: fails on the fixture\'s deliberate errors (exit 1)', r.code === 1, `exit ${r.code}`);
-  for (const code of ['TST1305', 'TST1302', 'TST1306', 'TST1304', 'TST1105']) {
+  // TST1314: a token with child tokens (the half-done `border` → `border.base`
+  // migration); TST1126: the same token sits at the renamed catalog path.
+  for (const code of ['TST1305', 'TST1302', 'TST1306', 'TST1304', 'TST1105', 'TST1314', 'TST1126']) {
     expect(`check --json: reports ${code}`, r.out.includes(`"${code}"`), r.out);
   }
   expect('check --json: prints a parseable JSON report', (() => {
@@ -1563,7 +1565,7 @@ try {
     writeConfig();
 
     // The acceptance order: brand, neutrals, dark neutrals, radius, fonts.
-    const NEUTRALS = ['elevation.0.surface defaulted', 'elevation.1.surface derived', 'text.base defaulted', 'text.muted derived', 'border missing'];
+    const NEUTRALS = ['elevation.0.surface defaulted', 'elevation.1.surface derived', 'text.base defaulted', 'text.muted derived', 'border.base derived'];
     const want = [
       ...NEUTRALS.map((n) => `semantic.color.${n}`),
       ...NEUTRALS.map((n) => `semantic.color.${n.replace(' ', ' (color-scheme=dark) ')}`),
@@ -1600,7 +1602,7 @@ try {
     let j = JSON.parse(run(['check', '--cwd', dir, '--json']).stdout);
     const t1202 = j.diagnostics.filter((d) => d.code === 'TST1202');
     expect('require completeness:recommended: one TST1202 per unauthored item (13)', t1202.length === 13, t1202.map((d) => d.message).join('\n'));
-    expect('require completeness:recommended: the per-scheme items say which scheme', t1202.some((d) => d.message.startsWith('Required token is not authored for color-scheme=dark: semantic.color.border')), t1202.map((d) => d.message).join('\n'));
+    expect('require completeness:recommended: the per-scheme items say which scheme', t1202.some((d) => d.message.startsWith('Required token is not authored for color-scheme=dark: semantic.color.border.base')), t1202.map((d) => d.message).join('\n'));
     // The defaulted bug: a defaulted slot passed `require` before.
     writeConfig({ derivation: { require: ['semantic.space.4', 'semantic.color.elevation.0.surface', 'semantic.color.primary'] } });
     j = JSON.parse(run(['check', '--cwd', dir, '--json']).stdout);
@@ -1626,13 +1628,13 @@ try {
     // for dark; one whose dark value is the light one is carried over.
     writeFileSync(join(dir, 'tokens/brand.tokens.json'), JSON.stringify({
       option: { $type: 'color', ink: { $value: '#111111', $extensions: { 'transtyle.modes': { 'color-scheme': { dark: '#eeeeee' } } } }, line: { $value: '#dddddd' } },
-      semantic: { color: { $type: 'color', primary: { solid: { $value: '#e8590c' } }, text: { base: { $value: '{option.ink}' } }, border: { $value: '{option.line}' } } },
+      semantic: { color: { $type: 'color', primary: { solid: { $value: '#e8590c' } }, text: { base: { $value: '{option.ink}' } }, border: { base: { $value: '{option.line}' } } } },
     }));
     writeConfig();
     c = todoOf(dir, 'recommended');
     const dark = (slot) => c.todo.find((t) => t.slot === slot && t.mode === 'color-scheme=dark')?.state ?? 'authored';
     expect('completeness: an alias whose target has a dark value is authored for dark', dark('semantic.color.text.base') === 'authored', keys(c.todo).join('\n'));
-    expect('completeness: an alias whose target has none is carried over', dark('semantic.color.border') === 'carried-over', keys(c.todo).join('\n'));
+    expect('completeness: an alias whose target has none is carried over', dark('semantic.color.border.base') === 'carried-over', keys(c.todo).join('\n'));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -2031,7 +2033,7 @@ try {
     const surface = res.j?.adoption?.unbound;
     expect('adoption: semantic.color.surface is unbound with a "did you mean elevation.0.surface" hint',
       surface?.length === 1 && surface[0].path === 'semantic.color.surface' && surface[0].hints[0]?.match === 'name' && surface[0].hints[0].slot === 'semantic.color.elevation.0.surface', JSON.stringify(surface));
-    expect('adoption: the name hint is printed', res.r.out.includes('↳ did you mean to author elevation.0.surface (or 5 other slots ending in .surface)?'), res.r.out);
+    expect('adoption: the name hint is printed', res.r.out.includes('↳ did you mean to author elevation.0.surface (or 6 other slots ending in .surface)?'), res.r.out);
 
     // Bound through another custom token: slot → my.a → my.b binds both.
     write({ elevation: { 0: { surface: { $value: '{semantic.color.my.a}' } } }, my: { a: { $value: '{semantic.color.my.b}' }, b: { $value: '#ffffff' } } });

@@ -14,9 +14,9 @@ order: 17
 [Chakra UI](https://chakra-ui.com/) v3 colours its components through eight semantic keys per palette, each with a light and a dark value, and its recipes read those keys rather than numbered shades. That is [the role grid](/docs/language/#color-roles-the-role-grid) under other names, so this exporter is the closest thing to a rename among the targets. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `config`, a `defineConfig()` object holding only overrides and additions, and `system`, Chakra's own `createSystem(defaultConfig, config)`.
 
 <!-- measured: acme.chakra.rows = 338 -->
-<!-- measured: acme.chakra.native = 153 -->
+<!-- measured: acme.chakra.native = 155 -->
 
-On [Acme](/docs/examples/) that is 338 classified rows in `report.json`, 153 of them native, measured against [Chakra's whole theming surface](#measured-against-chakras-whole-surface).
+On [Acme](/docs/examples/) that is 338 classified rows in `report.json`, 155 of them native, measured against [Chakra's whole theming surface](#measured-against-chakras-whole-surface).
 
 ```json
 "targets": { "chakra": { "output": "dist/chakra" } }
@@ -50,7 +50,7 @@ Each role becomes `semanticTokens.colors.<role>` with Chakra's eight keys, strai
 
 Chakra derives its own hovers (`solid/90` for a solid button, `muted` for the softer variants), so the grid's hover, active and selected cells have no key and are reported `dropped`. Custom roles work like built-in ones: [Cathode](/demo/cathode/chakra/)'s `crt-amber` is `colorPalette="crt-amber"`.
 
-The page colours come from the rest of the catalog: `bg` and `bg.panel` from the elevation ladder, `fg`, `fg.muted`, `fg.subtle` from the text rungs, `border` from the border, and `bg.error`, `fg.error`, `border.error` (and warning, success, info) from the status roles. The modal backdrop takes the design system's `scrim`.
+The page colours come from the rest of the catalog: `bg` and `bg.panel` from the elevation ladder, `fg`, `fg.muted`, `fg.subtle` from the text rungs, `border` and `border.subtle` from the border ladder, `bg.inverted` and `fg.inverted` from the inverse pair, and `bg.error`, `fg.error`, `border.error` (and warning, success, info) from the status roles. The modal backdrop takes the design system's `scrim`.
 
 ## Chakra's defaults read roles, not hues
 
