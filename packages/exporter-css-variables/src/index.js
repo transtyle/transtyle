@@ -32,6 +32,9 @@
 
 import { modeBlocks, formatModeBlocks, MODE_MEDIA_QUERIES } from '@transtyle/ir';
 
+/** Value types that carry a colour, so they get a line in the dark block too. */
+const COLOR_BEARING = new Set(['color', 'shadow', 'border', 'gradient']);
+
 export default {
   name: 'css-variables',
 
@@ -71,9 +74,11 @@ export default {
     for (const slot of slots) {
       const entry = light.get(slot);
       if (entry?.value === undefined) continue;
-      // A composite carrying a color member varies by color-scheme like a
-      // color does, wherever it lives in the tree (`semantic.border.focus`).
-      const isColor = slot.startsWith('semantic.color.') || entry.type === 'shadow' || entry.type === 'border';
+      // Any value carrying a colour varies by color-scheme, wherever it lives
+      // in the tree: a composite with a color member (`semantic.border.focus`)
+      // and a colour outside `semantic.color.*` (`palette.categorical.*`,
+      // whose dark values this block used to leave out).
+      const isColor = COLOR_BEARING.has(entry.type);
       const rendered = renderEntry(entry, ctx);
       if (!rendered) continue;
 
@@ -125,7 +130,7 @@ export default {
       for (const slot of [...map.keys()].filter((k) => k.startsWith('semantic.') && !omitted.has(k))) {
         const entry = map.get(slot);
         if (entry?.value === undefined) continue;
-        const isColor = slot.startsWith('semantic.color.') || entry.type === 'shadow' || entry.type === 'border';
+        const isColor = COLOR_BEARING.has(entry.type);
         // The dark block holds colors only; everything else is the :root value.
         if (isDark && !isColor) continue;
         for (const [suffix, value] of renderEntry(entry, ctx) ?? []) {

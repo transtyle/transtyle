@@ -28,7 +28,7 @@ The slot's own `description` (first line) and `deprecated` (`Deprecated: <reason
 
 ## Mode handling
 
-Mode polarity rule applies: `:root` always carries the **light** map, `[data-color-scheme="dark"]` the dark map (mode names, never the default flag — a dark-native DS like Cathode still emits this way). Only `semantic.color.*` slots (including the elevation ladder, which lives under `color.` internally) and `shadow`/`border` composites vary by mode and are duplicated across both blocks; every other catalog area is mode-invariant and appears once in `:root`. Override the dark selector via `options.darkSelector`; prefix every variable via `options.prefix`.
+Mode polarity rule applies: `:root` always carries the **light** map, `[data-color-scheme="dark"]` the dark map (mode names, never the default flag — a dark-native DS like Cathode still emits this way). Every value that carries a colour varies by mode and is duplicated across both blocks: the `semantic.color.*` slots (including the elevation ladder, which lives under `color.` internally), the categorical palette (`palette.categorical.*`, written in `:root` only until 2026-10-09, so its dark values were lost) and `shadow`/`border` composites; every other catalog area is mode-invariant and appears once in `:root`. Override the dark selector via `options.darkSelector`; prefix every variable via `options.prefix`.
 
 ## Coverage
 

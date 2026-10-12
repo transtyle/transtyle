@@ -61,9 +61,10 @@ loader: open one to see exactly what your plugin received.
 
 ## Checks
 
-Once per plugin: `interface-shape`, `manifest-valid` and `manifest-compatible` (with
-`{ manifest }`: the fields are there, and `irSpec`/`pluginApi` accept this `@transtyle/core`,
-the check the CLI runs at load time), `options-schema-shape` (when the plugin has an `optionsSchema`),
+Once per plugin: `interface-shape`, `manifest-valid`, `manifest-compatible` and
+`manifest-targets-ranges` (with `{ manifest }`: the fields are there, `irSpec`/`pluginApi` accept
+this `@transtyle/core`, the check the CLI runs at load time, and every `targets` entry is a version
+range core can match to a requested `version`), `options-schema-shape` (when the plugin has an `optionsSchema`),
 `open-vocabulary-shape` (when it sets `openVocabulary`: a boolean, and `true` comes with a
 `customTokens: "emit" | "omit"` option). Then on every fixture:
 
@@ -91,6 +92,17 @@ the check the CLI runs at load time), `options-schema-shape` (when the plugin ha
 [grid]: https://github.com/transtyle/transtyle/blob/main/docs/architecture/ir.md#color-the-role-grid
 [values]: https://github.com/transtyle/transtyle/blob/main/docs/architecture/ir.md#values-and-canonicalization
 [custom]: https://github.com/transtyle/transtyle/blob/main/docs/specs/validation-and-coverage.md#custom-vocabulary
+
+## Declarative exporters
+
+A mapping table ([format](https://github.com/transtyle/transtyle/blob/main/docs/specs/declarative-mapping.md))
+is tested like any plugin: wrap it with `createDeclarativeExporter` from `@transtyle/core`.
+
+```js
+import { createDeclarativeExporter } from '@transtyle/core';
+const plugin = createDeclarativeExporter(JSON.parse(readFileSync('./ourlib.mapping.json', 'utf8')));
+const { pass, checks } = await conformance(plugin, { manifest });
+```
 
 ## Documentation
 

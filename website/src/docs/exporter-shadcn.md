@@ -20,7 +20,7 @@ On the [Acme example](/docs/examples/) that is 103 custom-property declarations 
 
 ## Era profiles
 
-shadcn isn't a versioned library; its theming convention shifted with the Tailwind v3 → v4 transition. The exporter ships two **profiles**, selected in config via `options.era` (see [target instances](/docs/configuration/#targets--instances-not-just-names)):
+shadcn isn't a versioned library; its theming convention shifted with the Tailwind v3 → v4 transition. The exporter ships two **profiles**, keyed on your **Tailwind** version: set `"version": "3.4.17"` on the target and the `tailwind-v3` profile is selected, `"4.1.13"` selects `tailwind-v4` (the ranges are `>=3 <4` and `>=4 <5`; anything else fails with `TST1313`, see [target versions](/docs/configuration/#target-versions)). `options.era` still picks one explicitly (see [target instances](/docs/configuration/#targets--instances-not-just-names)); when both are set and disagree, the era wins and the build warns with `TST2105`.
 
 |               | `tailwind-v4` (default)                                       | `tailwind-v3`                                                                |
 | ------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------- |

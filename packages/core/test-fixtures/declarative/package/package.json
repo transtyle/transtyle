@@ -1,0 +1,20 @@
+{
+  "name": "ourlib-transtyle-exporter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A declarative Transtyle exporter: ourlib.css from a mapping table, no code. Fixture for scripts/check-cli.mjs.",
+  "type": "module",
+  "main": "./index.js",
+  "keywords": ["transtyle-exporter"],
+  "license": "MIT",
+  "transtyle": {
+    "kind": "exporter",
+    "name": "ourlib",
+    "irSpec": "v0-draft",
+    "pluginApi": "0",
+    "declarative": "ourlib.mapping.json",
+    "targets": { "ourlib": [">=2 <3"] },
+    "modes": ["color-scheme"],
+    "capabilities": ["build"]
+  }
+}

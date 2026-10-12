@@ -4,9 +4,10 @@
 > exporter ships a `transtyle` manifest declaring `irSpec`, `pluginApi`,
 > `targets` ranges and `modes`, `plugin-kit` validates its shape and its
 > compatibility in CI, and core checks `irSpec` and `pluginApi` at load time
-> (`TST1309`). What does **not** exist yet: no target version can be
-> requested, no profile is selected, and no lockfile is written. This page
-> marks those inline instead of describing the whole model in the present tense.
+> (`TST1309`). A target can request its framework version and core selects
+> the profile covering it (`TST1313` when none does). What does **not** exist
+> yet: `--force-profile`, and no lockfile is written. This page marks those
+> inline instead of describing the whole model in the present tense.
 
 Four independently-versioned surfaces. Conflating them is how ecosystems end up with "plugin works only with CLI 3.2.1" misery; separating them is how Babel and ESLint survived a decade of plugins.
 
@@ -30,7 +31,16 @@ The check needs the manifest, so it runs when the caller's `loadExporter` return
 
 ## Target framework versions ([ADR-0006](../adr/0006-version-ranges.md))
 
-**This whole section is specced.** Today an exporter's target era is chosen by an explicit option (shadcn's `era: tailwind-v3 | tailwind-v4`, daisyUI's `v5`) and every exporter documents the framework version it was built against; there is no version argument, no profile selection, and no `--force-profile`. The model below is what the manifests' `targets` ranges are there to support.
+**Implemented, except `--force-profile`** ([issue #83](https://github.com/transtyle/transtyle/issues/83), `packages/core/src/profiles.js`). How it works today:
+
+- An exporter declares its profiles as the ranges of its manifest's `targets`, one entry per profile, oldest first: `"bootstrap": [">=5.3 <6"]`, `"shadcn": [">=3 <4", ">=4 <5"]`. The ranges use the same zero-dependency matcher as the compatibility check above; plugin-kit's `manifest-targets-ranges` check fails an entry it can't match (an era name, a prerelease tag), because every requested version would then fail.
+- A project requests a version on the target, `targets.<t>.version: "5.3.8"` (always `major.minor.patch`; the config schema rejects a partial or prerelease version with `TST1010`).
+- Core selects the last declared range that covers it and passes both to `emit`: `ctx.targetVersion` (`"5.3.8"`, or `null` when none was requested) and `ctx.targetProfile` (`">=5.3 <6"`). The exporter keys its profile tables on the range string it declared and never parses a version. Without a request, `ctx.targetProfile` is the newest profile (the last entry) and nothing about the output changes.
+- `report.json` records `version: { requested, profile }` when a version was requested.
+- A version no range covers is `TST1313` (error), with the ranges and the package in the message; so is a version requested of an exporter that declares none (a bare plugin, a mapping file).
+- shadcn's two profiles follow Tailwind CSS, so its ranges and its `version` are Tailwind's; `options.era` stays an explicit override (`TST2105` when the two disagree).
+
+Each official exporter still has one profile per framework, except shadcn's two; a Bootstrap `>=5.2 <5.3` profile (a second surface inventory, 5.3-only variables reported `dropped`) is the first one the mechanism is waiting for. The model the mechanism serves:
 
 The vision pitched `transtyle build bootstrap 5.3.8` — patch-level targeting. We deliberately weaken this to **range-based compatibility**:
 
@@ -38,7 +48,7 @@ The vision pitched `transtyle build bootstrap 5.3.8` — patch-level targeting. 
 - Users request a version (`bootstrap@5.3.8`, or pinned in config); core selects the covering profile. The _requested_ version is recorded in the build manifest; the _profile_ determines output.
 - Theming surfaces change at minor boundaries (Bootstrap 5.3 added `-bg-subtle` and CSS-var theming), essentially never at patch boundaries. Claiming per-patch fidelity would create a combinatorial testing obligation no maintainer team survives, for zero real-world benefit.
 - If a patch release _does_ change theming behavior, the exporter ships a narrowed profile — the mechanism supports precision; we just don't promise it universally.
-- Requesting an uncovered version fails with the supported ranges listed; a `--force-profile` escape hatch exists for "5.4 just came out, the 5.3 profile probably works" moments, and the coverage report notes the mismatch.
+- Requesting an uncovered version fails with the supported ranges listed (`TST1313`); a `--force-profile` escape hatch for "5.4 just came out, the 5.3 profile probably works" moments, with the coverage report noting the mismatch, is **specced, not implemented**.
 
 ## What triggers what (worked examples)
 
