@@ -50,15 +50,16 @@ function hasDeprecated(map) {
 }
 
 /**
- * TST1122 (warning): a catalog slot (`semantic.*`, `component.*`) whose value
- * reaches a deprecated token, so the deprecated token still compiles into
- * every target that reads the slot. Judged after the deferred aliases resolve,
- * across every mode combo (a chain can differ per mode), and reported once per
- * (slot, deprecated token): the message names no mode, so the collector's
- * de-duplication folds the combos. A deprecated `option.*` token that no slot
- * reaches stays silent: deprecating it is the first step of removing it.
+ * Every (catalog slot, deprecated token) pair a normalized IR reaches, over
+ * every mode combo (a chain can differ per mode), once per pair and in the
+ * order the maps and slots are walked. `reason` is the `$deprecated` string
+ * or `undefined` for `true`. A slot's own deprecation is in the list too
+ * (`token` equal to `slot`). One walk for TST1122 and for `diff`, so the two
+ * cannot disagree about what "reaches" means.
  */
-export function reportDeprecatedReach(normalized, diagnostics) {
+export function reachedDeprecations(normalized) {
+  const out = [];
+  const found = new Set();
   const seen = new Set();
   for (const map of Object.values(normalized.modes)) {
     if (!map || seen.has(map)) continue; // modes.light/dark alias the combo maps
@@ -67,23 +68,42 @@ export function reportDeprecatedReach(normalized, diagnostics) {
     for (const slot of map.keys()) {
       if (!CATALOG_TIERS.some((t) => slot.startsWith(t))) continue;
       for (const { token, reason } of deprecationsReached(map, slot)) {
-        const self = token === slot;
-        diagnostics.warn(
-          'TST1122',
-          self
-            ? `${slot} is deprecated and still compiles into every target that reads it`
-            : `${slot} takes its value from deprecated token ${token}`,
-          {
-            path: slot,
-            hint: reason
-              ? `${self ? '' : `${token}: `}${firstLine(reason)}`
-              : self
-                ? 'Move what reads it to its replacement, then remove it.'
-                : `Point ${slot} at the replacement, or remove the binding.`,
-          },
-        );
+        const key = `${slot}\0${token}`;
+        if (found.has(key)) continue;
+        found.add(key);
+        out.push({ slot, token, reason });
       }
     }
+  }
+  return out;
+}
+
+/**
+ * TST1122 (warning): a catalog slot (`semantic.*`, `component.*`) whose value
+ * reaches a deprecated token, so the deprecated token still compiles into
+ * every target that reads the slot. Judged after the deferred aliases resolve,
+ * across every mode combo (a chain can differ per mode), and reported once per
+ * (slot, deprecated token): the message names no mode. A deprecated `option.*`
+ * token that no slot reaches stays silent: deprecating it is the first step of
+ * removing it.
+ */
+export function reportDeprecatedReach(normalized, diagnostics) {
+  for (const { slot, token, reason } of reachedDeprecations(normalized)) {
+    const self = token === slot;
+    diagnostics.warn(
+      'TST1122',
+      self
+        ? `${slot} is deprecated and still compiles into every target that reads it`
+        : `${slot} takes its value from deprecated token ${token}`,
+      {
+        path: slot,
+        hint: reason
+          ? `${self ? '' : `${token}: `}${firstLine(reason)}`
+          : self
+            ? 'Move what reads it to its replacement, then remove it.'
+            : `Point ${slot} at the replacement, or remove the binding.`,
+      },
+    );
   }
 }
 

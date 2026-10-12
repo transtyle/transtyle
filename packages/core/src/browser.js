@@ -19,7 +19,7 @@ export { makeUnits, DEFAULT_REM_BASE } from './units.js';
 export { diffResolved, contrastRegressions } from './diff.js';
 export { CONTRAST_STANDARDS, APCA_LEVELS, APCA_BASE_ALGORITHM } from './contrast.js';
 export { explainToken, explainVariable, slotConsumers, coverageSlots } from './explain.js';
-export { deprecationsReached } from './metadata.js';
+export { deprecationsReached, reachedDeprecations } from './metadata.js';
 export { catalog, isCatalogSlot } from './catalog.js';
 export { adoption } from './adoption.js';
 export { buildReport, REPORT_SCHEMA_ID } from './report.js';

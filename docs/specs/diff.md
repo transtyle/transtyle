@@ -20,6 +20,22 @@ This matters because the source and the meaning are different things:
 - `~ <slot>  <before> → <after>` value changed, with hex alongside OKLCH for colors
 - a `(<kind> → <kind>)` note when only the **provenance** changed (e.g. a value that used to be `derived` is now `authored` because someone pinned it — same value, meaningful governance change)
 
+**1b. Metadata and deprecations** — a token's `$description` and `$deprecated` are not values, so they get two lists of their own after the per-mode slots (`docs/specs/validation-and-coverage.md`, "Token metadata"):
+
+- `Metadata:` every token present on both sides, in every tier (`option.*` too: deprecating an option token is the first step of removing it), whose own `$description` or `$deprecated` changed. NORMALIZE puts both on the entry of every mode, so the default mode is compared. Added and removed tokens are already in the slot list above.
+- `Deprecations:` catalog slots (`semantic.*`, `component.*`) whose set of reached deprecated tokens changed, one line per slot and token: `!` for "now deprecated via <token>" with its reason, `✓` for "no longer deprecated via <token>" (the migration is done). A slot that already reached the token at the ref is not reported again, and a slot's own deprecation stays in `Metadata:`. The reach is the walk behind `TST1122` (`reachedDeprecations()`), taken over every mode combo, so `diff` and `check` agree on what "reaches" means; the walk is skipped when no token is deprecated on a side.
+
+```
+Metadata:
+  ~ semantic.color.primary.solid  description: "TODO: your brand color…" → "Brand blue, used for primary actions"
+  ~ option.color.brand.500  now deprecated: Use option.color.blue.600 instead.
+
+Deprecations:
+  ! semantic.color.primary.solid  now deprecated via option.color.brand.500: Use option.color.blue.600 instead.
+```
+
+Only the first line of a description or reason is printed; `--json` carries the full text. These changes move comments, `report.json` and `usage.md`, not values, so they never touch `changedSlots` (values only).
+
 **2. Contrast regressions** — the accessibility cost of the change. `check` tells you contrast is bad _now_; diff tells you **this change made it bad**, which is the reviewer's actual question and the thing a green CI baseline can silently lose:
 
 ```
@@ -42,7 +58,7 @@ Per-target impact:
   echarts: 32 lines changed
 ```
 
-Generated `usage.md` docs are excluded (they're documentation, not the theme). Because emit is deterministic per exporter version, this diff is stable — a change shows up only when a real output value moves.
+Generated `usage.md` docs are excluded (they're documentation, not the theme). Comment lines (descriptions, deprecation notes) are not counted as changed lines: a target whose files changed only in comments prints `<target>: comments only`, and `--json` gives their number as `commentLines` next to `changedLines`. Because emit is deterministic per exporter version, this diff is stable — a change shows up only when a real output value moves.
 
 ## Resolving "before": the git ref
 
@@ -54,8 +70,8 @@ The project subtree is located via `git rev-parse --show-prefix` (not `path.rela
 
 |               |                                                                                                            |
 | ------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Exit 0**    | no semantic changes (compiled themes identical)                                                            |
-| **Exit 1**    | changes found — composes in CI like `git diff --exit-code`                                                 |
+| **Exit 0**    | nothing listed: no value, metadata or deprecation change (compiled themes identical)                       |
+| **Exit 1**    | changes found, a metadata or deprecation change included — composes in CI like `git diff --exit-code`      |
 | **Exit 2**    | not a git repo, unknown ref, or the project can't be resolved at the ref                                   |
 | `--json`      | print a machine-readable report to stdout (for PR-comment tooling); human summary otherwise goes to stderr |
 | `--cwd <dir>` | project directory, as for every command                                                                    |
@@ -83,9 +99,28 @@ If the project didn't exist at the ref, diff says so and exits 0 (nothing to dif
       ],
     },
   ],
-  "impact": [{ "target": "shadcn", "status": "changed", "changedLines": 34 }],
+  // tokens whose own $description / $deprecated changed (the fields that changed only)
+  "metadata": [
+    {
+      "slot": "option.color.brand.500",
+      "deprecated": { "after": "Use option.color.blue.600 instead." },
+      "description": { "before": "…", "after": "…" },
+    },
+  ],
+  // catalog slots that reach (or no longer reach) a deprecated token
+  "deprecations": [
+    {
+      "slot": "semantic.color.primary.solid",
+      "token": "option.color.brand.500",
+      "reason": "Use option.color.blue.600 instead.",
+      "status": "reached",
+    },
+  ],
+  "impact": [{ "target": "shadcn", "status": "changed", "changedLines": 34, "commentLines": 0 }],
 }
 ```
+
+`before` and `after` of a `metadata` field are absent when the token had no description or deprecation on that side. `status` is `reached` or `cleared`. Every key that existed before is unchanged, so existing consumers keep working. `hasChanges` follows the exit code: CI that only cares about values reads `semantic` instead.
 
 ## Scope (skeleton)
 

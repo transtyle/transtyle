@@ -85,7 +85,7 @@ Also exported (from both entries): `catalog()` (every catalog slot with its type
 data — what `transtyle catalog --json` prints) and `isCatalogSlot(path)`, `adoption(normalized)` (the
 project's own semantic tokens, which ones no catalog slot reads, with hints — the `adoption` field of
 `transtyle check --json`), `diffResolved` and `contrastRegressions` (the
-semantic diff), `explainToken` (the provenance walk behind `transtyle explain`, as a JSON
+semantic diff, `metadata` and `deprecations` lists included), `reachedDeprecations` (the slots that reach a deprecated token, behind `TST1122` and `diff`), `explainToken` (the provenance walk behind `transtyle explain`, as a JSON
 tree), `explainVariable` and `slotConsumers` (from a target variable to the slots it reads, and
 back, over a compile's coverage rows), `coverageSlots` (what one coverage row reads), `consumption` (which targets read each catalog
 slot, from the `reads` that `compile()` records on every target result and writes to its
