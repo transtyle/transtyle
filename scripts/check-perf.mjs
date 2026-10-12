@@ -19,7 +19,8 @@
  *      machine.
  *   2. **Budget**: median compile time (5 runs after a warm-up) under
  *      BUDGET_MS, at most MAX_RATIO times the same project at 1,000 tokens and
- *      1,000-link chains, and peak RSS under MAX_RSS_MB. The ratio is what
+ *      1,000-link chains, and peak RSS under MAX_RSS_MB, with Node's old space capped (the script
+ *      re-spawns itself with --max-old-space-size). The ratio is what
  *      catches a quadratic stage on any machine: linear growth keeps it near
  *      10, the 50 s regression put it in the thousands. The absolute ceiling
  *      catches what the ratio cannot, a slowdown that hits both sizes alike.
@@ -37,18 +38,37 @@
  *
  * Run: node scripts/check-perf.mjs   (npm run check:perf)
  */
+import { spawnSync } from 'node:child_process';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { root, localExporter } from './lib/compile-examples.mjs';
 import { writeLargeDesignSystem, TARGETS } from './lib/large-ds.mjs';
 
+/**
+ * Old-space cap for the measured process. The live heap of this check stays
+ * under ~320 MB, but V8 collects lazily when it is allowed to grow, so uncapped
+ * peak RSS drifted between 640 and 1,200 MB run to run for the same code: a
+ * limit inside that spread fails at random. Capped, the peak is stable
+ * (~530 MB), and a real leak now crashes with an out-of-memory error instead of
+ * drifting past a limit.
+ */
+const OLD_SPACE_MB = 512;
+if (!process.execArgv.some((a) => a.startsWith('--max-old-space-size'))) {
+  const child = spawnSync(process.execPath, [`--max-old-space-size=${OLD_SPACE_MB}`, ...process.execArgv, ...process.argv.slice(1)], { stdio: 'inherit' });
+  if (child.error) {
+    console.error(`✖ perf check: could not re-spawn node with --max-old-space-size=${OLD_SPACE_MB}: ${child.error.message}`);
+    process.exit(1);
+  }
+  process.exit(child.status ?? 1);
+}
+
 /** Median compile of the large case. Local (Apple M4 Pro, under load): 0.4–1.7 s. */
 const BUDGET_MS = 10_000;
 /** Large case over the 1,000-token case. Linear: ~10. */
 const MAX_RATIO = 40;
-/** Peak resident memory of this process. Local, under load: 0.4–0.7 GB. */
-const MAX_RSS_MB = 1024;
+/** Peak resident memory of this process, old space capped at OLD_SPACE_MB. Local: 0.53–0.55 GB. */
+const MAX_RSS_MB = 768;
 const RUNS = 5;
 
 const LARGE = { tokens: 10000, layers: 20, combos: 4, chain: 10000, roles: 0 };

@@ -61,7 +61,7 @@ rewrite, absolute URLs assembled by hand in the sitemap and feed), and a
 source-level rule would have to know all five. The output knows none of them.
 
 `check-perf` compiles a generated 10,000-token design system with every
-exporter and holds it to a time and a memory budget, plus the same project at
+exporter and holds it to a time and a memory budget (it re-spawns itself with the old space capped at 512 MB, so the peak is stable and a leak crashes), plus the same project at
 1,000 tokens to catch anything that grows faster than linearly on any machine
 (issue #97). Its budgets sit an order of magnitude above a normal run, but a
 timing can still fail for a reason that is not the tree (a laptop on battery, a
