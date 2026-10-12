@@ -55,18 +55,41 @@ function isCustomRoleCell(path, normalized) {
 }
 
 /**
- * The design system's custom semantic tokens, in path order: the `semantic.*`
- * paths that are neither catalog slots nor custom role cells.
+ * The list, computed once per default mode map. It depends only on that map's
+ * keys and the design system's archetyped roles, and a compile asks for it
+ * twice per target (the exporter's `ctx.customTokens`, then
+ * `accountCustomTokens()`) and every target of a compile shares the map:
+ * listing and sorting every custom path each time was the largest cost of a
+ * large compile (issue #203). The IR is never changed once normalized, so the
+ * list is kept for as long as the map lives; the archetypes and size checks
+ * only guard against a caller that builds its maps by hand.
  */
-export function customTokens(normalized) {
+const lists = new WeakMap();
+const NONE = Object.freeze([]);
+
+function customTokenList(normalized) {
   const map = normalized ? defaultMap(normalized) : undefined;
-  if (!(map instanceof Map)) return [];
+  if (!(map instanceof Map)) return NONE;
+  const archetypes = normalized.roleArchetypes;
+  const known = lists.get(map);
+  if (known && known.archetypes === archetypes && known.size === map.size) return known.list;
   const out = [];
   for (const path of map.keys()) {
     if (!path.startsWith('semantic.') || isCatalogSlot(path) || isCustomRoleCell(path, normalized)) continue;
     out.push(path);
   }
-  return out.sort(compareSlotPaths);
+  const list = Object.freeze(out.sort(compareSlotPaths));
+  lists.set(map, { archetypes, size: map.size, list });
+  return list;
+}
+
+/**
+ * The design system's custom semantic tokens, in path order: the `semantic.*`
+ * paths that are neither catalog slots nor custom role cells. Each call
+ * returns its own array, so one exporter can't change what the next one sees.
+ */
+export function customTokens(normalized) {
+  return [...customTokenList(normalized)];
 }
 
 /** A rule input is recorded relative (`primary.solid`, `radius.md`): the same lookup `explain` does. */
@@ -91,7 +114,7 @@ function qualify(map, input) {
  *   once; `unreached` lists the tokens with no path, in path order
  */
 export function accountCustomTokens(normalized, coverage, slotsOf, { open = false, omitted = false } = {}) {
-  const custom = customTokens(normalized);
+  const custom = customTokenList(normalized);
   const summary = { total: custom.length, emitted: 0, reached: 0, dropped: 0 };
   if (custom.length === 0) return { rows: [], summary, unreached: [] };
   const map = defaultMap(normalized);

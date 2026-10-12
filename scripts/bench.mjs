@@ -23,9 +23,10 @@
  *     ALIASES (deferred aliases and the reports that need them), CHECKS. Core
  *     has no stage hooks, so these come from a second run that calls the
  *     stage functions in compile()'s order. What they and the exporters do
- *     not cover is the **other** column: compile() minus both, today mostly
- *     the recording of each exporter's reads (src/reads.js) and the reports.
- *     If compile() gains a stage, it shows up there.
+ *     not cover is the **other** column: compile() minus both, that is the
+ *     per-target work core does around each emit() (recording the exporter's
+ *     reads, src/reads.js; accounting for custom tokens, src/custom.js) and
+ *     the reports. If compile() gains a stage, it shows up there.
  *
  * Timings depend on the machine and on what else it is doing, so no number
  * here is a promise: `check:perf` (scripts/check-perf.mjs) is the guard, with
