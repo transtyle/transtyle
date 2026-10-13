@@ -518,6 +518,71 @@ try {
         return Array.isArray(cr) && cr.length > 0 && cr.every((x) => x.status === 'regressed' && x.before > x.after);
       } catch { return false; }
     })());
+
+    // Metadata (#192): a description or a deprecation is a change of its own.
+    git('checkout', '-q', '--', '.');
+    r = runIn(['diff']);
+    expect('diff metadata: a clean tree is still identical', r.code === 0 && r.out.includes('No semantic changes'), r.out);
+
+    // Control: nothing deprecated on either side, a value change adds neither list.
+    writeFileSync(tp, readFileSync(tp, 'utf8').replace('oklch(0.55 0.18 255)', 'oklch(0.55 0.19 25)'));
+    r = runIn(['diff', '--json']);
+    expect('diff metadata: no deprecation anywhere, no metadata rows', (() => {
+      try { const j = JSON.parse(r.stdout); return j.metadata.length === 0 && j.deprecations.length === 0; } catch { return false; }
+    })(), r.out);
+    git('checkout', '-q', '--', '.');
+
+    // Only a description changes: exit 1, under Metadata, no value line, comments only in the impact.
+    const withTokens = (edit) => { const j = JSON.parse(readFileSync(tp, 'utf8')); edit(j); writeFileSync(tp, JSON.stringify(j, null, 2)); };
+    withTokens((j) => { j.semantic.color.primary.solid.$description = 'Brand blue, used for primary actions'; });
+    r = runIn(['diff']);
+    expect('diff metadata: a description change exits 1', r.code === 1, `exit ${r.code}: ${r.out}`);
+    expect('diff metadata: lists the description under Metadata', r.out.includes('Metadata:') && r.out.includes('semantic.color.primary.solid  description:') && r.out.includes('Brand blue'), r.out);
+    expect('diff metadata: a description change is no value change', !/\[(light|dark)\]/.test(r.out) && !r.out.includes('Deprecations:'), r.out);
+    expect('diff metadata: the impact says comments only', r.out.includes('css-variables: comments only'), r.out);
+    r = runIn(['diff', '--json']);
+    expect('diff --json: description under metadata, semantic empty, comment lines counted', (() => {
+      try {
+        const j = JSON.parse(r.stdout);
+        const m = j.metadata.find((x) => x.slot === 'semantic.color.primary.solid');
+        return j.hasChanges === true && m?.description?.after === 'Brand blue, used for primary actions'
+          && j.semantic.every((x) => x.changed.length === 0)
+          && j.impact.every((x) => x.changedLines === 0) && j.impact.some((x) => x.commentLines > 0);
+      } catch { return false; }
+    })(), r.out);
+    git('checkout', '-q', '--', '.');
+
+    // Deprecating the option token a slot aliases: the slot is listed as newly deprecated.
+    const reason = 'Use option.color.blue.600 instead.';
+    withTokens((j) => { j.option.color.brand['500'].$deprecated = reason; });
+    r = runIn(['diff']);
+    expect('diff deprecation: exit 1', r.code === 1, `exit ${r.code}: ${r.out}`);
+    expect('diff deprecation: the slot now deprecated via the token, with its reason',
+      r.out.includes(`semantic.color.primary.solid  now deprecated via option.color.brand.500: ${reason}`), r.out);
+    expect('diff deprecation: the token itself under Metadata', r.out.includes('option.color.brand.500  now deprecated'), r.out);
+    r = runIn(['diff', '--json']);
+    expect('diff --json: deprecations has the slot, the token and the reason; semantic stays empty', (() => {
+      try {
+        const j = JSON.parse(r.stdout);
+        const d = j.deprecations.find((x) => x.slot === 'semantic.color.primary.solid');
+        return d?.token === 'option.color.brand.500' && d.reason === reason && d.status === 'reached'
+          && j.semantic.every((x) => x.changed.length === 0) && j.semantic.every((x) => x.added.length === 0);
+      } catch { return false; }
+    })(), r.out);
+
+    // Already deprecated at the ref: not reported again; removing the deprecation clears it.
+    git('add', '-A');
+    git('commit', '-q', '-m', 'deprecate');
+    r = runIn(['diff']);
+    expect('diff deprecation: a slot that already reached it is not reported again', r.code === 0, `exit ${r.code}: ${r.out}`);
+    withTokens((j) => { delete j.option.color.brand['500'].$deprecated; });
+    r = runIn(['diff']);
+    expect('diff deprecation: removing it lists the slot as no longer deprecated',
+      r.code === 1 && r.out.includes('no longer deprecated via option.color.brand.500') && r.out.includes('option.color.brand.500  no longer deprecated'), r.out);
+    r = runIn(['diff', '--json']);
+    expect('diff --json: cleared status', (() => {
+      try { return JSON.parse(r.stdout).deprecations.some((x) => x.status === 'cleared' && x.slot === 'semantic.color.primary.solid'); } catch { return false; }
+    })(), r.out);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -926,16 +926,17 @@ function diffTargets(beforeResults, afterResults) {
     if (!ar) { rows.push({ target: name, status: 'removed-target' }); continue; }
     const bf = new Map((br.emitted ?? []).map((f) => [f.path, f.contents]));
     const af = new Map((ar.emitted ?? []).map((f) => [f.path, f.contents]));
-    let changedLines = 0; const samples = [];
+    let changedLines = 0, commentLines = 0; const samples = [];
     for (const [p, ac] of af) {
       if (p.endsWith('usage.md')) continue; // generated docs, not the theme itself
       const bc = bf.get(p);
       if (bc === ac) continue;
       const d = lineChanges(bc ?? '', ac);
       changedLines += d.length;
+      commentLines += commentChanges(bc ?? '', ac);
       for (const line of d) if (samples.length < 8) samples.push(`${p}: ${line}`);
     }
-    rows.push({ target: name, status: 'changed', changedLines, samples });
+    rows.push({ target: name, status: 'changed', changedLines, commentLines, samples });
   }
   return rows;
 }
@@ -950,6 +951,27 @@ function lineChanges(before, after) {
     if (!beforeLines.has(l)) out.push(l);
   }
   return out;
+}
+
+/** Comment lines in `after` absent verbatim from `before`: what `lineChanges` leaves out. */
+function commentChanges(before, after) {
+  const beforeLines = new Set(before.split('\n').map((l) => l.trim()));
+  let n = 0;
+  for (const raw of after.split('\n')) {
+    const l = raw.trim();
+    if (l && (l.startsWith('*') || l.startsWith('//') || l.startsWith('/*')) && !beforeLines.has(l)) n++;
+  }
+  return n;
+}
+
+/** First non-empty line of a description or reason, quoted for the summary. */
+const brief = (v) => (v === undefined ? '(none)' : `"${metaLine(v)}"`);
+const metaLine = (v) => String(v).split(/\r\n|\r|\n/).map((l) => l.trim()).find((l) => l !== '') ?? '';
+/** The `$deprecated` change of a token as a phrase. */
+function deprecatedPhrase(d) {
+  if (d.after === undefined) return 'no longer deprecated';
+  const reason = typeof d.after === 'string' ? `: ${metaLine(d.after)}` : '';
+  return d.before === undefined ? `now deprecated${reason}` : `deprecation changed${reason}`;
 }
 
 function serializeDiff(ref, diff, impact, a11y = []) {
@@ -972,7 +994,13 @@ function serializeDiff(ref, diff, impact, a11y = []) {
         provenance: c.provChanged ? `${c.before.provenance.kind} → ${c.after.provenance.kind}` : c.after.provenance.kind,
       })),
     })),
-    impact: impact.map((r) => ({ target: r.target, status: r.status, changedLines: r.changedLines ?? 0 })),
+    metadata: diff.metadata.map((m) => ({
+      slot: m.slot,
+      ...(m.description ? { description: m.description } : {}),
+      ...(m.deprecated ? { deprecated: m.deprecated } : {}),
+    })),
+    deprecations: diff.deprecations.map((d) => ({ slot: d.slot, token: d.token, reason: d.reason ?? null, status: d.status })),
+    impact: impact.map((r) => ({ target: r.target, status: r.status, changedLines: r.changedLines ?? 0, commentLines: r.commentLines ?? 0 })),
   };
 }
 
@@ -993,10 +1021,29 @@ function printDiff(ref, diff, impact, a11y = []) {
     }
     console.error('');
   }
+  if (diff.metadata.length) {
+    console.error('Metadata:');
+    for (const m of diff.metadata) {
+      if (m.description) console.error(`  ~ ${m.slot}  description: ${brief(m.description.before)} → ${brief(m.description.after)}`);
+      if (m.deprecated) console.error(`  ~ ${m.slot}  ${deprecatedPhrase(m.deprecated)}`);
+    }
+    console.error('');
+  }
+  if (diff.deprecations.length) {
+    console.error('Deprecations:');
+    for (const d of diff.deprecations) {
+      const note = d.reason ? `: ${metaLine(d.reason)}` : '';
+      console.error(d.status === 'reached'
+        ? `  ! ${d.slot}  now deprecated via ${d.token}${note}`
+        : `  ✓ ${d.slot}  no longer deprecated via ${d.token}${note}`);
+    }
+    console.error('');
+  }
   console.error('Per-target impact:');
   for (const r of impact) {
     if (r.status === 'new-target') { console.error(`  ${r.target}: new target (not present at ${ref})`); continue; }
     if (r.status === 'removed-target') { console.error(`  ${r.target}: removed since ${ref}`); continue; }
+    if (!r.changedLines && r.commentLines) { console.error(`  ${r.target}: comments only`); continue; }
     if (!r.changedLines) { console.error(`  ${r.target}: no output change`); continue; }
     console.error(`  ${r.target}: ${r.changedLines} line${r.changedLines === 1 ? '' : 's'} changed`);
     for (const s of r.samples) console.error(`      ${s}`);

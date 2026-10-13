@@ -96,7 +96,9 @@ DTCG's `$description` and `$deprecated` ([format 2025.10](https://www.designtoke
 - **Emitted files.** Exporters whose files take comments write the slot's own description and deprecation on comment lines above the declaration, once, in the default mode's block: css-variables (every slot), shadcn and daisyUI (every mapped slot), Bootstrap Sass (the six theme colours). Only the first line of a multi-line text is written, and a `*/` is broken up so it cannot end a CSS comment early. `entryNotes()`, `blockComment()` and `lineComment()` in `@transtyle/ir` are the shared helpers; css-variables keeps its own copy to stay dependency-free. The other exporters (Storybook, ECharts, Radix, Mantine, Chakra, PrimeNG, MUI) emit generated option objects rather than per-slot declarations and write no comments; they get the report fields and the `usage.md` section from core.
 - **`explain`** prints `description:` and `deprecated:` under the value line (and under each input it walks), and `via deprecated <token>` for a deprecated token further down the alias chain.
 
-Not covered yet: `transtyle diff` compares values and provenance only, so a change of description or deprecation shows in a target's changed lines but not as a slot change; the TypeScript and JSON targets (Chakra, Mantine, PrimeNG, Storybook, ECharts) and Radix write no descriptions.
+`transtyle diff` lists a changed description or deprecation under `Metadata:`, and a slot that newly reaches (or no longer reaches) a deprecated token under `Deprecations:` ([the diff spec](./diff.md)).
+
+Not covered yet: the TypeScript and JSON targets (Chakra, Mantine, PrimeNG, Storybook, ECharts) and Radix write no descriptions.
 
 ## Tokens Studio exports (`TST1003`–`TST1009`)
 

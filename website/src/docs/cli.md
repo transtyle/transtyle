@@ -287,6 +287,10 @@ npx transtyle diff main         # what does this branch do to the compiled theme
 # [light]
 #   ~ semantic.color.primary.solid  oklch(0.55 0.18 255)  [#026fd7] → oklch(0.55 0.19 25)  [#ca3535]
 #   ...
+# Metadata:
+#   ~ option.color.brand.500  now deprecated: Use option.color.blue.600 instead.
+# Deprecations:
+#   ! semantic.color.primary.solid  now deprecated via option.color.brand.500: Use option.color.blue.600 instead.
 # Per-target impact:
 #   bootstrap: 63 lines changed
 #   shadcn: 34 lines changed
@@ -301,7 +305,9 @@ It also flags **contrast regressions** — pairs that passed your configured con
 
 That's the difference between `check` ("contrast is bad") and `diff` ("_this change_ made it bad") — the second is what a green CI baseline can otherwise lose silently.
 
-Exits `0` when the compiled themes are identical, `1` when there are changes (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling, including a `contrastRegressions` array (each row with its `threshold`, `unit` and `standard`). Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
+A changed `$description` or `$deprecated` is not a value change, so it has its own lists: `Metadata:` for the tokens whose own description or deprecation changed, and `Deprecations:` for the slots that now reach a deprecated token (or no longer do, which means the migration is done). A target whose files changed only in comments prints `comments only`.
+
+Exits `0` when the compiled themes are identical, `1` when there are changes, a description or deprecation change included (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling, including a `contrastRegressions` array (each row with its `threshold`, `unit` and `standard`), a `metadata` array and a `deprecations` array (each row with its `slot`, `token`, `reason` and `status`: `reached` or `cleared`). Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
 
 ### `transtyle catalog [--json]`
 

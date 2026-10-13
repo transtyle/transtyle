@@ -9,7 +9,7 @@
  * Run: node scripts/check-explain.mjs (also: npm run check:explain).
  */
 import assert from 'node:assert/strict';
-import { compile, explainToken, explainVariable, slotConsumers, coverageSlots, deprecationsReached } from '@transtyle/core';
+import { compile, explainToken, explainVariable, slotConsumers, coverageSlots, deprecationsReached, reachedDeprecations } from '@transtyle/core';
 
 const loadExporter = async () => ({ name: 'noop', optionsSchema: { type: 'object' }, emit: () => ({ files: [], coverage: [] }) });
 const entry = (provenance, value = 1) => ({ type: 'number', value, provenance });
@@ -181,5 +181,14 @@ assert.deepEqual(deprecationsReached(dep, 'semantic.shadow'), [{ token: 'option.
 assert.deepEqual(deprecationsReached(dep, 'semantic.loop'), [], 'a cycle ends the walk');
 assert.deepEqual(deprecationsReached(dep, 'semantic.hover'), [], 'derived inputs are not followed');
 assert.deepEqual(deprecationsReached(dep, 'nope'), []);
+
+// reachedDeprecations: every (catalog slot, token) pair of an IR, once, over every mode combo.
+const reach = reachedDeprecations({ modes: { light: dep, dark: dep, 'light+x': new Map(dep) } });
+assert.deepEqual(
+  reach.map((r) => `${r.slot}>${r.token}`),
+  ['semantic.s>semantic.s', 'semantic.s>option.o', 'semantic.t>option.o', 'semantic.shadow>option.o'],
+  'catalog slots only, a slot\'s own deprecation included, the same pair once across maps',
+);
+assert.deepEqual(reachedDeprecations({ modes: { light: new Map([['semantic.a', { value: 1, provenance: { kind: 'authored' } }]]) } }), [], 'nothing deprecated, nothing reached');
 
 console.log('✔ check-explain: explainToken tree, coverage lookups, edge cases and errors, and deprecationsReached all pass');

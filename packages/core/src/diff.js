@@ -12,6 +12,7 @@
 
 import { contrastPairs, pairContrast } from './checks.js';
 import { wcagContrast, checkStandard } from './contrast.js';
+import { reachedDeprecations } from './metadata.js';
 
 /** Canonical, stable string form of a resolved value, for equality only. */
 function canon(value) {
@@ -25,9 +26,53 @@ function canon(value) {
 
 const provKind = (entry) => entry?.provenance?.kind ?? null;
 
+/** The `$deprecated` of an entry as a comparable value: `true`, the reason, or absent. */
+const deprecatedOf = (entry) => (entry?.deprecated ? entry.deprecated : undefined);
+
 /**
+ * Tokens present on both sides whose own `$description` or `$deprecated`
+ * changed, in every tier. NORMALIZE copies both onto the entry of every mode
+ * (metadata is per token, not per mode), so the default mode's map is enough.
+ */
+function metadataChanges(before, after) {
+  const b = before.modes[before.defaultMode];
+  const a = after.modes[after.defaultMode];
+  if (!b || !a) return [];
+  const out = [];
+  for (const slot of [...a.keys()].filter((k) => b.has(k)).sort()) {
+    const be = b.get(slot), ae = a.get(slot);
+    const row = { slot };
+    if (be.description !== ae.description) row.description = { before: be.description, after: ae.description };
+    if (deprecatedOf(be) !== deprecatedOf(ae)) row.deprecated = { before: deprecatedOf(be), after: deprecatedOf(ae) };
+    if (row.description || row.deprecated) out.push(row);
+  }
+  return out;
+}
+
+/**
+ * Catalog slots whose set of reached deprecated tokens changed, one row per
+ * (slot, token). A slot's own deprecation is left out: `metadata` lists it.
+ */
+function deprecationChanges(before, after) {
+  const key = (r) => `${r.slot}\0${r.token}`;
+  const side = (n) => new Map(reachedDeprecations(n).filter((r) => r.token !== r.slot).map((r) => [key(r), r]));
+  const b = side(before), a = side(after);
+  const out = [];
+  for (const [k, r] of a) if (!b.has(k)) out.push({ slot: r.slot, token: r.token, reason: r.reason, status: 'reached' });
+  for (const [k, r] of b) if (!a.has(k)) out.push({ slot: r.slot, token: r.token, reason: r.reason, status: 'cleared' });
+  return out.sort((x, y) => (x.slot < y.slot ? -1 : x.slot > y.slot ? 1 : x.token < y.token ? -1 : x.token > y.token ? 1 : 0));
+}
+
+/**
+ * Values and provenance per mode (`modes`), then the metadata layer: `metadata`
+ * (a token's own `$description`/`$deprecated` changed) and `deprecations` (a
+ * catalog slot newly reaches, or no longer reaches, a deprecated token).
+ * `changedSlots` stays values only; `hasChanges` counts all three.
+ *
  * @returns {{ modes: Array<{ mode, added: string[], removed: string[],
  *   changed: Array<{ slot, before, after, valueChanged, provChanged }> }>,
+ *   metadata: Array<{ slot, description?: {before, after}, deprecated?: {before, after} }>,
+ *   deprecations: Array<{ slot, token, reason?: string, status: 'reached'|'cleared' }>,
  *   changedSlots: Set<string>, hasChanges: boolean }}
  */
 export function diffResolved(before, after) {
@@ -56,8 +101,11 @@ export function diffResolved(before, after) {
     modes.push({ mode, added, removed, changed });
   }
 
-  const hasChanges = modes.some((m) => m.added.length || m.removed.length || m.changed.length);
-  return { modes, changedSlots, hasChanges };
+  const metadata = metadataChanges(before, after);
+  const deprecations = deprecationChanges(before, after);
+  const hasChanges = modes.some((m) => m.added.length || m.removed.length || m.changed.length)
+    || metadata.length > 0 || deprecations.length > 0;
+  return { modes, metadata, deprecations, changedSlots, hasChanges };
 }
 
 /**
