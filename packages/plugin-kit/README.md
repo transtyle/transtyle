@@ -78,6 +78,7 @@ range core can match to a requested `version`), `options-schema-shape` (when the
 | `deterministic`                | two `emit` runs produce byte-identical files and diagnostics                                           |
 | `ir-immutable`                 | `emit` did not mutate the IR                                                                           |
 | `files-non-empty`              | every file has content                                                                                 |
+| `no-reserved-file-names`       | no file is named `report.json` or `transtyle-manifest.json`: core writes both itself, last             |
 | `no-leaked-values`             | no line carries `undefined`, `null` or `NaN` as a value, or `NaN` / `[object Object]` anywhere         |
 | `coverage-honest`              | no `native` or `derived` row names a slot that does not resolve                                        |
 | `mode-dimensions-accounted`    | `two-dimension` only: the compact `density` value is in a file, or a `(mode:density)` row is `dropped` |
