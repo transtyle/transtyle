@@ -12,10 +12,10 @@ order: 11
 </div>
 
 <!-- measured: acme.bootstrap.sass = 146 -->
-<!-- measured: acme.bootstrap.decls = 215 -->
-<!-- measured: acme.bootstrap.rows = 717 -->
+<!-- measured: acme.bootstrap.decls = 251 -->
+<!-- measured: acme.bootstrap.rows = 719 -->
 
-Emits a **Bootstrap ≥5.3** theme along both consumption paths the Bootstrap community actually uses — on [Acme](/docs/examples/), 146 Sass variables and 215 CSS custom properties, over 717 classified rows:
+Emits a **Bootstrap ≥5.3** theme along both consumption paths the Bootstrap community actually uses — on [Acme](/docs/examples/), 146 Sass variables and 251 CSS custom properties, over 719 classified rows:
 
 | File                        | Path          | Fidelity                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

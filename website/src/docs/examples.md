@@ -12,9 +12,9 @@ Four example design systems live in the repo. Acme and Cathode are invented, cho
 
 <!-- measured: acme.authored.semantic = 22 -->
 <!-- measured: acme.authored.component = 4 -->
-<!-- measured: acme.authored.option = 14 -->
+<!-- measured: acme.authored.option = 16 -->
 
-`examples/acme` authors **22 semantic tokens and 4 component-tier ones**, and only nine of the semantic ones are design decisions: a brand blue, background/surface/text/text-muted/border (each with authored dark values), one radius, two font stacks. The remaining thirteen are an explicit space scale, spelled out to exercise the machinery rather than because the system needs it. Plus a 14-token option palette they alias into.
+`examples/acme` authors **22 semantic tokens and 4 component-tier ones**, and only nine of the semantic ones are design decisions: a brand blue, background/surface/text/text-muted/border (each with authored dark values), one radius, two font stacks. The remaining thirteen are an explicit space scale, spelled out to exercise the machinery rather than because the system needs it. Plus a 16-token option palette they alias into.
 
 ```bash
 cd examples/acme
@@ -31,6 +31,7 @@ What to study:
 - **One brand color drives everything.** Change `option.color.blue.600`, rebuild, and watch the accent tint, on-colors, and all five chart colors follow coherently.
 - **Both mode-authoring forms.** Acme uses inline `$extensions` for dark values — the compact form for hand-edited files.
 - **Target instances.** Its config builds the same design system for both shadcn eras side by side — plus [per-mode ECharts themes](/docs/exporter-echarts/) whose `color[]` palette shares its first five colors with shadcn's `--chart-*`: one brand, one data-viz palette, everywhere.
+- **Contrast and motion, hand-written.** Acme declares `contrast` (`standard`, `more`) and `motion` (`full`, `reduced`). Two small layers author the `more` values for `text.muted` and `border.base`, one for light and one, as a combo layer, for dark; `motion` needs no authoring, the reduced durations are derived as `0ms`. The css-variables, shadcn/ui and Radix demos have a toggle for each.
 - **A live diagnostic.** Acme's muted text sits near the AA contrast boundary — a deliberate teaching case for `TST2101`.
 
 Acme is also the conformance fixture from the Phase 0 design exercise; `examples/acme/expected/` preserves the original hand-written expected output for comparison against real compiler output.

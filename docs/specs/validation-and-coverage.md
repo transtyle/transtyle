@@ -233,9 +233,9 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 <!-- measured: bootstrap.surface.component = 657 -->
 <!-- measured: primeng.surface.total = 2759 -->
 <!-- measured: primeng.surface.families = 98 -->
-<!-- measured: acme.bootstrap.native = 61 -->
+<!-- measured: acme.bootstrap.native = 62 -->
 <!-- measured: acme.bootstrap.derived = 489 -->
-<!-- measured: acme.bootstrap.approximated = 40 -->
+<!-- measured: acme.bootstrap.approximated = 41 -->
 <!-- measured: acme.bootstrap.dropped = 71 -->
 <!-- measured: acme.bootstrap.unsupported = 56 -->
 <!-- measured: acme.primeng.driven = 89 -->
@@ -245,7 +245,7 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 |                                          | Bootstrap                                                               | PrimeNG                                                                                             |
 | ---------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                                                       |
-| Driven                                   | 61 native + 489 derived = 550 of 717 rows (77%), plus 40 `approximated` | 89 driven + 1600 inherited = 1689 (61%), 1070 left on Aura's default                                |
+| Driven                                   | 62 native + 489 derived = 551 of 719 rows (77%), plus 41 `approximated` | 89 driven + 1600 inherited = 1689 (61%), 1070 left on Aura's default                                |
 | Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | the family rows in `report.json`; slot by slot in [catalog signals](../findings/catalog-signals.md) |
 | Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                                                             |
 
@@ -306,7 +306,7 @@ Terminal rendering:
 What the CLI actually prints, from `npx transtyle build shadcn --cwd examples/acme`:
 
 ```
-shadcn  42% native · 56% derived · 3% dropped
+shadcn  41% native · 54% derived · 5% dropped
   ↳ dist/shadcn/globals.transtyle.css
   ↳ dist/shadcn/usage.md
   ↳ dist/shadcn/report.json

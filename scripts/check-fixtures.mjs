@@ -34,6 +34,10 @@ function parseScssLike(text) {
   let block = 'light';
   for (const line of src.split('\n')) {
     if (/data-bs-theme="dark"/.test(line)) block = 'dark';
+    // Reserved-dimension blocks (contrast, motion, brand, their @media copies)
+    // restate values for other combinations: the Phase 0 fixture is the
+    // standard-contrast light and dark pair only.
+    if (/data-contrast|data-motion|data-brand|@media/.test(line)) block = 'dimension';
     for (const mm of line.matchAll(/(--bs-[\w-]+):\s*([^;]+);/g)) out.set(`${block}:${mm[1]}`, norm(mm[2]));
   }
   return out;
@@ -73,7 +77,7 @@ diffMaps('storybook/theme.transtyle.ts', expectedTheme, gotTheme);
 // preview/manager probes: substrings that must survive in the live output
 const previewProbes = [
   "value: '#ffffff'", "value: '#080b0f'", "colorScheme: 'light'",
-  "classList.toggle('dark'", "data-theme", "acme-design-system-${scheme}",
+  "classList.toggle('dark'", "data-theme", "['acme-design-system', scheme",
   "shadcn/globals.transtyle.css", "daisyui/daisyui.transtyle.css",
 ];
 const preview = readFileSync(join(acme, 'dist/storybook/preview.transtyle.ts'), 'utf8');

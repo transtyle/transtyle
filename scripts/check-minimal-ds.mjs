@@ -1450,9 +1450,10 @@ if (md.diagnostics.errors.length) {
   rmSync(dir, { recursive: true, force: true });
 }
 
-// Acme (color-scheme × density), through the same cascade: the planner that
-// now writes the contrast and brand blocks must still give density its old
-// block and nothing for dark + compact, which changes no color.
+// Acme (color-scheme × density × contrast × motion), through the same cascade:
+// the planner must still give density its old block and nothing for
+// dark + compact, which changes no color, and the hand-written `contrast: more`
+// layers must reach the stylesheet for light and dark alike.
 {
   const acme = await compile({ cwd: 'examples/acme', targets: ['css-variables'], emit: false, loadExporter: mdLoad });
   const css = acme.results[0]?.emitted.find((f) => f.path === 'variables.transtyle.css')?.contents ?? '';
@@ -1460,17 +1461,25 @@ if (md.diagnostics.errors.length) {
   if (/\[data-color-scheme="dark"\]\[data-density/.test(css)) errors.push('mode dimensions: Acme css-variables gained a dark + compact block, though density changes no color');
   for (const density of ['comfortable', 'compact']) {
     for (const dark of [false, true]) {
-      const want = computed(parseRules(acme.results[0].emitted[0].contents), dark ? { attrs: { 'data-color-scheme': 'dark' } } : {}, []);
-      const attrs = { ...(dark ? { 'data-color-scheme': 'dark' } : {}), 'data-density': density };
-      const got = computed(rules, { attrs }, []);
-      const key = `${dark ? 'dark' : 'light'}+${density}`;
-      for (const [slot, entry] of acme.normalized.modes[key]) {
-        if (!slot.startsWith('semantic.space.')) continue;
-        cascadeChecks++;
-        const name = `--${slot.replace('semantic.', '').replaceAll('.', '-')}`;
-        if (got.get(name) !== String(entry.value)) errors.push(`mode dimensions: Acme ${key}: ${name} resolves to ${got.get(name)}, expected ${entry.value}`);
+      for (const contrast of ['standard', 'more']) {
+        const attrs = { ...(dark ? { 'data-color-scheme': 'dark' } : {}), 'data-density': density, 'data-contrast': contrast, 'data-motion': 'full' };
+        const got = computed(rules, { attrs }, []);
+        const key = `${dark ? 'dark' : 'light'}+${density}+${contrast}+full`;
+        for (const [slot, entry] of acme.normalized.modes[key]) {
+          if (!slot.startsWith('semantic.space.')) continue;
+          cascadeChecks++;
+          const name = `--${slot.replace('semantic.', '').replaceAll('.', '-')}`;
+          if (got.get(name) !== String(entry.value)) errors.push(`mode dimensions: Acme ${key}: ${name} resolves to ${got.get(name)}, expected ${entry.value}`);
+        }
+        // The authored `more` values (gray.700 / gray.500 light, gray.200 / gray.400 dark).
+        const want = contrast === 'more'
+          ? (dark ? ['oklch(0.92 0.006 255)', 'oklch(0.7 0.01 255)'] : ['oklch(0.4 0.012 255)', 'oklch(0.55 0.012 255)'])
+          : (dark ? ['oklch(0.7 0.01 255)', 'oklch(0.3 0.012 255)'] : ['oklch(0.55 0.012 255)', 'oklch(0.92 0.006 255)']);
+        for (const [name, expected] of [['--color-text-muted', want[0]], ['--color-border-base', want[1]]]) {
+          cascadeChecks++;
+          if (got.get(name) !== expected) errors.push(`mode dimensions: Acme ${key}: ${name} resolves to ${got.get(name)}, expected ${expected}`);
+        }
       }
-      void want;
     }
   }
 }

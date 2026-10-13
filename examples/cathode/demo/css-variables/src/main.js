@@ -88,3 +88,28 @@ btn.addEventListener('click', () => {
   apply();
 });
 apply();
+
+// Contrast and motion: the same element as the scheme, so the compiled
+// [data-contrast] / [data-motion] blocks (and their compound blocks with the
+// scheme) apply. They start from the OS setting, as the stylesheet's own
+// prefers-* fallbacks would; a design system that declares neither dimension
+// has no such blocks and the buttons change nothing.
+let contrast = matchMedia('(prefers-contrast: more)').matches ? 'more' : 'standard';
+let motion = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full';
+const contrastBtn = document.getElementById('demo-contrast');
+const motionBtn = document.getElementById('demo-motion');
+const applyDimensions = () => {
+  document.documentElement.setAttribute('data-contrast', contrast);
+  document.documentElement.setAttribute('data-motion', motion);
+  contrastBtn.textContent = `contrast: ${contrast}`;
+  motionBtn.textContent = `motion: ${motion}`;
+};
+contrastBtn.addEventListener('click', () => {
+  contrast = contrast === 'more' ? 'standard' : 'more';
+  applyDimensions();
+});
+motionBtn.addEventListener('click', () => {
+  motion = motion === 'reduced' ? 'full' : 'reduced';
+  applyDimensions();
+});
+applyDimensions();

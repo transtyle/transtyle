@@ -7,6 +7,14 @@
     {
       "files": "tokens/acme.density-compact.tokens.json",
       "mode": { "density": "compact" }
+    },
+    {
+      "files": "tokens/acme.contrast-more.tokens.json",
+      "mode": { "contrast": "more" }
+    },
+    {
+      "files": "tokens/acme.dark-contrast-more.tokens.json",
+      "mode": { "color-scheme": "dark", "contrast": "more" }
     }
   ],
   "modes": {
@@ -23,6 +31,20 @@
         "compact"
       ],
       "default": "comfortable"
+    },
+    "contrast": {
+      "values": [
+        "standard",
+        "more"
+      ],
+      "default": "standard"
+    },
+    "motion": {
+      "values": [
+        "full",
+        "reduced"
+      ],
+      "default": "full"
     }
   },
   "derivation": {
