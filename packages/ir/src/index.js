@@ -383,6 +383,61 @@ export function entryNotes(entry) {
  */
 export const blockComment = (text) => `/* ${String(text).replace(/\*\//g, '* /')} */`;
 
+/**
+ * A `/** … *\/` JSDoc block for one IR entry (#194), the form editors show on
+ * hover: its `description` (first line), then `@deprecated <reason>` when the
+ * token itself is deprecated, so TypeScript strikes the property through. A `*\/`
+ * inside the text is broken up, as in `blockComment()`. `indent` is the
+ * indentation of the property it sits above; every line, the last included,
+ * ends with a line break. Empty (no lines at all) for an entry with neither,
+ * which is every derived and defaulted slot.
+ */
+export function jsdocComment(entry, indent = '') {
+  const firstLine = (s) => String(s).split(/\r\n|\r|\n/).map((l) => l.trim()).find((l) => l !== '') ?? '';
+  const safe = (s) => s.replace(/\*\//g, '* /');
+  const lines = [];
+  const description = typeof entry?.description === 'string' ? firstLine(entry.description) : '';
+  if (description) lines.push(safe(description));
+  if (entry?.deprecated) {
+    const reason = typeof entry.deprecated === 'string' ? firstLine(entry.deprecated) : '';
+    lines.push(reason ? `@deprecated ${safe(reason)}` : '@deprecated');
+  }
+  if (lines.length === 0) return '';
+  if (lines.length === 1) return `${indent}/** ${lines[0]} */\n`;
+  return `${indent}/**\n${lines.map((l) => `${indent} * ${l}`).join('\n')}\n${indent} */\n`;
+}
+
+/**
+ * A value of an object tree that an exporter prints as TypeScript, carrying
+ * the IR entry of the one slot it maps (#194). The exporter's `serialize()`
+ * writes `jsdocComment(entry, indent)` above the property and then the value.
+ * Wrap only properties that map exactly one slot.
+ */
+export class Documented {
+  constructor(value, entry) {
+    this.value = value;
+    this.entry = entry;
+  }
+}
+
+/**
+ * `[comment, value]` for one property of an object tree being printed: the
+ * JSDoc block to write above it (indented by `indent`, empty when there is
+ * none) and the value to print, unwrapped when it was a `Documented`.
+ */
+export const withDoc = (v, indent) => (v instanceof Documented ? [jsdocComment(v.entry, indent), v.value] : ['', v]);
+
+/**
+ * A copy of an object tree with every `Documented` replaced by its value, for
+ * the code that measures the tree (coverage) rather than prints it.
+ */
+export function withoutDocs(tree) {
+  if (tree instanceof Documented) return withoutDocs(tree.value);
+  if (Array.isArray(tree)) return tree.map(withoutDocs);
+  if (tree && typeof tree === 'object') return Object.fromEntries(Object.entries(tree).map(([k, v]) => [k, withoutDocs(v)]));
+  return tree;
+}
+
 /** A `// …` comment (Sass, JS/TS) holding one line of `text`; line breaks become spaces. */
 export const lineComment = (text) => `// ${String(text).replace(/[\r\n]+/g, ' ')}`;
 

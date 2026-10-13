@@ -132,6 +132,10 @@ Like Bootstrap and PrimeNG, Mantine carries a checked-in surface inventory, `pac
 
 The 31 kept on every example are behaviour switches with no design value (`focusRing`, `focusClassName`, `activeClassName`, `respectReducedMotion`, `cursorType`, `fontSmoothing`), slots the catalog has no concept for (`headings.textWrap`, the gradient variant's `defaultGradient`, `luminanceThreshold`, `scale`), Mantine's `white` and `black` (their colours are set through the resolver instead), the `red` and `teal` palettes (the page reads them only for the error and success colours, which are set from `danger.text` and `success.text`), the five z-index variables (not read by Mantine's stylesheet: `dropped`) and each scheme's `--mantine-color-scheme` name. GOV.UK adds its missing dark scheme and `font.mono`.
 
+## Token metadata
+
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the font families, the scales (`fontSizes`, `lineHeights`, `fontWeights`, `radius`, `defaultRadius`, `spacing`, `shadows`, `breakpoints`) and the light block of the `cssVariablesResolver`; the dark block maps the same slots and does not repeat them. The colour tuples and the component tier read several slots and get none. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Reserved dimensions: contrast, motion, brand
 
 `theme.transtyle.ts` is emitted once per brand, `theme.transtyle.<brand>.ts` (file-per-value, [ADR-0015](../../adr/0015-mode-combinations.md)): pass the brand's theme to `MantineProvider`. `contrast` and `motion` are `dropped` with their reasons: Mantine's color-scheme manager knows light and dark only, and transitions are per-component props.

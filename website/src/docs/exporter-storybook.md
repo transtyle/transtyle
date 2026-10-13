@@ -83,6 +83,10 @@ Every example uses this: each one's Storybook demo serves `public/logo.png` and 
 
 See it running — the demo _is_ Storybook's own chrome: `npm run dev -w acme-demo-storybook` (light corporate chrome) or `cathode-demo-storybook` (boots terminal-dark) in the [examples](/docs/examples/).
 
+## Descriptions and deprecations
+
+Each `create({ … })` property in `theme.transtyle.ts` carries the `description` and `deprecated` of the one slot it maps as a `/** … */` JSDoc block above it (`jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. Both the light and the dark export carry them. `brandTitle` is not a token and gets none, and `manager.transtyle.ts` and `preview.transtyle.ts` hold no slot-level values.
+
 ## Contrast, motion and brand
 
 Each declared [`contrast`, `motion` or `brand`](/docs/configuration/#contrast-motion-and-brand) dimension adds a toolbar next to **Scheme**. Its value lands on `<html>` as `data-contrast`, `data-motion` or `data-brand`, the attributes the previewed CSS targets select their blocks on; the daisyUI preview switches to the matching theme name. The manager (sidebar) theme stays the default brand's (an `approximated` row), and this `brand` is not `options.brand` above.

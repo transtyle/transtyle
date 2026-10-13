@@ -23,7 +23,7 @@
  * builds both per-mode maps and assembles that split throughout.
  */
 
-import { droppedDimensions, fontStack, emitPerValue } from '@transtyle/ir';
+import { Documented, droppedDimensions, fontStack, emitPerValue, withDoc, withoutDocs } from '@transtyle/ir';
 import { projectRamp } from './ramp.js';
 import { field, list, navigation, overlay, content } from './archetypes.js';
 import { coverageRows, INVENTORY } from './surface-coverage.js';
@@ -192,6 +192,10 @@ function emitOne(normalized, ctx) {
     note: "PrimeNG's own convention is 0.3s; the nearest motion-scale rung is used so the veil fade is authorable (was hardcoded)",
   });
 
+  // A property that maps exactly one slot carries that slot's description and
+  // deprecation as a JSDoc block (#194), in the light half only (the dark half
+  // maps the same slots). Derived and defaulted slots have none.
+  const doc = (path) => new Documented(get(light, path), light.get(`semantic.${path}`));
   const semantic = {
     // AL3 follow-up: PrimeNG's semantic typography block was left on Aura's
     // defaults, which the coverage bar exposed as a cascading gap — 60
@@ -201,13 +205,13 @@ function emitOne(normalized, ctx) {
     typography: {
       // No authored/derived font stack → leave Aura's `inherit` alone rather
       // than inventing one; the rest of the block always resolves.
-      ...(get(light, 'font.sans') ? { fontFamily: fontStack(get(light, 'font.sans')) } : {}),
-      fontSize: get(light, 'type.size.md'),
-      fontWeight: String(get(light, 'type.weight.regular')),
-      lineHeight: String(get(light, 'type.leading.normal')),
+      ...(get(light, 'font.sans') ? { fontFamily: new Documented(fontStack(get(light, 'font.sans')), light.get('semantic.font.sans')) } : {}),
+      fontSize: doc('type.size.md'),
+      fontWeight: new Documented(String(get(light, 'type.weight.regular')), light.get('semantic.type.weight.regular')),
+      lineHeight: new Documented(String(get(light, 'type.leading.normal')), light.get('semantic.type.leading.normal')),
     },
-    transitionDuration: get(light, 'duration.fast'),
-    disabledOpacity: String(get(light, 'opacity.disabled')), // AL2: promoted to the catalog once Bootstrap independently needed it (was a hardcoded 0.6 here)
+    transitionDuration: doc('duration.fast'),
+    disabledOpacity: new Documented(String(get(light, 'opacity.disabled')), light.get('semantic.opacity.disabled')), // AL2: promoted to the catalog once Bootstrap independently needed it (was a hardcoded 0.6 here)
     iconSize: '1rem',
     // width/style/offset are PrimeNG conventions we deliberately don't have a composite
     // for yet (proposal 0002 gap #8) — `color` reuses PrimeNG's own alias mechanism
@@ -233,29 +237,29 @@ function emitOne(normalized, ctx) {
     // Overlay pass (proposal 0003): was a hardcoded '0.3s'. The motion scale
     // already expresses this — no promotion needed, just stop hardcoding.
     // `mask.background` reads `color.scrim` (alpha included) below.
-    mask: { transitionDuration: get(light, 'duration.normal') },
+    mask: { transitionDuration: doc('duration.normal') },
     colorScheme: {
       light: {
         surface: surfaceRampLight.ramp,
         primary: {
-          color: get(light, 'color.primary.solid'),
-          contrastColor: get(light, 'color.primary.on-solid'),
-          hoverColor: get(light, 'color.primary.solid-hover'),
-          activeColor: get(light, 'color.primary.solid-active'),
+          color: doc('color.primary.solid'),
+          contrastColor: doc('color.primary.on-solid'),
+          hoverColor: doc('color.primary.solid-hover'),
+          activeColor: doc('color.primary.solid-active'),
         },
         highlight: {
-          background: get(light, 'color.primary.tint'),
-          focusBackground: get(light, 'color.primary.tint-hover'),
-          color: get(light, 'color.primary.on-tint'),
-          focusColor: get(light, 'color.primary.on-tint'),
+          background: doc('color.primary.tint'),
+          focusBackground: doc('color.primary.tint-hover'),
+          color: doc('color.primary.on-tint'),
+          focusColor: doc('color.primary.on-tint'),
         },
-        mask: { background: get(light, 'color.scrim'), color: get(light, 'color.neutral.tint') },
+        mask: { background: doc('color.scrim'), color: doc('color.neutral.tint') },
         formField: fLight.colorScheme,
         text: {
-          color: get(light, 'color.text.base'),
-          hoverColor: get(light, 'color.text.base'),
-          mutedColor: get(light, 'color.text.muted'),
-          hoverMutedColor: get(light, 'color.text.muted'),
+          color: doc('color.text.base'),
+          hoverColor: doc('color.text.base'),
+          mutedColor: doc('color.text.muted'),
+          hoverMutedColor: doc('color.text.muted'),
         },
         content: cLight.colorScheme,
         overlay: {
@@ -311,7 +315,7 @@ function emitOne(normalized, ctx) {
     );
     let inverseTooltip;
     if (inverseAuthored && get(light, 'color.inverse.surface') && get(light, 'color.inverse.text')) {
-      const pair = (m) => ({ root: { background: get(m, 'color.inverse.surface'), color: get(m, 'color.inverse.text') } });
+      const pair = (m) => ({ root: { background: m === light ? doc('color.inverse.surface') : get(m, 'color.inverse.surface'), color: m === light ? doc('color.inverse.text') : get(m, 'color.inverse.text') } });
       inverseTooltip = { colorScheme: { light: pair(light), dark: pair(dark ?? light) } };
       for (const [part, slot] of [['background', 'inverse.surface'], ['color', 'inverse.text']]) {
         coverage.push({ variable: `components.tooltip.colorScheme.*.root.${part}`, slot: `semantic.color.${slot}`, class: 'native', note: 'the authored inverse pair, per mode' });
@@ -390,7 +394,7 @@ function emitOne(normalized, ctx) {
   // hand-maintained STRUCTURAL_RESIDUE guess with per-family counts of what
   // is driven, what follows our theme through PrimeNG's own token
   // references, and what keeps Aura's default — every slot accounted for.
-  coverage.push(...coverageRows(INVENTORY, { semantic, components }));
+  coverage.push(...coverageRows(INVENTORY, { semantic: withoutDocs(semantic), components: withoutDocs(components) }));
 
   const ts = renderPreset(ctx, semantic, components);
   return {
@@ -423,11 +427,15 @@ function serialize(value, ctx, indent = 2) {
   if (Array.isArray(value)) return `[${value.map((v) => serialize(v, ctx, indent)).join(', ')}]`;
   if (typeof value === 'object') {
     const entries = Object.entries(value)
-      .map(([k, v]) => [k, serialize(v, ctx, indent + 4)])
+      .map(([k, v]) => {
+        const [comment, inner] = withDoc(v, padIn);
+        const code = serialize(inner, ctx, indent + 4);
+        return [k, code, comment];
+      })
       .filter(([, v]) => v !== undefined);
     if (!entries.length) return '{}';
     const key = (k) => (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k) ? k : JSON.stringify(k));
-    return `{\n${entries.map(([k, v]) => `${padIn}${key(k)}: ${v}`).join(',\n')}\n${pad}}`;
+    return `{\n${entries.map(([k, v, comment]) => `${comment}${padIn}${key(k)}: ${v}`).join(',\n')}\n${pad}}`;
   }
   return undefined;
 }

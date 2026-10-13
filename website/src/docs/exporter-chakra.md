@@ -77,6 +77,10 @@ The rows above say what the exporter maps. A checked-in inventory says what ther
 
 The full mapping is in the [exporter spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/exporters/chakra.md). See it running on real Chakra components: `npm run dev -w acme-demo-chakra` (or `cathode-demo-chakra`) in the [examples](/docs/examples/). The demo's build type-checks the emitted config against Chakra's own types before bundling it.
 
+## Descriptions and deprecations
+
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the palette keys, the global colours (`bg`, `fg`, `border`, `scrim`), every `tokens.*` entry, the semantic radii and shadows, the breakpoints and the disabled layer style. The text styles, recipes and component tier read several slots or a derived one and get none. A `{ value: … }` leaf stays on one line below its comment.
+
 ## Contrast, motion and brand
 
 [`brand`](/docs/configuration/#contrast-motion-and-brand) gives one system file per brand, `theme.transtyle.acme.ts` and `theme.transtyle.globex.ts`. `contrast` and `motion` are reported `dropped` with their reasons: the semantic tokens switch on `_light` / `_dark` only, and the theme carries no duration token.

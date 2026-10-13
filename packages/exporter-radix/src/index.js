@@ -19,7 +19,7 @@
  * paired-gray name, alongside `--neutral-*`.
  */
 
-import { COLOR_ROLES, droppedDimensions, modeBlocks, formatModeBlocks, modeBlocksUsage } from '@transtyle/ir';
+import { COLOR_ROLES, blockComment, droppedDimensions, entryNotes, modeBlocks, formatModeBlocks, modeBlocksUsage } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const ALPHA_RAMP = [0.05, 0.1, 0.15, 0.22, 0.3, 0.4, 0.5, 0.6, 0.75, 0.85, 0.92, 0.97];
@@ -38,7 +38,11 @@ export default {
       const lines = [];
       // Each declaration as { name, value, line }: the lines are written, the
       // values compared by modeBlocks() for the other dimensions' blocks.
-      const decl = (name, value) => lines.push({ name, value, line: `  ${name}: ${value};` });
+      const decl = (name, value, entry) => {
+        // Notes go above the variable (#194) in the light block only: `isFirst`.
+        const notes = isFirst ? entryNotes(entry).map((n) => `  ${blockComment(n)}\n`).join('') : '';
+        lines.push({ name, value, line: `${notes}  ${name}: ${value};` });
+      };
       for (const role of COLOR_ROLES) {
         const get = (cell) => map.get(`${S}${role}.${cell}`)?.value;
         const solid = get('solid');
@@ -83,7 +87,9 @@ export default {
           const slots = stepSlots[step];
           for (const sl of slots) roleSlots.add(sl);
           const name = `--${role}-${step}`;
-          decl(name, ctx.formatColor(value));
+          // Only a step that is exactly one cell carries that cell's notes: 1 is the page
+          // surface every role shares, 2 and 6 are mixes.
+          decl(name, ctx.formatColor(value), slots.length === 1 && step !== '1' ? map.get(slots[0]) : undefined);
           if (isFirst) {
             const mixed = step === '2' || step === '6';
             const clamped = ctx.formatHex(value).clamped;
@@ -101,7 +107,7 @@ export default {
 
         const onSolid = get('on-solid');
         if (onSolid) {
-          decl(`--${role}-contrast`, ctx.formatColor(onSolid));
+          decl(`--${role}-contrast`, ctx.formatColor(onSolid), map.get(own('on-solid')));
           if (isFirst) coverage.push({ variable: `--${role}-contrast`, slot: `${S}${role}.on-solid`, slots: [`${S}${role}.on-solid`], class: 'native' });
         }
 

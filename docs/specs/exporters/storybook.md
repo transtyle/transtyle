@@ -32,6 +32,10 @@ Unique among exporters: Storybook options may reference other configured targets
 - ThemeVars is a small, flat surface — most of the design system is _inexpressible in chrome theming_ and that is fine; it flows through preview composition instead. Coverage honestly reports chrome-inexpressible tokens as `dropped (chrome)` while noting preview-path delivery, a case that validated the coverage model's need for per-artifact context.
 - `unsupported`: Storybook chrome vars without IR equivalents (e.g. `barSelectedColor` nuances) → sensible role defaults, reported.
 
+## Token metadata
+
+Each `create({ … })` property in `theme.transtyle.ts` carries the `description` and `deprecated` of the one slot it maps as a `/** … */` JSDoc block above it (`jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. Both the light and the dark export carry them. `brandTitle` is not a token and gets none, and `manager.transtyle.ts` and `preview.transtyle.ts` hold no slot-level values. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Reserved dimensions: contrast, motion, brand
 
 Each declared `contrast`, `motion` or `brand` dimension gets a toolbar global (`globalTypes.contrast`, …) whose value the decorator sets as `data-<dimension>` on `<html>`, the attribute the previewed CSS targets select their blocks on ([ADR-0015](../../adr/0015-mode-combinations.md)). The daisyUI sibling's theme name includes the brand and contrast. The manager (sidebar) theme stays the default brand's, reported `approximated`. The `brand` dimension is not `options.brand` (the manager's own branding).

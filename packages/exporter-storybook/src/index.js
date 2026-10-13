@@ -12,7 +12,7 @@
  * parse oklch() — the per-target output-syntax choice ir.md provides for.
  */
 
-import { droppedDimensions, fontStack } from '@transtyle/ir';
+import { droppedDimensions, fontStack, jsdocComment } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const GAMUT_NOTE = 'sRGB gamut clamp during oklch → hex';
@@ -100,9 +100,13 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
     const v = val(p);
     return v ? ctx.formatHex(v).text : undefined;
   };
+  // ThemeVars key → the IR entry of the one slot it maps, for the JSDoc above
+  // it in theme.transtyle.ts (#194). Recorded on every mode, not only the first.
+  const entries = {};
   const cov = (variable, slot, cls, note) => {
-    if (!first) return;
     const fullSlot = slot.startsWith('semantic') ? slot : S + slot;
+    entries[variable] = map.get(fullSlot);
+    if (!first) return;
     const entry = map.get(fullSlot);
     // AL5 sweep: an absent slot used to fall through to `native` — the strongest
     // coverage claim this exporter can make — because the class was derived from
@@ -177,6 +181,7 @@ function buildThemeVars(normalized, mode, ctx, remBase, coverage) {
   const brand = ctx.targetConfig.options?.brand ?? {};
   return {
     mode,
+    entries,
     vars: {
       base: mode,
       colorPrimary: hx('primary.solid'),
@@ -225,10 +230,13 @@ function renderTheme(variants, ctx) {
     "import { create } from 'storybook/theming';",
     '',
   ];
-  for (const { mode, vars } of variants) {
+  for (const { mode, vars, entries } of variants) {
     lines.push(`export const ${mode} = create({`);
     for (const [k, v] of Object.entries(vars)) {
       if (v === undefined) continue;
+      // jsdocComment ends with a line break, and lines are joined with one.
+      const comment = jsdocComment(entries[k], '  ').replace(/\n$/, '');
+      if (comment) lines.push(comment);
       lines.push(`  ${k}: ${typeof v === 'number' ? v : `'${v}'`},`);
     }
     lines.push('});', '');

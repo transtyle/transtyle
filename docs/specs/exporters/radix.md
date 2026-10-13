@@ -33,6 +33,10 @@ Radix also ships a P3 (wide-gamut) variant of every scale. That is a themable sl
 
 Radix's `<Theme accentColor="...">` component only accepts its own preset names — it can't take an arbitrary string. To drive real Radix Themes components from a compiled brand, **override an existing preset's CSS variables** with your role's scale (e.g. `--violet-1` through `--violet-12`, `-a1..a12`, `-contrast`), then pass that preset's name to `accentColor`. `--gray-*` needs no override — it's already Radix's own name.
 
+## Token metadata
+
+Radix is a CSS target, so it takes `/* … */` comments like shadcn. A variable that is exactly one grid cell (steps 3 to 5 and 7 to 12 of each role, and `--<role>-contrast`) carries that cell's `description` and `deprecated` (`entryNotes()` and `blockComment()` from `@transtyle/ir`) above its declaration in the `:root` block; the `.dark` and other blocks do not repeat them. Step 1 is the page surface every role shares, steps 2 and 6 are mixes, and the alpha steps are derived, so they get none. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Reserved dimensions: contrast, motion, brand
 
 `contrast` and `brand` are blocks after `.dark` ([ADR-0015](../../adr/0015-mode-combinations.md)), planned by `modeBlocks()` (`@transtyle/ir`): `[data-contrast="more"]`, `[data-brand="globex"]`, and compound blocks such as `.dark[data-brand="globex"]` where the cascade of the separate blocks would be wrong. Every step that differs is restated, alpha steps included. `contrast: more` is also written inside `@media (prefers-contrast: more)` (`:not([data-contrast])`). `motion` is `dropped`: Radix Colors are color scales only.

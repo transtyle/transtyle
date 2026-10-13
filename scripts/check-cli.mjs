@@ -1721,8 +1721,11 @@ try {
     run(['add', 'shadcn', '--cwd', dir]);
     run(['add', 'daisyui', '--cwd', dir]);
     run(['add', 'bootstrap', '--cwd', dir]);
+    const TS_TARGETS = ['chakra', 'mantine', 'primeng', 'mui', 'storybook', 'echarts', 'radix'];
+    for (const target of TS_TARGETS) run(['add', target, '--cwd', dir]);
     const scaffold = readFileSync(tp, 'utf8');
     const t = JSON.parse(scaffold);
+    t.semantic.color.text.base.$description = 'Body text */ evil-ts-escape(); /* tail\nsecond-ts-line';
     t.semantic.radius.md.$description = 'Corner radius for interactive controls only.';
     t.semantic.color.primary.solid.$description = 'Brand blue */ .evil-escape { color: red } /* tail\nsecond-line-escape';
     t.option.color.legacy = { $value: 'oklch(0.55 0.2 25)', $deprecated: 'Use option.color.brand.500 instead.' };
@@ -1761,6 +1764,53 @@ try {
       expect('#30 bootstrap Sass: compiles with the hostile description, nothing leaks into CSS', !out.includes('evil-escape') && out.includes('.probe'));
     } catch (e) {
       expect('#30 bootstrap Sass: compiles with the hostile description', false, e.message.split('\n')[0]);
+    }
+
+    // JSDoc in the TypeScript and JS targets (#194): the description sits in a
+    // `/** … */` block above its property, `@deprecated` marks a deprecated slot,
+    // and the hostile text cannot leave the comment, so the file still parses.
+    let ts;
+    try { ts = (await import('typescript')).default; } catch { /* only a transitive dependency: parse when it is there */ }
+    const tsFiles = [
+      ['dist/chakra/theme.transtyle.ts', /\/\*\* Body text \* \/ evil-ts-escape\(\); \/\* tail \*\/\n\s*DEFAULT: /, /\/\*\*\n\s*\* Use primary\.\n/],
+      ['dist/mantine/theme.transtyle.ts', /\/\*\* Corner radius for interactive controls only\. \*\/\n\s*md: /, null],
+      ['dist/primeng/preset.transtyle.ts', /\/\*\* Body text \* \/ evil-ts-escape\(\); \/\* tail \*\/\n\s*color: /, null],
+      ['dist/mui/theme.transtyle.ts', /\/\*\* Body text \* \/ evil-ts-escape\(\); \/\* tail \*\/\n\s*primary: /, /\* @deprecated Use primary\./],
+      ['dist/storybook/theme.transtyle.ts', /\/\*\* Body text \* \/ evil-ts-escape\(\); \/\* tail \*\/\n\s*textColor: /, null],
+    ];
+    for (const [file, described, deprecated] of tsFiles) {
+      const text = readFileSync(join(dir, file), 'utf8');
+      expect(`#30 ${file}: the description sits in a JSDoc block above its property`, described.test(text), text.slice(0, 1500));
+      if (deprecated) expect(`#30 ${file}: @deprecated marks the deprecated slot`, /@deprecated Use primary\./.test(text), text.slice(0, 1500));
+      const code = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      expect(`#30 ${file}: "*/" and the second line stay inside the comment`,
+        !code.includes('evil-ts-escape') && !text.includes('second-ts-line') && !code.includes('evil-escape'), code.split('\n').filter((l) => /evil|second-/.test(l)).join(' | '));
+      if (ts) {
+        const parsed = ts.transpileModule(text, { reportDiagnostics: true, fileName: file, compilerOptions: { target: ts.ScriptTarget.ES2022 } });
+        expect(`#30 ${file}: parses`, parsed.diagnostics.length === 0, parsed.diagnostics.map((d) => d.messageText).join(' | '));
+      }
+    }
+    {
+      const jsFile = readdirSync(join(dir, 'dist/echarts')).find((f) => f.endsWith('.js'));
+      const text = readFileSync(join(dir, 'dist/echarts', jsFile), 'utf8');
+      expect('#30 echarts .js: the description sits in a JSDoc block above its property',
+        /\/\*\* Corner radius for interactive controls only\. \*\/\n\s*"borderRadius": /.test(text) && /\/\*\* Body text \* \/ evil-ts-escape\(\); \/\* tail \*\/\n\s*"color": /.test(text), text.slice(0, 1500));
+      const code = text.replace(/\/\*[\s\S]*?\*\//g, '');
+      expect('#30 echarts .js: "*/" and the second line stay inside the comment', !code.includes('evil-ts-escape') && !text.includes('second-ts-line'));
+      let theme;
+      try {
+        const mod = { exports: {} };
+        new Function('module', 'self', text)(mod, undefined);
+        theme = mod.exports;
+      } catch (e) { expect('#30 echarts .js: parses and evaluates', false, e.message); }
+      const twin = JSON.parse(readFileSync(join(dir, 'dist/echarts', jsFile.replace(/\.js$/, '.json')), 'utf8'));
+      expect('#30 echarts .js: the same theme as the .json twin, which takes no comments',
+        JSON.stringify(theme) === JSON.stringify(twin) && !readFileSync(join(dir, 'dist/echarts', jsFile.replace(/\.js$/, '.json')), 'utf8').includes('/*'));
+    }
+    {
+      const radix = readFileSync(join(dir, 'dist/radix/radix-colors.transtyle.css'), 'utf8');
+      expect('#30 radix: a deprecated single-cell step carries its note', /\/\* Deprecated: Use primary\. \*\/\n\s*--secondary-9:/.test(radix), radix.slice(0, 1200));
+      expect('#30 radix: "*/" stays inside the comment', !radix.replace(/\/\*[\s\S]*?\*\//g, '').includes('evil-ts-escape'));
     }
 
     const report = JSON.parse(readFileSync(join(dir, 'dist/css-variables/report.json'), 'utf8'));

@@ -8,7 +8,7 @@
  * Colors are hex (canvas rendering); OKLCH → hex may gamut-clamp (→ approximated).
  */
 
-import { droppedDimensions, fontNames, pinDimension } from '@transtyle/ir';
+import { Documented, droppedDimensions, fontNames, pinDimension, withDoc, withoutDocs } from '@transtyle/ir';
 
 const S = 'semantic.color.';
 const P = 'semantic.palette.categorical.';
@@ -43,7 +43,8 @@ export default {
         if (coverage.length === 0) coverage.push(...modeCoverage);
         for (const slot of clampedSlots) clampedAny.add(slot);
 
-        const json = JSON.stringify(theme, null, 2) + '\n';
+        // The .json twin takes no comments; the .js one writes them (#194).
+        const json = JSON.stringify(withoutDocs(theme), null, 2) + '\n';
         files.push({ path: `theme.${themeName}.json`, contents: json, kind: 'theme' });
         files.push({
           path: `theme.${themeName}.js`,
@@ -119,11 +120,15 @@ function buildTheme(map, mode, ctx) {
     cov(`color[${i - 1}]`, `${P}${i}`, 'native');
   }
 
-  const background = hex(`${S}elevation.0.surface`);
-  const text = hex(`${S}text.base`);
-  const textMuted = hex(`${S}text.muted`);
-  const border = hex(`${S}border.base`);
-  const overlay = hex(`${S}elevation.3.surface`);
+  // A property that maps exactly one slot carries that slot's description and
+  // deprecation as a JSDoc block in the .js twin (#194). The palette array
+  // takes none: it is eight slots.
+  const doc = (value, slot) => (value === undefined ? undefined : new Documented(value, map.get(slot)));
+  const background = doc(hex(`${S}elevation.0.surface`), `${S}elevation.0.surface`);
+  const text = doc(hex(`${S}text.base`), `${S}text.base`);
+  const textMuted = doc(hex(`${S}text.muted`), `${S}text.muted`);
+  const border = doc(hex(`${S}border.base`), `${S}border.base`);
+  const overlay = doc(hex(`${S}elevation.3.surface`), `${S}elevation.3.surface`);
   cov('backgroundColor', `${S}elevation.0.surface`, 'native');
   cov('textStyle.color', `${S}text.base`, 'native');
   cov('title/legend/axisLabel', `${S}text.muted`, 'native');
@@ -132,12 +137,12 @@ function buildTheme(map, mode, ctx) {
 
   // fontFamily: ECharts wants a single CSS-style string
   const fontEntry = map.get('semantic.font.sans');
-  const fontFamily = fontEntry ? fontNames(fontEntry.value).join(', ') : undefined;
+  const fontFamily = fontEntry ? doc(fontNames(fontEntry.value).join(', '), 'semantic.font.sans') : undefined;
   if (fontFamily) cov('textStyle.fontFamily', 'semantic.font.sans', 'native');
 
   // radius: rem → px numeric (unit conversion = approximated)
   const radiusEntry = map.get('semantic.radius.md');
-  const radiusPx = radiusEntry ? toPx(radiusEntry.value, ctx) : undefined;
+  const radiusPx = radiusEntry ? doc(toPx(radiusEntry.value, ctx), 'semantic.radius.md') : undefined;
   if (radiusPx !== undefined) {
     cov('tooltip.borderRadius', 'semantic.radius.md', 'approximated', `rem → px (base ${remBase(ctx)})`);
   }
@@ -149,7 +154,7 @@ function buildTheme(map, mode, ctx) {
     axisLine: { lineStyle: { color: border } },
     axisTick: { lineStyle: { color: border } },
     axisLabel: { color: textMuted },
-    splitLine: { lineStyle: { color: [border] } },
+    splitLine: { lineStyle: { color: [withoutDocs(border)] } },
     splitArea: { show: false },
   };
 
@@ -200,10 +205,34 @@ function umdWrapper(themeName, theme, ctx) {
     "  if (typeof module === 'object' && module.exports) { module.exports = factory(); }",
     '  else if (global.echarts) { global.echarts.registerTheme(' + JSON.stringify(themeName) + ', factory()); }',
     "}(typeof self !== 'undefined' ? self : this, function () {",
-    '  return ' + JSON.stringify(theme, null, 2).replace(/\n/g, '\n  ') + ';',
+    '  return ' + toJs(theme, '').replace(/\n/g, '\n  ') + ';',
     '}));',
     '',
   ].join('\n');
+}
+
+/**
+ * `JSON.stringify(theme, null, 2)` for a theme that may hold `Documented`
+ * values: the same layout, with a JSDoc block above each documented property.
+ * Only the .js twin goes through it.
+ */
+function toJs(value, pad) {
+  if (value instanceof Documented) return toJs(value.value, pad);
+  if (Array.isArray(value)) {
+    if (!value.length) return '[]';
+    return `[\n${value.map((v) => `${pad}  ${toJs(v, `${pad}  `)}`).join(',\n')}\n${pad}]`;
+  }
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value).filter(([, v]) => (v instanceof Documented ? v.value : v) !== undefined);
+    if (!entries.length) return '{}';
+    return `{\n${entries
+      .map(([k, v]) => {
+        const [comment, inner] = withDoc(v, `${pad}  `);
+        return `${comment}${pad}  ${JSON.stringify(k)}: ${toJs(inner, `${pad}  `)}`;
+      })
+      .join(',\n')}\n${pad}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function renderUsage(ctx, themeNames, coverage) {

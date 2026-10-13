@@ -26,7 +26,7 @@
  *     per-size proportions with catalog defaults.
  */
 
-import { COLOR_ROLES, droppedDimensions, fontStack, emitPerValue } from '@transtyle/ir';
+import { COLOR_ROLES, Documented, droppedDimensions, fontStack, emitPerValue, withDoc, withoutDocs } from '@transtyle/ir';
 import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
@@ -161,6 +161,9 @@ function emitOne(normalized, ctx) {
   // Chakra's default for want of it says which slot (surface-coverage.js).
   const mapped = new Map();
   const maps = (id, slot) => mapped.set(id, slot);
+  // A property that maps exactly one slot carries that slot's description and
+  // deprecation as a JSDoc block (#194); derived and defaulted slots have none.
+  const doc = (value, slot) => new Documented(value, light.get(slot));
 
   /** A semantic token value: `{ _light, _dark }` when the design system has both schemes. */
   const colorToken = (path) => {
@@ -180,7 +183,7 @@ function emitOne(normalized, ctx) {
     for (const p of PALETTE_KEYS) {
       const token = p.slot ? ringToken : colorToken(`${role}.${p.cell}`);
       if (!token) continue;
-      palette[p.key] = token;
+      palette[p.key] = doc(token, p.slot ?? `${S}${role}.${p.cell}`);
       row(`colors.${role}.${p.key}`, p.slot ?? `${S}${role}.${p.cell}`, p.cls, p.note);
     }
     colors[role] = palette;
@@ -200,7 +203,7 @@ function emitOne(normalized, ctx) {
     const token = colorToken(slot);
     if (!token) continue;
     colors[group] ??= {};
-    colors[group][key] = token;
+    colors[group][key] = doc(token, `${S}${slot}`);
     row(`colors.${group}${key === 'DEFAULT' ? '' : `.${key}`}`, `${S}${slot}`, cls, note);
   }
   for (const [status, role] of STATUSES) {
@@ -213,22 +216,22 @@ function emitOne(normalized, ctx) {
       const token = colorToken(`${role}.${cell}`);
       if (!token) continue;
       colors[group] ??= {};
-      colors[group][status] = token;
+      colors[group][status] = doc(token, `${S}${role}.${cell}`);
       row(`colors.${group}.${status}`, `${S}${role}.${cell}`, 'native', note);
     }
   }
 
   const scrim = colorToken('scrim');
   if (scrim) {
-    colors.scrim = scrim;
+    colors.scrim = doc(scrim, `${S}scrim`);
     row('colors.scrim (dialog and drawer backdrops)', `${S}scrim`, 'native', "replaces Chakra's blackAlpha.500 on both backdrops");
   }
 
   // ---------- tokens ----------
   const tokens = {};
-  const put = (category, key, value) => {
+  const put = (category, key, value, slot) => {
     tokens[category] ??= {};
-    tokens[category][key] = { value };
+    tokens[category][key] = slot ? doc({ value }, slot) : { value };
   };
 
   const sans = sem(light, 'font.sans');
@@ -239,19 +242,19 @@ function emitOne(normalized, ctx) {
   maps('tokens.fonts.heading', 'semantic.font.{display,sans}');
   maps('tokens.fonts.mono', 'semantic.font.mono');
   if (sans) {
-    put('fonts', 'body', fontStack(sans));
+    put('fonts', 'body', fontStack(sans), 'semantic.font.sans');
     row('fonts.body', 'semantic.font.sans', 'native');
   }
   if (display ?? sans) {
-    put('fonts', 'heading', fontStack(display ?? sans));
+    put('fonts', 'heading', fontStack(display ?? sans), display ? 'semantic.font.display' : 'semantic.font.sans');
     row('fonts.heading', display ? 'semantic.font.display' : 'semantic.font.sans', 'native', display ? undefined : 'no display face authored: headings take the sans');
   }
   if (mono) {
-    put('fonts', 'mono', fontStack(mono));
+    put('fonts', 'mono', fontStack(mono), 'semantic.font.mono');
     row('fonts.mono', 'semantic.font.mono', 'native');
   }
   if (serif) {
-    put('fonts', 'serif', fontStack(serif));
+    put('fonts', 'serif', fontStack(serif), 'semantic.font.serif');
     row('fonts.serif', 'semantic.font.serif', 'native', 'an extra key: Chakra has no serif face of its own');
   }
 
@@ -259,28 +262,28 @@ function emitOne(normalized, ctx) {
     maps(`tokens.fontSizes.${k}`, `semantic.type.size.${k}`);
     const v = sem(light, `type.size.${k}`);
     if (v === undefined) continue;
-    put('fontSizes', k, String(v));
+    put('fontSizes', k, String(v), `semantic.type.size.${k}`);
     row(`fontSizes.${k}`, `semantic.type.size.${k}`, 'native');
   }
   for (const [chakra, rung] of FONT_WEIGHTS) {
     maps(`tokens.fontWeights.${chakra}`, `semantic.type.weight.${rung}`);
     const v = sem(light, `type.weight.${rung}`);
     if (v === undefined) continue;
-    put('fontWeights', chakra, String(v));
+    put('fontWeights', chakra, String(v), `semantic.type.weight.${rung}`);
     row(`fontWeights.${chakra}`, `semantic.type.weight.${rung}`, 'native');
   }
   for (const [chakra, rung] of LINE_HEIGHTS) {
     maps(`tokens.lineHeights.${chakra}`, `semantic.type.leading.${rung}`);
     const v = sem(light, `type.leading.${rung}`);
     if (v === undefined) continue;
-    put('lineHeights', chakra, v);
+    put('lineHeights', chakra, v, `semantic.type.leading.${rung}`);
     row(`lineHeights.${chakra}`, `semantic.type.leading.${rung}`, 'approximated', "by rank: three catalog rungs for Chakra's five; Chakra's text styles carry their own line heights, so leading does not reach them");
   }
   for (const [chakra, rung] of LETTER_SPACINGS) {
     maps(`tokens.letterSpacings.${chakra}`, `semantic.type.tracking.${rung}`);
     const v = sem(light, `type.tracking.${rung}`);
     if (v === undefined) continue;
-    put('letterSpacings', chakra, String(v));
+    put('letterSpacings', chakra, String(v), `semantic.type.tracking.${rung}`);
     row(`letterSpacings.${chakra}`, `semantic.type.tracking.${rung}`, 'native', chakra === 'normal' ? 'an extra key: Chakra has no normal rung' : undefined);
   }
 
@@ -288,7 +291,7 @@ function emitOne(normalized, ctx) {
     maps(`tokens.radii.${k}`, `semantic.radius.${k}`);
     const v = sem(light, `radius.${k}`);
     if (v === undefined) continue;
-    put('radii', k, String(v));
+    put('radii', k, String(v), `semantic.radius.${k}`);
     row(`radii.${k}`, `semantic.radius.${k}`, 'native');
   }
 
@@ -297,7 +300,7 @@ function emitOne(normalized, ctx) {
     .filter((k) => k !== undefined)
     .sort((a, b) => Number(a) - Number(b));
   for (const k of spaceKeys) {
-    put('spacing', k, String(sem(light, `space.${k}`)));
+    put('spacing', k, String(sem(light, `space.${k}`)), `semantic.space.${k}`);
     row(`spacing.${k}`, `semantic.space.${k}`, 'native');
   }
 
@@ -305,21 +308,21 @@ function emitOne(normalized, ctx) {
     maps(`tokens.durations.${chakra}`, `semantic.duration.${rung}`);
     const v = sem(light, `duration.${rung}`);
     if (v === undefined) continue;
-    put('durations', chakra, String(v));
+    put('durations', chakra, String(v), `semantic.duration.${rung}`);
     row(`durations.${chakra}`, `semantic.duration.${rung}`, cls, note);
   }
   for (const [chakra, rung] of EASINGS) {
     maps(`tokens.easings.${chakra}`, `semantic.easing.${rung}`);
     const v = sem(light, `easing.${rung}`);
     if (v === undefined) continue;
-    put('easings', chakra, String(v));
+    put('easings', chakra, String(v), `semantic.easing.${rung}`);
     row(`easings.${chakra}`, `semantic.easing.${rung}`, 'native', ['emphasized', 'spring'].includes(chakra) ? 'an extra key' : undefined);
   }
   for (const k of Z) {
     maps(`tokens.zIndex.${k}`, `semantic.z.${k}`);
     const v = sem(light, `z.${k}`);
     if (v === undefined) continue;
-    put('zIndex', k, v);
+    put('zIndex', k, v, `semantic.z.${k}`);
     row(`zIndex.${k}`, `semantic.z.${k}`, 'native');
   }
 
@@ -328,7 +331,7 @@ function emitOne(normalized, ctx) {
     maps(`breakpoints.${k}`, `semantic.breakpoint.${k}`);
     const v = sem(light, `breakpoint.${k}`);
     if (v === undefined) continue;
-    breakpoints[k] = String(v);
+    breakpoints[k] = doc(String(v), `semantic.breakpoint.${k}`);
     row(`breakpoints.${k}`, `semantic.breakpoint.${k}`, 'native');
   }
   if (sem(light, 'breakpoint.xs') !== undefined) {
@@ -346,7 +349,7 @@ function emitOne(normalized, ctx) {
     maps(`semanticTokens.radii.${key}`, `semantic.${slot}`);
     const v = sem(light, slot);
     if (v === undefined) continue;
-    radii[key] = { value: String(v) };
+    radii[key] = doc({ value: String(v) }, `semantic.${slot}`);
     row(`radii.${key} (semantic)`, `semantic.${slot}`, cls, note);
   }
   if (Object.keys(radii).length) semanticTokens.radii = radii;
@@ -357,7 +360,7 @@ function emitOne(normalized, ctx) {
     const l = sem(light, `color.elevation.${level}.shadow`);
     if (!l) continue;
     const d = dark && sem(dark, `color.elevation.${level}.shadow`);
-    shadows[key] = { value: d ? { _light: shadowCss(l, ctx), _dark: shadowCss(d, ctx) } : shadowCss(l, ctx) };
+    shadows[key] = doc({ value: d ? { _light: shadowCss(l, ctx), _dark: shadowCss(d, ctx) } : shadowCss(l, ctx) }, `${S}elevation.${level}.shadow`);
     row(`shadows.${key}`, `${S}elevation.${level}.shadow`, 'approximated', "by rank: four elevation shadows for Chakra's sm to xl; xs, 2xl and inset stay Chakra's");
   }
   if (Object.keys(shadows).length) semanticTokens.shadows = shadows;
@@ -387,7 +390,7 @@ function emitOne(normalized, ctx) {
   const layerStyles = {};
   const disabled = sem(light, 'opacity.disabled');
   if (disabled !== undefined) {
-    layerStyles.disabled = { value: { opacity: String(disabled) } };
+    layerStyles.disabled = doc({ value: { opacity: String(disabled) } }, 'semantic.opacity.disabled');
     row('layerStyles.disabled.opacity', 'semantic.opacity.disabled', 'native', 'every Chakra control reads the disabled layer style');
   }
   row('(disabled text colour)', `${S}text.disabled`, 'dropped', "Chakra dims disabled controls with the disabled layer style's opacity, not with a colour");
@@ -493,7 +496,7 @@ function emitOne(normalized, ctx) {
 
   // AL3: measure what was emitted against Chakra's whole theming surface
   // (surface-inventory.json, extracted from @chakra-ui/react's defaultConfig).
-  coverage.push(...surfaceRows({ globalCss, theme }, mapped));
+  coverage.push(...surfaceRows(withoutDocs({ globalCss, theme }), mapped));
 
   return {
     files: [
@@ -541,7 +544,12 @@ function serialize(value, indent) {
       : JSON.stringify(inner);
     return `{ value: ${v} }`;
   }
-  return `{\n${entries.map(([k, v]) => `${padIn}${key(k)}: ${serialize(v, indent + 2)}`).join(',\n')},\n${pad}}`;
+  return `{\n${entries
+    .map(([k, v]) => {
+      const [comment, inner] = withDoc(v, padIn);
+      return `${comment}${padIn}${key(k)}: ${serialize(inner, indent + 2)}`;
+    })
+    .join(',\n')},\n${pad}}`;
 }
 
 function renderConfig(ctx, config, anatomies) {

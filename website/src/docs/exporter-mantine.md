@@ -77,6 +77,10 @@ Component geometry goes through Mantine's data-only routes, `defaultProps` and `
 
 See it running on real Mantine components: `npm run dev -w acme-demo-mantine` (or `cathode-demo-mantine`) in the [examples](/docs/examples/). The demo's build type-checks the emitted theme against Mantine's own types before bundling it.
 
+## Descriptions and deprecations
+
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the font families, the scales (`fontSizes`, `lineHeights`, `fontWeights`, `radius`, `defaultRadius`, `spacing`, `shadows`, `breakpoints`) and the light block of the `cssVariablesResolver`; the dark block maps the same slots and does not repeat them. The colour tuples and the component tier read several slots and get none.
+
 ## Contrast, motion and brand
 
 [`brand`](/docs/configuration/#contrast-motion-and-brand) gives one theme file per brand, `theme.transtyle.acme.ts` and `theme.transtyle.globex.ts`: hand the brand's theme to `MantineProvider`. `contrast` and `motion` are reported `dropped` with their reasons (Mantine's color-scheme manager knows light and dark only; transitions are component props).

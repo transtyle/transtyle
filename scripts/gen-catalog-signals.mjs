@@ -127,7 +127,8 @@ function primengPreset(contents) {
   // The exporter's serializer writes one `key: <JSON>` per line, keys bare
   // when they are identifiers, and the call's object ends on a trailing
   // comma: quoting the keys and dropping that comma makes it JSON.
-  const json = literal.replace(/^(\s*)([A-Za-z_$][\w$]*): /gm, '$1"$2": ').replace(/,\s*}$/, '\n}');
+  // A JSDoc block above a property (#194) is a comment, not JSON: drop it first.
+  const json = literal.replace(/^[ \t]*\/\*\*[\s\S]*?\*\/\n/gm, '').replace(/^(\s*)([A-Za-z_$][\w$]*): /gm, '$1"$2": ').replace(/,\s*}$/, '\n}');
   return JSON.parse(json);
 }
 

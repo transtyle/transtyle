@@ -41,6 +41,10 @@ A custom color role (role archetypes) lands in `components.button.extend.<name>.
 
 See it running: `npm run dev -w acme-demo-primeng` (or `cathode-demo-primeng`, `govuk-demo-primeng`, `carbon-demo-primeng`) in the [examples](/docs/examples/).
 
+## Descriptions and deprecations
+
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the semantic typography, durations and disabled opacity, and the `colorScheme.light` primary, highlight, mask and text colours; the `dark` half maps the same slots and does not repeat them. The surface ramps, the archetype helpers and the component tier read several slots or a derived one and get none.
+
 ## Contrast, motion and brand
 
 A preset has no runtime brand switch, so a design system declaring [`brand`](/docs/configuration/#contrast-motion-and-brand) gets one preset per brand, `preset.transtyle.acme.ts` and `preset.transtyle.globex.ts`; `usage.md` lists them. `contrast` and `motion` are reported `dropped`, each with its reason: a preset switches light and dark only, and its transition duration is one constant.

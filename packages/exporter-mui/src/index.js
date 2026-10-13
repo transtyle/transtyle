@@ -29,7 +29,7 @@
  * options merge under any other `createTheme(options, yours)` argument.
  */
 
-import { COLOR_ROLES, GRID_CELLS, droppedDimensions, fontStack, emitPerValue } from '@transtyle/ir';
+import { COLOR_ROLES, GRID_CELLS, Documented, droppedDimensions, fontStack, emitPerValue, withDoc } from '@transtyle/ir';
 import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
@@ -161,6 +161,10 @@ function emitOne(normalized, ctx) {
   // MUI's default for want of it says which slot (surface-coverage.js).
   const mapped = new Map();
   const maps = (path, slot) => mapped.set(path, slot);
+  // A property that maps exactly one slot carries that slot's description and
+  // deprecation as a JSDoc block (#194), in the light scheme only (the dark one
+  // maps the same slots). Derived and defaulted slots have none.
+  const doc = (value, path) => new Documented(value, light.get(`semantic.${path}`));
 
   const clamped = new Set(); // slots whose hex was clamped into sRGB in any scheme
   const hex = (map, path) => {
@@ -180,7 +184,7 @@ function emitOne(normalized, ctx) {
     for (const [name, map] of schemes) {
       const v = hex(map, slot);
       if (v === undefined) continue;
-      set(palettes[name], path, v);
+      set(palettes[name], path, name === 'light' ? doc(v, `color.${slot}`) : v);
       wrote = true;
     }
     return wrote;
@@ -310,14 +314,14 @@ function emitOne(normalized, ctx) {
   const sans = sem(light, 'font.sans');
   maps('typography.fontFamily', 'semantic.font.sans');
   if (sans) {
-    typography.fontFamily = fontStack(sans);
+    typography.fontFamily = doc(fontStack(sans), 'font.sans');
     row('typography.fontFamily', 'semantic.font.sans', 'native');
   }
   for (const [mui, rung] of FONT_WEIGHTS) {
     maps(`typography.${mui}`, `semantic.type.weight.${rung}`);
     const v = sem(light, `type.weight.${rung}`);
     if (v === undefined) continue;
-    typography[mui] = Number(v);
+    typography[mui] = doc(Number(v), `type.weight.${rung}`);
     row(`typography.${mui}`, `semantic.type.weight.${rung}`, 'native');
   }
   for (const [variant, role] of TYPE_VARIANTS) {
@@ -347,7 +351,7 @@ function emitOne(normalized, ctx) {
   maps('shape.borderRadius', 'semantic.radius.control');
   const controlRadius = sem(light, 'radius.control');
   if (controlRadius !== undefined) {
-    shape.borderRadius = String(controlRadius);
+    shape.borderRadius = doc(String(controlRadius), 'radius.control');
     row('shape.borderRadius', 'semantic.radius.control', 'native', 'MUI rounds buttons, inputs, chips and every Paper with it; Paper takes radius.container below');
   }
 
@@ -355,7 +359,7 @@ function emitOne(normalized, ctx) {
   maps('spacing', 'semantic.space.2');
   const unit = sem(light, 'space.2');
   if (unit !== undefined) {
-    spacing = String(unit);
+    spacing = doc(String(unit), 'space.2');
     const linear = [1, 3, 4, 8].every((k) => {
       const a = ctx.units?.toPx(String(sem(light, `space.${k}`) ?? ''));
       const b = ctx.units?.toPx(String(unit));
@@ -388,14 +392,14 @@ function emitOne(normalized, ctx) {
     maps(`transitions.duration.${mui}`, `semantic.duration.${rung}`);
     const ms = toMs(sem(light, `duration.${rung}`));
     if (ms === undefined) continue;
-    (transitions.duration ??= {})[mui] = ms;
+    (transitions.duration ??= {})[mui] = doc(ms, `duration.${rung}`);
     row(`transitions.duration.${mui}`, `semantic.duration.${rung}`, 'approximated', "by rank: MUI's seven names over the catalog's rungs, in milliseconds");
   }
   for (const [mui, rung, cls, note] of EASINGS) {
     maps(`transitions.easing.${mui}`, `semantic.easing.${rung}`);
     const v = sem(light, `easing.${rung}`);
     if (v === undefined) continue;
-    (transitions.easing ??= {})[mui] = String(v);
+    (transitions.easing ??= {})[mui] = doc(String(v), `easing.${rung}`);
     row(`transitions.easing.${mui}`, `semantic.easing.${rung}`, cls, note);
   }
 
@@ -404,7 +408,7 @@ function emitOne(normalized, ctx) {
     maps(`zIndex.${mui}`, `semantic.z.${rung}`);
     const v = sem(light, `z.${rung}`);
     if (v === undefined) continue;
-    zIndex[mui] = Number(v);
+    zIndex[mui] = doc(Number(v), `z.${rung}`);
     row(`zIndex.${mui}`, `semantic.z.${rung}`, 'native');
   }
 
@@ -428,7 +432,7 @@ function emitOne(normalized, ctx) {
   for (const name of SCHEME_NAMES) maps(`colorSchemes.${name}.palette.action.disabledOpacity`, 'semantic.opacity.disabled');
   const disabled = sem(light, 'opacity.disabled');
   if (disabled !== undefined) {
-    for (const [name] of schemes) set(palettes[name], 'action.disabledOpacity', Number(disabled));
+    for (const [name] of schemes) set(palettes[name], 'action.disabledOpacity', name === 'light' ? doc(Number(disabled), 'opacity.disabled') : Number(disabled));
     row('palette.action.disabledOpacity', 'semantic.opacity.disabled', 'native');
   }
 
@@ -611,7 +615,12 @@ function serialize(value, indent) {
   }
   const entries = Object.entries(value).filter(([, v]) => v !== undefined);
   if (!entries.length) return '{}';
-  return `{\n${entries.map(([k, v]) => `${padIn}${key(k)}: ${serialize(v, indent + 2)}`).join(',\n')},\n${pad}}`;
+  return `{\n${entries
+    .map(([k, v]) => {
+      const [comment, inner] = withDoc(v, padIn);
+      return `${comment}${padIn}${key(k)}: ${serialize(inner, indent + 2)}`;
+    })
+    .join(',\n')},\n${pad}}`;
 }
 
 function renderTheme(ctx, options, extraKeys, { hasRing, extras }) {

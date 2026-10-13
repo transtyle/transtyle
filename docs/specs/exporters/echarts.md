@@ -39,6 +39,10 @@ The same rule feeds shadcn's `--chart-*` variables — one brand, one data-viz p
 - Radius → tooltip/dataZoom corner radii: `native`; shadows → `native` (px conversion).
 - `unsupported` reported honestly: series-type-specific styling (candlestick up/down colors, gauge bands…) beyond catalog semantics — left at theme defaults and listed, giving users a precise TODO list for manual theme extension (emitted theme includes an `// extend here` merge pattern in `usage.md`).
 
+## Token metadata
+
+Only the `.js` twin takes comments. In `theme.<name>.js`, a property that maps exactly one slot (the background, the text and border colours, the tooltip surface and radius, the font family) carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`), and `@deprecated <reason>` marks a deprecated slot. The `color` palette is an array of eight slots and gets none. The `.json` file holds the same theme and, being JSON, no comments. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Reserved dimensions: contrast, motion, brand
 
 `brand` multiplies the themes like `color-scheme` does: one theme per brand and scheme, `theme.<project>-<brand>-<scheme>.json`, registered under that name, every brand named, the default one included ([ADR-0015](../../adr/0015-mode-combinations.md)). `contrast` and `motion` are `dropped`: a theme is picked at init with no media-query hook, and animation duration is a chart option.
