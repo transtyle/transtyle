@@ -23,7 +23,7 @@
     },
     "color.named-palette": {
       "status": "target-specific",
-      "summary": "The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`; Chakra's hue palettes, their ramps and its `black` and `white`), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept.",
+      "summary": "The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`; Chakra's hue palettes, their ramps and its `black` and `white`; MUI's `grey` ramp and its `common` black and white), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept.",
       "ref": "docs/specs/exporters/mantine.md"
     },
     "custom.vocabulary": {
@@ -35,6 +35,11 @@
       "status": "open",
       "summary": "A blur-radius scale for backdrop and filter blur: the IR has no blur. Single-source so far (Chakra's `blurs`).",
       "ref": "docs/specs/exporters/chakra.md"
+    },
+    "focus.ring-composite": {
+      "status": "open",
+      "summary": "The focus ring's width, offset and style beside its colour: the IR has `semantic.color.ring` alone. Proposal 0002 deferred a composite until a second component-heavy target needed the same fields; Chakra has four of the five, and MUI's `focusVisible` reports style, width and offset (#167).",
+      "ref": "docs/proposals/0002-component-theming-primeng.md"
     },
     "geometry.component": {
       "status": "rejected",
@@ -73,7 +78,7 @@
     },
     "scale.extra-rung": {
       "status": "open",
-      "summary": "A rung the target's scale has beyond the catalog's: a weight below regular or above bold, a half or a large spacing step, a duration, a layer or a shadow size outside the catalog's ladder. Mapping it would invent a value the design system never set. Single-source so far (Chakra's tokens, measured against its whole surface).",
+      "summary": "A rung the target's scale has beyond the catalog's: a weight below regular or above bold, a half or a large spacing step, a duration, a layer or a shadow size outside the catalog's ladder. Mapping it would invent a value the design system never set. Chakra's tokens and MUI's light weight and component layers, each measured against the target's whole surface.",
       "ref": "docs/specs/exporters/chakra.md"
     },
     "shadow.inset": {
@@ -87,13 +92,18 @@
     },
     "target.config": {
       "status": "target-specific",
-      "summary": "Target configuration rather than a design value: behaviour switches (focus-ring visibility, reduced motion, cursor, font smoothing), class names, algorithm parameters (Mantine's autoContrast luminance threshold, its global rem scale) and constants (the colour-scheme name, Chakra's CSS keywords, fraction and viewport sizes, media aspect ratios).",
+      "summary": "Target configuration rather than a design value: behaviour switches (focus-ring visibility, reduced motion, cursor, font smoothing), class names, algorithm parameters (Mantine's autoContrast luminance threshold, its global rem scale; MUI's contrast threshold, tonal offset and pxToRem base) and constants (the colour-scheme name, Chakra's CSS keywords, fraction and viewport sizes, media aspect ratios, MUI's `inherit` type variant and autofill shadow).",
       "ref": "docs/specs/exporters/mantine.md"
     },
     "type.display-ladder": {
       "status": "disagreement",
       "summary": "The display type sizes. `semantic.type.role.display.*` ships, but the target's ladder has twice the rungs over a different range, so mapping either invents rungs or drops them.",
       "ref": "docs/worklog/2026-07-27-coverage-bar-asymmetry.md"
+    },
+    "type.text-transform": {
+      "status": "open",
+      "summary": "A type role's letter case (MUI's uppercase `button` and `overline`): the IR's type roles carry family, size, weight, leading and tracking, no case. Single-source so far.",
+      "ref": "docs/specs/exporters/mui.md"
     },
     "type.text-wrap": {
       "status": "open",

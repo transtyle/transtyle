@@ -13,10 +13,10 @@ order: 18
 
 [Material UI](https://mui.com/material-ui/) themes through one `createTheme()` call. In CSS-variables mode it writes every palette colour of every colour scheme as a custom property, and its components read those properties, so switching schemes swaps variables instead of rebuilding the theme. This exporter emits one TypeScript module, `theme.transtyle.ts`, with two exports: `themeOptions`, a plain `ThemeOptions` object with no function in it, and `theme`, MUI's own `createTheme(themeOptions)`.
 
-<!-- measured: acme.mui.rows = 167 -->
-<!-- measured: acme.mui.native = 91 -->
+<!-- measured: acme.mui.rows = 303 -->
+<!-- measured: acme.mui.native = 95 -->
 
-On [Acme](/docs/examples/) that is 167 classified rows in `report.json`, 91 of them native.
+On [Acme](/docs/examples/) that is 303 classified rows in `report.json`, 95 of them native, measured against [MUI's whole theming surface](#measured-against-muis-whole-surface).
 
 ```json
 "targets": { "mui": { "output": "dist/mui" } }
@@ -65,6 +65,15 @@ MUI's components already take `shape.borderRadius`, mapped to the control radius
 - **Pressed and selected colours.** MUI shows a ripple on press, and selection reads `action.selected`.
 - **Link colours.** MUI's Link follows the palette colour it is given.
 - **Elevation surfaces 4 and 5, three of the six text rungs, the categorical palette, border widths, control heights, density.** No matching slot; each is a `dropped` row with its reason.
+
+## Measured against MUI's whole surface
+
+<!-- measured: mui.surface.total = 491 -->
+<!-- measured: acme.mui.set = 240 -->
+<!-- measured: acme.mui.follow = 119 -->
+<!-- measured: acme.mui.default = 132 -->
+
+The rows above say what the exporter maps. A checked-in inventory says what there is to map: 491 entries extracted from the installed `@mui/material` by calling `createTheme()` the way this exporter does, every CSS variable of its three style-sheet blocks and every theme leaf no variable carries (the typography variants field by field, the transitions, the breakpoints, the focus ring). On Acme, this theme sets 240 entries, MUI derives 119 more from those (every channel variable, the typography shorthands, the Slider and Switch tracks it lightens from each role's colour), and 132 keep MUI's value, each on its own row in `report.json` with the reason: MUI's grey ramp and the components that read it (Avatar, Chip, AppBar), its translucent state veils, constants such as the uppercase button. Two of them are worth knowing as a user: no example's type roles carry a letter spacing, so MUI's Roboto tracking stays on every variant, and MUI draws the outlined input's border from its own black or white at a fixed alpha, so the design system's field border does not reach it. The [coverage bar](/docs/concepts/#5-provenance-and-coverage) fails the build when an entry is unaccounted for or kept without a reason.
 
 The full mapping is in the [exporter spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/exporters/mui.md). See it running on real MUI components: `npm run dev -w acme-demo-mui` (or `cathode-demo-mui`) in the [examples](/docs/examples/). The demo's build type-checks the emitted options against MUI's own `ThemeOptions` before bundling them.
 

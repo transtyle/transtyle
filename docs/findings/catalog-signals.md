@@ -19,7 +19,7 @@ PrimeNG reports one row per component family, so for PrimeNG the unit is the slo
 | PrimeNG        | 1071 slots    | 57             | 1014    |
 | Mantine        | 28 rows       | 26             | 2       |
 | Chakra UI      | 117 rows      | 116            | 1       |
-| Material UI    | 1 row         | 1              | 0       |
+| Material UI    | 121 rows      | 108            | 13      |
 
 Every row and slot below is reported by all the examples, except Chakra UI `tokens.fonts.mono` (govuk only), Mantine `theme.fontFamilyMonospace` (govuk only), Mantine `variables.--mantine-font-family-monospace` (govuk only), PrimeNG `tooltip.root.maxWidth` (cathode, govuk, carbon only): `unsupported` mostly describes the target, and only a design system that authors a slot's concept takes it off the list.
 
@@ -27,27 +27,29 @@ shadcn/ui, Storybook, CSS variables report no `unsupported` row: only exporters 
 
 ## By meaning
 
-| Meaning                 | Status          | Exporters | Evidence                                 | Settled by                                                                           |
-| ----------------------- | --------------- | --------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| `opacity.component`     | open            | 2         | Bootstrap (12 rows), Material UI (1 row) |                                                                                      |
-| `shadow.inset`          | open            | 2         | Bootstrap (1 row), Chakra UI (2 rows)    |                                                                                      |
-| `color.gradient`        | open            | 1         | Mantine (3 rows)                         |                                                                                      |
-| `effect.blur`           | open            | 1         | Chakra UI (8 rows)                       |                                                                                      |
-| `motion.keyframes`      | open            | 1         | Chakra UI (4 rows)                       |                                                                                      |
-| `opacity.compositional` | open            | 1         | Bootstrap (1 row)                        |                                                                                      |
-| `scale.extra-rung`      | open            | 1         | Chakra UI (47 rows)                      |                                                                                      |
-| `type.text-wrap`        | open            | 1         | Mantine (2 rows)                         |                                                                                      |
-| `icon.size`             | watch           | 2         | Bootstrap (3 rows), PrimeNG (57 slots)   | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
-| `color.wide-gamut`      | watch           | 1         | Radix Themes (1 row)                     | [radix](../specs/exporters/radix.md)                                                 |
-| `icon.asset`            | watch           | 1         | Bootstrap (16 rows)                      | [backlog](../backlog.md#bl-19)                                                       |
-| `style.effect`          | watch           | 1         | daisyUI (1 row)                          | [daisyui](../specs/exporters/daisyui.md)                                             |
-| `type.display-ladder`   | disagreement    | 2         | Bootstrap (1 row), Chakra UI (8 rows)    | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
-| `breakpoint.ladder`     | disagreement    | 1         | Bootstrap (1 row)                        | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
-| `geometry.indicator`    | disagreement    | 1         | Bootstrap (4 rows)                       | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
-| `geometry.component`    | rejected        | 2         | Bootstrap (17 rows), Chakra UI (15 rows) | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
-| `color.named-palette`   | target-specific | 2         | Mantine (7 rows), Chakra UI (13 rows)    | [mantine](../specs/exporters/mantine.md)                                             |
-| `target.config`         | target-specific | 2         | Mantine (14 rows), Chakra UI (19 rows)   | [mantine](../specs/exporters/mantine.md)                                             |
-| `chart.series-style`    | target-specific | 1         | Apache ECharts (1 row)                   | [echarts](../specs/exporters/echarts.md)                                             |
+| Meaning                 | Status          | Exporters | Evidence                                                      | Settled by                                                                           |
+| ----------------------- | --------------- | --------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `opacity.component`     | open            | 2         | Bootstrap (12 rows), Material UI (26 rows)                    |                                                                                      |
+| `scale.extra-rung`      | open            | 2         | Chakra UI (47 rows), Material UI (4 rows)                     |                                                                                      |
+| `shadow.inset`          | open            | 2         | Bootstrap (1 row), Chakra UI (2 rows)                         |                                                                                      |
+| `color.gradient`        | open            | 1         | Mantine (3 rows)                                              |                                                                                      |
+| `effect.blur`           | open            | 1         | Chakra UI (8 rows)                                            |                                                                                      |
+| `focus.ring-composite`  | open            | 1         | Material UI (3 rows)                                          |                                                                                      |
+| `motion.keyframes`      | open            | 1         | Chakra UI (4 rows)                                            |                                                                                      |
+| `opacity.compositional` | open            | 1         | Bootstrap (1 row)                                             |                                                                                      |
+| `type.text-transform`   | open            | 1         | Material UI (2 rows)                                          |                                                                                      |
+| `type.text-wrap`        | open            | 1         | Mantine (2 rows)                                              |                                                                                      |
+| `icon.size`             | watch           | 2         | Bootstrap (3 rows), PrimeNG (57 slots)                        | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
+| `color.wide-gamut`      | watch           | 1         | Radix Themes (1 row)                                          | [radix](../specs/exporters/radix.md)                                                 |
+| `icon.asset`            | watch           | 1         | Bootstrap (16 rows)                                           | [backlog](../backlog.md#bl-19)                                                       |
+| `style.effect`          | watch           | 1         | daisyUI (1 row)                                               | [daisyui](../specs/exporters/daisyui.md)                                             |
+| `type.display-ladder`   | disagreement    | 2         | Bootstrap (1 row), Chakra UI (8 rows)                         | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
+| `breakpoint.ladder`     | disagreement    | 1         | Bootstrap (1 row)                                             | [2026-07-27-coverage-bar-asymmetry](../worklog/2026-07-27-coverage-bar-asymmetry.md) |
+| `geometry.indicator`    | disagreement    | 1         | Bootstrap (4 rows)                                            | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
+| `geometry.component`    | rejected        | 2         | Bootstrap (17 rows), Chakra UI (15 rows)                      | [0004-component-geometry](../proposals/0004-component-geometry.md)                   |
+| `color.named-palette`   | target-specific | 3         | Mantine (7 rows), Chakra UI (13 rows), Material UI (58 rows)  | [mantine](../specs/exporters/mantine.md)                                             |
+| `target.config`         | target-specific | 3         | Mantine (14 rows), Chakra UI (19 rows), Material UI (15 rows) | [mantine](../specs/exporters/mantine.md)                                             |
+| `chart.series-style`    | target-specific | 1         | Apache ECharts (1 row)                                        | [echarts](../specs/exporters/echarts.md)                                             |
 
 Statuses:
 
@@ -66,7 +68,14 @@ Statuses:
 Per-component opacities that are not `semantic.opacity.disabled`: a veil strength, a shimmer range, a glyph alpha. A candidate only once a second target needs the identical one. See [2026-07-23-bootstrap-coverage-chase](../worklog/2026-07-23-bootstrap-coverage-chase.md).
 
 - Bootstrap: `$btn-close-focus-opacity`, `$btn-close-hover-opacity`, `$btn-close-opacity`, `$carousel-control-hover-opacity`, `$carousel-control-opacity`, `$carousel-indicator-active-opacity`, `$carousel-indicator-opacity`, `$form-floating-label-opacity`, `$hr-opacity`, `$placeholder-opacity-max`, `$placeholder-opacity-min`, `$tooltip-opacity`.
-- Material UI: `colorSchemes.*.opacity.{inputPlaceholder,inputUnderline,switchTrackDisabled,switchTrack}`.
+- Material UI: `dark.--mui-opacity-inputPlaceholder`, `dark.--mui-opacity-inputUnderline`, `dark.--mui-opacity-switchTrackDisabled`, `dark.--mui-opacity-switchTrack`, `dark.--mui-palette-FilledInput-bg`, `dark.--mui-palette-FilledInput-disabledBg`, `dark.--mui-palette-FilledInput-hoverBg`, `dark.--mui-palette-action-activatedOpacity`, `dark.--mui-palette-action-disabledBackground`, `dark.--mui-palette-action-focusOpacity`, `dark.--mui-palette-action-focus`, `dark.--mui-palette-action-hoverOpacity`, `dark.--mui-palette-action-selectedOpacity`, `light.--mui-opacity-inputPlaceholder`, `light.--mui-opacity-inputUnderline`, `light.--mui-opacity-switchTrackDisabled`, `light.--mui-opacity-switchTrack`, `light.--mui-palette-FilledInput-bg`, `light.--mui-palette-FilledInput-disabledBg`, `light.--mui-palette-FilledInput-hoverBg`, `light.--mui-palette-action-activatedOpacity`, `light.--mui-palette-action-disabledBackground`, `light.--mui-palette-action-focusOpacity`, `light.--mui-palette-action-focus`, `light.--mui-palette-action-hoverOpacity`, `light.--mui-palette-action-selectedOpacity`.
+
+#### `scale.extra-rung`
+
+A rung the target's scale has beyond the catalog's: a weight below regular or above bold, a half or a large spacing step, a duration, a layer or a shadow size outside the catalog's ladder. Mapping it would invent a value the design system never set. Chakra's tokens and MUI's light weight and component layers, each measured against the target's whole surface. See [chakra](../specs/exporters/chakra.md).
+
+- Chakra UI: `semanticTokens.shadows.2xl`, `semanticTokens.shadows.xs`, `textStyles.2xs.fontSize`, `tokens.durations.faster`, `tokens.durations.slowest`, `tokens.easings.ease-in-smooth`, `tokens.fontSizes.2xs`, `tokens.fontWeights.black`, `tokens.fontWeights.extrabold`, `tokens.fontWeights.extralight`, `tokens.fontWeights.light`, `tokens.fontWeights.thin`, `tokens.letterSpacings.tighter`, `tokens.letterSpacings.wider`, `tokens.letterSpacings.widest`, `tokens.lineHeights.shorter`, `tokens.lineHeights.taller`, `tokens.radii.2xl`, `tokens.radii.2xs`, `tokens.radii.3xl`, `tokens.radii.4xl`, `tokens.radii.xs`, `tokens.spacing.0.5`, `tokens.spacing.1.5`, `tokens.spacing.11`, `tokens.spacing.14`, `tokens.spacing.2.5`, `tokens.spacing.28`, `tokens.spacing.3.5`, `tokens.spacing.32`, `tokens.spacing.36`, `tokens.spacing.4.5`, `tokens.spacing.40`, `tokens.spacing.44`, `tokens.spacing.48`, `tokens.spacing.52`, `tokens.spacing.56`, `tokens.spacing.60`, `tokens.spacing.64`, `tokens.spacing.72`, `tokens.spacing.7`, `tokens.spacing.80`, `tokens.spacing.96`, `tokens.spacing.9`, `tokens.zIndex.docked`, `tokens.zIndex.max`, `tokens.zIndex.skipNav`.
+- Material UI: `theme.typography.fontWeightLight`, `variables.--mui-zIndex-fab`, `variables.--mui-zIndex-mobileStepper`, `variables.--mui-zIndex-speedDial`.
 
 #### `shadow.inset`
 
@@ -87,6 +96,12 @@ A blur-radius scale for backdrop and filter blur: the IR has no blur. Single-sou
 
 - Chakra UI: `tokens.blurs.2xl`, `tokens.blurs.3xl`, `tokens.blurs.4xl`, `tokens.blurs.lg`, `tokens.blurs.md`, `tokens.blurs.none`, `tokens.blurs.sm`, `tokens.blurs.xl`.
 
+#### `focus.ring-composite`
+
+The focus ring's width, offset and style beside its colour: the IR has `semantic.color.ring` alone. Proposal 0002 deferred a composite until a second component-heavy target needed the same fields; Chakra has four of the five, and MUI's `focusVisible` reports style, width and offset (#167). See [0002-component-theming-primeng](../proposals/0002-component-theming-primeng.md).
+
+- Material UI: `theme.focusVisible.outlineOffset`, `theme.focusVisible.outlineStyle`, `theme.focusVisible.outlineWidth`.
+
 #### `motion.keyframes`
 
 A named keyframe animation (spin, ping, pulse, bounce) as a theme token: the IR has durations and easings, no animations. Single-source so far (Chakra's `animations`). See [chakra](../specs/exporters/chakra.md).
@@ -99,11 +114,11 @@ A catalog opacity the target composes against its own resting alpha, so the cata
 
 - Bootstrap: `$btn-close-disabled-opacity`.
 
-#### `scale.extra-rung`
+#### `type.text-transform`
 
-A rung the target's scale has beyond the catalog's: a weight below regular or above bold, a half or a large spacing step, a duration, a layer or a shadow size outside the catalog's ladder. Mapping it would invent a value the design system never set. Single-source so far (Chakra's tokens, measured against its whole surface). See [chakra](../specs/exporters/chakra.md).
+A type role's letter case (MUI's uppercase `button` and `overline`): the IR's type roles carry family, size, weight, leading and tracking, no case. Single-source so far. See [mui](../specs/exporters/mui.md).
 
-- Chakra UI: `semanticTokens.shadows.2xl`, `semanticTokens.shadows.xs`, `textStyles.2xs.fontSize`, `tokens.durations.faster`, `tokens.durations.slowest`, `tokens.easings.ease-in-smooth`, `tokens.fontSizes.2xs`, `tokens.fontWeights.black`, `tokens.fontWeights.extrabold`, `tokens.fontWeights.extralight`, `tokens.fontWeights.light`, `tokens.fontWeights.thin`, `tokens.letterSpacings.tighter`, `tokens.letterSpacings.wider`, `tokens.letterSpacings.widest`, `tokens.lineHeights.shorter`, `tokens.lineHeights.taller`, `tokens.radii.2xl`, `tokens.radii.2xs`, `tokens.radii.3xl`, `tokens.radii.4xl`, `tokens.radii.xs`, `tokens.spacing.0.5`, `tokens.spacing.1.5`, `tokens.spacing.11`, `tokens.spacing.14`, `tokens.spacing.2.5`, `tokens.spacing.28`, `tokens.spacing.3.5`, `tokens.spacing.32`, `tokens.spacing.36`, `tokens.spacing.4.5`, `tokens.spacing.40`, `tokens.spacing.44`, `tokens.spacing.48`, `tokens.spacing.52`, `tokens.spacing.56`, `tokens.spacing.60`, `tokens.spacing.64`, `tokens.spacing.72`, `tokens.spacing.7`, `tokens.spacing.80`, `tokens.spacing.96`, `tokens.spacing.9`, `tokens.zIndex.docked`, `tokens.zIndex.max`, `tokens.zIndex.skipNav`.
+- Material UI: `theme.typography.button.textTransform`, `theme.typography.overline.textTransform`.
 
 #### `type.text-wrap`
 
@@ -164,17 +179,19 @@ Bespoke component geometry (spinner, popover, modal widths, offcanvas, dropdown 
 
 #### `color.named-palette`
 
-The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`; Chakra's hue palettes, their ramps and its `black` and `white`), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept. See [mantine](../specs/exporters/mantine.md).
+The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`; Chakra's hue palettes, their ramps and its `black` and `white`; MUI's `grey` ramp and its `common` black and white), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept. See [mantine](../specs/exporters/mantine.md).
 
 - Mantine: `theme.black`, `theme.colors.red`, `theme.colors.teal`, `theme.white`, `variables.--mantine-color-black`, `variables.--mantine-color-red-<shade>`, `variables.--mantine-color-teal-<shade>`.
 - Chakra UI: `semanticTokens.colors.<palette>.border`, `semanticTokens.colors.<palette>.contrast`, `semanticTokens.colors.<palette>.emphasized`, `semanticTokens.colors.<palette>.fg`, `semanticTokens.colors.<palette>.focusRing`, `semanticTokens.colors.<palette>.muted`, `semanticTokens.colors.<palette>.solid`, `semanticTokens.colors.<palette>.subtle`, `tokens.colors.<palette>.<shade>`, `tokens.colors.blackAlpha.<shade>`, `tokens.colors.black`, `tokens.colors.whiteAlpha.<shade>`, `tokens.colors.white`.
+- Material UI: `dark.--mui-palette-AppBar-defaultBg`, `dark.--mui-palette-Avatar-defaultBg`, `dark.--mui-palette-Button-inheritContainedBg`, `dark.--mui-palette-Button-inheritContainedHoverBg`, `dark.--mui-palette-Chip-defaultAvatarColor`, `dark.--mui-palette-Chip-defaultBorder`, `dark.--mui-palette-Chip-defaultIconColor`, `dark.--mui-palette-StepConnector-border`, `dark.--mui-palette-StepContent-border`, `dark.--mui-palette-Switch-defaultColor`, `dark.--mui-palette-Switch-defaultDisabledColor`, `dark.--mui-palette-common-backgroundChannel`, `dark.--mui-palette-common-background`, `dark.--mui-palette-common-black`, `dark.--mui-palette-common-white`, `dark.--mui-palette-grey-100`, `dark.--mui-palette-grey-200`, `dark.--mui-palette-grey-300`, `dark.--mui-palette-grey-400`, `dark.--mui-palette-grey-500`, `dark.--mui-palette-grey-50`, `dark.--mui-palette-grey-600`, `dark.--mui-palette-grey-700`, `dark.--mui-palette-grey-800`, `dark.--mui-palette-grey-900`, `dark.--mui-palette-grey-A100`, `dark.--mui-palette-grey-A200`, `dark.--mui-palette-grey-A400`, `dark.--mui-palette-grey-A700`, `light.--mui-palette-AppBar-defaultBg`, `light.--mui-palette-Avatar-defaultBg`, `light.--mui-palette-Button-inheritContainedBg`, `light.--mui-palette-Button-inheritContainedHoverBg`, `light.--mui-palette-Chip-defaultAvatarColor`, `light.--mui-palette-Chip-defaultBorder`, `light.--mui-palette-Chip-defaultIconColor`, `light.--mui-palette-StepConnector-border`, `light.--mui-palette-StepContent-border`, `light.--mui-palette-Switch-defaultColor`, `light.--mui-palette-Switch-defaultDisabledColor`, `light.--mui-palette-common-backgroundChannel`, `light.--mui-palette-common-background`, `light.--mui-palette-common-black`, `light.--mui-palette-common-white`, `light.--mui-palette-grey-100`, `light.--mui-palette-grey-200`, `light.--mui-palette-grey-300`, `light.--mui-palette-grey-400`, `light.--mui-palette-grey-500`, `light.--mui-palette-grey-50`, `light.--mui-palette-grey-600`, `light.--mui-palette-grey-700`, `light.--mui-palette-grey-800`, `light.--mui-palette-grey-900`, `light.--mui-palette-grey-A100`, `light.--mui-palette-grey-A200`, `light.--mui-palette-grey-A400`, `light.--mui-palette-grey-A700`.
 
 #### `target.config`
 
-Target configuration rather than a design value: behaviour switches (focus-ring visibility, reduced motion, cursor, font smoothing), class names, algorithm parameters (Mantine's autoContrast luminance threshold, its global rem scale) and constants (the colour-scheme name, Chakra's CSS keywords, fraction and viewport sizes, media aspect ratios). See [mantine](../specs/exporters/mantine.md).
+Target configuration rather than a design value: behaviour switches (focus-ring visibility, reduced motion, cursor, font smoothing), class names, algorithm parameters (Mantine's autoContrast luminance threshold, its global rem scale; MUI's contrast threshold, tonal offset and pxToRem base) and constants (the colour-scheme name, Chakra's CSS keywords, fraction and viewport sizes, media aspect ratios, MUI's `inherit` type variant and autofill shadow). See [mantine](../specs/exporters/mantine.md).
 
 - Mantine: `dark.--mantine-color-scheme`, `light.--mantine-color-scheme`, `theme.activeClassName`, `theme.cursorType`, `theme.focusClassName`, `theme.focusRing`, `theme.fontSmoothing`, `theme.luminanceThreshold`, `theme.respectReducedMotion`, `theme.scale`, `variables.--mantine-cursor-type`, `variables.--mantine-moz-font-smoothing`, `variables.--mantine-scale`, `variables.--mantine-webkit-font-smoothing`.
 - Chakra UI: `layerStyles.disabled.cursor`, `tokens.aspectRatios.golden`, `tokens.aspectRatios.landscape`, `tokens.aspectRatios.portrait`, `tokens.aspectRatios.square`, `tokens.aspectRatios.ultrawide`, `tokens.aspectRatios.wide`, `tokens.colors.current`, `tokens.colors.transparent`, `tokens.cursor.button`, `tokens.cursor.checkbox`, `tokens.cursor.disabled`, `tokens.cursor.menuitem`, `tokens.cursor.option`, `tokens.cursor.radio`, `tokens.cursor.slider`, `tokens.cursor.switch`, `tokens.sizes.<fraction>`, `tokens.sizes.<keyword>`.
+- Material UI: `dark.--mui-palette-Input-autofillWebkitBoxShadow`, `light.--mui-palette-Input-autofillWebkitBoxShadow`, `theme.colorSchemes.dark.palette.contrastThreshold`, `theme.colorSchemes.dark.palette.tonalOffset`, `theme.colorSchemes.light.palette.contrastThreshold`, `theme.colorSchemes.light.palette.tonalOffset`, `theme.motion.reducedMotion`, `theme.typography.fontSize`, `theme.typography.htmlFontSize`, `theme.typography.inherit.fontFamily`, `theme.typography.inherit.fontSize`, `theme.typography.inherit.fontWeight`, `theme.typography.inherit.letterSpacing`, `theme.typography.inherit.lineHeight`, `variables.--mui-font-inherit`.
 
 #### `chart.series-style`
 
@@ -215,6 +232,22 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 
 - `tokens.fonts.mono` (govuk only): set whenever the design system defines semantic.font.mono; this one does not, so Chakra's value stays
 
+### Material UI
+
+- `theme.typography.body1.letterSpacing`: set whenever the design system defines semantic.type.role.body.md (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.body2.letterSpacing`: set whenever the design system defines semantic.type.role.body.sm (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.button.letterSpacing`: set whenever the design system defines semantic.type.role.label.md (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.caption.letterSpacing`: set whenever the design system defines semantic.type.role.body.sm (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.h1.letterSpacing`: set whenever the design system defines semantic.type.role.display.lg (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.h2.letterSpacing`: set whenever the design system defines semantic.type.role.display.md (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.h3.letterSpacing`: set whenever the design system defines semantic.type.role.display.sm (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.h4.letterSpacing`: set whenever the design system defines semantic.type.role.heading.lg (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.h5.letterSpacing`: set whenever the design system defines semantic.type.role.heading.md (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.h6.letterSpacing`: set whenever the design system defines semantic.type.role.heading.sm (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.overline.letterSpacing`: set whenever the design system defines semantic.type.role.label.sm (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.subtitle1.letterSpacing`: set whenever the design system defines semantic.type.role.title.sm (letterSpacing); this one does not, so MUI's value stays
+- `theme.typography.subtitle2.letterSpacing`: set whenever the design system defines semantic.type.role.label.lg (letterSpacing); this one does not, so MUI's value stays
+
 ## Target limits (`dropped`)
 
 `dropped` is the opposite direction: the IR expresses something the target can't. It is not catalog-growth signal, but it says which catalog slots and mode dimensions a target leaves out. Rows naming a catalog slot or a mode dimension:
@@ -227,9 +260,12 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 | `semantic.z.*`                                                                                                                                             | Mantine                                                                                                          |
 | `semantic.type.tracking.*`                                                                                                                                 | Chakra UI                                                                                                        |
 | `semantic.color.inverse.{surface,text}`                                                                                                                    | PrimeNG, Mantine, Material UI                                                                                    |
+| `semantic.color.text.{base,muted}`                                                                                                                         | Material UI                                                                                                      |
 | `semantic.breakpoint.2xl`                                                                                                                                  | Mantine, Material UI                                                                                             |
 | `semantic.breakpoint.xs`                                                                                                                                   | Chakra UI, Material UI                                                                                           |
+| `semantic.color.border.field`                                                                                                                              | Material UI                                                                                                      |
 | `semantic.color.border.{subtle,strong,field}`                                                                                                              | Mantine, Material UI                                                                                             |
+| `semantic.color.inverse.surface`                                                                                                                           | Material UI                                                                                                      |
 | `semantic.color.link.{base,hover,visited}`                                                                                                                 | Chakra UI, Material UI                                                                                           |
 | `semantic.palette.categorical.*`                                                                                                                           | Chakra UI, Material UI                                                                                           |
 | `component.control.{padding-x,padding-y}, component.button.padding-y`                                                                                      | Mantine                                                                                                          |
@@ -264,7 +300,7 @@ Rows and slots no exporter has given a meaning yet. A key goes on the row in the
 | `semantic.space.*`                                                                                                                                         | Chakra UI                                                                                                        |
 | `semantic.type.role.display.*`                                                                                                                             | Mantine                                                                                                          |
 
-The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): Bootstrap 71, Storybook 2, Mantine 37, Chakra UI 1, Material UI 1. Each one's reason is in that target's `report.json`.
+The other `dropped` rows are target variables an exporter leaves alone because they carry no token meaning (layout switches, derivation knobs, filters): Bootstrap 71, Storybook 2, Mantine 37, Chakra UI 1, Material UI 139. Each one's reason is in that target's `report.json`.
 
 ## Custom vocabulary (`dropped`)
 

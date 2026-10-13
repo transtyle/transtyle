@@ -22,7 +22,7 @@
  * on Aura's default are read one by one. The totals are reconciled against the
  * exporter's own report row, so the two views can't drift apart.
  *
- * Mantine and Chakra report one summary row per family of their surface
+ * Mantine, Chakra and MUI report one summary row per family of their surface
  * inventory and a named row for every entry left on the target's default; the
  * named rows are the units and the summaries are skipped (Chakra's recipe
  * families have a summary row only: their defaults are the named rows of the
@@ -159,9 +159,9 @@ for (const [example, result] of results) {
     }
 
     for (const row of target.coverage) {
-      // Mantine's and Chakra's family rows (`theme.* (73 entries)`) summarize
+      // Mantine's, Chakra's and MUI's family rows (`theme.* (73 entries)`) summarize
       // the named entry rows that follow them; the entries are the units, not the sums.
-      if (['mantine', 'chakra'].includes(exporter) && /^\w+\.\* \(\d+ entries\)$/.test(row.variable)) continue;
+      if (['mantine', 'chakra', 'mui'].includes(exporter) && /^\w+\.\* \(\d+ entries\)$/.test(row.variable)) continue;
       if (row.class === 'unsupported' && exporter !== 'primeng') {
         see(example, { direction: 'unsupported', kind: 'row', exporter, id: row.variable, meaning: row.meaning, note: row.note });
       } else if (row.class === 'dropped') {

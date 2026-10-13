@@ -430,11 +430,12 @@ async function measure(metric) {
     );
   }
 
-  // <target>.surface.total | <target>.surface.component
+  // <target>.surface.total | .component | .families | .variables | .theme
   if (parts[1] === 'surface') {
     const inv = surfaceInventory(parts[0]);
     if (!inv) return null;
     if (parts[2] === 'total') return inv.counts.total;
+    if (['variables', 'theme'].includes(parts[2])) return inv.counts[parts[2]] ?? null;
     if (parts[2] === 'component') return inv.counts.component ?? inv.counts.components ?? null;
     if (parts[2] === 'families') return Object.keys(inv.counts.families ?? {}).length;
     return null;
@@ -466,10 +467,10 @@ async function measure(metric) {
     return memo(metric, () => catalog().counts[parts[1]] ?? null);
   }
 
-  // <example>.<mantine|chakra>.<set|follow|default> — the three-way split of a
+  // <example>.<mantine|chakra|mui>.<set|follow|default> — the three-way split of a
   // graph-shaped surface inventory, read off the exporter's own totals row
   // like PrimeNG's.
-  const GRAPH_LABELS = { mantine: 'Mantine', chakra: 'Chakra' };
+  const GRAPH_LABELS = { mantine: 'Mantine', chakra: 'Chakra', mui: 'MUI' };
   if (GRAPH_LABELS[parts[1]] && ['set', 'follow', 'default'].includes(parts[2])) {
     const label = GRAPH_LABELS[parts[1]];
     const result = await targetResult(parts[0], parts[1]);

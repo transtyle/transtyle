@@ -30,6 +30,7 @@
  */
 
 import { COLOR_ROLES, GRID_CELLS, droppedDimensions, fontStack, emitPerValue } from '@transtyle/ir';
+import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
 const GAMUT_NOTE = 'sRGB gamut clamp during oklch → hex (MUI parses only sRGB colour syntaxes)';
@@ -155,6 +156,11 @@ function emitOne(normalized, ctx) {
   const row = (variable, slot, cls, note) =>
     coverage.push({ variable, slot, class: cls, ...(note ? { note } : {}) });
   const sem = (map, path) => map?.get(`semantic.${path}`)?.value;
+  // Option path → the catalog slot this exporter writes it from, recorded
+  // whether or not this design system defines the slot, so an entry left on
+  // MUI's default for want of it says which slot (surface-coverage.js).
+  const mapped = new Map();
+  const maps = (path, slot) => mapped.set(path, slot);
 
   const clamped = new Set(); // slots whose hex was clamped into sRGB in any scheme
   const hex = (map, path) => {
@@ -170,6 +176,7 @@ function emitOne(normalized, ctx) {
   /** Write `path` (a dotted path inside the palette) from a colour slot in every scheme; true when written. */
   const paint = (path, slot) => {
     let wrote = false;
+    for (const name of SCHEME_NAMES) maps(`colorSchemes.${name}.palette.${path}`, `${S}${slot}`);
     for (const [name, map] of schemes) {
       const v = hex(map, slot);
       if (v === undefined) continue;
@@ -263,6 +270,9 @@ function emitOne(normalized, ctx) {
 
   // ---------- elevation: overlays per scheme, shadows through palette variables ----------
   const overlays = {};
+  for (const name of SCHEME_NAMES) {
+    for (let n = 0; n < 25; n++) maps(`colorSchemes.${name}.overlays.${n}`, `${S}elevation.${surfaceLevel(n)}.surface`);
+  }
   for (const [name, map] of schemes) {
     const surfaces = [1, 2, 3].map((n) => hex(map, `elevation.${n}.surface`));
     if (surfaces.every((s) => s !== undefined)) {
@@ -279,6 +289,7 @@ function emitOne(normalized, ctx) {
   }
   row('(elevation surfaces 4–5)', `${S}elevation.{4,5}.surface`, 'dropped', "MUI's floating components all sit on level 3; nothing reads a deeper surface");
 
+  for (let n = 1; n < 25; n++) maps(`shadows.${n}`, `${S}elevation.${shadowLevel(n)}.shadow`);
   const shadowLevels = [1, 2, 3, 4].filter((n) => sem(light, `color.elevation.${n}.shadow`));
   let shadows;
   if (shadowLevels.length === 4) {
@@ -297,17 +308,22 @@ function emitOne(normalized, ctx) {
   // ---------- typography ----------
   const typography = {};
   const sans = sem(light, 'font.sans');
+  maps('typography.fontFamily', 'semantic.font.sans');
   if (sans) {
     typography.fontFamily = fontStack(sans);
     row('typography.fontFamily', 'semantic.font.sans', 'native');
   }
   for (const [mui, rung] of FONT_WEIGHTS) {
+    maps(`typography.${mui}`, `semantic.type.weight.${rung}`);
     const v = sem(light, `type.weight.${rung}`);
     if (v === undefined) continue;
     typography[mui] = Number(v);
     row(`typography.${mui}`, `semantic.type.weight.${rung}`, 'native');
   }
   for (const [variant, role] of TYPE_VARIANTS) {
+    for (const field of ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing']) {
+      maps(`typography.${variant}.${field}`, `semantic.type.role.${role} (${field})`);
+    }
     const t = sem(light, `type.role.${role}`);
     if (!t || typeof t !== 'object') continue;
     typography[variant] = {
@@ -328,6 +344,7 @@ function emitOne(normalized, ctx) {
 
   // ---------- scales ----------
   const shape = {};
+  maps('shape.borderRadius', 'semantic.radius.control');
   const controlRadius = sem(light, 'radius.control');
   if (controlRadius !== undefined) {
     shape.borderRadius = String(controlRadius);
@@ -335,6 +352,7 @@ function emitOne(normalized, ctx) {
   }
 
   let spacing;
+  maps('spacing', 'semantic.space.2');
   const unit = sem(light, 'space.2');
   if (unit !== undefined) {
     spacing = String(unit);
@@ -352,6 +370,7 @@ function emitOne(normalized, ctx) {
   }
 
   let breakpoints;
+  for (const k of BREAKPOINTS) maps(`breakpoints.values.${k}`, `semantic.breakpoint.${k}`);
   const bpValues = BREAKPOINTS.map((k) => toPx(sem(light, `breakpoint.${k}`), ctx));
   if (bpValues.every((v) => v !== undefined)) {
     breakpoints = { values: { xs: 0, ...Object.fromEntries(BREAKPOINTS.map((k, i) => [k, bpValues[i]])) } };
@@ -366,12 +385,14 @@ function emitOne(normalized, ctx) {
 
   const transitions = {};
   for (const [mui, rung] of DURATIONS) {
+    maps(`transitions.duration.${mui}`, `semantic.duration.${rung}`);
     const ms = toMs(sem(light, `duration.${rung}`));
     if (ms === undefined) continue;
     (transitions.duration ??= {})[mui] = ms;
     row(`transitions.duration.${mui}`, `semantic.duration.${rung}`, 'approximated', "by rank: MUI's seven names over the catalog's rungs, in milliseconds");
   }
   for (const [mui, rung, cls, note] of EASINGS) {
+    maps(`transitions.easing.${mui}`, `semantic.easing.${rung}`);
     const v = sem(light, `easing.${rung}`);
     if (v === undefined) continue;
     (transitions.easing ??= {})[mui] = String(v);
@@ -380,6 +401,7 @@ function emitOne(normalized, ctx) {
 
   const zIndex = {};
   for (const [mui, rung] of Z) {
+    maps(`zIndex.${mui}`, `semantic.z.${rung}`);
     const v = sem(light, `z.${rung}`);
     if (v === undefined) continue;
     zIndex[mui] = Number(v);
@@ -391,6 +413,7 @@ function emitOne(normalized, ctx) {
   const override = (path, value) => set(components, path, value);
   if (buttonVariants.length) components.MuiButton = { variants: buttonVariants };
 
+  maps('focusVisible.outlineColor', `${S}ring`);
   if (hasRing) row('focusVisible.outlineColor', `${S}ring`, 'native', "turns on MUI's opt-in keyboard focus ring for every focusable component, in the design system's ring colour");
 
   const containerRadius = sem(light, 'radius.container');
@@ -402,6 +425,7 @@ function emitOne(normalized, ctx) {
     override('MuiDialog.styleOverrides.backdrop.backgroundColor', muiVar('transtyle.scrim'));
     row('components.MuiDialog.styleOverrides.backdrop.backgroundColor', `${S}scrim`, 'native', "replaces MUI's rgba(0, 0, 0, 0.5); Menu and Popover backdrops stay invisible");
   }
+  for (const name of SCHEME_NAMES) maps(`colorSchemes.${name}.palette.action.disabledOpacity`, 'semantic.opacity.disabled');
   const disabled = sem(light, 'opacity.disabled');
   if (disabled !== undefined) {
     for (const [name] of schemes) set(palettes[name], 'action.disabledOpacity', Number(disabled));
@@ -479,15 +503,8 @@ function emitOne(normalized, ctx) {
   row('(text rungs)', `${S}text.{strong,subtle,inverse}`, 'dropped', 'MUI has three text rungs: primary, secondary and disabled');
   row('(categorical palette)', 'semantic.palette.categorical.*', 'dropped', "no chart slot in MUI's theme");
   row('(border widths)', 'semantic.border-width.*', 'dropped', "MUI's components write 1px borders literally");
-    row('(border ladder: subtle, strong, field)', `${S}border.{subtle,strong,field}`, 'dropped', "MUI's palette has one border colour, divider (border.base); the outlined input's border is a fixed black or white alpha in its component styles, not a palette key");
-    row('(inverse pair)', `${S}inverse.{surface,text}`, 'dropped', "MUI's Tooltip paints a fixed grey 700 at 92% in both schemes, in its component styles: not a palette key, and not an inverse");
-  coverage.push({
-    variable: 'colorSchemes.*.opacity.{inputPlaceholder,inputUnderline,switchTrackDisabled,switchTrack}',
-    slot: '—',
-    class: 'unsupported',
-    note: "per-component opacities with no catalog slot (a placeholder's alpha, a switch track's): semantic.opacity.disabled is the only one the catalog has; MUI's defaults stay",
-    meaning: 'opacity.component',
-  });
+    row('(border ladder: subtle, strong, field)', `${S}border.{subtle,strong,field}`, 'dropped', "MUI's palette has one border colour, divider (border.base); the outlined input's border is common.onBackground at a fixed alpha, not a border colour (see the common-onBackground rows)");
+    row('(inverse pair)', `${S}inverse.{surface,text}`, 'dropped', "MUI's tooltip paints palette.Tooltip.bg, a grey 700 at 92% in both schemes (not an inverse), with common.white text; this exporter writes neither (see the Tooltip-bg rows)");
   // A clamp in any scheme makes that variable's row approximated, on the row
   // itself (#171), never on an aggregate one.
   for (const r of coverage) {
@@ -520,6 +537,10 @@ function emitOne(normalized, ctx) {
     ...(Object.keys(components).length ? { components } : {}),
   };
 
+  // AL3: measure what was emitted against MUI's whole theming surface
+  // (surface-inventory.json, extracted from @mui/material's createTheme).
+  coverage.push(...surfaceRows(options, mapped, !!dark));
+
   return {
     files: [
       { path: 'theme.transtyle.ts', contents: renderTheme(ctx, options, extraKeys, { hasRing, extras: hasScrim || !!shadows }), kind: 'source' },
@@ -530,6 +551,8 @@ function emitOne(normalized, ctx) {
 }
 
 const CONTROL_SIZES = ['sm', 'md', 'lg'];
+/** The colour schemes MUI's options can hold, written or not (surface-coverage.js reads `mapped` for both). */
+const SCHEME_NAMES = ['light', 'dark'];
 
 // ---------- helpers ----------
 
