@@ -83,6 +83,15 @@ Every generated file says "do not edit"; the manifest is what checks it. Before 
 - No manifest, no warning: a project never built, output from a build before manifests existed, or an output directory that isn't committed. Files in the output directory that the manifest doesn't list are not Transtyle's and are ignored. A manifest that is not valid JSON or doesn't match its published schema (`schemas/manifest/v0.json`) gets one warning; the next build writes a new one.
 - `explain`, `diff` and `init` never check for drift.
 
+A file can also be unedited and still wrong: you changed a token and forgot to rebuild. `check` has the fresh files in memory, so when a file that still matches its manifest differs from what a build would write now, it warns once per instance with `TST1315`:
+
+```
+⚠ TST1315 shadcn: 2 generated files are out of date with the tokens (dist/shadcn/globals.transtyle.css, dist/shadcn/usage.md)
+  ↳ The files match their manifest, so nobody edited them, but a fresh build writes something else. `transtyle build shadcn` brings them up to date.
+```
+
+- Only `check` raises it: a `build` rewrites the files at once. Edited or deleted files are `TST1312`'s and are left out of the list, and an instance without a manifest is silent.
+
 ### `--completeness <level>`
 
 `check` only. Lists what is still worth authoring for a [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`minimal`, `recommended` or `complete`), in the order it pays off, on **stdout**: each slot with its state (`missing`, `derived by <rule>`, `defaulted by <rule>`, `carried over from the default scheme`, or for a scale `k/n authored`) and why it matters. The exit code doesn't change; `derivation.require: ["completeness:<level>"]` is how a team makes a level mandatory.

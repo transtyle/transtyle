@@ -2205,6 +2205,60 @@ try {
   }
 }
 
+// ---------- output out of date with the tokens (TST1315, issue #10 follow-up) ----------
+{
+  const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-outofdate-'));
+  const out = (p) => join(dir, 'dist/css-variables', p);
+  const stale = (r) => (r.out.match(/TST1315/g) ?? []).length;
+  const drifts = (r) => (r.out.match(/TST1312/g) ?? []).length;
+  const tokensFile = join(dir, 'tokens/brand.tokens.json');
+  try {
+    run(['init', 'outofdate-ds', '--cwd', dir]);
+    const tokens = readFileSync(tokensFile, 'utf8');
+    let r = run(['build', '--cwd', dir]);
+    r = run(['check', '--cwd', dir]);
+    expect('out of date: check right after a build is clean', r.code === 0 && stale(r) === 0 && drifts(r) === 0, r.out);
+
+    // The tokens move on and nobody rebuilds: one warning for the target, no TST1312.
+    writeFileSync(tokensFile, tokens.replace('oklch(0.55 0.18 255)', 'oklch(0.6 0.18 25)'));
+    r = run(['check', '--cwd', dir]);
+    expect('out of date: changed tokens without a rebuild warn once for the target, naming files', r.code === 0 && stale(r) === 1 && drifts(r) === 0 && /⚠ TST1315 css-variables: \d+ generated files? (is|are) out of date with the tokens \(dist\/css-variables\/variables\.transtyle\.css/.test(r.out) && r.out.includes('transtyle build css-variables'), r.out);
+    r = run(['check', '--cwd', dir, '--json']);
+    expect('out of date: check --json carries it as a warning on the target', (() => { try { return JSON.parse(r.stdout).diagnostics.some((d) => d.code === 'TST1315' && d.severity === 'warning' && d.target === 'css-variables'); } catch { return false; } })(), r.stdout);
+    const cfgPath = join(dir, 'transtyle.config.json');
+    const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
+    writeFileSync(cfgPath, JSON.stringify({ ...cfg, check: { ...cfg.check, failOn: 'warning' } }, null, 2));
+    r = run(['check', '--cwd', dir]);
+    expect('out of date: fails the check under failOn: "warning" (exit 1)', r.code === 1 && stale(r) === 1, r.out);
+    writeFileSync(cfgPath, JSON.stringify({ ...cfg, check: { ...cfg.check, suppress: [{ code: 'TST1315', reason: 'output is rebuilt in CI' }] } }, null, 2));
+    r = run(['check', '--cwd', dir]);
+    expect('out of date: check.suppress silences it', r.code === 0 && stale(r) === 0, r.out);
+    writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+    r = run(['explain', 'primary.solid', '--cwd', dir]);
+    expect('out of date: explain never reports it', r.code === 0 && stale(r) === 0, r.out);
+
+    // A hand-edited file is TST1312's, not TST1315's, whatever the tokens say.
+    const css = 'variables.transtyle.css';
+    writeFileSync(out(css), readFileSync(out(css), 'utf8') + '/* hand edit */\n');
+    r = run(['check', '--cwd', dir]);
+    expect('out of date: a hand-edited file is TST1312 only, and left out of the TST1315 list', drifts(r) === 1 && stale(r) <= 1 && !/TST1315[^\n]*variables\.transtyle\.css/.test(r.out), r.out);
+
+    // Build: rewrites the files at once, so no TST1315, and the next check is clean.
+    r = run(['build', '--cwd', dir]);
+    expect('out of date: build does not report it', stale(r) === 0, r.out);
+    r = run(['check', '--cwd', dir]);
+    expect('out of date: check after the rebuild is clean', r.code === 0 && stale(r) === 0 && drifts(r) === 0, r.out);
+
+    // No manifest, nothing to compare with: silent.
+    rmSync(out('transtyle-manifest.json'));
+    writeFileSync(tokensFile, tokens);
+    r = run(['check', '--cwd', dir]);
+    expect('out of date: output without a manifest reports nothing', r.code === 0 && stale(r) === 0, r.out);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // ---------- #56: the merge rules, one key at a time ----------
 {
   const { mergeConfigChain } = await import('../packages/core/src/load.js');

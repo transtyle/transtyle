@@ -74,6 +74,11 @@ import { readTokenTrees, toFileMap, projectPath } from './project.js';
  *   to add there, so `check.suppress` applies to them and every `report.json`
  *   lists them. `compile()` passes one that compares each output directory
  *   with the manifest its last build wrote (TST1312, manifest.js).
+ * - `checkEmitted`: optional, an async function called once, after the last
+ *   exporter ran and before `check.suppress` is applied, with the results
+ *   (`{ target, files }`, the exporters' files in memory); it returns diagnostics
+ *   like `checkOutputs`. `compile()` passes one that tells output left behind
+ *   by the tokens from a hand edit (TST1315, manifest.js).
  * - `reports`: `false` leaves `report.json` out of every target's files, for a
  *   caller that will not read it: `compile()` with `emit: false` (`check`,
  *   `explain`, `diff`). Serialising eleven reports is a fifth of a
@@ -107,6 +112,7 @@ export async function compileProject({
   configChain = ['transtyle.config.json'],
   origins,
   checkOutputs,
+  checkEmitted,
   reports: withReports = true,
 }) {
   if (typeof config?.extends === 'string') {
@@ -483,6 +489,13 @@ export async function compileProject({
   // run, exporters included: an exporter's own diagnostic (shadcn's TST2104)
   // can be suppressed like any other, and every target's report agrees.
   fillLocations(diagnostics.items, normalized.sources);
+  // What the caller can only say once the files are in memory (compile():
+  // output out of date with the tokens, TST1315), before suppressions too.
+  for (const { severity, code, message, ...context } of (await checkEmitted?.(results)) ?? []) {
+    if (severity === 'error') diagnostics.error(code, message, context);
+    else if (severity === 'warning') diagnostics.warn(code, message, context);
+    else diagnostics.info(code, message, context);
+  }
   diagnostics.applySuppressions(config.check?.suppress, chained ? ruleLabels(origins.suppress, leafName, 'check.suppress') : undefined);
 
   // REPORT: the build manifest and machine-readable report per target

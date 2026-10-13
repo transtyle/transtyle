@@ -13,6 +13,10 @@
  *     that is gone, was changed outside transtyle since the last build. Only
  *     `build` and `check` ask for it (`compile({ drift: true })`), so `explain`,
  *     `diff` and API callers keep their output.
+ *   - out of date (`TST1315`, warning): a file that still matches its manifest
+ *     but differs from what the fresh compile produces, so the tokens moved on
+ *     and nobody rebuilt. Only `check` raises it (`compile({ drift: true,
+ *     emit: false })`): a build rewrites the files at once.
  *   - stale files: a file the previous manifest lists that this build does not
  *     produce any more. It is left in place (deleting files is orphan cleanup,
  *     still specced) and returned per target so the CLI can say so.
@@ -167,4 +171,44 @@ export async function staleFiles(previous, files, cwd) {
     }
   }
   return stale;
+}
+
+/**
+ * TST1315: the output is out of date with the tokens. A listed file whose
+ * bytes still match the manifest was not edited (so TST1312 stays silent), but
+ * the fresh compile, in memory, no longer produces those bytes: the tokens, the
+ * config or transtyle itself changed and `build` was not run. One warning per
+ * target, naming the files; a file TST1312 already reported (edited or gone),
+ * one the manifest doesn't list, and a target without a usable manifest are
+ * left out. `results` are compile()'s own (`{ target, files }`), before any
+ * `report.json` is added.
+ */
+export async function reportOutOfDate(manifests, results, cwd, diagnostics) {
+  for (const { target: name, files } of results) {
+    const entry = manifests.get(name);
+    if (!entry?.manifest) continue;
+    const { outDir, manifest } = entry;
+    const outdated = [];
+    for (const f of files) {
+      const key = posix(path.normalize(f.path));
+      if (!Object.hasOwn(manifest.files, key)) continue;
+      let text;
+      try {
+        text = await readFile(path.join(outDir, key), 'utf8');
+      } catch (err) {
+        if (err.code !== 'ENOENT' && err.code !== 'ENOTDIR' && err.code !== 'EISDIR') throw err;
+        continue;
+      }
+      const onDisk = hashContents(text);
+      if (onDisk !== manifest.files[key]) continue;
+      if (onDisk !== hashContents(f.contents)) outdated.push(posix(path.relative(cwd, path.join(outDir, key))));
+    }
+    if (outdated.length === 0) continue;
+    outdated.sort();
+    const list = outdated.length > 3 ? `${outdated.slice(0, 3).join(', ')} and ${outdated.length - 3} more` : outdated.join(', ');
+    diagnostics.warn('TST1315', `${name}: ${outdated.length} generated ${outdated.length === 1 ? 'file is' : 'files are'} out of date with the tokens (${list})`, {
+      target: name,
+      hint: `The files match their manifest, so nobody edited them, but a fresh build writes something else. \`transtyle build ${name}\` brings them up to date.`,
+    });
+  }
 }
