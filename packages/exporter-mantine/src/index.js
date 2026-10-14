@@ -28,7 +28,7 @@
  * so it keeps the IR's own `oklch()` (and its alpha, e.g. `text.disabled`).
  */
 
-import { COLOR_ROLES, droppedDimensions, fontStack, emitPerValue } from '@transtyle/ir';
+import { COLOR_ROLES, Documented, droppedDimensions, fontStack, emitPerValue, withDoc, withoutDocs } from '@transtyle/ir';
 import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
@@ -156,6 +156,9 @@ function emitOne(normalized, ctx) {
     coverage.push({ variable, slot, class: cls, ...(note ? { note } : {}) });
   const sem = (map, path) => map?.get(`semantic.${path}`)?.value;
   const hex = (color) => ctx.formatHex(color).text;
+  // A property that maps exactly one slot carries that slot's description and
+  // deprecation as a JSDoc block (#194); derived and defaulted slots have none.
+  const doc = (value, slot) => new Documented(value, light.get(slot));
 
   const roles = [...COLOR_ROLES, ...normalized.roleArchetypes.keys()].filter((r) =>
     sem(light, `color.${r}.solid`),
@@ -227,19 +230,19 @@ function emitOne(normalized, ctx) {
         const value = sem(map, `color.${role}.${v.cell}`);
         if (!value) continue;
         const name = `--mantine-color-${role}-${v.suffix}`;
-        out[name] = ctx.formatColor(value);
+        out[name] = first ? doc(ctx.formatColor(value), `${S}${role}.${v.cell}`) : ctx.formatColor(value);
         if (first) row(name, `${S}${role}.${v.cell}`, v.cls, v.note);
       }
     }
     const onSolid = sem(map, 'color.primary.on-solid');
     if (onSolid) {
-      out['--mantine-primary-color-contrast'] = ctx.formatColor(onSolid);
+      out['--mantine-primary-color-contrast'] = first ? doc(ctx.formatColor(onSolid), `${S}primary.on-solid`) : ctx.formatColor(onSolid);
       if (first) row('--mantine-primary-color-contrast', `${S}primary.on-solid`, 'native');
     }
     for (const [name, slot, cls, note] of PAGE_VARS) {
       const value = sem(map, `color.${slot}`);
       if (!value) continue;
-      out[`--mantine-color-${name}`] = ctx.formatColor(value);
+      out[`--mantine-color-${name}`] = first ? doc(ctx.formatColor(value), `${S}${slot}`) : ctx.formatColor(value);
       if (first) row(`--mantine-color-${name}`, `${S}${slot}`, cls, note);
     }
     // Mantine's light scheme paints its raised surfaces (Card, inputs,
@@ -248,7 +251,7 @@ function emitOne(normalized, ctx) {
     // the icon colour on filled controls it also is.
     const raised = sem(map, 'color.elevation.1.surface');
     if (first && raised) {
-      out['--mantine-color-white'] = ctx.formatColor(raised);
+      out['--mantine-color-white'] = doc(ctx.formatColor(raised), `${S}elevation.1.surface`);
       row(
         '--mantine-color-white (light scheme)',
         `${S}elevation.1.surface`,
@@ -272,11 +275,11 @@ function emitOne(normalized, ctx) {
   const sans = sem(light, 'font.sans');
   const mono = sem(light, 'font.mono');
   if (sans) {
-    theme.fontFamily = fontStack(sans);
+    theme.fontFamily = doc(fontStack(sans), 'semantic.font.sans');
     row('fontFamily', 'semantic.font.sans', 'native');
   }
   if (mono) {
-    theme.fontFamilyMonospace = fontStack(mono);
+    theme.fontFamilyMonospace = doc(fontStack(mono), 'semantic.font.mono');
     row('fontFamilyMonospace', 'semantic.font.mono', 'native');
   }
 
@@ -320,7 +323,7 @@ function emitOne(normalized, ctx) {
   for (const size of SIZES) {
     const value = sem(light, `type.leading.${leading[size]}`);
     if (value === undefined) continue;
-    theme.lineHeights[size] = String(value);
+    theme.lineHeights[size] = doc(String(value), `semantic.type.leading.${leading[size]}`);
     row(
       `lineHeights.${size}`,
       `semantic.type.leading.${leading[size]}`,
@@ -332,7 +335,7 @@ function emitOne(normalized, ctx) {
   for (const w of ['regular', 'medium', 'bold']) {
     const value = sem(light, `type.weight.${w}`);
     if (value === undefined) continue;
-    theme.fontWeights[w] = String(value);
+    theme.fontWeights[w] = doc(String(value), `semantic.type.weight.${w}`);
     row(`fontWeights.${w}`, `semantic.type.weight.${w}`, 'native');
   }
 
@@ -347,7 +350,7 @@ function emitOne(normalized, ctx) {
   Object.assign(theme.radius, scale(light, 'radius', ['sm', 'md', 'lg', 'xl'], row, 'radius'));
   const radiusControl = sem(light, 'radius.control');
   if (radiusControl !== undefined) {
-    theme.defaultRadius = String(radiusControl);
+    theme.defaultRadius = doc(String(radiusControl), 'semantic.radius.control');
     row('defaultRadius', 'semantic.radius.control', 'native');
   }
 
@@ -356,7 +359,7 @@ function emitOne(normalized, ctx) {
   for (const size of SIZES) {
     const value = sem(light, SPACING[size]);
     if (value === undefined) continue;
-    theme.spacing[size] = String(value);
+    theme.spacing[size] = doc(String(value), `semantic.${SPACING[size]}`);
     row(
       `spacing.${size}`,
       `semantic.${SPACING[size]}`,
@@ -370,7 +373,7 @@ function emitOne(normalized, ctx) {
   for (const size of SIZES) {
     const value = sem(light, `color.elevation.${SHADOWS[size]}.shadow`);
     if (!value) continue;
-    theme.shadows[size] = shadowCss(value, ctx);
+    theme.shadows[size] = doc(shadowCss(value, ctx), `${S}elevation.${SHADOWS[size]}.shadow`);
     row(
       `shadows.${size}`,
       `${S}elevation.${SHADOWS[size]}.shadow`,
@@ -384,7 +387,7 @@ function emitOne(normalized, ctx) {
     const value = sem(light, `breakpoint.${size}`);
     if (value === undefined) continue;
     const em = toEm(String(value));
-    theme.breakpoints[size] = em ?? String(value);
+    theme.breakpoints[size] = doc(em ?? String(value), `semantic.breakpoint.${size}`);
     row(`breakpoints.${size}`, `semantic.breakpoint.${size}`, 'native', em ? 'converted to em, the unit Mantine writes its media queries in' : undefined);
   }
   if (sem(light, 'breakpoint.2xl') !== undefined) {
@@ -470,7 +473,7 @@ function emitOne(normalized, ctx) {
   // defaultCssVariablesResolver).
   coverage.push(
     ...surfaceRows({
-      theme,
+      theme: withoutDocs(theme),
       colorNames: [...Object.keys(colors), ...virtuals.map((v) => v.name)],
       blocks: { variables: {}, light: lightVars, dark: darkVars ?? {} },
       hasDark: !!darkVars,
@@ -494,7 +497,7 @@ function scale(map, prefix, keys, row, label) {
   for (const k of keys) {
     const value = map.get(`semantic.${prefix}.${k}`)?.value;
     if (value === undefined) continue;
-    out[k] = String(value);
+    out[k] = new Documented(String(value), map.get(`semantic.${prefix}.${k}`));
     row(`${label}.${k}`, `semantic.${prefix}.${k}`, 'native');
   }
   return out;
@@ -540,7 +543,12 @@ function serialize(value, indent) {
   if (Array.isArray(value)) return `[${value.map((v) => serialize(v, indent)).join(', ')}]`;
   const entries = Object.entries(value).filter(([, v]) => v !== undefined);
   if (!entries.length) return '{}';
-  return `{\n${entries.map(([k, v]) => `${padIn}${key(k)}: ${serialize(v, indent + 2)}`).join(',\n')},\n${pad}}`;
+  return `{\n${entries
+    .map(([k, v]) => {
+      const [comment, inner] = withDoc(v, padIn);
+      return `${comment}${padIn}${key(k)}: ${serialize(inner, indent + 2)}`;
+    })
+    .join(',\n')},\n${pad}}`;
 }
 
 function renderTheme(ctx, theme, virtuals, lightVars, darkVars) {
@@ -551,7 +559,10 @@ function renderTheme(ctx, theme, virtuals, lightVars, darkVars) {
       (v) => `    ${key(v.name)}: virtualColor({ name: ${JSON.stringify(v.name)}, light: ${JSON.stringify(v.light)}, dark: ${JSON.stringify(v.dark)} }),`,
     ),
   ];
-  const restLines = Object.entries(rest).map(([k, v]) => `  ${key(k)}: ${serialize(v, 2)},`);
+  const restLines = Object.entries(rest).map(([k, v]) => {
+    const [comment, inner] = withDoc(v, '  ');
+    return `${comment}  ${key(k)}: ${serialize(inner, 2)},`;
+  });
   return `// GENERATED by transtyle — do not edit; source: ${ctx.projectName} token files
 // Target: Mantine 9 (createTheme + cssVariablesResolver) · rules standard@1
 // See usage.md in this directory for the wiring and the coverage report.

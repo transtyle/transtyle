@@ -77,6 +77,10 @@ The rows above say what the exporter maps. A checked-in inventory says what ther
 
 The full mapping is in the [exporter spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/exporters/mui.md). See it running on real MUI components: `npm run dev -w acme-demo-mui` (or `cathode-demo-mui`) in the [examples](/docs/examples/). The demo's build type-checks the emitted options against MUI's own `ThemeOptions` before bundling them.
 
+## Descriptions and deprecations
+
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the palette keys of the `light` colour scheme (the `dark` one maps the same slots and does not repeat them), the font family and weights, `shape.borderRadius`, `spacing`, the transition durations and easings, and `zIndex`. The overlays, shadows, type variants and component overrides read several slots and get none.
+
 ## Contrast, motion and brand
 
 [`brand`](/docs/configuration/#contrast-motion-and-brand) gives one theme file per brand, `theme.transtyle.acme.ts` and `theme.transtyle.globex.ts`: hand the brand's theme to `ThemeProvider`. `contrast` and `motion` are reported `dropped` with their reasons: no contrast scheme is emitted yet, and MUI's transition durations are one set per theme.

@@ -172,6 +172,10 @@ On Acme, the 132 defaults are MUI's own colour vocabulary (the grey ramp and the
 
 GOV.UK adds every dark entry the other examples set or derive, under one reason: with no dark scheme, MUI writes no dark block. The dark entries already on MUI's default elsewhere (the grey ramp and what reads it, the veils, the palette parameters) keep their own reasons.
 
+## Token metadata
+
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the palette keys of the `light` colour scheme (the `dark` one maps the same slots and does not repeat them), the font family and weights, `shape.borderRadius`, `spacing`, the transition durations and easings, and `zIndex`. The overlays, shadows, type variants and component overrides read several slots and get none. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Reserved dimensions: contrast, motion, brand
 
 `theme.transtyle.ts` is emitted once per brand, `theme.transtyle.<brand>.ts` (file-per-value, [ADR-0015](../../adr/0015-mode-combinations.md)): pass the brand's theme to `ThemeProvider`. `contrast` and `motion` are `dropped` with their reasons: MUI's `colorSchemes` could carry a scheme per contrast value, which is not emitted yet, and `transitions.duration` is one set per theme that MUI does not switch on `prefers-reduced-motion`.

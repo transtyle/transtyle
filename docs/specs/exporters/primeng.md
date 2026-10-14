@@ -49,6 +49,10 @@ Current split: **88 driven · 1600 inherited · 1071 on Aura's default** on Cath
 
 Components with no builder yet (DataTable, Galleria, Tree, Splitter, Timeline, …) keep Aura's defaults. They are no longer listed from a hand-maintained array — the inventory measures them, so the list cannot go stale.
 
+## Token metadata
+
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the semantic typography, durations and disabled opacity, and the `colorScheme.light` primary, highlight, mask and text colours; the `dark` half maps the same slots and does not repeat them. The surface ramps, the archetype helpers and the component tier read several slots or a derived one and get none. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
+
 ## Reserved dimensions: contrast, motion, brand
 
 A preset has no runtime brand axis, so `preset.transtyle.ts` is emitted once per brand, `preset.transtyle.<brand>.ts` (file-per-value, `emitPerValue()` in `@transtyle/ir`, [ADR-0015](../../adr/0015-mode-combinations.md)); `usage.md` lists the files. `contrast` and `motion` are `dropped` with their reasons: a preset switches light and dark only, and its transition duration is one constant.

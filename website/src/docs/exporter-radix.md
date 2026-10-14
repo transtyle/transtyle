@@ -58,6 +58,10 @@ Radix's `<Theme accentColor="...">` only accepts its own preset names, so to dri
 
 See it running on real `@radix-ui/themes` components: `npm run dev -w acme-demo-radix` (or `cathode-demo-radix`) in the [examples](/docs/examples/).
 
+## Descriptions and deprecations
+
+Radix is a CSS target, so it takes `/* … */` comments like shadcn. A variable that is exactly one grid cell (steps 3 to 5 and 7 to 12 of each role, and `--<role>-contrast`) carries that cell's `description` and `deprecated` (`entryNotes()` and `blockComment()` from `@transtyle/ir`) above its declaration in the `:root` block; the `.dark` and other blocks do not repeat them. Step 1 is the page surface every role shares, steps 2 and 6 are mixes, and the alpha steps are derived, so they get none.
+
 ## Contrast, motion and brand
 
 A design system declaring [`contrast` or `brand`](/docs/configuration/#contrast-motion-and-brand) gets extra blocks after `.dark`, with every scale step (alpha steps included) that changes: `[data-contrast="more"]`, `[data-brand="globex"]`, and compound blocks like `.dark[data-brand="globex"]` where the separate ones would be wrong on a dark page. `contrast: more` also follows `prefers-contrast: more` until `data-contrast` is set. `motion` is reported `dropped`: Radix Colors are color scales only.
