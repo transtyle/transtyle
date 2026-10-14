@@ -197,16 +197,18 @@ Declares the **axes your design system varies along**. Each dimension lists its 
 
 `default` names your design system's **native** mode — the one plain `$value`s describe. It does not reorder exporter output: exporters bind mode _names_, so a dark-native system still gets shadcn's light-first structure. See [Weird things](/docs/diagnostics/#my-dark-native-system-comes-out-light-first) for why.
 
-Worked example — the [Acme example](/docs/examples/) declares two dimensions:
+Worked example — the [Acme example](/docs/examples/) declares four dimensions:
 
 ```json
 "modes": {
   "color-scheme": { "values": ["light", "dark"], "default": "light" },
-  "density":      { "values": ["comfortable", "compact"], "default": "comfortable" }
+  "density":      { "values": ["comfortable", "compact"], "default": "comfortable" },
+  "contrast":     { "values": ["standard", "more"], "default": "standard" },
+  "motion":       { "values": ["full", "reduced"], "default": "full" }
 }
 ```
 
-which resolves to four full token maps: `light+comfortable`, `light+compact`, `dark+comfortable`, `dark+compact`. Every derived value is computed independently in each one — a dark-mode hover state darkens or lightens according to _that_ combination, not by translating the light-mode answer.
+which resolves to sixteen full token maps: `light+comfortable+standard+full`, `light+comfortable+standard+reduced`, and so on up to `dark+compact+more+reduced`. Every derived value is computed independently in each one — a dark-mode hover state darkens or lightens according to _that_ combination, not by translating the light-mode answer.
 
 Two constraints worth knowing:
 

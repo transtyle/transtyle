@@ -21,7 +21,7 @@ npx transtyle build shadcn
 #
 # authored 14/14 recommended
 #
-# shadcn  42% native · 56% derived · 3% dropped
+# shadcn  41% native · 54% derived · 5% dropped
 #   ↳ dist/shadcn/globals.transtyle.css
 #   ↳ dist/shadcn/usage.md
 #   ↳ dist/shadcn/report.json
@@ -49,7 +49,7 @@ When the design system has custom semantic tokens (its own `semantic.*` names ou
 ```bash
 npx transtyle build --dry-run --out /tmp/themes
 #
-# shadcn  42% native · 56% derived · 3% dropped
+# shadcn  41% native · 54% derived · 5% dropped
 #   ↳ would write ../../tmp/themes/shadcn/globals.transtyle.css
 #   ↳ would write ../../tmp/themes/shadcn/report.json
 #   ↳ would write ../../tmp/themes/shadcn/transtyle-manifest.json

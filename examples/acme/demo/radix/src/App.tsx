@@ -39,9 +39,23 @@ function SectionLabel({ children }: { children: string }) {
 export default function App() {
   const [mode, setMode] = useState<'light' | 'dark'>(ds.defaultMode);
 
+  // Contrast and motion start from the OS setting; the compiled
+  // [data-contrast] / [data-motion] blocks sit on the same element as `.dark`.
+  const [contrast, setContrast] = useState<'standard' | 'more'>(
+    matchMedia('(prefers-contrast: more)').matches ? 'more' : 'standard',
+  );
+  const [motion, setMotion] = useState<'full' | 'reduced'>(
+    matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full',
+  );
+
   useEffect(() => {
     document.documentElement.classList.toggle('dark', mode === 'dark');
   }, [mode]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-contrast', contrast);
+    document.documentElement.setAttribute('data-motion', motion);
+  }, [contrast, motion]);
 
   return (
     <Theme accentColor={ds.accentPreset} grayColor="gray" appearance={mode} radius="medium" style={{ minHeight: '100vh' }}>
@@ -52,6 +66,12 @@ export default function App() {
           @radix-ui/themes — real components, {ds.accentPreset}/gray preset overridden by the compiled theme
         </Text>
         <Box flexGrow="1" />
+        <Button variant="outline" size="1" onClick={() => setContrast(contrast === 'more' ? 'standard' : 'more')}>
+          contrast: {contrast}
+        </Button>
+        <Button variant="outline" size="1" onClick={() => setMotion(motion === 'reduced' ? 'full' : 'reduced')}>
+          motion: {motion}
+        </Button>
         <Button variant="outline" size="1" onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
           {mode === 'dark' ? '☀ light' : '☾ dark'}
         </Button>

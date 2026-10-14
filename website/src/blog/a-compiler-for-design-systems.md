@@ -207,8 +207,6 @@ And a second file saying what those values _mean_, which is the only part that i
 }
 ```
 
-<!-- measured: acme.authored = 40 -->
-
 That is the shape of the whole input. In full, the Acme example authors **40 tokens**, and the
 compiler resolves them into **271 slots** per mode — every hover shade, every readable foreground,
 every step of the dark mirror, filled in by rule.

@@ -35,9 +35,23 @@ function SectionLabel({ children }: { children: string }) {
 export default function App() {
   const [mode, setMode] = useState<'light' | 'dark'>(ds.defaultMode);
 
+  // Contrast and motion start from the OS setting; the compiled
+  // [data-contrast] / [data-motion] blocks sit on the same element as `.dark`.
+  const [contrast, setContrast] = useState<'standard' | 'more'>(
+    matchMedia('(prefers-contrast: more)').matches ? 'more' : 'standard',
+  );
+  const [motion, setMotion] = useState<'full' | 'reduced'>(
+    matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full',
+  );
+
   useEffect(() => {
     document.documentElement.classList.toggle('dark', mode === 'dark');
   }, [mode]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-contrast', contrast);
+    document.documentElement.setAttribute('data-motion', motion);
+  }, [contrast, motion]);
 
   return (
     <>
@@ -45,9 +59,17 @@ export default function App() {
       <div className="bg-card text-muted-foreground flex items-center gap-3 border-b px-4 py-2 text-sm">
         <strong className="text-foreground">transtyle demo · {ds.label}</strong>
         <span>shadcn/ui — real registry components on the generated token contract</span>
-        <Button variant="outline" size="sm" className="ml-auto" onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
-          {mode === 'dark' ? '☀ light' : '☾ dark'}
-        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setContrast(contrast === 'more' ? 'standard' : 'more')}>
+            contrast: {contrast}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setMotion(motion === 'reduced' ? 'full' : 'reduced')}>
+            motion: {motion}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}>
+            {mode === 'dark' ? '☀ light' : '☾ dark'}
+          </Button>
+        </div>
       </div>
 
       {/* §1 Header */}
