@@ -57,17 +57,19 @@ invalidates a column.
   <style>
     /* Selectors are id-scoped on purpose: this is raw HTML inside markdown, so
        a bare `.nl` here would be a global rule on whatever page includes it.
-       Every var() carries its light-theme fallback: this diagram also travels
+       Colours are the K4 tokens (--color-*), never the site aliases like --text, which
+       the tokens package redefines as a size and would leave the fill black. Every
+       var() carries its light-theme fallback: this diagram also travels
        in the RSS feed, where the site's stylesheet doesn't exist and an
        unresolved var() would drop to the SVG default of solid black. */
-    #nxm .nl { stroke: var(--border, #dbdee3); stroke-width: 1.4; fill: none; }
-    #nxm .nl.hi { stroke: var(--primary, #2d69de); stroke-width: 1.8; }
-    #nxm .nb { fill: var(--surface, #ffffff); stroke: var(--border, #dbdee3); stroke-width: 1.2; }
-    #nxm .nb.hub { fill: var(--primary-soft, #e0ecff); stroke: var(--primary, #2d69de); }
-    #nxm .nt { fill: var(--text, #12161d); font: 600 11px 'JetBrains Mono Variable', monospace; }
-    #nxm .nt.hub { fill: var(--primary-strong, #0e4ec8); }
-    #nxm .nc { fill: var(--text-muted, #4f5661); font: 700 11px 'Inter Variable', system-ui, sans-serif; letter-spacing: 0.06em; }
-    #nxm .nn { fill: var(--text-muted, #4f5661); font: 400 11px 'Inter Variable', system-ui, sans-serif; }
+    #nxm .nl { stroke: var(--color-line, #dbdee3); stroke-width: 1.4; fill: none; }
+    #nxm .nl.hi { stroke: var(--color-primary, #2d69de); stroke-width: 1.8; }
+    #nxm .nb { fill: var(--color-panel, #ffffff); stroke: var(--color-line, #dbdee3); stroke-width: 1.2; }
+    #nxm .nb.hub { fill: var(--color-tint, #e0ecff); stroke: var(--color-primary, #2d69de); }
+    #nxm .nt { fill: var(--color-fg, #12161d); font: 600 11px 'JetBrains Mono Variable', monospace; }
+    #nxm .nt.hub { fill: var(--color-primary-lift, #0e4ec8); }
+    #nxm .nc { fill: var(--color-muted, #4f5661); font: 700 11px 'Inter Variable', system-ui, sans-serif; letter-spacing: 0.06em; }
+    #nxm .nn { fill: var(--color-muted, #4f5661); font: 400 11px 'Inter Variable', system-ui, sans-serif; }
   </style>
   <text class="nc" x="0" y="14">BY HAND — N × M</text>
   <text class="nn" x="0" y="238">3 systems × 4 frameworks = 12 mappings to maintain</text>
