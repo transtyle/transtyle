@@ -78,13 +78,13 @@ invalidates a column.
     <path class="nl" d="M96 106 L244 52 M96 106 L244 92 M96 106 L244 132 M96 106 L244 172"/>
     <path class="nl" d="M96 160 L244 52 M96 160 L244 92 M96 160 L244 132 M96 160 L244 172"/>
     <g>
-      <rect class="nb" x="6" y="38" width="90" height="28" rx="7"/><text class="nt" x="20" y="56">system A</text>
-      <rect class="nb" x="6" y="92" width="90" height="28" rx="7"/><text class="nt" x="20" y="110">system B</text>
-      <rect class="nb" x="6" y="146" width="90" height="28" rx="7"/><text class="nt" x="20" y="164">system C</text>
-      <rect class="nb" x="244" y="38" width="98" height="28" rx="7"/><text class="nt" x="258" y="56">Bootstrap</text>
-      <rect class="nb" x="244" y="78" width="98" height="28" rx="7"/><text class="nt" x="258" y="96">shadcn</text>
-      <rect class="nb" x="244" y="118" width="98" height="28" rx="7"/><text class="nt" x="258" y="136">ECharts</text>
-      <rect class="nb" x="244" y="158" width="98" height="28" rx="7"/><text class="nt" x="258" y="176">PrimeNG</text>
+      <rect class="nb" x="6" y="38" width="90" height="28" rx="0"/><text class="nt" x="20" y="56">system A</text>
+      <rect class="nb" x="6" y="92" width="90" height="28" rx="0"/><text class="nt" x="20" y="110">system B</text>
+      <rect class="nb" x="6" y="146" width="90" height="28" rx="0"/><text class="nt" x="20" y="164">system C</text>
+      <rect class="nb" x="244" y="38" width="98" height="28" rx="0"/><text class="nt" x="258" y="56">Bootstrap</text>
+      <rect class="nb" x="244" y="78" width="98" height="28" rx="0"/><text class="nt" x="258" y="96">shadcn</text>
+      <rect class="nb" x="244" y="118" width="98" height="28" rx="0"/><text class="nt" x="258" y="136">ECharts</text>
+      <rect class="nb" x="244" y="158" width="98" height="28" rx="0"/><text class="nt" x="258" y="176">PrimeNG</text>
     </g>
   </g>
   <text class="nc" x="400" y="14">THROUGH A PIVOT — N + M</text>
@@ -93,15 +93,15 @@ invalidates a column.
     <path class="nl hi" d="M484 52 L530 106 M484 106 H530 M484 160 L530 106"/>
     <path class="nl hi" d="M626 106 L666 52 M626 106 H666 M626 106 L666 136 M626 106 L666 176"/>
     <g>
-      <rect class="nb" x="400" y="38" width="84" height="28" rx="7"/><text class="nt" x="412" y="56">system A</text>
-      <rect class="nb" x="400" y="92" width="84" height="28" rx="7"/><text class="nt" x="412" y="110">system B</text>
-      <rect class="nb" x="400" y="146" width="84" height="28" rx="7"/><text class="nt" x="412" y="164">system C</text>
-      <rect class="nb hub" x="530" y="78" width="96" height="56" rx="10"/>
+      <rect class="nb" x="400" y="38" width="84" height="28" rx="0"/><text class="nt" x="412" y="56">system A</text>
+      <rect class="nb" x="400" y="92" width="84" height="28" rx="0"/><text class="nt" x="412" y="110">system B</text>
+      <rect class="nb" x="400" y="146" width="84" height="28" rx="0"/><text class="nt" x="412" y="164">system C</text>
+      <rect class="nb hub" x="530" y="78" width="96" height="56" rx="0"/>
       <text class="nt hub" x="546" y="102">catalog</text><text class="nt hub" x="546" y="120">(meanings)</text>
-      <rect class="nb" x="666" y="38" width="88" height="28" rx="7"/><text class="nt" x="678" y="56">Bootstrap</text>
-      <rect class="nb" x="666" y="78" width="88" height="28" rx="7"/><text class="nt" x="678" y="96">shadcn</text>
-      <rect class="nb" x="666" y="118" width="88" height="28" rx="7"/><text class="nt" x="678" y="136">ECharts</text>
-      <rect class="nb" x="666" y="158" width="88" height="28" rx="7"/><text class="nt" x="678" y="176">PrimeNG</text>
+      <rect class="nb" x="666" y="38" width="88" height="28" rx="0"/><text class="nt" x="678" y="56">Bootstrap</text>
+      <rect class="nb" x="666" y="78" width="88" height="28" rx="0"/><text class="nt" x="678" y="96">shadcn</text>
+      <rect class="nb" x="666" y="118" width="88" height="28" rx="0"/><text class="nt" x="678" y="136">ECharts</text>
+      <rect class="nb" x="666" y="158" width="88" height="28" rx="0"/><text class="nt" x="678" y="176">PrimeNG</text>
     </g>
   </g>
 </svg>
