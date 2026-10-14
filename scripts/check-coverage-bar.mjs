@@ -191,6 +191,27 @@ for (const example of EXAMPLES) {
     const totals = items.find((i) => i.variable === 'PrimeNG surface totals');
     if (!totals) errors.push(`${example}/primeng: no surface totals row`);
     summary.push([example, 'primeng', pnInventory.counts.total, tally(items), totals?.slot]);
+
+    // The projected 11-step ramps (primary, surface light, surface dark) must be
+    // monotonic from 700 to 950, in the direction that ramp runs (lighter to
+    // darker in light mode, the other way in dark): 900 once pinned `text`,
+    // which equals solid-active, and the ramp folded back on itself. Steps below
+    // 700 are authored (Cathode's primary.solid sits at text-strong's lightness)
+    // and are not checked.
+    const presetPath = join(root, 'examples', example, 'dist/primeng/preset.transtyle.ts');
+    const presetText = existsSync(presetPath) ? readFileSync(presetPath, 'utf8') : '';
+    const step = (n) => `"${n}":\\s*"oklch\\(([\\d.]+)[^"]*"`;
+    const rampRe = new RegExp([700, 800, 900, 950].map(step).join(',\\s*'), 'g');
+    const ramps = [...presetText.matchAll(rampRe)].map((m) => m.slice(1).map(Number));
+    if (ramps.length !== 3) {
+      errors.push(`${example}/primeng: expected 3 projected ramps (primary, surface light, surface dark) with steps 700-950, found ${ramps.length}`);
+    }
+    for (const [i, l] of ramps.entries()) {
+      const dir = Math.sign(l[3] - l[0]) || 1;
+      if (!l.slice(1).every((v, k) => (v - l[k]) * dir >= 0)) {
+        errors.push(`${example}/primeng: ramp ${i + 1} is not monotonic from 700 to 950 (oklch L ${l.join(' / ')})`);
+      }
+    }
   }
 
   // ---- Mantine, Chakra, MUI: per-family arithmetic, plus a named row per entry on the target's default ----
