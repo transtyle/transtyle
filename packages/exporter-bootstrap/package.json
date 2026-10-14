@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/exporter-bootstrap",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Transtyle exporter for Bootstrap themes (5.3+, Sass and CSS-variable paths).",
   "keywords": [
     "design-tokens",
@@ -19,7 +19,7 @@
     ".": "./src/index.js"
   },
   "dependencies": {
-    "@transtyle/ir": "0.1.0-alpha.3"
+    "@transtyle/ir": "0.1.0-alpha.4"
   },
   "transtyle": {
     "kind": "exporter",

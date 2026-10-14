@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/plugin-kit",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "The executable specification of the Transtyle exporter interface: a conformance suite any exporter (official or third-party) runs against to prove it honors the plugin contract.",
   "keywords": [
     "design-tokens",
@@ -19,7 +19,7 @@
     ".": "./src/index.js"
   },
   "dependencies": {
-    "@transtyle/core": "0.1.0-alpha.3"
+    "@transtyle/core": "0.1.0-alpha.4"
   },
   "files": [
     "src",

@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@deramond.dev/astro": "^0.14.0",
-    "@transtyle/core": "0.1.0-alpha.3",
+    "@transtyle/core": "0.1.0-alpha.4",
     "astro": "^7.3.4"
   }
 }

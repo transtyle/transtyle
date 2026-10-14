@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/exporter-daisyui",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Transtyle exporter for daisyUI themes (v5, Tailwind 4 era).",
   "keywords": [
     "design-tokens",
@@ -18,7 +18,7 @@
     ".": "./src/index.js"
   },
   "dependencies": {
-    "@transtyle/ir": "0.1.0-alpha.3"
+    "@transtyle/ir": "0.1.0-alpha.4"
   },
   "transtyle": {
     "kind": "exporter",

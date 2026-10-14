@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/exporter-mantine",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Transtyle exporter for Mantine 9: a createTheme object with one virtual colour per role, and a cssVariablesResolver carrying the per-scheme colours.",
   "keywords": [
     "design-tokens",
@@ -18,7 +18,7 @@
     ".": "./src/index.js"
   },
   "dependencies": {
-    "@transtyle/ir": "0.1.0-alpha.3"
+    "@transtyle/ir": "0.1.0-alpha.4"
   },
   "transtyle": {
     "kind": "exporter",

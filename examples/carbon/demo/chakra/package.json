@@ -17,7 +17,7 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@transtyle/cli": "0.1.0-alpha.3",
+    "@transtyle/cli": "0.1.0-alpha.4",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
