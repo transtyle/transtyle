@@ -490,10 +490,10 @@ for (const [fixture, shape, modes] of sweep) {
             if (m.get(`semantic.color.${slot}`)?.value === undefined) errors.push(`${at} [${combo}]: ${slot} is not derived from the default text.base`);
           }
         }
-        // A role's on-solid under `contrast: more` is held to 7:1, which the
+        // A role's on-solid under `contrast: more` is held to 7:1 (the ring to 4.5:1), which the
         // derived mid-tone solids can't reach whatever text sits on them:
         // that is about the roles, not the default page/text pair.
-        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101' && !/^[\w-]+\.on-solid vs .*contrast: more\)$/.test(d.message));
+        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101' && !/^(?:[\w-]+\.on-solid|ring) vs .*contrast: more\)$/.test(d.message));
         if (failing.length) errors.push(`${at}: the default page/text pair fails a contrast check — ${failing.map((d) => d.message).join('; ')}`);
       }
       if (fixture === 'late-text') {
@@ -553,7 +553,7 @@ for (const [fixture, shape, modes] of sweep) {
         const notes = result.diagnostics.items.filter((d) => d.code === 'TST1206');
         if (notes.length !== (swaps ? 1 : 0)) errors.push(`${at}: ${notes.length} TST1206 note(s) for ${swaps} swapped combo(s), expected ${swaps ? 'one' : 'none'}`);
         // As above: a role's on-solid held to 7:1 under `contrast: more` is about the roles, not the pair.
-        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101' && !/^[\w-]+\.on-solid vs .*contrast: more\)$/.test(d.message));
+        const failing = result.diagnostics.items.filter((d) => d.code === 'TST2101' && !/^(?:[\w-]+\.on-solid|ring) vs .*contrast: more\)$/.test(d.message));
         if (shape !== 'dark-only' && failing.length) errors.push(`${at}: the swapped pair fails a contrast check — ${failing.map((d) => d.message).join('; ')}`);
       }
 

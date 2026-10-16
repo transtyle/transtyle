@@ -29,10 +29,14 @@ export const APCA_BASE_ALGORITHM = '0.0.98G-4g';
 
 /**
  * APCA Bronze simple mode, by use: Lc 75 for body text, Lc 60 for other
- * content text (secondary text, labels, buttons, badges). WCAG 2.1 has one
- * minimum for all text and ignores the use.
+ * content text (secondary text, labels, buttons, badges). Bronze defines no
+ * non-text level, so `non-text` (the focus ring) takes Lc 30, the minimum APCA's
+ * Silver guidance gives for spot-readable elements such as control outlines.
+ * WCAG 2.1 has one minimum for all text; its non-text minimum is 3:1 (SC 1.4.11)
+ * at both levels.
  */
-export const APCA_LEVELS = { body: 75, content: 60 };
+export const APCA_LEVELS = { body: 75, content: 60, 'non-text': 30 };
+export const WCAG_NON_TEXT_MIN = 3;
 const WCAG_MIN = { 'wcag21-aa': 4.5, 'wcag21-aaa': 7 };
 
 // Round toward zero to one decimal, so a value just under a threshold never
@@ -40,7 +44,7 @@ const WCAG_MIN = { 'wcag21-aa': 4.5, 'wcag21-aaa': 7 };
 // read "Lc 60").
 const toward0 = (n) => Math.trunc(n * 10) / 10 || 0;
 
-/** WCAG 2.1: the contrast ratio, order-independent, one minimum for every use. */
+/** WCAG 2.1: the contrast ratio, order-independent, one minimum for text and 3:1 for non-text. */
 export function wcagContrast(standard = DEFAULT_CONTRAST_STANDARD) {
   const min = WCAG_MIN[standard] ?? WCAG_MIN[DEFAULT_CONTRAST_STANDARD];
   return {
@@ -49,9 +53,9 @@ export function wcagContrast(standard = DEFAULT_CONTRAST_STANDARD) {
     algorithm: 'WCAG 2.1 contrast ratio',
     measure: (fg, bg) => contrastRatio(fg, bg),
     score: (v) => v,
-    threshold: () => min,
+    threshold: (use) => (use === 'non-text' ? WCAG_NON_TEXT_MIN : min),
     format: (v) => `${toward0(v)}:1`,
-    formatThreshold: () => `${min}:1`,
+    formatThreshold: (use) => `${use === 'non-text' ? WCAG_NON_TEXT_MIN : min}:1`,
     // `diff` reports an already-failing pair as worsened past this drop.
     tolerance: 0.05,
   };

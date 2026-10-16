@@ -1236,11 +1236,13 @@ try {
 
     // The neutral ladder in the hue of very different brands: no contrast warning
     // on a neutral pair. (A violet brand's derived secondary can still warn:
-    // that comes from derivation, not from what init writes.)
+    // that comes from derivation, not from what init writes. The focus ring is not
+    // a neutral pair: it follows the brand, and a very light or very dark brand
+    // can't reach its 3:1.)
     for (const brand of ['#e8590c', '#ffe066', '#0a0a0a', '#00ff00', '#7c3aed']) {
       dir = fresh('brand'); dirs.push(dir);
       run(['init', '--cwd', dir, '--yes', '--brand', brand, '--targets', 'css-variables']);
-      const neutral = report(dir).diagnostics.filter((d) => d.code === 'TST2101' && /(text|elevation|border)\./.test(d.message));
+      const neutral = report(dir).diagnostics.filter((d) => d.code === 'TST2101' && !d.message.startsWith('ring ') && /(text|elevation|border)\./.test(d.message));
       expect(`init --brand ${brand}: no neutral pair below AA in either mode`, neutral.length === 0, neutral.map((d) => d.message).join('\n'));
     }
 
@@ -2059,6 +2061,18 @@ try {
       setConfig((c) => { c.tokens.push('tokens/on-solid.tokens.json'); c.check.contrast.standard = standard; });
       r = check();
       expect(`${standard}: an authored on-solid that fails is warned`, r.warnings.some((m) => m.startsWith('primary.on-solid vs primary.solid')), r.warnings.join('\n') || r.out);
+    }
+
+    // The focus ring is a non-text pair (WCAG 1.4.11): 3:1 under both WCAG
+    // levels, Lc 30 under APCA. Cathode's own ring passes all three.
+    setConfig(() => {});
+    r = check();
+    expect('non-text: Cathode\'s ring passes under wcag21-aa', r.warnings.every((m) => !m.startsWith('ring vs')), r.warnings.join('\n'));
+    writeFileSync(join(dir, 'tokens/ring.tokens.json'), JSON.stringify({ semantic: { color: { ring: { $type: 'color', $value: '#1b3a1d' } } } }));
+    for (const [standard, level] of [['wcag21-aa', '< 3:1 wcag21-aa'], ['wcag21-aaa', '< 3:1 wcag21-aaa'], ['apca', '< Lc 30 apca']]) {
+      setConfig((c) => { c.tokens.push('tokens/ring.tokens.json'); c.check.contrast.standard = standard; });
+      r = check();
+      expect(`non-text (${standard}): a faint ring is warned at ${level}`, has(r.warnings, 'ring vs elevation.0.surface') && r.warnings.some((m) => m.startsWith('ring vs') && m.includes(level)), r.warnings.join('\n') || r.out);
     }
 
     setConfig((c) => { c.derivation.contrast = 'apca-ish'; });
