@@ -392,9 +392,23 @@ The `recommended` neutrals are a starting ladder in your brand's hue, light and 
 
 `init` then checks what it wrote, prints any diagnostics, shows your brand color with the `on-solid` text color derived for it and their contrast ratio, and lists what is worth authoring next. Refuses (exit 2) if a config or one of the token files already exists.
 
-### `transtyle add <target>`
+### `transtyle add <target | package> [--yes]`
 
-Validates the target against the CLI's known exporters and inserts `"<target>": { "output": "dist/<target>" }` into the existing config. Refuses (exit 2) for an unknown or already-configured target.
+With the name of an official exporter, it inserts `"<target>": { "output": "dist/<target>" }` into the existing config. Refuses (exit 2) for an already-configured target.
+
+With anything else, the argument is the exact name of an npm package (no version suffix) or a local `.tgz` made by `npm pack`. It prints the package's manifest first (kind, target name, IR spec, plugin API, supported framework versions, modes, capabilities) read from the registry without installing or running anything, then installs it as a dev dependency with install scripts off and adds a target for it:
+
+```bash
+npx transtyle add ourlib-transtyle-exporter
+```
+
+```json
+"targets": {
+  "ourlib": { "exporter": "ourlib-transtyle-exporter", "output": "dist/ourlib" }
+}
+```
+
+A [declarative package](/docs/write-an-exporter/#start-declarative-a-mapping-table) prints "No code will run" and installs without a question: its mapping is read, never imported. Any other package runs its code in your builds with full trust, so `add` says so and asks for a yes on a terminal; `--yes` skips the question, and without a terminal and without `--yes` it exits 2 and installs nothing. It also exits 2, before installing, for a package with no Transtyle manifest, an importer (not installable yet), a target name already in your config, or an IR spec or plugin API this version does not accept. If the installed manifest is not the one it showed, the config stays untouched.
 
 ### `transtyle migrate --from style-dictionary [--write]`
 
@@ -441,10 +455,9 @@ The full code table lives in [Weird things & diagnostics](/docs/diagnostics/#dia
 
 These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the same principles when they land:
 
-| Command                                        | What it will do                                                                         |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `transtyle add <exporter>` (community plugins) | Install + register third-party exporter packages, printing their manifest first         |
-| `transtyle import <source>`                    | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
-| `transtyle preview`                            | Local themed preview site across all targets                                            |
+| Command                     | What it will do                                                                         |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| `transtyle import <source>` | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
+| `transtyle preview`         | Local themed preview site across all targets                                            |
 
 Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `completenessStatus()`, `adoption()`, `suggestBindings()`, `migrateStyleDictionary()`, and `buildReport()` for the `report.json` object), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported). Without a disk, `compileProject({ config, files, exporters })` from `@transtyle/core/browser` takes the config and the token files as a map of paths to contents and returns every target's files, `report.json` included, byte for byte what `build` writes (only `transtyle-manifest.json`, the record of what landed on disk, is left to the disk side); `compile({ cwd })` is that plus reading the project (`loadProject()`, which follows `extends`) and writing the result (`writeResults()`).

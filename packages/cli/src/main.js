@@ -11,8 +11,9 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execSync } from 'node:child_process';
 import process from 'node:process';
-import { compile, loadDeclarativePackage, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca, loadConfigChain, DEFAULT_CONFIG_FILE, isCustomRow, customVocabularySentence } from '@transtyle/core';
+import { compile, loadDeclarativePackage, checkPluginCompat, catalog, adoption, completenessStatus, COMPLETENESS_LEVELS, DEFAULT_COMPLETENESS_LEVEL, consumption, diffResolved, contrastRegressions, explainToken, explainVariable, suggestBindings, slotConsumers, deprecationsReached, formatColor, formatHex, loadApca, loadConfigChain, DEFAULT_CONFIG_FILE, isCustomRow, customVocabularySentence } from '@transtyle/core';
 import { renderMatrix } from './matrix.js';
+import { isNpmName, isTarballPath, isTargetName, readRemoteManifest, describeManifest, canonical, confirm, installPackage, readPackageJson } from './add-package.js';
 import { cmdMigrate } from './migrate.js';
 import { INIT_DEFAULTS, INIT_VALUE_FLAGS, TOKENS_SCHEMA, validateFlags, promptAnswers, scaffold, swatch, authorNext, targetEntry } from './init.js';
 
@@ -191,7 +192,8 @@ Usage:
   transtyle diff [ref]            semantic diff of the resolved graph vs a git ref (default: HEAD), with per-target impact
   transtyle catalog               list every catalog slot: type, derivation rule, inputs (no project needed)
   transtyle init [name]           scaffold transtyle.config.json + token files (asks on a terminal)
-  transtyle add <target>          add a target to transtyle.config.json
+  transtyle add <target|package>  add a target to transtyle.config.json: an official exporter by name, or a
+                                  community exporter by its exact npm name (shows its manifest, then installs)
   transtyle migrate --from style-dictionary [--write]
                                   rewrite Style Dictionary v3 token files (value/type) to DTCG ($value/$type); a diff unless --write
 Options:
@@ -223,6 +225,9 @@ init options (each skips its question; without a terminal, unset ones take the d
                                   minimal: the brand color only (default: recommended)
   --layout <single|layered>       one token file, or your names + bindings (default: single)
   --yes, -y                       ask nothing: take the default for every unset option
+add options:
+  --yes, -y                       install a community exporter that runs code without asking first (a declarative
+                                  package, which runs no code, never asks)
 `;
 
 /** TRANSTYLE_DEBUG=1 is `--verbose`: one switch for the stack of a crashed exporter and the extra detail. */
@@ -294,9 +299,9 @@ async function main() {
     process.exit(2);
   }
 
-  if ((args.init || args.yes) && args.command !== 'init') {
-    const flag = args.yes ? '--yes' : `--${Object.keys(args.init)[0]}`;
-    console.error(`✖ ${flag} only applies to init`);
+  if ((args.init || args.yes) && args.command !== 'init' && !(args.yes && !args.init && args.command === 'add')) {
+    const flag = args.init ? `--${Object.keys(args.init)[0]}` : '--yes';
+    console.error(`✖ ${flag} only applies to init${args.init ? '' : ' and add'}`);
     process.exit(2);
   }
 
@@ -1188,10 +1193,12 @@ ${authorNext(answers.preset).map((l) => `  - ${l}`).join('\n')}
 // ---------- add ----------
 
 async function cmdAdd(args) {
-  const target = args.targets[0];
-  if (!target) { console.error('Usage: transtyle add <target>'); process.exit(2); }
-  if (!(target in OFFICIAL_EXPORTERS)) {
-    console.error(`✖ Unknown target: ${target}\nValid targets: ${Object.keys(OFFICIAL_EXPORTERS).join(', ')}`);
+  const spec = args.targets[0];
+  if (!spec) { console.error('Usage: transtyle add <target | npm package>'); process.exit(2); }
+  const official = spec in OFFICIAL_EXPORTERS;
+  const tarball = !official && isTarballPath(spec);
+  if (!official && !tarball && !isNpmName(spec)) {
+    console.error(`✖ "${spec}" is neither an official target nor an npm package name\nOfficial targets: ${Object.keys(OFFICIAL_EXPORTERS).join(', ')}\nA community exporter is added by its exact npm package name (or a local .tgz from npm pack).`);
     process.exit(2);
   }
   const { configPath } = args;
@@ -1211,17 +1218,102 @@ async function cmdAdd(args) {
     process.exit(2);
   }
   const config = chain[chain.length - 1].config;
-  const declaredIn = chain.findLast((f) => f.config?.targets?.[target] !== undefined);
-  if (declaredIn) {
+  const refuseDuplicate = (target) => {
+    const declaredIn = chain.findLast((f) => f.config?.targets?.[target] !== undefined);
+    if (!declaredIn) return;
     console.error(declaredIn === chain[chain.length - 1]
       ? `✖ Target "${target}" is already configured`
       : `✖ Target "${target}" is already configured: inherited from ${declaredIn.name}`);
     process.exit(2);
+  };
+  const write = (target, entry) => {
+    config.targets ??= {};
+    config.targets[target] = entry;
+    writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+  };
+
+  if (official) {
+    refuseDuplicate(spec);
+    write(spec, targetEntry(spec));
+    console.error(`✔ added target "${spec}" → dist/${spec}\n\nBuild it: npx transtyle build ${spec}`);
+    return;
   }
-  config.targets ??= {};
-  config.targets[target] = targetEntry(target);
-  writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
-  console.error(`✔ added target "${target}" → dist/${target}\n\nBuild it: npx transtyle build ${target}`);
+  await addPackage(args, { spec, tarball, refuseDuplicate, write });
+}
+
+/**
+ * A community exporter by its exact npm name (docs/architecture/plugins.md#trust-model):
+ * read its manifest without installing, show it, install with scripts off,
+ * check that what landed is what was shown, then register the target. Every
+ * refusal before the install leaves the project as it was; one after it leaves
+ * the config untouched.
+ */
+async function addPackage(args, { spec, tarball, refuseDuplicate, write }) {
+  const fail = (msg) => { console.error(`✖ ${msg}`); process.exit(2); };
+  const tarballPath = tarball ? path.resolve(args.cwd, spec) : undefined;
+  if (tarball && !existsSync(tarballPath)) fail(`No such file: ${spec}`);
+
+  let remote;
+  try {
+    remote = readRemoteManifest(tarball ? tarballPath : spec, { tarball: tarballPath, cwd: args.project });
+  } catch (e) {
+    fail(e.message);
+  }
+  const { manifest } = remote;
+  const label = `${remote.name}${remote.version ? ` ${remote.version}` : ''}`;
+  if (!manifest || typeof manifest !== 'object') {
+    fail(`${label} has no "transtyle" manifest in its package.json, so it is not a Transtyle plugin`);
+  }
+  console.error(`${label}\n${describeManifest(remote, manifest).join('\n')}\n`);
+  if (manifest.kind !== 'exporter') {
+    fail(manifest.kind === 'importer'
+      ? `${remote.name} is an importer; "transtyle add" installs exporters only (importers are not supported yet)`
+      : `${remote.name} declares kind ${JSON.stringify(manifest.kind)}; "transtyle add" installs packages of kind "exporter"`);
+  }
+  if (!isTargetName(manifest.name)) {
+    fail(`${remote.name} declares the target name ${JSON.stringify(manifest.name)}; a target name is lowercase letters, digits and hyphens`);
+  }
+  const target = manifest.name;
+  refuseDuplicate(target);
+
+  // The same check core makes at build time (TST1309, TST1310), before anything is installed.
+  const { missing, mismatches } = checkPluginCompat(manifest);
+  for (const { field, declared, provided } of mismatches) {
+    fail(`${remote.name} declares ${field} "${declared}"; this @transtyle/core provides ${provided.map((v) => `"${v}"`).join(', ')} (TST1309)`);
+  }
+  if (missing.length) console.error(`⚠ ${remote.name} declares no ${missing.map((f) => `"${f}"`).join(' or ')}, so its compatibility with this @transtyle/core was not checked (TST1310)\n`);
+
+  const declarative = typeof manifest.declarative === 'string';
+  if (declarative) {
+    console.error('No code will run: this package is a declarative mapping, read by transtyle, never imported.\n');
+  } else {
+    console.error('This package runs code in your build process (full trust, see docs/architecture/plugins.md#trust-model).\n');
+    if (!args.yes) {
+      if (!(process.stdin.isTTY && process.stderr.isTTY)) fail('Not installing a package that runs code without a yes: run on a terminal, or pass --yes');
+      if (!(await confirm(`Install ${label} and let it run in your builds?`))) fail('Not installed');
+    }
+  }
+
+  try {
+    installPackage(tarball ? tarballPath : spec, args.project);
+  } catch (e) {
+    fail(e.message);
+  }
+  const afterFailing = (msg) => fail(`${msg}\n  ${remote.name} is installed but no target was added; remove it with: npm uninstall ${remote.name}`);
+
+  const dir = packageDir(createRequire(path.join(args.project, 'noop.js')), remote.name);
+  if (!dir) afterFailing(`${remote.name} was installed but cannot be found from ${args.project}`);
+  let installed;
+  try { installed = readPackageJson(dir); } catch (e) { afterFailing(`Cannot read the installed package.json: ${e.message}`); }
+  if (installed.name !== remote.name || canonical(installed.transtyle) !== canonical(manifest)) {
+    afterFailing('The installed manifest is not the one shown above');
+  }
+  if (declarative) {
+    try { loadDeclarativePackage(dir); } catch (e) { afterFailing(`The mapping does not load: ${e.message}`); }
+  }
+
+  write(target, { exporter: remote.name, ...targetEntry(target) });
+  console.error(`✔ installed ${label} and added target "${target}" → dist/${target}\n\nBuild it: npx transtyle build ${target}`);
 }
 
 main();

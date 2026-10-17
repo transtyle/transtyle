@@ -18,8 +18,8 @@ const cli = join(root, 'packages/cli/src/main.js');
 const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-cli-'));
 
 let failures = 0;
-function run(args) {
-  const r = spawnSync('node', [cli, ...args], { encoding: 'utf8' });
+function run(args, env) {
+  const r = spawnSync('node', [cli, ...args], { encoding: 'utf8', env: env ? { ...process.env, ...env } : process.env });
   return { code: r.status ?? 1, out: (r.stdout ?? '') + (r.stderr ?? ''), stdout: r.stdout ?? '' };
 }
 function expect(label, cond, detail) {
@@ -44,9 +44,9 @@ try {
   r = run(['add', 'shadcn', '--cwd', dir]);
   expect('add shadcn: exit 0', r.code === 0, r.out);
 
-  r = run(['add', 'not-a-real-target', '--cwd', dir]);
-  expect('add: unknown target refused (exit 2)', r.code === 2);
-  expect('add: unknown target lists valid ones', r.out.includes('Valid targets:'));
+  r = run(['add', 'Not A Target', '--cwd', dir]);
+  expect('add: neither an official target nor an npm name is refused (exit 2)', r.code === 2);
+  expect('add: ... and lists the official ones', r.out.includes('Official targets:'));
 
   r = run(['add', 'shadcn', '--cwd', dir]);
   expect('add: duplicate target refused (exit 2)', r.code === 2);
@@ -2629,6 +2629,82 @@ try {
     writeConfig({ ourlib: { exporter: 'ourlib-transtyle-exporter', output: 'dist/pkg', version: '3.0.0' } });
     r = run(['build', '--cwd', dir]);
     expect('#83 a version outside every declared range: TST1313 naming the ranges', r.code === 1 && r.out.includes('TST1313 Target "ourlib" asks for ourlib 3.0.0, outside every range ourlib-transtyle-exporter 1.0.0 supports: >=2 <3'), r.out);
+
+    // ---------- transtyle add <npm package> (T1042): from local tarballs, no network ----------
+    {
+      const offline = { npm_config_offline: 'true' };
+      const addDir = mkdtempSync(join(tmpdir(), 'transtyle-check-add-pkg-'));
+      const tgzDir = mkdtempSync(join(tmpdir(), 'transtyle-check-add-tgz-'));
+      try {
+        // A code package, an importer and a package without a manifest, each packed like a real one.
+        const pack = (name, pkg, files) => {
+          const src = join(tgzDir, `${name}-src`);
+          mkdirSync(src, { recursive: true });
+          writeFileSync(join(src, 'package.json'), JSON.stringify({ name, version: '1.0.0', type: 'module', license: 'MIT', ...pkg }, null, 2));
+          for (const [f, c] of Object.entries(files)) writeFileSync(join(src, f), c);
+          const p = spawnSync('npm', ['pack', '--pack-destination', tgzDir, '--silent'], { cwd: src, encoding: 'utf8' });
+          if (p.status !== 0) throw new Error(`npm pack ${name}: ${p.stderr}`);
+          return join(tgzDir, `${name}-1.0.0.tgz`);
+        };
+        const manifest = (extra) => ({ kind: 'exporter', irSpec: 'v0-draft', pluginApi: '0', targets: {}, modes: ['color-scheme'], capabilities: ['build'], ...extra });
+        const codeTgz = pack('codelib-transtyle-exporter', { main: './index.js', transtyle: manifest({ name: 'codelib' }) }, {
+          'index.js': "export default { name: 'codelib', emit: () => ({ files: [{ path: 'codelib.txt', contents: 'codelib\\n', kind: 'text' }], coverage: [] }) };\n",
+        });
+        const importerTgz = pack('someimporter-transtyle-importer', { main: './index.js', transtyle: manifest({ kind: 'importer', name: 'someimporter' }) }, { 'index.js': 'export default {};\n' });
+        const futureTgz = pack('future-transtyle-exporter', { main: './index.js', transtyle: manifest({ name: 'future', irSpec: 'v9' }) }, { 'index.js': 'export default {};\n' });
+        const plainTgz = pack('plain-npm-package', { main: './index.js' }, { 'index.js': 'export default {};\n' });
+        const declTgz = join(packDir, 'ourlib-transtyle-exporter-1.0.0.tgz');
+
+        run(['init', 'add-pkg-ds', '--cwd', addDir]);
+        writeFileSync(join(addDir, 'package.json'), JSON.stringify({ name: 'add-pkg-ds', version: '0.0.0', private: true }, null, 2));
+        const cfgPath = join(addDir, 'transtyle.config.json');
+        const targets = () => JSON.parse(readFileSync(cfgPath, 'utf8')).targets ?? {};
+        const pkgJson = () => JSON.parse(readFileSync(join(addDir, 'package.json'), 'utf8'));
+        const before = readFileSync(cfgPath, 'utf8');
+
+        // Refused before anything is installed: exit 2, config and package.json as they were.
+        const refusals = [
+          ['an importer', [importerTgz], 'is an importer'],
+          ['a package without a transtyle manifest', [plainTgz], 'has no "transtyle" manifest'],
+          ['an IR spec this core does not produce', [futureTgz], 'TST1309'],
+          ['an invalid name', ['Bad_Name!'], 'neither an official target nor an npm package name'],
+          ['a name with a shell metacharacter', ['x;touch pwned'], 'neither an official target nor an npm package name'],
+          ['a version suffix (exact names only)', ['ourlib-transtyle-exporter@1.0.0'], 'neither an official target nor an npm package name'],
+          ['a tarball that does not exist', [join(tgzDir, 'nope.tgz')], 'No such file'],
+        ];
+        for (const [what, a, text] of refusals) {
+          r = run(['add', ...a, '--cwd', addDir], offline);
+          expect(`add package: ${what} is refused (exit 2, "${text}")`, r.code === 2 && r.out.includes(text), `exit ${r.code}: ${r.out}`);
+        }
+        expect('add package: refusals leave the config and package.json untouched', readFileSync(cfgPath, 'utf8') === before && !pkgJson().devDependencies && !existsSync(join(addDir, 'node_modules')) && !existsSync(join(addDir, 'pwned')));
+        r = run(['add', declTgz, '--cwd', join(addDir, 'no-such-project')], offline);
+        expect('add package: no config is refused (exit 2)', r.code === 2 && r.out.includes('run "transtyle init" first'), r.out);
+
+        // A code package: the manifest is shown, then a yes is required. A script has no terminal, so no --yes is a refusal.
+        r = run(['add', codeTgz, '--cwd', addDir], offline);
+        expect('add package: a code package without --yes and without a terminal is refused (exit 2)', r.code === 2 && r.out.includes('runs code in your build process') && r.out.includes('pass --yes') && readFileSync(cfgPath, 'utf8') === before && !existsSync(join(addDir, 'node_modules')), `exit ${r.code}: ${r.out}`);
+        expect('add package: the manifest is printed first', r.out.includes('codelib-transtyle-exporter 1.0.0') && r.out.includes('kind          exporter') && r.out.includes('irSpec        v0-draft') && r.out.includes('capabilities  build'), r.out);
+        r = run(['add', codeTgz, '--yes', '--cwd', addDir], offline);
+        expect('add package: a code package with --yes installs and registers (exit 0)', r.code === 0 && r.out.includes('added target "codelib"'), `exit ${r.code}: ${r.out}`);
+        expect('add package: ... as { exporter: <package>, output }', JSON.stringify(targets().codelib) === JSON.stringify({ exporter: 'codelib-transtyle-exporter', output: 'dist/codelib' }), JSON.stringify(targets()));
+        expect('add package: ... as a dev dependency', Boolean(pkgJson().devDependencies?.['codelib-transtyle-exporter']));
+        r = run(['build', 'codelib', '--cwd', addDir]);
+        expect('add package: the added code package builds', r.code === 0 && existsSync(join(addDir, 'dist/codelib/codelib.txt')), r.out);
+        r = run(['add', codeTgz, '--yes', '--cwd', addDir], offline);
+        expect('add package: a target already configured is refused (exit 2)', r.code === 2 && r.out.includes('Target "codelib" is already configured'), r.out);
+
+        // A declarative package: nothing runs, so no confirmation and no --yes.
+        r = run(['add', declTgz, '--cwd', addDir], offline);
+        expect('add package: a declarative package installs without --yes (exit 0)', r.code === 0 && r.out.includes('No code will run: this package is a declarative mapping, read by transtyle, never imported') && !r.out.includes('runs code in your build process'), `exit ${r.code}: ${r.out}`);
+        expect('add package: ... and shows its declarative file and version ranges first', r.out.includes('declarative   ourlib.mapping.json') && r.out.includes('ourlib >=2 <3'), r.out);
+        expect('add package: ... registered under the manifest name', JSON.stringify(targets().ourlib) === JSON.stringify({ exporter: 'ourlib-transtyle-exporter', output: 'dist/ourlib' }), JSON.stringify(targets()));
+        r = run(['build', 'ourlib', '--cwd', addDir]);
+        expect('add package: the added declarative package builds, and its throwing main never ran', r.code === 0 && !r.out.includes('package code ran') && existsSync(join(addDir, 'dist/ourlib/ourlib.css')), r.out);
+      } finally {
+        rmSync(addDir, { recursive: true, force: true });
+        rmSync(tgzDir, { recursive: true, force: true });
+      }
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
     rmSync(packDir, { recursive: true, force: true });

@@ -26,5 +26,5 @@ A **declarative mapping** (`*.mapping.json`, [spec](../specs/declarative-mapping
 
 - One trust class is real: a declarative package runs no code at build time. `plugin-kit` runs a mapping unchanged (`conformance(createDeclarativeExporter(mapping))`).
 - The proof is executable: a reference mapping, generated from `exporter-css-variables`' own coverage on plugin-kit's canonical fixture, reproduces its stylesheet byte for byte (`check:plugins`); a fixture package whose `main` throws is `npm pack`ed, installed and built (`check:cli`). Writing it found that css-variables left `palette.categorical.*` out of its dark block (it chose the block by path, not by type); fixed in the same change.
-- `transtyle add <npm package>` (install, print the manifest, say "no code will run" for a declarative package) is still a separate feature: the CLI's `add` takes official target names only.
+- `transtyle add <npm package>` installs one: it prints the manifest first, says "no code will run" for a declarative package, and asks before installing a package that runs code ([cli.md](../specs/cli.md#add)).
 - Two diagnostic codes are appended (`TST1014`, `TST1015`) and one schema is published.
