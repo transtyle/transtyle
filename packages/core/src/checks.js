@@ -131,8 +131,9 @@ function checkDistinguishability(normalized, diagnostics) {
 
 /**
  * The foreground/background pairs the compiler contrast-checks, each with its
- * use: `body` (running text) or `content` (secondary text, labels, the text on
- * a role's fill). WCAG 2.1 holds every use to one minimum; APCA sets one per use
+ * use: `body` (running text), `content` (secondary text, labels, the text on
+ * a role's fill) or `non-text` (the focus ring, WCAG 1.4.11). WCAG 2.1 holds
+ * text to one minimum and non-text to 3:1; APCA sets one per use
  * (contrast.js). Shared with `transtyle diff`'s contrast-regression flag
  * (diff.js) so "which pairs count" has exactly one definition — a pair added
  * here is checked in both places.
@@ -143,6 +144,8 @@ export const CONTRAST_PAIRS = [
   ['text.muted', 'elevation.0.surface', 'content'],
   ['text.muted', 'elevation.1.surface', 'content'],
   ['inverse.text', 'inverse.surface', 'content'],
+  ['ring', 'elevation.0.surface', 'non-text'],
+  ['ring', 'elevation.1.surface', 'non-text'],
 ];
 
 /**
@@ -230,7 +233,8 @@ export function runChecks(normalized, config, diagnostics, contrast = wcagContra
  * already checked under the scheme's own name (density changes no color) is
  * the same finding, not a new one. A `contrast: more` combo is held one level
  * up, since asking for more contrast is what that value means: 7:1 (WCAG AAA)
- * for every pair, or APCA Lc 90 for body text and Lc 75 for the rest. One
+ * for every text pair, or APCA Lc 90 for body text and Lc 75 for the rest; the
+ * focus ring is raised to 4.5:1 or Lc 45. One
  * pair failing the same way in several combos (the motion or brand axes don't
  * change it) is one warning naming them all.
  */
@@ -239,8 +243,19 @@ function checkOtherCombos(normalized, contrast, diagnostics) {
   const aliased = new Set(normalized.modeValues.map((v) => normalized.modes[v]));
   const pairs = contrastPairs(normalized);
   const apca = contrast.standard === 'apca';
-  const moreThreshold = (use) => (apca ? (use === 'body' ? 90 : 75) : Math.max(contrast.threshold(use), 7));
-  const moreLabel = (use) => (apca ? `Lc ${moreThreshold(use)} apca` : `${moreThreshold(use)}:1 wcag21-aaa`);
+  // A non-text pair is raised to 4.5:1 / Lc 45, not to the text levels.
+  const moreThreshold = (use) =>
+    use === 'non-text'
+      ? apca
+        ? 45
+        : 4.5
+      : apca
+        ? use === 'body'
+          ? 90
+          : 75
+        : Math.max(contrast.threshold(use), 7);
+  const moreLabel = (use) =>
+    apca ? `Lc ${moreThreshold(use)} apca` : `${moreThreshold(use)}:1 ${use === 'non-text' ? contrast.standard : 'wcag21-aaa'}`;
   const findings = new Map();
   for (const key of normalized.allCombos ?? []) {
     const map = normalized.modes[key];
