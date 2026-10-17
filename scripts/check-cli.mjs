@@ -2503,6 +2503,30 @@ try {
     const cycles = r.diagnostics.filter((d) => d.code === 'TST1104');
     expect(`#97: a ${LINKS}-link loop is one TST1104 (exit 1)`, r.code === 1 && cycles.length === 1, r.out ?? `${cycles.length} TST1104`);
     expect(`#97: the loop's TST1104 lists all ${LINKS} links and no TST1105 follows`, cycles[0]?.message.split(' → ').length === LINKS + 1 && !r.diagnostics.some((d) => d.code === 'TST1105'), r.diagnostics.map((d) => d.code).join(', '));
+
+    // #204: a token that aliases into a loop is not on it. Only the loop is
+    // reported, once, however long the tail and wherever it is entered.
+    const withTail = (length, second = false) => {
+      const tree = structuredClone(scaffold);
+      const g = (tree.semantic.chain = { $type: 'color', a: { $value: '{semantic.chain.b}' }, b: { $value: '{semantic.chain.a}' }, tail: {} });
+      for (let i = 0; i < length; i++) g.tail[`t${i}`] = { $value: `{semantic.chain.tail.t${i + 1}}` };
+      g.tail[`t${length}`] = { $value: '{semantic.chain.a}' };
+      if (second) g.other = { $value: '{semantic.chain.b}' };
+      writeFileSync(tp, JSON.stringify(tree));
+    };
+    withTail(1);
+    r = check();
+    let loop = r.diagnostics.filter((d) => d.code === 'TST1104');
+    expect('#204: a token aliasing into a loop is not reported as a cycle', r.code === 1 && loop.length === 1 && loop[0].message === 'Alias cycle: semantic.chain.a → semantic.chain.b → semantic.chain.a' && !r.diagnostics.some((d) => d.code === 'TST1105'), loop.map((d) => d.message).join(' | '));
+    expect('#204: the loop is located on its own first token', loop[0]?.path === 'semantic.chain.a', JSON.stringify(loop[0]));
+    withTail(1, true);
+    r = check();
+    loop = r.diagnostics.filter((d) => d.code === 'TST1104');
+    expect('#204: two tails into the same loop are one TST1104', r.code === 1 && loop.length === 1, loop.map((d) => d.message).join(' | '));
+    withTail(LINKS);
+    r = check();
+    loop = r.diagnostics.filter((d) => d.code === 'TST1104');
+    expect(`#204: a ${LINKS}-token tail is one TST1104 listing only the loop and no TST1105`, r.code === 1 && loop.length === 1 && loop[0].message.split(' → ').length === 3 && !r.diagnostics.some((d) => d.code === 'TST1105'), r.out ?? loop.map((d) => d.message.slice(0, 120)).join(' | '));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
