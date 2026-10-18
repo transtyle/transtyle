@@ -21,7 +21,7 @@ npx transtyle build shadcn
 #
 # authored 14/14 recommended
 #
-# shadcn  41% native · 54% derived · 5% dropped
+# shadcn  39% native · 53% derived · 8% dropped
 #   ↳ dist/shadcn/globals.transtyle.css
 #   ↳ dist/shadcn/usage.md
 #   ↳ dist/shadcn/report.json
@@ -49,7 +49,7 @@ When the design system has custom semantic tokens (its own `semantic.*` names ou
 ```bash
 npx transtyle build --dry-run --out /tmp/themes
 #
-# shadcn  41% native · 54% derived · 5% dropped
+# shadcn  39% native · 53% derived · 8% dropped
 #   ↳ would write ../../tmp/themes/shadcn/globals.transtyle.css
 #   ↳ would write ../../tmp/themes/shadcn/report.json
 #   ↳ would write ../../tmp/themes/shadcn/transtyle-manifest.json
@@ -313,15 +313,15 @@ Exits `0` when the compiled themes are identical, `1` when there are changes, a 
 
 Lists every slot of the catalog (the vocabulary exporters bind to) with its DTCG type, the rule that fills it when you don't author it, that rule's inputs, and the optional anchor it needs. It reads no project (run it anywhere; `--cwd` is ignored), because the catalog belongs to the language and the rule pack, not to a design system.
 
-<!-- measured: catalog.slots = 264 -->
-<!-- measured: catalog.semantic = 257 -->
+<!-- measured: catalog.slots = 266 -->
+<!-- measured: catalog.semantic = 259 -->
 <!-- measured: catalog.component = 7 -->
 
 ```bash
 npx transtyle catalog
 #
 # Transtyle catalog — IR spec v0-draft, rule pack standard@1
-# 264 slots: 257 semantic, 7 component (174 derived, 84 defaulted, 6 authored only)
+# 266 slots: 259 semantic, 7 component (175 derived, 85 defaulted, 6 authored only)
 # ...
 # semantic · radius (8)
 #   semantic.radius.full   dimension  derived by radius-scale(full)  (needs semantic.radius.md)
@@ -335,11 +335,11 @@ npx transtyle catalog
   "irSpec": "v0-draft",
   "rulePack": "standard@1",
   "counts": {
-    "slots": 264,
-    "semantic": 257,
+    "slots": 266,
+    "semantic": 259,
     "component": 7,
-    "derived": 174,
-    "defaulted": 84,
+    "derived": 175,
+    "defaulted": 85,
     "authoredOnly": 6
   },
   "roles": ["primary", "secondary", "..."],

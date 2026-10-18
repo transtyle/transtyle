@@ -180,6 +180,7 @@ export default {
       coverage.push({ variable: '--radius-{selector,field,box}', slot: 'semantic.radius.md', class: 'approximated', provenance: radius.provenance.kind, note: 'one radius feeds three component families' });
     }
     coverage.push({ variable: '--depth / --noise / --size-*', slot: '—', class: 'unsupported', meaning: 'style.effect', note: 'daisyUI themable stylistic effects and control sizes (depth, noise, size-selector, size-field) the IR has no vocabulary for; theme uses daisyUI defaults' });
+    coverage.push({ variable: '(focus ring width, offset)', slot: 'semantic.ring.{width,offset}', class: 'dropped', note: 'daisyUI draws its focus outline (2px solid at 2px) in component CSS; a theme block has no ring geometry variable' });
     // Mode dimensions this exporter doesn't express (T8, ir.md#modes) — a
     // no-op unless the compile actually declares one, e.g. `density`.
     coverage.push(...droppedDimensions(normalized.dimensionNames, ['color-scheme', 'contrast', 'brand'], {

@@ -25,9 +25,9 @@ npx transtyle build          # shadcn (v4 era), shadcn-v3, daisyui, echarts, boo
 
 What to study:
 
-<!-- measured: acme.engine = 237 -->
+<!-- measured: acme.engine = 239 -->
 
-- **Derivation in action.** The engine fills the other 237 slots per mode: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
+- **Derivation in action.** The engine fills the other 239 slots per mode: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
 - **One brand color drives everything.** Change `option.color.blue.600`, rebuild, and watch the accent tint, on-colors, and all five chart colors follow coherently.
 - **Both mode-authoring forms.** Acme uses inline `$extensions` for dark values, the compact form for hand-edited files.
 - **Target instances.** Its config builds the same design system for both shadcn eras side by side. It also builds [per-mode ECharts themes](/docs/exporter-echarts/) whose `color[]` palette shares its first five colors with shadcn's `--chart-*`. One brand, one data-viz palette, everywhere.
@@ -74,6 +74,7 @@ npx transtyle build          # same eleven targets as Acme/Cathode
 What to study:
 
 - **A clean 1:1 mapping, found by accident.** GOV.UK's iconic yellow keyboard-focus color maps directly onto the catalog's `ring` slot, with no judgment call needed.
+- **The ring's thickness, carried.** GOV.UK's focus outline is 3px (`$govuk-focus-width`). The example authors it as `ring.width`, so the [PrimeNG](/demo/govuk/primeng/), [Chakra UI](/demo/govuk/chakra/), [Material UI](/demo/govuk/mui/) and [Bootstrap](/demo/govuk/bootstrap/) demos draw a 3px ring, where every other example keeps each library's own width.
 - **Gaps.** GOV.UK's functional-colour set has no distinct `secondary`, `accent`, `warning`, or `info` role. Those four are left unbound and derive from `primary` via the standard rule pack, which is exactly the "don't translate everything on day one" guidance in the [adoption playbook](/docs/adopt-existing/).
 - **A single-mode config, on purpose.** GOV.UK's public system has no published dark theme, so `modes.color-scheme` declares only `"light"`. That's legal, and proof a mode dimension is optional infrastructure, not a requirement.
 - **A licensing limitation, not a compiler one.** GOV.UK's real typeface (GDS Transport) is licensed to crown services only; the demo projects render in GOV.UK's own documented `arial` fallback instead.

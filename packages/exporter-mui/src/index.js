@@ -29,7 +29,7 @@
  * options merge under any other `createTheme(options, yours)` argument.
  */
 
-import { COLOR_ROLES, GRID_CELLS, Documented, droppedDimensions, fontStack, emitPerValue, withDoc } from '@transtyle/ir';
+import { COLOR_ROLES, GRID_CELLS, Documented, droppedDimensions, fontStack, emitPerValue, isAuthored, withDoc } from '@transtyle/ir';
 import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
@@ -419,6 +419,17 @@ function emitOne(normalized, ctx) {
 
   maps('focusVisible.outlineColor', `${S}ring`);
   if (hasRing) row('focusVisible.outlineColor', `${S}ring`, 'native', "turns on MUI's opt-in keyboard focus ring for every focusable component, in the design system's ring colour");
+  // Focus ring geometry (#167): the ring's width and offset, written only when
+  // the design system authors them (the width itself or through
+  // `border-width.medium`), so MUI's own 2px ring at 2px stands otherwise; an
+  // unauthored one is a surface-inventory row naming the slot (surface-coverage.js).
+  const focusVisible = {};
+  for (const [prop, slot] of [['outlineWidth', 'ring.width'], ['outlineOffset', 'ring.offset']]) {
+    maps(`focusVisible.${prop}`, `semantic.${slot}`);
+    if (!hasRing || !isAuthored(light, `semantic.${slot}`)) continue;
+    focusVisible[prop] = doc(String(sem(light, slot)), slot);
+    row(`focusVisible.${prop}`, `semantic.${slot}`, 'native', prop === 'outlineOffset' ? 'MUI multiplies it by its own inset factor on clip-prone components (tabs, menu items), so the ring stays visible there' : undefined);
+  }
 
   const containerRadius = sem(light, 'radius.container');
   if (containerRadius !== undefined) {
@@ -530,7 +541,7 @@ function emitOne(normalized, ctx) {
   const options = {
     cssVariables: { colorSchemeSelector: '[data-color-scheme="%s"]' },
     colorSchemes,
-    ...(hasRing ? { focusVisible: { outlineColor: muiVar('ring') } } : {}),
+    ...(hasRing ? { focusVisible: { outlineColor: muiVar('ring'), ...focusVisible } } : {}),
     ...(Object.keys(shape).length ? { shape } : {}),
     ...(spacing !== undefined ? { spacing } : {}),
     ...(breakpoints ? { breakpoints } : {}),

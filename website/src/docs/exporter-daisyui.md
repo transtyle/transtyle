@@ -14,9 +14,9 @@ order: 10
 Emits **daisyUI v5** theme blocks (Tailwind 4 era): one `@plugin "daisyui/theme"` block per color-scheme mode, OKLCH values, light as `default`, dark as `prefersdark`. This is standard daisyUI multi-theme behavior, generated from your design system.
 
 <!-- measured: acme.daisyui.decls = 92 -->
-<!-- measured: acme.daisyui.rows = 25 -->
+<!-- measured: acme.daisyui.rows = 26 -->
 
-On [Acme](/docs/examples/): 92 declarations over the two blocks, from 25 classified theme keys.
+On [Acme](/docs/examples/): 92 declarations over the two blocks, over 26 classified rows.
 
 ```json
 "targets": { "daisyui": { "output": "dist/daisyui" } }

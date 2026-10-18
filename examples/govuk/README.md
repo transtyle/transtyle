@@ -12,6 +12,7 @@ This is the **T11 "real-DS run"** (`docs/plan/catalog-revision.md`) — proof th
 
 - **Colors**: real, current GOV.UK functional colours (`brand` #1d70b8, `error` #ca3535, `success` #0f7a52, `focus` #ffdd00, and the full text/link/border set).
 - **Radius**: real. GOV.UK components render with no border-radius — an authentic, deliberate flat aesthetic, not a fictional quirk.
+- **Focus width**: real. `option.measurement.focus-width` is GOV.UK Frontend's `$govuk-focus-width` (3px, `settings/_measurements.scss`), bound to the catalog's `ring.width`, so the PrimeNG, Chakra UI, Material UI and Bootstrap demos draw GOV.UK's 3px ring where the other examples keep each library's own.
 - **Typeface**: `option.font.transport` names GOV.UK's real fallback stack (`GDS Transport, arial, sans-serif`) — but **GDS Transport itself is a licensed, crown-service-only font** and isn't publicly distributable, so the demo projects render in the `arial` fallback GOV.UK's own CSS specifies for exactly this situation. Not a compiler limitation — a licensing one.
 - **Single mode**: GOV.UK's public design system doesn't publish a dark theme, so `modes.color-scheme` declares only `"light"` — legal, and a good demonstration that a mode dimension is optional infrastructure, not a requirement (see `docs/architecture/ir.md#modes`).
 

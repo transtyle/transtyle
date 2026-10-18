@@ -33,6 +33,8 @@ Radix also ships a P3 (wide-gamut) variant of every scale. That is a themable sl
 
 Radix's `<Theme accentColor="...">` component only accepts its own preset names — it can't take an arbitrary string. To drive real Radix Themes components from a compiled brand, **override an existing preset's CSS variables** with your role's scale (e.g. `--violet-1` through `--violet-12`, `-a1..a12`, `-contrast`), then pass that preset's name to `accentColor`. `--gray-*` needs no override — it's already Radix's own name.
 
+Focus rings are component CSS in Radix Themes (`2px solid var(--focus-8)`, the accent scale's step 8), so `semantic.ring.{width,offset}` are reported `dropped`; the ring's colour follows the `--focus-*` scale Radix derives from the overridden preset.
+
 ## Token metadata
 
 Radix is a CSS target, so it takes `/* … */` comments like shadcn. A variable that is exactly one grid cell (steps 3 to 5 and 7 to 12 of each role, and `--<role>-contrast`) carries that cell's `description` and `deprecated` (`entryNotes()` and `blockComment()` from `@transtyle/ir`) above its declaration in the `:root` block; the `.dark` and other blocks do not repeat them. Step 1 is the page surface every role shares, steps 2 and 6 are mixes, and the alpha steps are derived, so they get none. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).

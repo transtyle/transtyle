@@ -50,6 +50,13 @@
         "$type": "fontFamily",
         "$value": ["GDS Transport", "arial", "sans-serif"]
       }
+    },
+    "measurement": {
+      "focus-width": {
+        "$type": "dimension",
+        "$value": "3px",
+        "$description": "GOV.UK Frontend's $govuk-focus-width (settings/_measurements.scss): the thickness of its focus outline."
+      }
     }
   }
 }

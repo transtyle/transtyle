@@ -1868,6 +1868,48 @@
           },
           "additionalProperties": false
         },
+        "ring": {
+          "type": "object",
+          "properties": {
+            "$type": {
+              "type": "string",
+              "enum": [
+                "color",
+                "dimension",
+                "fontFamily",
+                "fontWeight",
+                "duration",
+                "cubicBezier",
+                "number",
+                "typography",
+                "shadow",
+                "border",
+                "gradient",
+                "transition",
+                "strokeStyle"
+              ]
+            },
+            "$description": {
+              "type": "string"
+            },
+            "$deprecated": {
+              "type": [
+                "boolean",
+                "string"
+              ]
+            },
+            "$extensions": {
+              "$ref": "#/$defs/extensions"
+            },
+            "offset": {
+              "$ref": "#/$defs/node"
+            },
+            "width": {
+              "$ref": "#/$defs/node"
+            }
+          },
+          "additionalProperties": false
+        },
         "size": {
           "type": "object",
           "properties": {
@@ -2850,6 +2892,8 @@
         "{semantic.radius.none}",
         "{semantic.radius.sm}",
         "{semantic.radius.xl}",
+        "{semantic.ring.offset}",
+        "{semantic.ring.width}",
         "{semantic.size.control.lg}",
         "{semantic.size.control.md}",
         "{semantic.size.control.sm}",

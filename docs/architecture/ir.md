@@ -37,11 +37,11 @@ Tier is structural (top-level group name: `option.*`, `semantic.*`, `component.*
 
 A fixed, versioned catalog of semantic slots that exporters may rely on existing after DERIVE. **The catalog — the role grid**, derived from a comparative study of ~14 design-system ecosystems ([proposal 0001](../proposals/0001-universal-token-ir.md)) to be the smallest set of concepts capable of representing all of them:
 
-<!-- measured: catalog.slots = 264 -->
-<!-- measured: catalog.semantic = 257 -->
+<!-- measured: catalog.slots = 266 -->
+<!-- measured: catalog.semantic = 259 -->
 <!-- measured: catalog.component = 7 -->
 
-**Machine-readable form:** `catalog()` in `@transtyle/core`, printed by `transtyle catalog --json` ([cli.md](../specs/cli.md#catalog--the-contract-as-data)) — 264 slots today, 257 semantic and 7 component, each with its DTCG type, the rule that fills it when unauthored, that rule's inputs and the anchor it requires. It is read off the engine by a probe compile, so it is the implemented catalog; where this page and it disagree, this page is the one to fix.
+**Machine-readable form:** `catalog()` in `@transtyle/core`, printed by `transtyle catalog --json` ([cli.md](../specs/cli.md#catalog--the-contract-as-data)) — 266 slots today, 259 semantic and 7 component, each with its DTCG type, the rule that fills it when unauthored, that rule's inputs and the anchor it requires. It is read off the engine by a probe compile, so it is the implemented catalog; where this page and it disagree, this page is the one to fix.
 
 ### Color: the role grid
 
@@ -70,7 +70,7 @@ strong         —                —               —                text-stro
 
 ### Content hierarchy
 
-`semantic.color.text.{strong, base, muted, subtle, disabled, inverse}` and `semantic.color.link.{base, hover, visited}`. (`text.base` is the _default rung_ of this ladder — not a leftover of the old `.base` state suffix, which no longer exists outside the grid.) `ring` is a single-value slot (`semantic.color.ring`).
+`semantic.color.text.{strong, base, muted, subtle, disabled, inverse}` and `semantic.color.link.{base, hover, visited}`. (`text.base` is the _default rung_ of this ladder — not a leftover of the old `.base` state suffix, which no longer exists outside the grid.) `ring` is a single-value slot (`semantic.color.ring`); its geometry is two scales, `ring.{width, offset}` ([below](#scales)).
 
 **Borders** are a ladder too, `semantic.color.border.{subtle, base, strong, field}` ([proposal 0005](../proposals/0005-border-ladder-inverse-pair.md)): content borders by strength (separators and cards, the default border, a boundary at 3:1), plus `field`, the neutral border of a form field at rest. They are the _content_ borders; the role grid's `<role>.outline` cells stay the _role-tinted_ ones (outlined buttons, alerts), the same split as `text.*` against `<role>.text`. Until proposal 0005 the catalog had one leaf, `semantic.color.border`; it was renamed in place to `border.base` under [ADR-0010](../adr/0010-pre-release-breaking-changes.md), and a token left at the old path is an error (`TST1126`), not a silent custom token.
 
@@ -82,7 +82,7 @@ strong         —                —               —                text-stro
 
 ### Scales
 
-- **Shape:** `radius.{none,sm,md,lg,xl,full}` + family aliases `radius.{control,field,container}` (each defaults to `{radius.md}`); `border-width.{thin,medium,thick}`.
+- **Shape:** `radius.{none,sm,md,lg,xl,full}` + family aliases `radius.{control,field,container}` (each defaults to `{radius.md}`); `border-width.{thin,medium,thick}`; `ring.{width,offset}`, the focus ring's outline width (defaults to `{border-width.medium}`) and its gap from the element (2px), the geometry of `color.ring` ([proposal 0002, row 8](../proposals/0002-component-theming-primeng.md#amendment-2026-10-18-row-8-decided-a-ring-width-and-a-ring-offset-no-composite)). Two scalars, the shape Chakra, Material UI, Adobe Spectrum and Material 3 use: no style (every outline-family library draws it solid) and no shadow (a rendering strategy, PrimeNG's alone). Exporters write them only when the design system authors them, itself or through `border-width.medium` (`isAuthored()` in `@transtyle/ir`), so an unauthored system keeps each target's own ring.
 - **Spacing:** `space.{0,1,2,3,4,5,6,8,10,12,16,20,24}`.
 - **Sizing:** `size.control.{sm,md,lg}` — the one component-adjacent primitive every consuming library needs pre-component-tier.
 - **Layout:** `breakpoint.{xs,sm,md,lg,xl,2xl}`; `z.{hide,base,dropdown,sticky,banner,overlay,modal,popover,toast,tooltip}` — key _order_ is the contract, values are catalog defaults unless authored.

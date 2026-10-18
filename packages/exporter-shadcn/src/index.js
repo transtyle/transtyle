@@ -120,6 +120,7 @@ export default {
     const fontSans = light.get('semantic.font.sans');
     const fontMono = light.get('semantic.font.mono');
     if (radius) coverage.push({ variable: '--radius', slot: 'semantic.radius.md', class: 'native', provenance: radius.provenance.kind });
+    coverage.push({ variable: '(focus ring width, offset)', slot: 'semantic.ring.{width,offset}', class: 'dropped', note: "shadcn's components set the ring in their classes (ring-[3px], ring-ring/50); only its colour, --ring, is a variable" });
     for (const [v, e, slot] of [['--font-sans', fontSans, 'semantic.font.sans'], ['--font-mono', fontMono, 'semantic.font.mono']]) {
       if (e) coverage.push({ variable: v, slot, class: 'native', provenance: e.provenance.kind });
     }

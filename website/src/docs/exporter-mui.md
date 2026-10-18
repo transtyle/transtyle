@@ -54,7 +54,7 @@ Every colour is written as hex: `createTheme` refuses `oklch()`, because it comp
 
 `background.default` and `background.paper` are elevation levels 0 and 1. MUI lifts a Paper (Card, Menu, Dialog) by painting an overlay over it. The exporter fills those 25 overlays per scheme with flat gradients of the design system's surfaces, so a dark Dialog shows elevation level 3, not MUI's white veil. The four elevation shadows spread over MUI's 24 by rank, and each one follows the colour scheme.
 
-The design system's focus ring turns on MUI's opt-in keyboard ring (`focusVisible`) for every focusable component, in the ring colour: [GOV.UK](/demo/govuk/mui/)'s yellow ring on its blue buttons is the proof. The Dialog backdrop takes the design system's `scrim`.
+The design system's focus ring turns on MUI's opt-in keyboard ring (`focusVisible`) for every focusable component, in the ring colour: [GOV.UK](/demo/govuk/mui/)'s yellow ring on its blue buttons is the proof. The ring's width and offset follow `ring.width` and `ring.offset` when you author them (the width itself, or through `border-width.medium`); otherwise MUI's 2px ring at 2px stays. GOV.UK's is 3px. The Dialog backdrop takes the design system's `scrim`.
 
 ## Component geometry
 

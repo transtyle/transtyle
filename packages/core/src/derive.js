@@ -457,6 +457,22 @@ export function derive(normalized, config, diagnostics, contrast = wcagContrast(
       rd(ctx, `semantic.size.control.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
     for (const [k, v] of Object.entries(BORDER_WIDTH))
       rd(ctx, `semantic.border-width.${k}`, () => v, 'catalog-default', [], PROVENANCE.DEFAULTED);
+    // Focus ring geometry (#167, proposal 0002 row 8): two scalars next to
+    // `color.ring`, the shape Chakra, MUI, Spectrum and Material 3 all use. The
+    // width is the medium border width, so a design system that authors its
+    // border scale moves its ring with it; the offset is the 2px gap every
+    // outline-family witness but Aura draws. No style (every witness is
+    // `solid`) and no shadow (a rendering strategy, PrimeNG's alone). Exporters
+    // write them only when authored (`isAuthored` in @transtyle/ir), so an
+    // unauthored design system keeps each target's own ring.
+    rd(
+      ctx,
+      'semantic.ring.width',
+      () => get(map, 'semantic.border-width.medium'),
+      'alias(border-width.medium)',
+      ['border-width.medium'],
+    );
+    rd(ctx, 'semantic.ring.offset', () => RING_OFFSET, 'catalog-default', [], PROVENANCE.DEFAULTED);
     // AL2 promotion: the one opacity meaning both reference component-heavy
     // targets independently need (PrimeNG's `disabledOpacity` constant;
     // Bootstrap's three `*-disabled-opacity` variables). Bootstrap's other
@@ -938,6 +954,8 @@ const SHADOW_LEVELS = [
 const SPACE_KEYS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
 const SIZE_CONTROL = { sm: '2rem', md: '2.25rem', lg: '2.5rem' };
 const BORDER_WIDTH = { thin: '1px', medium: '2px', thick: '4px' };
+/** The focus ring's gap from the element (#167): Chakra, MUI, Nora, Spectrum and Material 3 all draw 2px. */
+const RING_OFFSET = '2px';
 const OPACITY = { disabled: 0.6 };
 const BREAKPOINT = {
   xs: '480px',

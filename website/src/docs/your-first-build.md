@@ -42,7 +42,7 @@ npx transtyle build shadcn
 ```
 authored 14/14 recommended
 
-shadcn  41% native · 54% derived · 5% dropped
+shadcn  39% native · 53% derived · 8% dropped
   ↳ dist/shadcn/globals.transtyle.css
   ↳ dist/shadcn/usage.md
   ↳ dist/shadcn/report.json

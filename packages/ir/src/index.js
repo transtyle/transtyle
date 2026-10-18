@@ -96,6 +96,33 @@ export const PROVENANCE = {
   DEFAULTED: 'defaulted',
 };
 
+/**
+ * Whether the design system authored `path` in this mode map: the entry is
+ * `authored` or `aliased`, or its default is an `alias(<slot>)` of a slot the
+ * design system authored (`component.button.radius` from an authored
+ * `component.control.radius`, `semantic.ring.width` from an authored
+ * `semantic.border-width.medium`). A rule input is recorded relative
+ * (`control.radius`, `border-width.medium`), so the alias is qualified the way
+ * `transtyle explain` does, in the same order.
+ *
+ * Exporters that write a slot only when it is authored (the component tier in
+ * Chakra, the focus ring geometry in PrimeNG, Chakra, MUI and Bootstrap) read
+ * this, so they agree on what "authored" means.
+ */
+export function isAuthored(map, path, seen = new Set()) {
+  const entry = map?.get(path);
+  if (!entry || seen.has(path)) return false;
+  seen.add(path);
+  const kind = entry.provenance?.kind;
+  if (kind === PROVENANCE.AUTHORED || kind === PROVENANCE.ALIASED) return true;
+  const via = /^alias\(([\w.-]+)\)/.exec(entry.provenance?.rule ?? '')?.[1];
+  if (!via) return false;
+  for (const candidate of [via, `semantic.${via}`, `semantic.color.${via}`, `component.${via}`]) {
+    if (map.has(candidate)) return isAuthored(map, candidate, seen);
+  }
+  return false;
+}
+
 /** Coverage classes (docs/specs/validation-and-coverage.md). */
 export const COVERAGE = ['native', 'derived', 'approximated', 'dropped', 'unsupported'];
 

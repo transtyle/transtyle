@@ -28,7 +28,7 @@
  *    private exporter fallback table.
  */
 
-import { droppedDimensions, entryNotes, fontStack, lineComment, emitPerValue, modeBlocks, formatModeBlocks, modeBlocksUsage } from '@transtyle/ir';
+import { droppedDimensions, entryNotes, fontStack, isAuthored, lineComment, emitPerValue, modeBlocks, formatModeBlocks, modeBlocksUsage } from '@transtyle/ir';
 import { componentVariables, componentCssBlocks, buttonVariantBlocks } from './components.js';
 
 const S = 'semantic.color.';
@@ -357,6 +357,27 @@ function resolve(light, dark, ctx) {
     cls('ring'),
     'ring ← primary (F3) at Bootstrap conventional alpha .25',
   );
+  // Focus ring geometry (#167): Bootstrap draws a box-shadow halo, so the
+  // catalog's outline width becomes its spread, written only when the design
+  // system authors it (the width itself or through `border-width.medium`);
+  // Bootstrap's own .25rem stands otherwise. A halo has no gap: the offset is dropped.
+  const ringWidth = isAuthored(light, 'semantic.ring.width') ? raw(light, 'ring.width') : undefined;
+  if (ringWidth !== undefined) {
+    cov('$focus-ring-width', 'semantic.ring.width', 'native', "the halo's spread: the outline width every other target draws, at Bootstrap's alpha .25 (CSS path: --bs-focus-ring-width reaches the .focus-ring helper; components bake the Sass value)");
+  } else {
+    coverage.push({
+      variable: '$focus-ring-width',
+      slot: 'semantic.ring.width',
+      class: 'dropped',
+      note: "not authored: Bootstrap's own .25rem spread stands — author semantic.ring.width (or border-width.medium, which it defaults from) and it is driven",
+    });
+  }
+  coverage.push({
+    variable: '(focus ring offset)',
+    slot: 'semantic.ring.offset',
+    class: 'dropped',
+    note: "Bootstrap's ring is a box-shadow spread with no gap between the element and the halo: there is no offset to set",
+  });
   for (const s of SHADOWS)
     cov(
       `$box-shadow${s.name && '-' + s.name}`,
@@ -543,6 +564,7 @@ function resolve(light, dark, ctx) {
     radiusEntries: Object.fromEntries(['md', 'sm', 'lg', 'xl', 'full'].map((k) => [k, radius(k)])),
     fontSans: font('sans'),
     fontMono: font('mono'),
+    ringWidth,
     typeScale,
     spaceScale,
     hx,
@@ -630,6 +652,7 @@ function renderVariables(r, ctx) {
     '// $link-color-dark intentionally NOT emitted: Bootstrap derives it from $primary (F13)',
   );
   lines.push('$focus-ring-color: rgba($primary, .25);  // ring ← primary (F3)');
+  if (r.ringWidth !== undefined) lines.push(`$focus-ring-width: ${r.ringWidth};  // ring.width — the halo's spread`);
   lines.push(
     `$component-active-color: ${r.componentActiveColor};  // primary.on-solid — Bootstrap hardcodes $white (AL1.2 review pickup); -bg already chains from $primary`,
   );
@@ -845,6 +868,7 @@ function renderCss(r, ctx) {
   lines.push('  --bs-border-radius-pill: 50rem;');
   if (r.fontSans) lines.push(`  --bs-font-sans-serif: ${fontStack(r.fontSans.value)};`);
   if (r.fontMono) lines.push(`  --bs-font-monospace: ${fontStack(r.fontMono.value)};`);
+  if (r.ringWidth !== undefined) lines.push(`  --bs-focus-ring-width: ${r.ringWidth};  /* ring.width: reaches the .focus-ring helper; components bake the Sass value */`);
   lines.push('}');
   if (r.dark) {
     lines.push('', '[data-bs-theme="dark"] {', ...modeBlock(r.dark, true), '}');

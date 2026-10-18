@@ -65,7 +65,7 @@ Mantine's components do not read tuple indices; its variant resolver uses per-co
 
 ### Focus ring: dropped
 
-Mantine draws every focus outline (`.mantine-focus-*` and a dozen component rules) as `2px solid var(--mantine-primary-color-filled)` in its stylesheet: the primary `solid`. There is no ring variable to set; `focusClassName` would replace the global class but not the component rules. `semantic.color.ring` is reported `dropped`.
+Mantine draws every focus outline (`.mantine-focus-*` and a dozen component rules) as `2px solid var(--mantine-primary-color-filled)` in its stylesheet: the primary `solid`. There is no ring variable to set; `focusClassName` would replace the global class but not the component rules. `semantic.color.ring` is reported `dropped`, and so are `semantic.ring.{width,offset}`: the outline's 2px and its 2px offset are stylesheet constants too.
 
 ## Typography and scales
 

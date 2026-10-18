@@ -13,9 +13,9 @@ order: 15
 
 Every other reference exporter binds at the semantic tier only. PrimeNG ships its own explicit three-tier design-token system (`primitive` → `semantic` → `components`). So this exporter overrides an existing preset (`Aura`) rather than authoring one from zero. Anything it doesn't emit is inherited from Aura untouched.
 
-<!-- measured: acme.primeng.rows = 363 -->
+<!-- measured: acme.primeng.rows = 365 -->
 
-On [Acme](/docs/examples/) the emitted preset carries 363 classified slots, against the 2759-slot Aura surface the [coverage bar](/docs/concepts/#5-provenance-and-coverage) reconciles them with.
+On [Acme](/docs/examples/) the emitted preset carries 365 classified slots, against the 2759-slot Aura surface the [coverage bar](/docs/concepts/#5-provenance-and-coverage) reconciles them with.
 
 ```json
 "targets": { "primeng": { "output": "dist/primeng" } }
@@ -40,6 +40,10 @@ A custom color role (role archetypes) lands in `components.button.extend.<name>.
 `examples/*/demo/primeng/` are real, standalone Angular applications, with `providePrimeNG({ theme: { preset } })` in `app.config.ts`. The build type-checks every emitted preset against PrimeNG's own `DesignTokens` types. That catches real structural mistakes a looser toolchain wouldn't have caught: a flat object where PrimeNG expects `{ light, dark }`, or a component-specific type narrower than the shared semantic group.
 
 See it running: `npm run dev -w acme-demo-primeng` (or `cathode-demo-primeng`, `govuk-demo-primeng`, `carbon-demo-primeng`) in the [examples](/docs/examples/).
+
+## Focus ring
+
+The preset's `focusRing` takes the design system's colour through PrimeNG's own `{primary.color}` alias. Its width and offset are the catalog's `ring.width` and `ring.offset` when you author them (the width itself, or through `border-width.medium`); otherwise Aura's 1px ring at 2px stays, and `report.json` names the slot to author. [GOV.UK](/demo/govuk/primeng/) authors its 3px focus width, so its PrimeNG components draw a 3px ring.
 
 ## Descriptions and deprecations
 

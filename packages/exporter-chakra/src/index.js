@@ -26,7 +26,7 @@
  *     per-size proportions with catalog defaults.
  */
 
-import { COLOR_ROLES, Documented, droppedDimensions, fontStack, emitPerValue, withDoc, withoutDocs } from '@transtyle/ir';
+import { COLOR_ROLES, Documented, droppedDimensions, fontStack, emitPerValue, isAuthored, withDoc, withoutDocs } from '@transtyle/ir';
 import { surfaceRows } from './surface-coverage.js';
 
 const S = 'semantic.color.';
@@ -408,6 +408,22 @@ function emitOne(normalized, ctx) {
   // Route Chakra's own defaults at roles.
   const globalCss = { html: { colorPalette: 'neutral' } };
   row('globalCss.html.colorPalette', `${S}neutral.*`, 'native', "Chakra's default palette (gray) becomes the neutral role, so components without a colorPalette wear the design system's neutral grid");
+  // Focus ring geometry (#167): Chakra's focusVisibleRing reads
+  // `--focus-ring-width` and `--focus-ring-offset` with a fallback per variant
+  // (2px outside, 1px inside, 3px mixed; 2px offset outside). Set on <html>
+  // only when the design system authors the slot (the width itself or through
+  // `border-width.medium`), so Chakra's own rings stand otherwise.
+  for (const [cssVar, slot, own, stands] of [
+    ['--focus-ring-width', 'ring.width', '2px outside, 1px inside, 3px mixed', "Chakra's own widths (2px outside, 1px inside, 3px mixed) stand"],
+    ['--focus-ring-offset', 'ring.offset', '2px, outside rings only', "Chakra's own offset (2px, outside rings only) stands"],
+  ]) {
+    if (isAuthored(light, `semantic.${slot}`)) {
+      globalCss.html[cssVar] = doc(String(sem(light, slot)), `semantic.${slot}`);
+      row(`globalCss.html.${cssVar}`, `semantic.${slot}`, 'native', `every focusVisibleRing variant reads it (Chakra's own: ${own})`);
+    } else {
+      row(`globalCss.html.${cssVar}`, `semantic.${slot}`, 'dropped', `not authored: ${stands} — author semantic.${slot}${slot === 'ring.width' ? ' (or border-width.medium, which it defaults from)' : ''} and it is set`);
+    }
+  }
   for (const [status, role] of [...STATUSES, ['neutral', 'neutral']]) {
     set(slotRecipes, `alert.variants.status.${status}.root.colorPalette`, role);
   }
