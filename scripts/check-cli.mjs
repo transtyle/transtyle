@@ -1446,6 +1446,19 @@ try {
   }
 }
 
+// ---------- check.suppress on the shipped examples ----------
+// An entry whose path matches nothing leaves its warning on screen and adds
+// TST1012 (the entry matched no diagnostic). The examples must stay clean of it.
+{
+  for (const name of ['acme', 'cathode', 'govuk', 'carbon']) {
+    const r = run(['check', '--cwd', join(root, 'examples', name), '--json']);
+    let out;
+    try { out = JSON.parse(r.stdout); } catch { out = { diagnostics: [{ code: 'unparseable', message: r.out }] }; }
+    const stale = out.diagnostics.filter((x) => x.code === 'TST1012' || x.code === 'unparseable');
+    expect(`examples/${name}: every check.suppress entry matches a diagnostic (no TST1012)`, stale.length === 0, JSON.stringify(stale));
+  }
+}
+
 // ---------- #5: --out, --dry-run, --quiet, --verbose, NO_COLOR ----------
 {
   const dir = mkdtempSync(join(tmpdir(), 'transtyle-check-flags-'));
