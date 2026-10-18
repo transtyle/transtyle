@@ -504,18 +504,27 @@ const CYCLE = Symbol('alias-cycle');
  * message cannot catch. Keying on the sorted member set makes any rotation of
  * the same loop a single report; the chain is still printed in traversal order,
  * because that is what shows the user how the loop closes.
+ *
+ * Only the loop is reported (#204). A walk that came in from a tail (`x → a → b
+ * → a`) is cut at the first occurrence of the repeated token, so the message,
+ * the dedupe key and the diagnostic's location are the loop's (`a → b → a`).
+ * `x` is not on a cycle: it has no value because what it points at loops, a
+ * consequence the reported cause already explains. Returns the loop's members.
  */
 const reportedCycles = new WeakMap();
-function reportCycle(diagnostics, chain) {
+function reportCycle(diagnostics, walkedChain) {
+  const chain = walkedChain.slice(walkedChain.indexOf(walkedChain.at(-1)));
   let seen = reportedCycles.get(diagnostics);
   if (!seen) reportedCycles.set(diagnostics, (seen = new Set()));
   const key = [...new Set(chain)].sort().join('|');
-  if (seen.has(key)) return;
-  seen.add(key);
-  diagnostics.error('TST1104', `Alias cycle: ${chain.join(' → ')}`, {
-    path: chain[0],
-    hint: 'Break the loop: one of these tokens has to hold a literal value.',
-  });
+  if (!seen.has(key)) {
+    seen.add(key);
+    diagnostics.error('TST1104', `Alias cycle: ${chain.join(' → ')}`, {
+      path: chain[0],
+      hint: 'Break the loop: one of these tokens has to hold a literal value.',
+    });
+  }
+  return chain.slice(0, -1);
 }
 
 /** Per combo map, the tokens on an alias loop resolveEntry() has reported. */
@@ -554,15 +563,11 @@ function resolveEntry(map, tokenPath, stack, diagnostics) {
     if (entry.value !== undefined) { outcome = entry; break; }
     if (entry.pendingAlias || entry.pendingMembers) { outcome = DEFERRED; break; }
     if (onPath.has(path)) {
-      const walked = [...stack, ...chain];
-      reportCycle(diagnostics, [...walked, path]);
-      // Only a walk that started on the loop reported the loop's own member
-      // set; one that came in from a tail reported tail + loop, and each loop
-      // member still reports the loop alone on its own walk, as before.
-      if (walked[0] === path) {
-        if (!loopMembers.has(map)) loopMembers.set(map, new Set());
-        for (const member of walked) loopMembers.get(map).add(member);
-      }
+      const members = reportCycle(diagnostics, [...stack, ...chain, path]);
+      // Record the loop's own members whatever the walk started from, so a
+      // later walk that starts on one of them returns at once.
+      if (!loopMembers.has(map)) loopMembers.set(map, new Set());
+      for (const member of members) loopMembers.get(map).add(member);
       // AL5: a distinct sentinel, not `undefined`. Returning `undefined` made the
       // caller report TST1105 "dangling alias" on top of the cycle — which is
       // false (the target exists; it just loops) and doubled the output on the

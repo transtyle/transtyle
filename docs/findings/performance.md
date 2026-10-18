@@ -70,7 +70,6 @@ Every one is invisible at example size, and each is now covered by a check.
 
 ## Left as it is
 
-- **`TST1104` for a long tail into a loop** prints one cycle per tail token, each with the full tail: the output itself is quadratic in the tail's length. It was the behavior before, nothing realistic has such a tail, and changing what it reports is a diagnostics decision, not a performance fix: [#204](https://github.com/transtyle/transtyle/issues/204).
 - **`TST2103` clustering** compares every pair of status roles: quadratic in the number of roles archetyped `status`, about 170 in the 500-role case, which costs a few milliseconds.
 - **The linear stages** above. If a real design system ever needs it, the cheapest wins are in LOAD (the location scanner compares characters through one-character strings) and in the scale-order check (it scans the whole map once per scale per combination when a scale has no catalog rung authored).
 
