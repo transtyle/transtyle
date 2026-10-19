@@ -8,26 +8,26 @@ order: 9
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/echarts/">Acme</a> · <a href="/demo/cathode/echarts/">Cathode</a> · <a href="/demo/govuk/echarts/">GOV.UK</a> · <a href="/demo/carbon/echarts/">Carbon</a> — one page, four design systems, compiled to Apache ECharts. <a href="/demo/">All 44 demos →</a></p>
+  <p><a href="/demo/acme/echarts/">Acme</a> · <a href="/demo/cathode/echarts/">Cathode</a> · <a href="/demo/govuk/echarts/">GOV.UK</a> · <a href="/demo/carbon/echarts/">Carbon</a>: one page, four design systems, compiled to Apache ECharts. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
-The second reference exporter, and proof that Transtyle is not a CSS generator: the output is a **JSON theme object** for `echarts.registerTheme()`, colors are hex (canvas rendering), and the star of the show is a derivation problem no UI-framework target has — the **categorical data palette**.
+This is the second reference exporter, and it shows Transtyle isn't a CSS generator. The output is a **JSON theme object** for `echarts.registerTheme()`, and colors are hex (canvas rendering). The star is a derivation problem no UI-framework target has: the **categorical data palette**.
 
 <!-- measured: acme.echarts.rows = 19 -->
 
-It is also the smallest surface any target exposes — 19 classified theme keys on [Acme](/docs/examples/) — which is why the palette is the whole story here.
+It's also the smallest surface any target exposes, with 19 classified theme keys on [Acme](/docs/examples/). That's why the palette is the whole story here.
 
 ## The palette problem
 
-ECharts' most important themable value is `color: [...]` — series colors that must be _mutually distinguishable_, not just on-brand. Design systems define roles, not ten distinct hues. Transtyle derives an **8-color palette** from your brand: hues rotated in OKLCH around your primary's anchor, lightness and chroma held in bands tuned for adjacent distinguishability, re-tuned per mode for dark surfaces.
+ECharts' most important themable value is `color: [...]`, which holds series colors that must be _mutually distinguishable_, not just on-brand. Design systems define roles, not ten distinct hues. Transtyle derives an **8-color palette** from your brand: hues rotated in OKLCH around your primary's anchor, lightness and chroma held in bands tuned for adjacent distinguishability, re-tuned per mode for dark surfaces.
 
-The same palette feeds shadcn's `--chart-1…5` (the first five colors, frozen by contract) — one brand, one data-viz palette, everywhere. This is the single-source-of-truth promise applied exactly where hand-maintained themes always drift. Authored palettes win as always: author `semantic.palette.categorical.*` tokens to pin your own.
+The same palette feeds shadcn's `--chart-1…5` (the first five colors, frozen by contract). One brand, one data-viz palette, everywhere. It's the single-source-of-truth promise applied where hand-maintained themes always drift. Authored palettes win as always: author `semantic.palette.categorical.*` tokens to pin your own.
 
-Pin your own and the compiler checks them: two entries closer than ΔE<sub>OK</sub> 0.05 in a mode raise [`TST2102`](/docs/diagnostics/), because series that close can't be told apart on a chart. The derived palette never does (its closest pair is 0.082).
+Pin your own and the compiler checks them: two entries closer than ΔE<sub>OK</sub> 0.05 in a mode raise [`TST2102`](/docs/diagnostics/), because series that close can't be told apart on a chart. The derived palette never does: its closest pair is 0.082.
 
 ## Artifacts
 
-One theme per `color-scheme` mode — ECharts has no runtime mode concept, so theme-per-init is the native pattern:
+One theme per `color-scheme` mode. ECharts has no runtime mode concept, so theme-per-init is the native pattern:
 
 | File                                                       | Purpose                                                             |
 | ---------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -38,16 +38,16 @@ One theme per `color-scheme` mode — ECharts has no runtime mode concept, so th
 
 ## What maps where
 
-| Theme path                                   | Comes from                                 | Note                                                                    |
-| -------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- |
-| `color[0]` … `color[7]`                      | `palette.categorical.1–8`, one each        | derived from `primary` (or authored)                                    |
-| `backgroundColor`                            | `background.base`                          |                                                                         |
-| `textStyle.color` / `.fontFamily`            | `text.base`, `font.sans`                   | font list joined to a CSS string                                        |
-| `title`, `legend`, `axisLabel`               | `text.base`, `text-muted.base`             |                                                                         |
-| axis lines, ticks, split lines               | `border.base`                              | applied to all four axis types                                          |
-| `tooltip` background / border / text         | `overlay.base`, `border.base`, `text.base` | overlay = floating surface, as everywhere                               |
-| `tooltip.borderRadius`                       | `radius.md`                                | rem → px at `units.remBase` (16 by default) — classified `approximated` |
-| series-specific styles (candlestick, gauge…) | —                                          | honestly reported `unsupported`; extend at `init`                       |
+| Theme path                                   | Comes from                                 | Note                                                                   |
+| -------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------- |
+| `color[0]` … `color[7]`                      | `palette.categorical.1–8`, one each        | derived from `primary` (or authored)                                   |
+| `backgroundColor`                            | `background.base`                          |                                                                        |
+| `textStyle.color` / `.fontFamily`            | `text.base`, `font.sans`                   | font list joined to a CSS string                                       |
+| `title`, `legend`, `axisLabel`               | `text.base`, `text-muted.base`             |                                                                        |
+| axis lines, ticks, split lines               | `border.base`                              | applied to all four axis types                                         |
+| `tooltip` background / border / text         | `overlay.base`, `border.base`, `text.base` | overlay = floating surface, as everywhere                              |
+| `tooltip.borderRadius`                       | `radius.md`                                | rem → px at `units.remBase` (16 by default), classified `approximated` |
+| series-specific styles (candlestick, gauge…) | —                                          | reported `unsupported`; extend at `init`                               |
 
 OKLCH → hex may clamp colors outside the sRGB gamut; clamped values are classified `approximated` with a note.
 
@@ -64,11 +64,11 @@ echarts.registerTheme('acme-light', light);
 const chart = echarts.init(el, 'acme-light');
 ```
 
-Mode switching: dispose and re-init with the other theme name (ECharts fixes the theme at init). Both examples ship ECharts targets — [Cathode's](/docs/examples/#cathode--the-hostile-example) dark theme opens with phosphor green on tube-black, which is worth building just to look at.
+Mode switching: dispose and re-init with the other theme name (ECharts fixes the theme at init). Both examples ship ECharts targets. [Cathode's](/docs/examples/#cathode--the-hostile-example) dark theme opens with phosphor green on tube-black, and it's fun to build just to look at.
 
 ## Descriptions and deprecations
 
-Only the `.js` twin takes comments. In `theme.<name>.js`, a property that maps exactly one slot (the background, the text and border colours, the tooltip surface and radius, the font family) carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`), and `@deprecated <reason>` marks a deprecated slot. The `color` palette is an array of eight slots and gets none. The `.json` file holds the same theme and, being JSON, no comments.
+Only the `.js` twin takes comments. In `theme.<name>.js`, a property that maps exactly one slot (the background, the text and border colours, the tooltip surface and radius, the font family) carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`). `@deprecated <reason>` marks a deprecated slot. The `color` palette is an array of eight slots and gets none. The `.json` file holds the same theme and, being JSON, no comments.
 
 ## Contrast, motion and brand
 
