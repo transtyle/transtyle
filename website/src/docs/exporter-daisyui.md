@@ -1,6 +1,6 @@
 ---
 title: 'daisyUI exporter'
-description: "Complete daisyUI v5 themes (light + dark) from your tokens — where 'secondary' finally means secondary."
+description: "Complete daisyUI v5 themes (light + dark) from your tokens, where 'secondary' finally means secondary."
 order: 10
 ---
 
@@ -8,10 +8,10 @@ order: 10
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/daisyui/">Acme</a> · <a href="/demo/cathode/daisyui/">Cathode</a> · <a href="/demo/govuk/daisyui/">GOV.UK</a> · <a href="/demo/carbon/daisyui/">Carbon</a> — one page, four design systems, compiled to daisyUI. <a href="/demo/">All 44 demos →</a></p>
+  <p><a href="/demo/acme/daisyui/">Acme</a> · <a href="/demo/cathode/daisyui/">Cathode</a> · <a href="/demo/govuk/daisyui/">GOV.UK</a> · <a href="/demo/carbon/daisyui/">Carbon</a>. One page, four design systems, compiled to daisyUI. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
-Emits **daisyUI v5** theme blocks (Tailwind 4 era): one `@plugin "daisyui/theme"` block per color-scheme mode, OKLCH values, light as `default`, dark as `prefersdark` — standard daisyUI multi-theme behavior, generated from your design system.
+Emits **daisyUI v5** theme blocks (Tailwind 4 era): one `@plugin "daisyui/theme"` block per color-scheme mode, OKLCH values, light as `default`, dark as `prefersdark`. This is standard daisyUI multi-theme behavior, generated from your design system.
 
 <!-- measured: acme.daisyui.decls = 92 -->
 <!-- measured: acme.daisyui.rows = 25 -->
@@ -35,31 +35,31 @@ On [Acme](/docs/examples/): 92 declarations over the two blocks, from 25 classif
 
 ## The interesting part: false friends, resolved correctly
 
-daisyUI's `secondary` and `accent` are **true brand roles** — so this exporter maps them from `secondary.solid` and `accent.solid`. shadcn's identically-named variables are subtle surfaces — so that exporter maps them from `neutral.tint` and `accent.tint`. Same design system, same words, opposite mapping decisions, both correct: this is [the pivot-language principle](/docs/language/#false-friends) doing its job. Every role ships with its `-content` pair from `<role>.on-solid`, contrast-checked at derivation time.
+daisyUI's `secondary` and `accent` are **true brand roles**, so this exporter maps them from `secondary.solid` and `accent.solid`. shadcn's identically-named variables are subtle surfaces, so that exporter maps them from `neutral.tint` and `accent.tint`. Same design system, same words, opposite mapping decisions, both correct. That's [the pivot-language principle](/docs/language/#false-friends) doing its job. Every role ships with its `-content` pair from `<role>.on-solid`, contrast-checked at derivation time.
 
 ## Mapping table
 
-| daisyUI variable                                                               | Comes from                                              | Note                                                                                           |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `--color-base-100` / `-200`                                                    | `elevation.0.surface` / `elevation.1.surface`           |                                                                                                |
-| `--color-base-300`                                                             | `border.base`                                           | `approximated` — daisyUI wants a third bg-ramp step the IR doesn't define (catalog watch item) |
-| `--color-base-content`                                                         | `text.base`                                             |                                                                                                |
-| `--color-{primary,secondary,accent,neutral,info,success,warning}` + `-content` | the same-named roles' `.solid` + `.on-solid` grid cells | brand-direct                                                                                   |
-| `--color-error` + `-content`                                                   | `danger.solid` + `danger.on-solid`                      | name translation                                                                               |
-| `--radius-{selector,field,box}`                                                | `radius.md`                                             | one radius feeds three families — `approximated`                                               |
-| `--depth`, `--noise`, `--size-*`                                               | —                                                       | `dropped`: stylistic effects without token semantics; daisyUI defaults apply                   |
+| daisyUI variable                                                               | Comes from                                              | Note                                                                                          |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `--color-base-100` / `-200`                                                    | `elevation.0.surface` / `elevation.1.surface`           |                                                                                               |
+| `--color-base-300`                                                             | `border.base`                                           | `approximated`. daisyUI wants a third bg-ramp step the IR doesn't define (catalog watch item) |
+| `--color-base-content`                                                         | `text.base`                                             |                                                                                               |
+| `--color-{primary,secondary,accent,neutral,info,success,warning}` + `-content` | the same-named roles' `.solid` + `.on-solid` grid cells | brand-direct                                                                                  |
+| `--color-error` + `-content`                                                   | `danger.solid` + `danger.on-solid`                      | name translation                                                                              |
+| `--radius-{selector,field,box}`                                                | `radius.md`                                             | one radius feeds three families, `approximated`                                               |
+| `--depth`, `--noise`, `--size-*`                                               | —                                                       | `dropped`: stylistic effects without token semantics; daisyUI defaults apply                  |
 
-Because daisyUI wants every role authored-or-derived, coverage skews `derived` on minimal systems (Acme: 65% derived) — the report shows exactly which roles you might want to author. Both [examples](/docs/examples/) ship daisyUI targets.
+daisyUI wants every role authored or derived, so coverage skews `derived` on minimal systems (Acme: 65% derived). The report shows exactly which roles you might want to author. Both [examples](/docs/examples/) ship daisyUI targets.
 
 A slot's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describing-and-deprecating-tokens) are written as comment lines above its variable in the light theme block.
 
 ## Your own tokens (custom vocabulary)
 
-The theme block takes any custom property, so the `semantic.*` tokens you add outside the [catalog](/docs/concepts/#3-the-semantic-catalog) are written into each theme too, named like the [css-variables](/docs/exporter-css-variables/) target names them: GOV.UK's `semantic.color.govuk.link` becomes `--color-govuk-link`, `native`, with each theme's own value. A composite (a shadow, a typography) has no single-value form there and is reported `dropped`. Set `options.customTokens` to `"omit"` to leave them all out; each is then `dropped` in `report.json`.
+The theme block takes any custom property. So the `semantic.*` tokens you add outside the [catalog](/docs/concepts/#3-the-semantic-catalog) are written into each theme too, named like the [css-variables](/docs/exporter-css-variables/) target names them: GOV.UK's `semantic.color.govuk.link` becomes `--color-govuk-link`, `native`, with each theme's own value. A composite (a shadow, a typography) has no single-value form there and is reported `dropped`. Set `options.customTokens` to `"omit"` to leave them all out; each is then `dropped` in `report.json`.
 
 ## Custom roles (role archetypes)
 
-daisyUI's color set is **open** — any `--color-<name>` custom property is a real Tailwind utility color — so a custom role declaring `$extensions.transtyle.role` (docs/architecture/ir.md's [role archetypes](/docs/language/#color-roles-the-role-grid)) gets `--color-<name>` + `--color-<name>-content` emitted alongside the built-ins, `native`. Cathode's `crt-amber` role (archetype `status`) demonstrates this: it's authored once, with no other bindings, purely to show the open-role-set path — contrast Bootstrap/shadcn, whose closed sets can't take it at all.
+daisyUI's color set is **open**: any `--color-<name>` custom property is a real Tailwind utility color. So a custom role declaring `$extensions.transtyle.role` (docs/architecture/ir.md's [role archetypes](/docs/language/#color-roles-the-role-grid)) gets `--color-<name>` + `--color-<name>-content` emitted alongside the built-ins, `native`. Cathode's `crt-amber` role (archetype `status`) demonstrates this: it's authored once, with no other bindings, purely to show the open-role-set path. Contrast Bootstrap/shadcn, whose closed sets can't take it at all.
 
 ## Contrast, motion and brand
 
