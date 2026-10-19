@@ -65,6 +65,8 @@ npx transtyle add bootstrap
 npx transtyle build
 ```
 
+A community exporter is added by its npm name: `npx transtyle add <package>` prints its manifest, installs it with scripts off and registers the target, and asks first when the package runs code (a declarative mapping runs none).
+
 ## Targets
 
 <!-- measured: exporters = 11 -->
