@@ -6,16 +6,16 @@ order: 3
 
 # You already have a design system
 
-This is the primary use case. Your design system exists — in Figma, in Sass variables, in a brand book — with its own names and its own logic. **You do not rename anything.** You express your system in its own vocabulary, then bind Transtyle's catalog to it with one-line aliases. Five steps.
+This is the primary use case. Your design system exists in Figma, in Sass variables or in a brand book, with its own names and its own logic. **You don't rename anything.** You express your system in its own vocabulary, then bind Transtyle's catalog to it with one-line aliases. Five steps.
 
 <div class="callout"><div class="callout-title">In Figma-token terms</div>
 
-If you use primitive → alias → component token layering (Tokens Studio, Figma variables collections): your primitives go in `option.*` unchanged (a Tokens Studio export loads as it is, see [below](#coming-from-tokens-studio)), your alias layer becomes custom semantic tokens under _your_ names, and the binding file below is a second, tiny alias layer that only the build pipeline knows about. Your designers never see it.
+If you use primitive → alias → component token layering (Tokens Studio, Figma variables collections), your primitives go in `option.*` unchanged. A Tokens Studio export loads as it is, see [below](#coming-from-tokens-studio). Your alias layer becomes custom semantic tokens under _your_ names. The binding file below is a second, tiny alias layer that only the build pipeline knows about. Your designers never see it.
 </div>
 
 ## 1. Dump your raw values into `option.*`, verbatim
 
-Your palette, your names, your structure. This tier is private vocabulary — nothing downstream depends on its shape:
+Your palette, your names, your structure. This tier is private vocabulary, and nothing downstream depends on its shape:
 
 ```json
 {
@@ -30,13 +30,13 @@ Your palette, your names, your structure. This tier is private vocabulary — no
 }
 ```
 
-Paste whatever your stylesheets already contain — hex (including 4/8-digit alpha), `rgb()`/`hsl()` in either the modern or legacy comma form, `hwb()`, `lab()`, `lch()`, `oklab()`, `color(display-p3 …)`, and CSS named colors like `red` or `purple` all parse. A DTCG export from a design tool pastes as is too: its color objects (`{ "colorSpace": "srgb", "components": […], "hex": "#…" }`) are read in all fourteen DTCG color spaces. OKLCH is canonical internally; conversion is automatic, so you never retype a value to satisfy the compiler.
+Paste whatever your stylesheets already contain. Hex (including 4/8-digit alpha), `rgb()`/`hsl()` in either the modern or legacy comma form, `hwb()`, `lab()`, `lch()`, `oklab()`, `color(display-p3 …)`, and CSS named colors like `red` or `purple` all parse. A DTCG export from a design tool pastes as is too: Transtyle reads its color objects (`{ "colorSpace": "srgb", "components": […], "hex": "#…" }`) in all fourteen DTCG color spaces. OKLCH is canonical internally and conversion is automatic, so you never retype a value to satisfy the compiler.
 
-### No palette? Synthesize one — the names are throwaway
+### No palette? Synthesize one, the names are throwaway
 
-The step above assumes you _have_ a primitive tier. Plenty of real products never built one: colors are literals written at the point of use, and the same value shows up in a dozen places under a dozen different names. If that's you, you're not doing it wrong — you just have one extra job before the interesting part.
+The step above assumes you _have_ a primitive tier. Plenty of real products never built one: colors are literals written at the point of use, and the same value shows up in a dozen places under a dozen different names. If that's you, you're not doing it wrong. You just have one extra job before the interesting part.
 
-**Collect the distinct values and give them any names at all.** That's the whole task. The `option` tier is private vocabulary that nothing downstream binds to, so the names are scaffolding, not decisions — you will never defend them in a design review:
+**Collect the distinct values and give them any names at all.** That's the whole task. The `option` tier is private vocabulary that nothing downstream binds to, so the names are scaffolding, not decisions. You'll never defend them in a design review:
 
 ```json
 {
@@ -51,16 +51,16 @@ The step above assumes you _have_ a primitive tier. Plenty of real products neve
 }
 ```
 
-Naming by value (`gray-333`) or by hue-and-lightness (`blue-600`) both work and both take minutes. Resist the urge to name them semantically here — "brand-primary" belongs in step 2, where it can be argued about, not in the tier you'll regenerate whenever your palette changes.
+Naming by value (`gray-333`) or by hue-and-lightness (`blue-600`) both work and both take minutes. Resist the urge to name them semantically here. "brand-primary" belongs in step 2, where it can be argued about, not in the tier you'll regenerate whenever your palette changes.
 
 <div class="callout"><div class="callout-title">The duplication you find is a result, not an obstacle</div>
 
-In a [real run against a product with no tokens](https://github.com/transtyle/transtyle/blob/main/docs/findings/hostile-adoption.md), 89 CSS custom properties collapsed to **29 distinct values** — one gray appeared under **13 different names** (`--body-color`, `--title-color`, `--panel-color`, …), with nothing recording that they were the same decision. Discovering that is the first thing adoption pays you, before a single theme is compiled. Expect the ratio; don't be alarmed by it.
+In a [real run against a product with no tokens](https://github.com/transtyle/transtyle/blob/main/docs/findings/hostile-adoption.md), 89 CSS custom properties collapsed to **29 distinct values**. One gray appeared under **13 different names** (`--body-color`, `--title-color`, `--panel-color`, …), with nothing recording that they were the same decision. Discovering that is the first thing adoption pays you, before a single theme is compiled. Expect the ratio; don't be alarmed by it.
 </div>
 
-## 2. Express your existing semantics — with _your_ names
+## 2. Express your existing semantics with _your_ names
 
-If your system already has meaning-level names ("flame is our action color", "sand is our canvas"), write them as **custom semantic tokens**. They're first-class: carried, resolved per mode, provenance-tracked, and accounted for on every target (the build prints how many reach it through your bindings, and `report.json` lists the rest as `dropped`):
+If your system already has meaning-level names ("flame is our action color", "sand is our canvas"), write them as **custom semantic tokens**. They're first-class: carried, resolved per mode, provenance-tracked, and accounted for on every target. The build prints how many reach it through your bindings, and `report.json` lists the rest as `dropped`:
 
 ```json
 {
@@ -74,9 +74,9 @@ If your system already has meaning-level names ("flame is our action color", "sa
 }
 ```
 
-If your names are _component_-scoped rather than meaning-scoped — `--button-primary-background`, `--table-th-background`, the usual shape when a product grew its CSS organically — keep them exactly as they are. They are still your system's real vocabulary, and step 3 binds by meaning regardless of how a name is spelled. Renaming them into meaning-words here is the one thing not to do: it invents a semantic layer your team never agreed on, in a file they'll have to maintain.
+If your names are _component_-scoped rather than meaning-scoped (`--button-primary-background`, `--table-th-background`, the usual shape when a product grew its CSS organically), keep them exactly as they are. They're still your system's real vocabulary, and step 3 binds by meaning regardless of how a name is spelled. Renaming them into meaning-words here is the one thing not to do: it invents a semantic layer your team never agreed on, in a file they'd have to maintain.
 
-Mode variants go in **separate pure-DTCG files** — the recommended layout, because every file stays readable by your existing tooling (Figma, Tokens Studio, Style Dictionary) with the mode assignment in the config, not the tokens:
+Mode variants go in **separate pure-DTCG files**. That's the recommended layout: every file stays readable by your existing tooling (Figma, Tokens Studio, Style Dictionary), with the mode assignment in the config, not the tokens:
 
 ```json
 // tokens/dark.tokens.json — plain DTCG, only the tokens that vary
@@ -93,9 +93,9 @@ Mode variants go in **separate pure-DTCG files** — the recommended layout, bec
 
 (The [inline `$extensions` form](/docs/authoring-tokens/#modes) exists too, for small hand-edited systems.)
 
-## 3. Bind the catalog — the translation layer
+## 3. Bind the catalog: the translation layer
 
-One small file of aliases connects [the Transtyle language](/docs/language/) to yours. This file is _knowledge about_ your system, not part of it — keep it separate, own it in the platform team:
+One small file of aliases connects [the Transtyle language](/docs/language/) to yours. This file is _knowledge about_ your system, not part of it. Keep it separate and own it in the platform team:
 
 ```json
 {
@@ -113,9 +113,9 @@ One small file of aliases connects [the Transtyle language](/docs/language/) to 
 
 Don't translate everything on day one. Bind what you're sure of; the coverage report will show you what derivation guessed for the rest.
 
-**Start from a suggestion.** `npx transtyle bind --suggest > tokens/bindings.suggested.tokens.json` drafts this file from your own names and colors: for each slot nothing binds yet, the token that fills it, with a confidence (`high` when the name and the value agree) and the reason in its `$description`. It reads a name by its structure, not by similarity (`text-secondary` is a text rung, not the secondary role), and a slot it can't settle stays out of the file, listed as contested. It's a draft: read every line, delete what you disagree with, then add the file to `tokens`. `--rules` prints the same proposals as [`bindings` rules](/docs/configuration/#binding-rules) for the config ([CLI reference](/docs/cli/#transtyle-bind---suggest)).
+**Start from a suggestion.** `npx transtyle bind --suggest > tokens/bindings.suggested.tokens.json` drafts this file from your own names and colors. For each slot nothing binds yet, it gives the token that fills it, with a confidence (`high` when the name and the value agree) and the reason in its `$description`. It reads a name by its structure, not by similarity (`text-secondary` is a text rung, not the secondary role). A slot it can't settle stays out of the file, listed as contested. It's a draft: read every line, delete what you disagree with, then add the file to `tokens`. `--rules` prints the same proposals as [`bindings` rules](/docs/configuration/#binding-rules) for the config ([CLI reference](/docs/cli/#transtyle-bind---suggest)).
 
-A binding can also point at another catalog slot when two meanings share a colour in your system: `"secondary": { "solid": { "$value": "{semantic.color.info.solid}" } }` makes secondary the info blue and still derives secondary's own grid (hover, tint, on-colours), whatever the order of the roles. The one limit is a slot derived after the role grids: bound to `ring`, `link.*` or `palette.categorical.*`, a role keeps the colour but gets no grid, and `TST1205` [says so](/docs/diagnostics/).
+A binding can also point at another catalog slot when two meanings share a colour in your system. `"secondary": { "solid": { "$value": "{semantic.color.info.solid}" } }` makes secondary the info blue and still derives secondary's own grid (hover, tint, on-colours), whatever the order of the roles. The one limit is a slot derived after the role grids. Bound to `ring`, `link.*` or `palette.categorical.*`, a role keeps the colour but gets no grid, and `TST1205` [says so](/docs/diagnostics/).
 
 ## 4. Build, and read the report
 
@@ -123,19 +123,19 @@ A binding can also point at another catalog slot when two meanings share a colou
 npx transtyle build
 ```
 
-Open `report.json` (or read the `· derived` comments in the output). Every variable is classified: what came from _your_ system, what was derived from it, what was approximated. Derived values aren't wrong — they're **proposals computed from your brand**. The hover states and tinted backgrounds will already be coherent with your colors.
+Open `report.json` (or read the `· derived` comments in the output). Every variable is classified: what came from _your_ system, what was derived from it, what was approximated. Derived values aren't wrong. They're **proposals computed from your brand**. The hover states and tinted backgrounds will already be coherent with your colors.
 
-Then read what is left on your side: `npx transtyle check` ends with an adoption block that counts your own semantic tokens and lists the ones no catalog slot reads. Those reach css-variables verbatim and no other target. Each comes with hints: the slots already set to the same value (GOV.UK's `govuk.focus-text` is "same value as `text.base`", the black drawn on the yellow focus state, which the catalog has no foreground slot for), or the slot whose name it shadows (`semantic.color.surface` is not the page background; `elevation.0.surface` is). Bind it, or keep it as a css-variables-only token on purpose. `check --json` carries the same report as `adoption`.
+Then read what is left on your side: `npx transtyle check` ends with an adoption block that counts your own semantic tokens and lists the ones no catalog slot reads. Those reach css-variables verbatim and no other target. Each comes with hints: the slots already set to the same value, or the slot whose name it shadows. GOV.UK's `govuk.focus-text` is "same value as `text.base`", the black drawn on the yellow focus state, which the catalog has no foreground slot for. `semantic.color.surface` is not the page background; `elevation.0.surface` is. Bind it, or keep it as a css-variables-only token on purpose. `check --json` carries the same report as `adoption`.
 
 ## 5. Tighten as trust grows
 
-Where a derived value contradicts your system, bind it — one alias, versioned, visible. When your vocabulary is regular (a ramp per role), one [`bindings` rule](/docs/configuration/#binding-rules) binds the whole grid instead of one alias per cell. When bindings stabilize, encode policy:
+Where a derived value contradicts your system, bind it with one alias, versioned and visible. When your vocabulary is regular (a ramp per role), one [`bindings` rule](/docs/configuration/#binding-rules) binds the whole grid instead of one alias per cell. When bindings stabilize, encode policy:
 
 ```json
 "derivation": { "require": ["semantic.color.primary", "semantic.color.danger"] }
 ```
 
-Now a build fails if someone deletes the binding and derivation silently takes over. Your migration is done when the report's authored/derived split matches your intent — not when it hits 100% authored. Most systems settle around 40–60% authored; the rest is coherent derivation that tracks your brand automatically. For which slots are worth a decision first, run `npx transtyle check --completeness complete`: it lists them in order ([completeness levels](/docs/derivation/#what-to-author-next-completeness-levels)), and `"require": ["completeness:recommended"]` makes a whole level policy.
+Now a build fails if someone deletes the binding and derivation silently takes over. Your migration is done when the report's authored/derived split matches your intent, not when it hits 100% authored. Most systems settle around 40–60% authored; the rest is coherent derivation that tracks your brand automatically. To see which slots deserve a decision first, run `npx transtyle check --completeness complete`: it lists them in order ([completeness levels](/docs/derivation/#what-to-author-next-completeness-levels)), and `"require": ["completeness:recommended"]` makes a whole level policy.
 
 ## Coming from Tokens Studio
 
@@ -164,7 +164,7 @@ Math, references inside values, Figma weight names, unitless pixels and the lega
 
 <div class="callout warn"><div class="callout-title">Practitioner warning</div>
 
-The failures we see are never technical — they're these two, both preventable on day one.
+The failures we see are never technical. They're these two, both preventable on day one.
 </div>
 
-**Don't rename your system into our catalog.** The catalog names never leak into your design language — they're the compilation interface. If your team says "flame", your tokens say "flame" forever. **Don't bind by name similarity.** Your "secondary" and shadcn's `--secondary` and Bootstrap's `$secondary` are three different concepts that happen to share a word — bind by _meaning_, and read [the language reference](/docs/language/#false-friends) before assuming. `check` notes the two known cases (`TST1124`): `secondary.solid` or `accent.solid` bound to a token of that name whose value is the gray or the wash shadcn means by the word. The [Cathode example](/docs/examples/#cathode--the-hostile-example) runs this whole playbook against a maximally alien system, with file layout included.
+**Don't rename your system into our catalog.** The catalog names never leak into your design language. They're the compilation interface. If your team says "flame", your tokens say "flame" forever. **Don't bind by name similarity.** Your "secondary" and shadcn's `--secondary` and Bootstrap's `$secondary` are three different concepts that happen to share a word, so bind by _meaning_, and read [the language reference](/docs/language/#false-friends) before assuming. `check` notes the two known cases (`TST1124`): `secondary.solid` or `accent.solid` bound to a token of that name whose value is the gray or the wash shadcn means by the word. The [Cathode example](/docs/examples/#cathode--the-hostile-example) runs this whole playbook against a maximally alien system, with file layout included.
