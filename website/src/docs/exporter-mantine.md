@@ -8,7 +8,7 @@ order: 16
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/mantine/">Acme</a> · <a href="/demo/cathode/mantine/">Cathode</a> · <a href="/demo/govuk/mantine/">GOV.UK</a> · <a href="/demo/carbon/mantine/">Carbon</a> — one page, four design systems, compiled to Mantine. <a href="/demo/">All 44 demos →</a></p>
+  <p><a href="/demo/acme/mantine/">Acme</a> · <a href="/demo/cathode/mantine/">Cathode</a> · <a href="/demo/govuk/mantine/">GOV.UK</a> · <a href="/demo/carbon/mantine/">Carbon</a>: one page, four design systems, compiled to Mantine. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
 [Mantine](https://mantine.dev/) themes through one object passed to `<MantineProvider>`: colours are named ten-shade tuples, `primaryShade` picks the filled shade per scheme, and `virtualColor()` lets one name stand for a different tuple in light and in dark. That is [the role grid](/docs/language/#color-roles-the-role-grid) in another shape, so this exporter is mostly a mapping table. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `theme` and `cssVariablesResolver`.
@@ -36,7 +36,7 @@ Every role is then a colour name: `<Button color="danger">`, `<Badge color="succ
 
 ## Why a resolver, and no override stylesheet
 
-Mantine writes its CSS variables **at runtime**, in a `<style>` it renders inside the React tree, after anything in `<head>`. A stylesheet overriding `--mantine-*` variables loses that cascade for every variable Mantine writes itself. The provider's `cssVariablesResolver` result is merged over Mantine's own values instead, so the compiled colours always win. That is the whole reason the output is a resolver and not a CSS file.
+Mantine writes its CSS variables **at runtime**, in a `<style>` it renders inside the React tree, after anything in `<head>`. A stylesheet overriding `--mantine-*` variables loses that cascade for every variable Mantine writes itself. The provider's `cssVariablesResolver` result is merged over Mantine's own values instead, so the compiled colours always win. That's the whole reason the output is a resolver and not a CSS file.
 
 ## Colours
 
@@ -46,17 +46,17 @@ Each role becomes `virtualColor({ name, light: '<role>-light', dark: '<role>-dar
 | ----- | ----------------------------- | ----------------- | --------------------------- | ------ | ------------- |
 | Cell  | `tint` · `-hover` · `-active` | `outline` · hover | `solid` · `-hover` · active | `text` | `text-strong` |
 
-All ten are direct grid cells, and `primaryShade` is 5, the solid. But Mantine's components don't read tuple positions: they read per-colour variables such as `--mantine-color-danger-filled`, `-light` and `-outline`. The resolver sets each of those per scheme straight from the grid, so every variant shows the compiled colour. Three are honest approximations, because Mantine's variable means something the catalog's same-named cell does not:
+All ten are direct grid cells, and `primaryShade` is 5, the solid. But Mantine's components don't read tuple positions: they read per-colour variables such as `--mantine-color-danger-filled`, `-light` and `-outline`. The resolver sets each of those per scheme straight from the grid, so every variant shows the compiled colour. Three are approximations, because Mantine's variable means something the catalog's same-named cell doesn't:
 
-| Mantine          | Comes from | Why it is approximated                                                                              |
-| ---------------- | ---------- | --------------------------------------------------------------------------------------------------- |
-| `-outline`       | `text`     | it is the outline variant's border **and** its label; the catalog's `outline` is too light for text |
-| `-outline-hover` | `tint`     | it is a hovered **background**; the catalog's `outline-hover` is a hovered border                   |
-| `-light-color`   | `on-tint`  | one variable for text on the tint and on the page                                                   |
+| Mantine          | Comes from | Why it's approximated                                                                              |
+| ---------------- | ---------- | -------------------------------------------------------------------------------------------------- |
+| `-outline`       | `text`     | it's the outline variant's border **and** its label; the catalog's `outline` is too light for text |
+| `-outline-hover` | `tint`     | it's a hovered **background**; the catalog's `outline-hover` is a hovered border                   |
+| `-light-color`   | `on-tint`  | one variable for text on the tint and on the page                                                  |
 
-`autoContrast` is on, so filled buttons take their text from `--mantine-color-<role>-contrast`, the role's `on-solid`. [Cathode](/demo/cathode/mantine/) shows why that matters: its phosphor-green buttons carry dark text, where Mantine's default would put white on them.
+`autoContrast` is on, so filled buttons take their text from `--mantine-color-<role>-contrast`, the role's `on-solid`. [Cathode](/demo/cathode/mantine/) shows it: its phosphor-green buttons carry dark text, where Mantine's default would put white on them.
 
-Mantine's two neutral tuples, `gray` and `dark`, are read directly by its stylesheet hundreds of times (borders, inputs, the default variant), so they are filled from the light and the dark neutral ladders, at the positions Mantine's own page variables read.
+Mantine's two neutral tuples, `gray` and `dark`, are read directly by its stylesheet hundreds of times (borders, inputs, the default variant). They're filled from the light and the dark neutral ladders, at the positions Mantine's own page variables read.
 
 ## What Mantine has no slot for
 
@@ -71,7 +71,7 @@ Mantine's two neutral tuples, `gray` and `dark`, are read directly by its styles
 <!-- measured: acme.mantine.follow = 66 -->
 <!-- measured: acme.mantine.default = 31 -->
 
-The rows above say what the exporter maps. A checked-in inventory says what there is to map: 203 entries extracted from the installed `@mantine/core`, every leaf of `DEFAULT_THEME` and every variable `defaultCssVariablesResolver` writes. Ten of Mantine's fourteen default palettes fold into one `<color>` entry; `gray`, `dark`, `red` and `teal` stay named, because Mantine's own page variables read them. On Acme, this theme sets 106 entries, Mantine computes 66 more from those (`--mantine-font-size-xs` from `fontSizes.xs`, `--mantine-primary-color-filled` from `primaryColor` and the role's filled colour), and 31 keep Mantine's value, each on its own row in `report.json` with the reason: behaviour switches such as `focusRing` and `cursorType`, the gradient variant, `scale`, the unread z-index variables. The [coverage bar](/docs/concepts/#5-provenance-and-coverage) fails the build when an entry is unaccounted for or kept without a reason.
+The rows above say what the exporter maps. A checked-in inventory says what there is to map: 203 entries extracted from the installed `@mantine/core`, every leaf of `DEFAULT_THEME` and every variable `defaultCssVariablesResolver` writes. Ten of Mantine's fourteen default palettes fold into one `<color>` entry; `gray`, `dark`, `red` and `teal` stay named, because Mantine's own page variables read them. On Acme, this theme sets 106 entries. Mantine computes 66 more from those (`--mantine-font-size-xs` from `fontSizes.xs`, `--mantine-primary-color-filled` from `primaryColor` and the role's filled colour). The other 31 keep Mantine's value, each on its own row in `report.json` with the reason: behaviour switches such as `focusRing` and `cursorType`, the gradient variant, `scale`, the unread z-index variables. The [coverage bar](/docs/concepts/#5-provenance-and-coverage) fails the build when an entry is unaccounted for or kept without a reason.
 
 Component geometry goes through Mantine's data-only routes, `defaultProps` and `styles`: button and control radius, the default button's horizontal padding, and control heights mapped default size to default size. Inputs and buttons are height-driven, so vertical padding is dropped. The full mapping is in the [exporter spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/exporters/mantine.md).
 
@@ -79,7 +79,7 @@ See it running on real Mantine components: `npm run dev -w acme-demo-mantine` (o
 
 ## Descriptions and deprecations
 
-A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the font families, the scales (`fontSizes`, `lineHeights`, `fontWeights`, `radius`, `defaultRadius`, `spacing`, `shadows`, `breakpoints`) and the light block of the `cssVariablesResolver`; the dark block maps the same slots and does not repeat them. The colour tuples and the component tier read several slots and get none.
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`). The description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the font families, the scales (`fontSizes`, `lineHeights`, `fontWeights`, `radius`, `defaultRadius`, `spacing`, `shadows`, `breakpoints`) and the light block of the `cssVariablesResolver`; the dark block maps the same slots and doesn't repeat them. The colour tuples and the component tier read several slots and get none.
 
 ## Contrast, motion and brand
 
