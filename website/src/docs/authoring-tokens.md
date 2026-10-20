@@ -33,11 +33,15 @@ Supported `$type`s today: `color` (see [Colors](#colors) below), `dimension`, `d
 | `fontWeight`  | `600`                            | `"semi-bold"`                          |
 | `fontFamily`  | `"Inter, system-ui, sans-serif"` | `["Inter", "system-ui", "sans-serif"]` |
 
-Dimension units are `px` or `rem`, duration units `ms` or `s`; a cubicBezier's x1 and x2 lie between 0 and 1; a DTCG weight keyword compiles to its number; a `fontFamily` string is read as a CSS font list, split on its commas, with quotes around a name (`"'Helvetica Neue', Arial"`) optional, and a `var(…)` kept whole. Both forms compile to the same output on every target, and the same members inside `typography`, `shadow`, `border` and `transition` composites accept both too. A structured value that doesn't fit (a missing or unknown unit, a string where a number belongs, an unknown weight keyword, an empty font name) stops the build with `TST1106` and a hint naming the accepted forms.
+Dimension units are `px` or `rem`, and duration units are `ms` or `s`. A cubicBezier's x1 and x2 lie between 0 and 1. A DTCG weight keyword compiles to its number. A `fontFamily` string is read as a CSS font list split on its commas. Quotes around a name (`"'Helvetica Neue', Arial"`) are optional, and a `var(…)` is kept whole.
+
+Both forms compile to the same output on every target. The same members inside `typography`, `shadow`, `border` and `transition` composites accept both too.
+
+A structured value that doesn't fit stops the build with `TST1106` and a hint naming the accepted forms. That covers a missing or unknown unit, a string where a number belongs, an unknown weight keyword and an empty font name.
 
 ### Colors
 
-A `color` takes any CSS color a stylesheet holds: `#hex` (3, 4, 6 or 8 digits, alpha included), `rgb()`/`rgba()` and `hsl()`/`hsla()` in the modern or legacy comma form, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()`, `color()` with a predefined space (`srgb`, `srgb-linear`, `display-p3`, `a98-rgb`, `prophoto-rgb`, `rec2020`, `xyz`, `xyz-d50`, `xyz-d65`), the CSS named colors and `transparent`. It also takes the DTCG color object, which is what design tools export:
+A `color` takes any CSS color a stylesheet holds: `#hex` (3, 4, 6 or 8 digits, alpha included), `rgb()`/`rgba()` and `hsl()`/`hsla()` in the modern or legacy comma form, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()`, `color()` with a predefined space (`srgb`, `srgb-linear`, `display-p3`, `a98-rgb`, `prophoto-rgb`, `rec2020`, `xyz`, `xyz-d50`, `xyz-d65`), the CSS named colors and `transparent`. It also takes the DTCG color object that design tools export:
 
 ```json
 {
@@ -55,7 +59,9 @@ Every form becomes the same OKLCH value: `{ "colorSpace": "srgb", "components": 
 
 ### Composites
 
-A composite's members follow the same rules as top-level tokens: a color member parses like a `color` token, any member may be an alias — including to a slot the engine derives, like `scrim` — and a malformed or missing member is reported under its own path (`TST1106` on `semantic.color.elevation.1.shadow.color`). Members a stylesheet writes positionally are required, as DTCG specifies: all five of a `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), and all three of a `border` (`color`, `width`, `style`) or a `transition` (`duration`, `delay`, `timingFunction`). A `shadow` may also be an array of layers, stacked first-on-top as in CSS, each with an optional `inset: true`:
+A composite's members follow the same rules as top-level tokens. A color member parses like a `color` token. Any member may be an alias, including to a slot the engine derives, like `scrim`. A malformed or missing member is reported under its own path (`TST1106` on `semantic.color.elevation.1.shadow.color`).
+
+Members a stylesheet writes positionally are required, as DTCG specifies: all five of a `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), and all three of a `border` (`color`, `width`, `style`) or a `transition` (`duration`, `delay`, `timingFunction`). A `shadow` may also be an array of layers, stacked first-on-top as in CSS, each with an optional `inset: true`:
 
 ```json
 {
@@ -129,17 +135,17 @@ DTCG's `$description` and `$deprecated` travel with the token:
 }
 ```
 
-- **The description** is written as a comment above the variable in the targets whose files take comments (CSS variables, shadcn, daisyUI, and Bootstrap's theme colours), added to the slot's items in every `report.json`, and printed by [`transtyle explain`](/docs/cli/#transtyle-explain-slot---mode-name). Only its first line goes into a comment. A slot bound to another token keeps its own description, not its target's.
-- **`$deprecated`** is `true` or a sentence saying why and what to use instead. Set on a group, it covers every token in it; a token opts out with `"$deprecated": false`. A semantic or component slot whose value still reaches a deprecated token warns `TST1122`, with your sentence as the hint, and every target's `usage.md` gets a "Deprecated tokens" section listing the variables still fed by it. With `check.failOn: "warning"` that fails the build until the binding moves; a planned deprecation can be [suppressed](/docs/diagnostics/#suppressing-a-diagnostic) by the slot's `path` meanwhile. A deprecated option token nothing reads stays silent.
+- **The description** becomes a comment above the variable in the targets whose files take comments (CSS variables, shadcn, daisyUI, and Bootstrap's theme colours). It's also added to the slot's items in every `report.json` and printed by [`transtyle explain`](/docs/cli/#transtyle-explain-slot---mode-name). Only its first line goes into a comment. A slot bound to another token keeps its own description, not its target's.
+- **`$deprecated`** is `true` or a sentence saying why and what to use instead. Set on a group, it covers every token in it; a token opts out with `"$deprecated": false`. A semantic or component slot whose value still reaches a deprecated token warns `TST1122`, with your sentence as the hint. Every target's `usage.md` also gets a "Deprecated tokens" section listing the variables still fed by it. With `check.failOn: "warning"` that fails the build until the binding moves; a planned deprecation can be [suppressed](/docs/diagnostics/#suppressing-a-diagnostic) by the slot's `path` meanwhile. A deprecated option token nothing reads stays silent.
 - A description that isn't a string, or a `$deprecated` that isn't `true`, `false` or a string, warns `TST1311` and is ignored.
 
 ## Tiers
 
-Top-level groups declare the tier: `option` (your raw palette, private), `semantic` (meaning — where exporters bind), `component` (parsed and carried, reserved for v2). Custom semantic tokens beyond the [catalog](/docs/concepts/#3-the-semantic-catalog) are welcome — see the binding pattern below.
+Top-level groups declare the tier: `option` (your raw palette, private), `semantic` (meaning, where exporters bind), `component` (parsed and carried, reserved for v2). Custom semantic tokens beyond the [catalog](/docs/concepts/#3-the-semantic-catalog) are welcome; see the binding pattern below.
 
 ## Modes
 
-Two equivalent forms. **Mode-scoped layer files** are the recommended default: every token file stays pure DTCG (readable by Figma, Tokens Studio, Style Dictionary — nothing Transtyle-specific inside), and the mode assignment lives in the config:
+Two equivalent forms. **Mode-scoped layer files** are the recommended default: every token file stays pure DTCG (readable by Figma, Tokens Studio, Style Dictionary, with nothing Transtyle-specific inside), and the mode assignment lives in the config:
 
 ```json
 "tokens": [
@@ -150,7 +156,7 @@ Two equivalent forms. **Mode-scoped layer files** are the recommended default: e
 
 `dark.tokens.json` then contains plain `$value`s for whichever tokens vary. This is also the form that scales: generated files, per-mode ownership, and new dimensions (density, brand) each stay their own file.
 
-The **inline** alternative, via the sanctioned `$extensions` mechanism, keeps a token and all its mode values in one place — convenient for small systems that hand-edit token files:
+The **inline** alternative, via the sanctioned `$extensions` mechanism, keeps a token and all its mode values in one place, which suits small systems that hand-edit token files:
 
 ```json
 {
@@ -184,11 +190,13 @@ A layer may name several dimensions. Its values then apply to that one combinati
 
 `globex.tokens.json` holds Globex's light primary, `globex-dark.tokens.json` its dark one. Leave the second file out and dark + Globex gets Globex's light primary, with a `TST1125` warning naming the combination. See [Combo layers](/docs/configuration/#combo-layers), and [Contrast, motion and brand](/docs/configuration/#contrast-motion-and-brand) for what the exporters do with those three dimensions.
 
-Another way to give each brand its own dark value, with no combo layer: keep the brand's colors at the option tier, overridden per brand (`option.color.brand.accent` and `option.color.brand.accent-dark` in `globex.tokens.json`), and let the semantic token alias one per scheme (`primary.solid` aliases `accent` in light and `accent-dark` in dark). A brand layer can only change tokens the base already defines (`TST1107` otherwise), so every brand overrides the same option tokens.
+Another way to give each brand its own dark value, with no combo layer: keep the brand's colors at the option tier, overridden per brand (`option.color.brand.accent` and `option.color.brand.accent-dark` in `globex.tokens.json`). Then let the semantic token alias one per scheme (`primary.solid` aliases `accent` in light and `accent-dark` in dark).
+
+A brand layer can only change tokens the base already defines (`TST1107` otherwise), so every brand overrides the same option tokens.
 
 ## The layered layout (recommended for teams)
 
-The pattern the [Cathode example](/docs/examples/#cathode--the-hostile-example) demonstrates — three kinds of files, every one pure DTCG:
+The pattern the [Cathode example](/docs/examples/#cathode--the-hostile-example) demonstrates, with three kinds of files, every one pure DTCG:
 
 | Layer           | Contains                                                              | Typical owner                       |
 | --------------- | --------------------------------------------------------------------- | ----------------------------------- |
@@ -204,7 +212,7 @@ The pattern the [Cathode example](/docs/examples/#cathode--the-hostile-example) 
 ]
 ```
 
-Enterprise layering (core system, business-unit overlay, product overlay) redefines tokens in every layer on purpose. Mark those layers `"override": true` so the redefinitions are not reported as accidental duplicates (`TST1103`):
+Enterprise layering (core system, business-unit overlay, product overlay) redefines tokens in every layer on purpose. Mark those layers `"override": true` so the redefinitions aren't reported as accidental duplicates (`TST1103`):
 
 ```json
 "tokens": [
@@ -221,7 +229,7 @@ When the vocabulary is regular, the bindings layer can be a few [`bindings` rule
 
 ## Authoring rules of thumb
 
-- **Author meaning, not mechanics.** Give Transtyle `primary` and your neutrals; let [derivation](/docs/derivation/) produce hover states, on-colors, and tints — then override the few you disagree with, in tokens, where the override is visible and versioned.
+- **Author meaning, not mechanics.** Give Transtyle `primary` and your neutrals; let [derivation](/docs/derivation/) produce hover states, on-colors, and tints. Then override the few you disagree with, in tokens, where the override is visible and versioned.
 - **Author dark values for your neutrals** (background, surface, text, border). Auto-dark derivation exists but is off by default, deliberately.
 - **Prefer OKLCH.** It's the internal canonical space; authoring in it means no conversion surprises, and lightness/chroma read meaningfully.
-- **A token defined twice across files warns** (`TST1103`). Don't rely on merge order for values — that's how token repos rot; use explicit layering instead: a layer that redefines tokens on purpose is marked `"override": true` in the [`tokens` manifest](/docs/configuration/#override-layers), and then warns about nothing.
+- **A token defined twice across files warns** (`TST1103`). Don't rely on merge order for values, because that's how token repos rot. Use explicit layering instead: mark a layer that redefines tokens on purpose `"override": true` in the [`tokens` manifest](/docs/configuration/#override-layers), and it warns about nothing.
