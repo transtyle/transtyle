@@ -6,7 +6,7 @@ order: 7
 
 # CLI reference
 
-One binary, subcommands. Human logs go to **stderr**; requested data goes to stdout; exit codes are stable. All variant selection lives in [config](/docs/configuration/), never in flags — same command, same output, on every machine.
+One binary, subcommands. Human logs go to **stderr**; requested data goes to stdout; exit codes are stable. All variant selection lives in [config](/docs/configuration/), never in flags, so the same command gives the same output on every machine.
 
 ## Implemented
 
@@ -30,7 +30,7 @@ npx transtyle build shadcn
 # ✔ build complete
 ```
 
-The first line is the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`check.completeness`, default `recommended`) and how many of its items you author; it is printed once, whatever the number of targets. Per instance, emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list; the [report viewer](/report/) draws one as a page) and `transtyle-manifest.json`, the emitted-file manifest: a sha256 of each artifact, so the next `build` or `check` can tell when one was changed by hand (see [Drift detection](#drift-detection)). If any `error`-level diagnostic exists, nothing is emitted — a build never half-succeeds.
+The first line is the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`check.completeness`, default `recommended`) and how many of its items you author; it's printed once, whatever the number of targets. Per instance, `build` emits the exporter's artifacts plus `report.json` (schema-versioned: coverage items, the catalog slots the exporter read, diagnostics, file list; the [report viewer](/report/) draws one as a page) and `transtyle-manifest.json`. The manifest holds a sha256 of each artifact, so the next `build` or `check` can tell when one was changed by hand (see [Drift detection](#drift-detection)). If any `error`-level diagnostic exists, nothing is emitted. A build never half-succeeds.
 
 A file that an earlier build wrote in the output directory and this one no longer produces (a renamed theme, an option that drops a file) is never deleted. The build that stops producing it lists it once, under its target:
 
@@ -40,7 +40,7 @@ A file that an earlier build wrote in the output directory and this one no longe
 
 Delete it if nothing uses it. The new manifest no longer lists it.
 
-When the design system has custom semantic tokens (its own `semantic.*` names outside the catalog), each target gets one more line under its bar, `custom vocabulary: 14 tokens, 10 reach this target via bindings, 4 have no path`, and the tokens without a path are `dropped` rows named `(custom:<path>)`. They stay out of the percentages: they describe your vocabulary, not the target ([coverage spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/validation-and-coverage.md#custom-vocabulary)).
+When the design system has custom semantic tokens (its own `semantic.*` names outside the catalog), each target gets one more line under its bar, `custom vocabulary: 14 tokens, 10 reach this target via bindings, 4 have no path`. The tokens without a path are `dropped` rows named `(custom:<path>)`. They stay out of the percentages because they describe your vocabulary, not the target ([coverage spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/validation-and-coverage.md#custom-vocabulary)).
 
 ### `--out <dir>`, `--dry-run`
 
@@ -61,11 +61,11 @@ npx transtyle build --dry-run --out /tmp/themes
 
 `build` and `check`. `--quiet` prints only what explains a failure: errors, warnings when `check.failOn` is `warning`, and the `✖ failed` line. A successful run prints nothing on stderr, and what you asked for on stdout (`check --json`) is unchanged. `--verbose` adds, per target, the exporter, its options, the output directory, the row counts and each file's size, and prints the stack of a crashed exporter or a fatal error; `TRANSTYLE_DEBUG=1` is the same switch. The two together exit 2. Neither is accepted by the commands whose output is the answer (`explain`, `diff`, `catalog`, `bindings`).
 
-The CLI never colors its output, so `NO_COLOR` changes nothing there; it is honored by contract. The one place color is possible is the chip `init` prints on a terminal, which `NO_COLOR` turns off.
+The CLI never colors its output, so `NO_COLOR` changes nothing there; it's honored by contract. The one place color is possible is the chip `init` prints on a terminal, which `NO_COLOR` turns off.
 
 ### `transtyle check [instance...]`
 
-The pipeline minus EMIT — same code path, guaranteed to agree with real builds. Runs schema validation, alias/cycle detection, mode validation, contrast checks (WCAG 2.1, or APCA when [configured](/docs/configuration/#wcag-21-or-apca)), coverage computation and drift detection, writing nothing.
+The pipeline minus EMIT. It runs the same code path, so it's guaranteed to agree with real builds. It runs schema validation, alias/cycle detection, mode validation, contrast checks (WCAG 2.1, or APCA when [configured](/docs/configuration/#wcag-21-or-apca)), coverage computation and drift detection, writing nothing.
 
 ### Drift detection
 
@@ -76,7 +76,7 @@ Every generated file says "do not edit"; the manifest is what checks it. Before 
   ↳ `transtyle build shadcn` overwrites it with the generated file. Make the change in the tokens or the config to keep it; if a formatter or linter rewrote it, exclude dist/shadcn/ from that tool.
 ```
 
-- It is a warning: `check` fails on it only under `check.failOn: "warning"`, and it can be silenced with [`check.suppress`](/docs/diagnostics/#suppressing-a-diagnostic) like any other warning.
+- It's a warning: `check` fails on it only under `check.failOn: "warning"`, and it can be silenced with [`check.suppress`](/docs/diagnostics/#suppressing-a-diagnostic) like any other warning.
 - `build` warns, then overwrites: the message appears at the moment the edit is lost (it is still in version control if the output is committed). `build --dry-run` warns and writes nothing.
 - The manifest moves with the output: with `build --out <dir>` it is read from and written to `<dir>/<instance name>`.
 - Line endings don't count: hashes are taken with CRLF turned into LF, so a checkout with `core.autocrlf` is not reported.
@@ -94,7 +94,7 @@ A file can also be unedited and still wrong: you changed a token and forgot to r
 
 ### `--completeness <level>`
 
-`check` only. Lists what is still worth authoring for a [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`minimal`, `recommended` or `complete`), in the order it pays off, on **stdout**: each slot with its state (`missing`, `derived by <rule>`, `defaulted by <rule>`, `carried over from the default scheme`, or for a scale `k/n authored`) and why it matters. The exit code doesn't change; `derivation.require: ["completeness:<level>"]` is how a team makes a level mandatory.
+`check` only. Lists what's still left to author for a [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) (`minimal`, `recommended` or `complete`), in the order it pays off, on **stdout**. Each slot with its state (`missing`, `derived by <rule>`, `defaulted by <rule>`, `carried over from the default scheme`, or for a scale `k/n authored`) and why. The exit code doesn't change; `derivation.require: ["completeness:<level>"]` is how a team makes a level mandatory.
 
 ```bash
 npx transtyle check --completeness complete --cwd examples/acme
@@ -111,7 +111,7 @@ npx transtyle check --completeness complete --cwd examples/acme
 
 ### Adoption report
 
-After the diagnostics, `check` prints an **adoption** block when the project has vocabulary of its own: the `semantic.*` tokens that are not catalog slots, how many of them a catalog slot reads (following the alias chain, in every mode), and the ones none reads, each with hints. An unbound token reaches css-variables verbatim and no other target. A hint names the catalog slots already set to the same value, or the slot whose name the token shadows (`semantic.color.surface` for `elevation.0.surface`). Roles declared with `$extensions.transtyle.role` are listed apart: their grid is derived like a built-in role's. A project that authors catalog paths only gets no block, and `--quiet` leaves it out (`--json` still carries it).
+After the diagnostics, `check` prints an **adoption** block when the project has vocabulary of its own. The block lists the `semantic.*` tokens that aren't catalog slots, how many of them a catalog slot reads (following the alias chain, in every mode), and the ones none reads, each with hints. An unbound token reaches css-variables verbatim and no other target. A hint names the catalog slots already set to the same value, or the slot whose name the token shadows (`semantic.color.surface` for `elevation.0.surface`). Roles declared with `$extensions.transtyle.role` are listed apart: their grid is derived like a built-in role's. A project that authors catalog paths only gets no block, and `--quiet` leaves it out (`--json` still carries it).
 
 ```bash
 npx transtyle check --cwd examples/govuk
@@ -123,7 +123,7 @@ npx transtyle check --cwd examples/govuk
 
 ### `--json`
 
-`check`, `diff` and `catalog`. For `check`, prints the config files read (`config`), the contrast standard the checks used, the full diagnostics array, the `suppressed` list, per-target coverage, the completeness to-do and the adoption report to **stdout** as one JSON object — human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
+`check`, `diff` and `catalog`. For `check`, prints one JSON object to **stdout**: the config files read (`config`), the contrast standard the checks used, the full diagnostics array, the `suppressed` list, per-target coverage, the completeness to-do and the adoption report. Human-readable logs still go to stderr, so both work in the same invocation (pipe stdout to `jq`, read stderr in your terminal):
 
 ```bash
 npx transtyle check --json
@@ -143,11 +143,11 @@ npx transtyle check --json
 
 `completeness.todo` lists the items left, in order: `{ "slot", "state", "mode"?, "rule"?, "reason" }`, where `state` is `missing`, `derived`, `defaulted` or `carried-over`, `mode` is `color-scheme=dark` on a dark neutral, and a scale carries `authoredMembers` and `members`. `--completeness` picks the level.
 
-In `adoption`, `custom` and `bound` are counts and `unbound` lists the tokens no catalog slot reads, in path order. A hint is `{ slot, match: "value", deltaE, binding, via? }` (a slot whose default-mode value is within ΔE<sub>OK</sub> 0.05; `binding` is `authored`, `bound` with the token it aliases in `via`, `derived` or `defaulted`) or `{ slot, match: "name", others }` (the slot whose name the token shadows; `others` counts the other slots ending the same way). `roles` lists custom roles as `{ role, archetype, cells }`.
+In `adoption`, `custom` and `bound` are counts and `unbound` lists the tokens no catalog slot reads, in path order. A hint is `{ slot, match: "value", deltaE, binding, via? }` or `{ slot, match: "name", others }`. The first is a slot whose default-mode value is within ΔE<sub>OK</sub> 0.05; `binding` is `authored`, `bound` with the token it aliases in `via`, `derived` or `defaulted`. The second is the slot whose name the token shadows; `others` counts the other slots ending the same way. `roles` lists custom roles as `{ role, archetype, cells }`.
 
 ### `--matrix`
 
-`check` only. Prints, for every catalog slot, which targets read it: the answer to "if I author this slot, which libraries change?". The compiler records each slot an exporter reads while it emits (each target's `reads`, also in its `report.json`), so the table holds for any exporter, third-party ones included, and needs nothing from them. Each reader is classed from its coverage rows: `native`, `derived` or `approximated` when a row names the slot, `input` when the exporter reads it to compute a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface). Slots are grouped by catalog section; the table goes to **stdout**.
+`check` only. Prints, for every catalog slot, which targets read it: the answer to "if I author this slot, which libraries change?". The compiler records each slot an exporter reads while it emits (each target's `reads`, also in its `report.json`), so the table holds for any exporter, third-party ones included, and needs nothing from them. Each reader is classed from its coverage rows. It's `native`, `derived` or `approximated` when a row names the slot, and `input` when the exporter reads it to compute a value described under another slot or a pattern (a Radix ramp, a PrimeNG surface). Slots are grouped by catalog section; the table goes to **stdout**.
 
 ```bash
 npx transtyle check --matrix
@@ -158,7 +158,7 @@ npx transtyle check --matrix
 #   3.surface    6/12  shadcn (derived), shadcn-v3 (derived), echarts (derived), css-variables (native), primeng (input), mui (approximated)
 ```
 
-With `--json`, the table is not printed and the JSON report gains a `matrix` key: `{ "targets": [...], "slots": { "<slot>": { "<target>": { "class": "native", "variables": ["--card"] } } } }`, one entry per catalog slot (an empty object when nothing reads it), sorted. From your own code, `consumption(result)` from `@transtyle/core` builds the same object from a `compile()` result. The [slot matrix](/docs/slot-matrix/) page is the same table for Acme and every official exporter, regenerated on every change.
+With `--json`, the table isn't printed and the JSON report gains a `matrix` key: `{ "targets": [...], "slots": { "<slot>": { "<target>": { "class": "native", "variables": ["--card"] } } } }`, one entry per catalog slot (an empty object when nothing reads it), sorted. From your own code, `consumption(result)` from `@transtyle/core` builds the same object from a `compile()` result. The [slot matrix](/docs/slot-matrix/) page is the same table for Acme and every official exporter, regenerated on every change.
 
 ### `--cwd <dir>`
 
@@ -173,11 +173,11 @@ npx transtyle build --config apps/marketing/transtyle.config.json
 npx transtyle init --config packages/brand-b/transtyle.config.json   # writes it, with tokens/ next to it
 ```
 
-When the config extends a base, `explain` prints `config: transtyle.config.json ← ../design-system/transtyle.config.json` on stderr, `check --json` and every `report.json` list the chain as `config`, `add` refuses a target the base already declares, and `diff` also reports a change made only in the base.
+When the config extends a base, `explain` prints `config: transtyle.config.json ← ../design-system/transtyle.config.json` on stderr. `check --json` and every `report.json` list the chain as `config`. `add` refuses a target the base already declares, and `diff` also reports a change made only in the base.
 
 ### `transtyle explain <slot> [--mode <name>]`
 
-Prints a slot's resolved value, provenance, and — for derived/defaulted values — the rule that computed it and every input, recursively indented. An alias is followed to its target, so the chain always ends at what was authored. Accepts the slot with or without the `semantic.`/`semantic.color.` prefix.
+Prints a slot's resolved value, provenance and, for derived/defaulted values, the rule that computed it and every input, recursively indented. An alias is followed to its target, so the chain always ends at what was authored. Accepts the slot with or without the `semantic.`/`semantic.color.` prefix.
 
 ```bash
 npx transtyle explain primary.on-tint
@@ -194,7 +194,7 @@ npx transtyle explain primary.on-tint
 #              └─ authored
 ```
 
-A rule that reads the other color scheme (`text.inverse`, `swap-neutrals`) shows its inputs from that mode, named after the path: `inputs: semantic.color.text.base (light) = …`. An unknown slot exits 2 and lists the 5 closest catalog names instead of a bare error. `--json` prints the same tree as data (what `explainToken()` returns).
+A rule that reads the other color scheme (`text.inverse`, `swap-neutrals`) shows its inputs from that mode, named after the path: `inputs: semantic.color.text.base (light) = …`. An unknown slot exits 2 and lists the five closest catalog names instead of a bare error. `--json` prints the same tree as data (what `explainToken()` returns).
 
 A color authored as a [DTCG color object](/docs/authoring-tokens/#colors) shows what was written, since the value line is OKLCH: `└─ authored as {"colorSpace":"display-p3","components":[0.85,0.1,0.12]}`.
 
@@ -245,10 +245,10 @@ npx transtyle explain component.button.radius --target bootstrap
 #   $navbar-toggler-border-radius  derived  via $btn-border-radius
 ```
 
-- `--variable` finds the variable in the target's [coverage report](/docs/concepts/#5-provenance-and-coverage), follows the variables it is chained to (Bootstrap's own `!default` chain, a `var(--bs-*)` alias), and explains each slot it reaches. Bootstrap names work with or without `$`; a nested preset path works too (`--variable components.button.root.borderRadius --target primeng`). An unknown name exits 2 with the 5 nearest names of that target.
+- `--variable` finds the variable in the target's [coverage report](/docs/concepts/#5-provenance-and-coverage), follows the variables it is chained to (Bootstrap's own `!default` chain, a `var(--bs-*)` alias), and explains each slot it reaches. Bootstrap names work with or without `$`; a nested preset path works too (`--variable components.button.root.borderRadius --target primeng`). An unknown name exits 2 with the five nearest names of that target.
 - A variable that reads no slot (dropped, unsupported, computed privately by the exporter) prints its class and the reason, and exits 0. A chain that reaches a variable the target doesn't drive ends with `(no coverage row names it)`: the target leaves that variable at the framework's default, or covers it only in a summary row.
 - `explain <slot> --target <t>` lists the target's variables that consume the slot, directly or through a chain. When none names it, it says whether the target still reads the slot as an input to some other value, or doesn't read it at all.
-- Without `--variable`, a name that is not a catalog slot is looked up as a variable of the target; a catalog slot always wins.
+- Without `--variable`, a name that isn't a catalog slot is looked up as a variable of the target; a catalog slot always wins.
 - `--mode` applies to the provenance trees, and `--json` prints everything as data on stdout.
 
 ### `transtyle bindings --expand`
@@ -257,7 +257,7 @@ Prints the config's [`bindings`](/docs/configuration/#binding-rules) pattern rul
 
 ### `transtyle bind --suggest`
 
-Drafts the bindings of an existing design system: for every catalog slot nothing binds yet, the project token that fills it, read from your own token names and colors ([adopting an existing system](/docs/adopt-existing/), step 3). Deterministic, offline, byte-identical on every run: a versioned name table (`synonyms@2`) plus color measurements, no model.
+Drafts the bindings of an existing design system. For every catalog slot nothing binds yet, it proposes the project token that fills it, read from your own token names and colors ([adopting an existing system](/docs/adopt-existing/), step 3). Deterministic, offline, byte-identical on every run: a versioned name table (`synonyms@2`) plus color measurements, no model.
 
 ```bash
 npx transtyle bind --suggest --cwd examples/cathode   # with its bindings file left out of the config
@@ -269,15 +269,15 @@ npx transtyle bind --suggest --cwd examples/cathode   # with its bindings file l
 #   ...
 ```
 
-- **What it proposes**: the role `.solid`s but `neutral`, the text rungs, `elevation.0/1.surface`, `border.base`, `ring`, `inverse.surface/text`, `link.*`, `font.sans/mono/display`. Candidates are your own `semantic.*` tokens; an `option.*` token only on name evidence, at `low`. A slot already authored or aliased (by a file or a `bindings` rule) is left alone.
-- **How**: a name is read by structure, not similarity: a family word (text, link, focus, surface, border) decides before a role word, so `text-primary` is a text rung, not the brand, and `focus-text` is no text slot. A value is checked against the slot's shape in every mode (the page is low chroma at the end of the lightness range, a border sits 1.2–3:1 off it, body text reads at 4.5:1), or against what derivation would give the slot; a status color is matched on hue against its role's anchor.
+- **What it proposes**: the role `.solid`s but `neutral`, the text rungs, `elevation.0/1.surface`, `border.base`, `ring`, `inverse.surface/text`, `link.*`, `font.sans/mono/display`. Candidates are your own `semantic.*` tokens; an `option.*` token only on name evidence, at `low`. It leaves alone a slot already authored or aliased (by a file or a `bindings` rule).
+- **How**: a name is read by structure, not similarity. A family word (text, link, focus, surface, border) decides before a role word, so `text-primary` is a text rung, not the brand, and `focus-text` is no text slot. A value is checked against the slot's shape in every mode (the page is low chroma at the end of the lightness range, a border sits 1.2–3:1 off it, body text reads at 4.5:1), or against what derivation would give the slot. A status color is matched on hue against its role's anchor.
 - **Confidence**: `high` when name and value agree, `medium` for one of them, `low` for `primary` on value alone (one mode decides it) or an `option.*` token. Two candidates nothing separates are **contested**: listed on stderr and in the file's `$description`, never written as an alias.
 - **Output**: stdout is a token file, each alias carrying its reason in `$description`; redirect it to a file, review it, then add it to `tokens`. `--rules` prints the same proposals as `{ "bindings": [...] }` [rules](/docs/configuration/#binding-rules) for the config, generalized with `{role}`, `{rung}` or `{level}` where your names are regular and checked to expand to exactly the same aliases. `--json` prints the whole report (every slot `bound`, `proposed`, `contested` or `none`, with its ranked candidates). The table above goes to stderr.
-- It writes nothing. It exits 2 without `--suggest`, with an argument, or with both `--rules` and `--json`; 1 when the config or a token file can't be loaded. A missing `primary.solid` is no error here: that's usually why you're binding.
+- It writes nothing. It exits 2 without `--suggest`, with an argument, or with both `--rules` and `--json`, and 1 when the config or a token file can't be loaded. A missing `primary.solid` is no error here. That's usually why you're binding.
 
 ### `transtyle diff [ref]`
 
-Semantic diff of the **resolved** token graph against a git ref (default `HEAD`), plus per-target impact. It compiles both the working tree and the project at the ref and compares resolved values per mode — so a token rename that changes no resolved value reports nothing, while one authored change shows its full derived cascade.
+Semantic diff of the **resolved** token graph against a git ref (default `HEAD`), plus per-target impact. It compiles both the working tree and the project at the ref and compares resolved values per mode. A token rename that changes no resolved value reports nothing, while one authored change shows its full derived cascade.
 
 ```bash
 npx transtyle diff              # what have I changed since my last commit?
@@ -296,22 +296,22 @@ npx transtyle diff main         # what does this branch do to the compiled theme
 #   shadcn: 34 lines changed
 ```
 
-It also flags **contrast regressions** — pairs that passed your configured contrast standard before the change and fail after it (in `Lc` under APCA):
+It also flags **contrast regressions**, pairs that passed your configured contrast standard before the change and fail after it (in `Lc` under APCA):
 
 ```
 ⚠ Contrast regressions:
   ✖ text.base on elevation.0.surface (light): 18.1:1 → 2.2:1 — now FAILS 4.5:1
 ```
 
-That's the difference between `check` ("contrast is bad") and `diff` ("_this change_ made it bad") — the second is what a green CI baseline can otherwise lose silently.
+That's the difference between `check` ("contrast is bad") and `diff` ("_this change_ made it bad"). The second is what a green CI baseline can otherwise lose silently.
 
-A changed `$description` or `$deprecated` is not a value change, so it has its own lists: `Metadata:` for the tokens whose own description or deprecation changed, and `Deprecations:` for the slots that now reach a deprecated token (or no longer do, which means the migration is done). A target whose files changed only in comments prints `comments only`.
+A changed `$description` or `$deprecated` isn't a value change, so it has its own lists: `Metadata:` for the tokens whose own description or deprecation changed, and `Deprecations:` for the slots that now reach a deprecated token (or no longer do, which means the migration is done). A target whose files changed only in comments prints `comments only`.
 
-Exits `0` when the compiled themes are identical, `1` when there are changes, a description or deprecation change included (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling, including a `contrastRegressions` array (each row with its `threshold`, `unit` and `standard`), a `metadata` array and a `deprecations` array (each row with its `slot`, `token`, `reason` and `status`: `reached` or `cleared`). Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
+Exits `0` when the compiled themes are identical, `1` when there are changes, a description or deprecation change included (composes in CI like `git diff --exit-code`), `2` on a missing repo/unknown ref. `--json` prints a machine-readable report to stdout for PR tooling. It includes a `contrastRegressions` array (each row with its `threshold`, `unit` and `standard`), a `metadata` array and a `deprecations` array (each row with its `slot`, `token`, `reason` and `status`: `reached` or `cleared`). Full contract: [the diff spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/diff.md).
 
 ### `transtyle catalog [--json]`
 
-Lists every slot of the catalog — the vocabulary exporters bind to — with its DTCG type, the rule that fills it when you don't author it, that rule's inputs, and the optional anchor it needs. It reads no project (run it anywhere; `--cwd` is ignored): the catalog belongs to the language and the rule pack, not to a design system.
+Lists every slot of the catalog (the vocabulary exporters bind to) with its DTCG type, the rule that fills it when you don't author it, that rule's inputs, and the optional anchor it needs. It reads no project (run it anywhere; `--cwd` is ignored), because the catalog belongs to the language and the rule pack, not to a design system.
 
 <!-- measured: catalog.slots = 264 -->
 <!-- measured: catalog.semantic = 257 -->
@@ -328,7 +328,7 @@ npx transtyle catalog
 #   semantic.radius.md     dimension  author it
 ```
 
-`--json` prints the same catalog for tools, one object on stdout. The output is deterministic — the same bytes on every run and machine — so it can be committed, diffed, or cached:
+`--json` prints the same catalog for tools, one object on stdout. The output is deterministic, with the same bytes on every run and machine, so it can be committed, diffed, or cached:
 
 ```json
 {
@@ -390,7 +390,7 @@ Without a terminal (CI, a script, an agent), `init` asks nothing and never reads
 
 The `recommended` neutrals are a starting ladder in your brand's hue, light and dark, each with a `$description: "TODO: ..."` placeholder: authored values in your file, there to be replaced. Token files are listed by name in the config, the dark one as a [mode-scoped overlay](/docs/authoring-tokens/#modes), and each starts with a `$schema` line for [editor autocomplete](/docs/configuration/#token-files-in-your-editor). The same answers always write the same bytes.
 
-`init` then checks what it wrote, prints any diagnostics, shows your brand color with the `on-solid` text color derived for it and their contrast ratio, and lists what is worth authoring next. Refuses (exit 2) if a config or one of the token files already exists.
+`init` then checks what it wrote, prints any diagnostics, shows your brand color with the `on-solid` text color derived for it and their contrast ratio, and lists what to author next. It refuses (exit 2) if a config or one of the token files already exists.
 
 ### `transtyle add <target | package> [--yes]`
 
@@ -408,11 +408,11 @@ npx transtyle add ourlib-transtyle-exporter
 }
 ```
 
-A [declarative package](/docs/write-an-exporter/#start-declarative-a-mapping-table) prints "No code will run" and installs without a question: its mapping is read, never imported. Any other package runs its code in your builds with full trust, so `add` says so and asks for a yes on a terminal; `--yes` skips the question, and without a terminal and without `--yes` it exits 2 and installs nothing. It also exits 2, before installing, for a package with no Transtyle manifest, an importer (not installable yet), a target name already in your config, or an IR spec or plugin API this version does not accept. If the installed manifest is not the one it showed, the config stays untouched.
+A [declarative package](/docs/write-an-exporter/#start-declarative-a-mapping-table) prints "No code will run" and installs without a question: its mapping is read, never imported. Any other package runs its code in your builds with full trust, so `add` says so and asks for a yes on a terminal; `--yes` skips the question, and without a terminal and without `--yes` it exits 2 and installs nothing. It also exits 2, before installing, for a package with no Transtyle manifest, an importer (not installable yet), a target name already in your config, or an IR spec or plugin API this version doesn't accept. If the installed manifest isn't the one it showed, the config stays untouched.
 
 ### `transtyle migrate --from style-dictionary [--write]`
 
-Rewrites [Style Dictionary](https://styledictionary.com/) v3 token files (`value`/`type` without the `$`) to DTCG, the format Transtyle reads. It is what the [`TST1307`](/docs/diagnostics/#diagnostic-code-reference) error points you to. Without `--write` it prints a diff per file and changes nothing; with it, the files are rewritten in place. It reads the files your config's `tokens` list matches (a base's too, when the config [`extends`](/docs/configuration/#extends--several-products-one-design-system) one), and leaves any file that is not Style Dictionary v3 alone, so running it twice changes nothing the second time.
+Rewrites [Style Dictionary](https://styledictionary.com/) v3 token files (`value`/`type` without the `$`) to DTCG, the format Transtyle reads. It's what the [`TST1307`](/docs/diagnostics/#diagnostic-code-reference) error points you to. Without `--write` it prints a diff per file and changes nothing; with it, the files are rewritten in place. It reads the files your config's `tokens` list matches (a base's too, when the config [`extends`](/docs/configuration/#extends--several-products-one-design-system) one) and leaves any file that isn't Style Dictionary v3 alone. Running it twice changes nothing the second time.
 
 ```bash
 npx transtyle migrate --from style-dictionary          # diff only
@@ -424,11 +424,11 @@ What it changes:
 
 - `value` → `$value`, `type` → `$type`, `comment` → `$description`.
 - `{color.brand.primary.value}` → `{color.brand.primary}`: the trailing `.value` of a reference goes.
-- Style Dictionary type names become DTCG ones (`size` → `dimension`, `fontFamilies` → `fontFamily`, `fontWeights` → `fontWeight`, `boxShadow` → `shadow`). A token with no `type`, which is the usual case since the category is the top-level key, gets its `$type` from that key when it is one of those names; the output says so.
+- Style Dictionary type names become DTCG ones (`size` → `dimension`, `fontFamilies` → `fontFamily`, `fontWeights` → `fontWeight`, `boxShadow` → `shadow`). A token with no `type`, the usual case since the category is the top-level key, gets its `$type` from that key when it's one of those names; the output says so.
 - Build metadata (`attributes`, `name`, `filePath`, `isSource`, `original`, `path`) is kept, under `$extensions["style-dictionary"]`, so nothing is lost silently.
-- Style Dictionary has no tiers, so every top-level group moves under `option` and references follow (`{option.color.brand.primary}`). Binding the `semantic` tokens, at least `semantic.color.primary.solid`, is yours to do: Transtyle does not guess it.
+- Style Dictionary has no tiers, so every top-level group moves under `option` and references follow (`{option.color.brand.primary}`). Binding the `semantic` tokens, at least `semantic.color.primary.solid`, is yours to do. Transtyle doesn't guess it.
 
-The files are re-serialized with their own indentation, and the diff compares the file before and after that, so only real changes show. Exit `0` when it ran, `1` if a token file does not parse (nothing is written), `2` for a usage or config error (no `--from`, an unknown source, no config). It does not read Style Dictionary's `config.json` platforms, and Style Dictionary v4 files that already use `$value` load as they are.
+The files are re-serialized with their own indentation, and the diff compares the file before and after that, so only real changes show. Exit `0` when it ran, `1` if a token file doesn't parse (nothing is written), `2` for a usage or config error (no `--from`, an unknown source, no config). It doesn't read Style Dictionary's `config.json` platforms, and Style Dictionary v4 files that already use `$value` load as they are.
 
 ## Exit codes
 
@@ -460,4 +460,4 @@ These exist as design (see [Status & roadmap](/docs/roadmap/)) and will keep the
 | `transtyle import <source>` | Materialize an importer's output (Figma, Tailwind, Bootstrap) as reviewable token files |
 | `transtyle preview`         | Local themed preview site across all targets                                            |
 
-Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `completenessStatus()`, `adoption()`, `suggestBindings()`, `migrateStyleDictionary()`, and `buildReport()` for the `report.json` object), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported). Without a disk, `compileProject({ config, files, exporters })` from `@transtyle/core/browser` takes the config and the token files as a map of paths to contents and returns every target's files, `report.json` included, byte for byte what `build` writes (only `transtyle-manifest.json`, the record of what landed on disk, is left to the disk side); `compile({ cwd })` is that plus reading the project (`loadProject()`, which follows `extends`) and writing the result (`writeResults()`).
+Programmatic use: `build`, `check`, `diff`, `explain`, `catalog`, `bind --suggest` and `migrate --from style-dictionary` wrap `@transtyle/core`'s public API (`compile()`, `diffResolved()`, `explainToken()`, `explainVariable()`, `slotConsumers()`, `catalog()`, `completenessStatus()`, `adoption()`, `suggestBindings()`, `migrateStyleDictionary()`, and `buildReport()` for the `report.json` object), so a build-tool integration can reach the same logic. `init` and `add` only scaffold files and rewrite the config, so they stay CLI-only (`parseColor`, which `init` validates the brand with, is exported). Without a disk, `compileProject({ config, files, exporters })` from `@transtyle/core/browser` takes the config and the token files as a map of paths to contents. It returns every target's files, `report.json` included, byte for byte what `build` writes (only `transtyle-manifest.json`, the record of what landed on disk, is left to the disk side). `compile({ cwd })` is that plus reading the project (`loadProject()`, which follows `extends`) and writing the result (`writeResults()`).
