@@ -6,9 +6,11 @@ order: 5
 
 # Configuration reference
 
-One file: `transtyle.config.json`, in your project root (or another name you pass with [`--config`](/docs/cli/#--config-file); several products can share a base through [`extends`](#extends--several-products-one-design-system)). It's the **only** Transtyle-specific file in a project — everything else is standard DTCG. Config is data: no `transtyle.config.ts`, by design (introspectability, portability, determinism).
+One file: `transtyle.config.json`, in your project root (or another name you pass with [`--config`](/docs/cli/#--config-file); several products can share a base through [`extends`](#extends--several-products-one-design-system)). It's the **only** Transtyle-specific file in a project. Everything else is standard DTCG. Config is data, so there's no `transtyle.config.ts`, by design (introspectability, portability, determinism).
 
-The `$schema` line at the top is a real, published [JSON Schema](/schemas/config/v0.json) — editors that honor it give you autocomplete and inline validation as you type. The `transtyle.dev` URL below is the schema's permanent identifier, not a download link: that domain is not registered yet, so an editor that fetches it literally will come up empty. The identical file is served from this site at the link above, and the compiler fetches neither — it validates against its own bundled copy. The compiler validates the same schema at load time: an **unknown or mistyped key is an error** (`TST1010`), never silently ignored, and each target's `options` are checked against the selected exporter's own schema (`TST1011`) — so a wrong `era` or a stray option fails the build with the exact path, rather than being dropped without warning.
+The `$schema` line at the top is a real, published [JSON Schema](/schemas/config/v0.json). Editors that honor it give you autocomplete and inline validation as you type. The `transtyle.dev` URL below is the schema's permanent identifier, not a download link. That domain is not registered yet, so an editor that fetches it literally will come up empty. The identical file is served from this site at the link above, and the compiler fetches neither: it validates against its own bundled copy.
+
+The compiler validates the same schema at load time. An **unknown or mistyped key is an error** (`TST1010`), never silently ignored. Each target's `options` are checked against the selected exporter's own schema (`TST1011`), so a wrong `era` or a stray option fails the build with the exact path instead of being dropped without warning.
 
 Full annotated example:
 
@@ -51,7 +53,7 @@ Full annotated example:
 
 ## Binding rules
 
-`bindings` is optional. A binding is one alias from a catalog slot to a token of your own vocabulary; when that vocabulary is regular (a `brand.50` to `brand.950` ramp per role), a rule writes the whole grid in one line:
+`bindings` is optional. A binding is one alias from a catalog slot to a token of your own vocabulary. When that vocabulary is regular (a `brand.50` to `brand.950` ramp per role), a rule writes the whole grid in one line:
 
 ```json
 "bindings": [
@@ -65,10 +67,10 @@ Full annotated example:
 
 - `{role}` is every built-in color role plus every custom role that joined the grid with `$extensions.transtyle.role`; `roles` restricts it. `{rung}` is the text rungs (`strong`, `base`, `muted`, `subtle`, `disabled`, `inverse`) and `{level}` the elevation levels `0` to `5`. Those three are the only placeholders; write ramp steps such as `600` literally. Two placeholders in one `slot` iterate their cross product.
 - `from` is a single alias and may only use placeholders the `slot` uses.
-- **Explicit bindings win.** A slot you already bind in a token file (an authored value or a hand-written alias) is left alone by every rule, silently, so overriding one cell of the grid is just writing it. Between two rules, the first in the array wins and the second gets a `TST1119` note.
-- A slot whose target token does not exist is skipped silently, so one rule can cover the whole grid and bind only what your vocabulary has. Add `"required": true` and a missing target is an error instead (`TST1118`). Targets must be tokens written in a token file.
+- **Explicit bindings win.** A slot you already bind in a token file (an authored value or a hand-written alias) is left alone by every rule, silently. Overriding one cell of the grid is just writing it. Between two rules, the first in the array wins and the second gets a `TST1119` note.
+- A slot whose target token doesn't exist is skipped silently, so one rule can cover the whole grid and bind only what your vocabulary has. Add `"required": true` and a missing target is an error instead (`TST1118`). Targets must be tokens written in a token file.
 - Rules expand when the config loads into ordinary aliases, so exporters and [`diff`](/docs/cli/) see nothing new, and [`explain`](/docs/cli/) names the rule behind an alias. `npx transtyle bindings --expand` prints the expansion as a token file when you prefer to freeze it, and `npx transtyle bind --suggest --rules` drafts rules from your own names.
-- A malformed rule is `TST1117`: an unknown placeholder, a `from` that is not one alias, `roles` without `{role}` or naming a role that does not exist.
+- A malformed rule is `TST1117`: an unknown placeholder, a `from` that isn't one alias, `roles` without `{role}` or naming a role that doesn't exist.
 
 ## Token files in your editor
 
@@ -94,7 +96,7 @@ As with the config schema, the `transtyle.dev` URL is the identifier and an edit
 }
 ```
 
-Two limits are by design. Your own tokens must stay valid, so `semantic`, `semantic.color`, `semantic.font` and `component` accept any group: a misspelled _role_ (`semantic.color.primry`) looks like a custom role and is not flagged, while everything inside a built-in role or ladder is checked. And alias completion offers the catalog as a list of strings; editors complete a string value from that list, but not in the middle of a string, and `option.*` aliases and literal values are never flagged.
+Two limits are by design. Your own tokens must stay valid, so `semantic`, `semantic.color`, `semantic.font` and `component` accept any group. A misspelled _role_ (`semantic.color.primry`) looks like a custom role and isn't flagged, while everything inside a built-in role or ladder is checked. And alias completion offers the catalog as a list of strings. Editors complete a string value from that list, but not in the middle of a string, and `option.*` aliases and literal values are never flagged.
 
 ## `name`
 
@@ -116,13 +118,13 @@ Worked example. Three files, in this order:
 ]
 ```
 
-| File                   | Contains                                                 | Effect                                                                             |
-| ---------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `option.tokens.json`   | `option.color.blue.500 = #3b5bdb`                        | A raw value. Nothing binds to it yet.                                              |
-| `semantic.tokens.json` | `semantic.color.primary.solid = {option.color.blue.500}` | Binds meaning to the raw value — this is the alias that makes it your brand color. |
-| `dark.tokens.json`     | `semantic.color.text.base = #f8f9fa`                     | Applies **only** in dark mode. Light mode keeps whatever the base layers said.     |
+| File                   | Contains                                                 | Effect                                                                            |
+| ---------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `option.tokens.json`   | `option.color.blue.500 = #3b5bdb`                        | A raw value. Nothing binds to it yet.                                             |
+| `semantic.tokens.json` | `semantic.color.primary.solid = {option.color.blue.500}` | Binds meaning to the raw value. This is the alias that makes it your brand color. |
+| `dark.tokens.json`     | `semantic.color.text.base = #f8f9fa`                     | Applies **only** in dark mode. Light mode keeps whatever the base layers said.    |
 
-The mode-scoped layer never has to repeat anything: it lists only the tokens that genuinely differ in that mode, which on a real design system is usually a handful of neutrals. Everything else — including every derived value — recomputes per mode from what's underneath.
+The mode-scoped layer never has to repeat anything: it lists only the tokens that differ in that mode, which on a real design system is usually a handful of neutrals. Everything else, including every derived value, recomputes per mode from what's underneath.
 
 A glob can cover the folder that holds the overlays. The overlay claims its file, so the glob skips it, whichever entry comes first:
 
@@ -195,9 +197,9 @@ The full rules are in [the configuration spec](https://github.com/transtyle/tran
 
 Declares the **axes your design system varies along**. Each dimension lists its values and names a default; the compiler resolves every _combination_ of them.
 
-`default` names your design system's **native** mode — the one plain `$value`s describe. It does not reorder exporter output: exporters bind mode _names_, so a dark-native system still gets shadcn's light-first structure. See [Weird things](/docs/diagnostics/#my-dark-native-system-comes-out-light-first) for why.
+`default` names your design system's **native** mode, the one plain `$value`s describe. It doesn't reorder exporter output: exporters bind mode _names_, so a dark-native system still gets shadcn's light-first structure. See [Weird things](/docs/diagnostics/#my-dark-native-system-comes-out-light-first) for why.
 
-Worked example — the [Acme example](/docs/examples/) declares four dimensions:
+Worked example: the [Acme example](/docs/examples/) declares four dimensions:
 
 ```json
 "modes": {
@@ -208,13 +210,13 @@ Worked example — the [Acme example](/docs/examples/) declares four dimensions:
 }
 ```
 
-which resolves to sixteen full token maps: `light+comfortable+standard+full`, `light+comfortable+standard+reduced`, and so on up to `dark+compact+more+reduced`. Every derived value is computed independently in each one — a dark-mode hover state darkens or lightens according to _that_ combination, not by translating the light-mode answer.
+which resolves to sixteen full token maps: `light+comfortable+standard+full`, `light+comfortable+standard+reduced`, and so on up to `dark+compact+more+reduced`. Every derived value is computed independently in each one. A dark-mode hover state darkens or lightens according to _that_ combination, not by translating the light-mode answer.
 
-Two constraints worth knowing:
+Two constraints:
 
-- **The first dimension carries light/dark.** Order matters: the first dimension listed is the _polarity axis_ — the one exporters bind as light/dark. So if you use `color-scheme`, list it first. Declaring it after another dimension (e.g. `density` first) would make dark mode silently never reach any exporter — the dark values still resolve into their combinations, but no target reads them, so every exporter emits a dark block filled with light values. Because that output is guaranteed wrong, Transtyle makes it a build **error** (`TST1112`), not a warning — reorder `modes` to fix it.
+- **The first dimension carries light/dark.** Order matters. The first dimension listed is the _polarity axis_, the one exporters bind as light/dark. So if you use `color-scheme`, list it first. Declaring it after another dimension (for example `density` first) would make dark mode silently never reach any exporter. The dark values still resolve into their combinations, but no target reads them, so every exporter emits a dark block filled with light values. Because that output is guaranteed wrong, Transtyle makes it a build **error** (`TST1112`), not a warning. Reorder `modes` to fix it.
 - **One combination per layer.** A mode-scoped token file usually targets one value of one dimension, `{ "color-scheme": "dark" }`. When a value belongs to a _combination_, the layer names every dimension of it: see [Combo layers](#combo-layers).
-- **Exporters express what their target can express.** `color-scheme` maps everywhere; `density` has no Bootstrap or PrimeNG counterpart, so it appears in those reports as an honest `dropped` row naming the dimension, rather than being silently flattened.
+- **Exporters express what their target can express.** `color-scheme` maps everywhere; `density` has no Bootstrap or PrimeNG counterpart, so it appears in those reports as a `dropped` row naming the dimension, not silently flattened.
 
 ### Combo layers
 
@@ -236,7 +238,7 @@ Three reserved dimension names mean something to the exporters:
 
 - **`contrast`** (`standard` / `more`). CSS targets write the `more` values in a `[data-contrast="more"]` block and again inside `@media (prefers-contrast: more)`, so the user's system setting applies until the page sets the attribute. Unauthored on-colors and role text aim at 7:1 there, and `check` holds the `more` combinations to 7:1 (WCAG AAA). Authored values are never re-derived: write the `more` value for every authored text or border color that falls short, and the warning names them.
 - **`motion`** (`full` / `reduced`). Every unauthored `duration.*` is `0ms` under `reduced`; CSS targets follow `prefers-reduced-motion: reduce` the same way.
-- **`brand`** (your brand names). CSS targets add a `[data-brand="<name>"]` block per brand; targets with no runtime switch (Bootstrap's Sass path, PrimeNG, Mantine, Chakra, MUI) emit their files once per brand (`preset.transtyle.globex.ts`), ECharts one theme per brand and scheme, daisyUI one theme per combination. Brand values become file names and selectors, so they are lowercase letters, digits and hyphens (`TST1010` otherwise). This dimension is not Storybook's `options.brand`, which brands the Storybook manager itself.
+- **`brand`** (your brand names). CSS targets add a `[data-brand="<name>"]` block per brand. Targets with no runtime switch (Bootstrap's Sass path, PrimeNG, Mantine, Chakra, MUI) emit their files once per brand (`preset.transtyle.globex.ts`). ECharts emits one theme per brand and scheme, and daisyUI one theme per combination. Brand values become file names and selectors, so they are lowercase letters, digits and hyphens (`TST1010` otherwise). This dimension is not Storybook's `options.brand`, which brands the Storybook manager itself.
 
 ```json
 "modes": {
@@ -251,21 +253,21 @@ Set the attributes on the same element as the scheme's own class or attribute, u
 
 ## `derivation`
 
-- `rules` — the rule pack, pinned with a version (`standard@1`). Pinning means upgrading Transtyle can never silently change your compiled theme.
-- `autoDark` — default `false`. Regardless of this setting, a role's `.solid` you didn't author for a non-default `color-scheme` value falls back to the default-mode color (brand colors stay identical across modes) — deliberate, surfaced by `TST1204`. What `autoDark: true` adds today: that carry-over is classified `derived` in coverage instead of `authored`, so `report.json` shows synthetic dark-theme coverage honestly. Computing a genuinely _different_ dark color is specced but not yet implemented — an open, deliberately deferred research question (see the [roadmap](/docs/roadmap/#specced-not-yet-implemented)), not a missing wire-up. The page and body text are not covered by this setting: an unauthored page under a `text.base` with no dark value gets the light pair swapped in dark mode either way ([`TST1206`](/docs/diagnostics/#my-dark-page-is-my-light-text-color)).
-- `require` — tokens that must be **authored** (an alias to your own token counts), not derived, defaulted or left out. Build fails with `TST1202` otherwise. Use this to encode team policy ("nobody ships a derived brand color"). A color role may be named at the role (`semantic.color.primary`) or the anchor cell (`semantic.color.primary.solid`); both check the `.solid` cell, which is the one the grid is built from. An entry `"completeness:recommended"` (or `minimal`, `complete`) requires a whole [completeness level](/docs/derivation/#what-to-author-next-completeness-levels), dark neutrals included: one `TST1202` per item left.
-- `overrides` — per-slot derivation rules (specced, not yet implemented; today, simply author the token — authored always wins).
-- `contrast` — `wcag21` | `apca`: the contrast on-colors are picked with (`on-solid`, `on-tint`, a role's `text`). Unless set, it follows `check.contrast.standard`: `apca` when the check is `apca`, `wcag21` otherwise. Set it to `wcag21` to keep the WCAG picks while checking under APCA (each pick that fails APCA then warns). The WCAG picks aim at 4.5:1 even when the check is `wcag21-aaa`.
+- `rules`: the rule pack, pinned with a version (`standard@1`). Pinning means upgrading Transtyle can never silently change your compiled theme.
+- `autoDark`: default `false`. Regardless of this setting, a role's `.solid` you didn't author for a non-default `color-scheme` value falls back to the default-mode color (brand colors stay identical across modes). That's deliberate, and `TST1204` surfaces it. What `autoDark: true` adds today is that this carry-over is classified `derived` in coverage instead of `authored`, so `report.json` shows synthetic dark-theme coverage. Computing a _different_ dark color is specced but not yet implemented. It's an open, deliberately deferred research question (see the [roadmap](/docs/roadmap/#specced-not-yet-implemented)), not a missing wire-up. The page and body text aren't covered by this setting: an unauthored page under a `text.base` with no dark value gets the light pair swapped in dark mode either way ([`TST1206`](/docs/diagnostics/#my-dark-page-is-my-light-text-color)).
+- `require`: tokens that must be **authored** (an alias to your own token counts), not derived, defaulted or left out. Otherwise the build fails with `TST1202`. Use this to encode team policy ("nobody ships a derived brand color"). A color role may be named at the role (`semantic.color.primary`) or the anchor cell (`semantic.color.primary.solid`); both check the `.solid` cell, which is the one the grid is built from. An entry `"completeness:recommended"` (or `minimal`, `complete`) requires a whole [completeness level](/docs/derivation/#what-to-author-next-completeness-levels), dark neutrals included: one `TST1202` per item left.
+- `overrides`: per-slot derivation rules (specced, not yet implemented; today, author the token, since authored always wins).
+- `contrast`: `wcag21` | `apca`, the contrast on-colors are picked with (`on-solid`, `on-tint`, a role's `text`). Unless set, it follows `check.contrast.standard`: `apca` when the check is `apca`, `wcag21` otherwise. Set it to `wcag21` to keep the WCAG picks while checking under APCA (each pick that fails APCA then warns). The WCAG picks aim at 4.5:1 even when the check is `wcag21-aaa`.
 
-Note that `require` is a **policy** knob, not the engine's own floor. `semantic.color.primary.solid` is required whether or not you list it — nothing can invent your brand color — and its absence is `TST1201`, which fires even with no `derivation` block at all.
+`require` is a **policy** knob, not the engine's own floor. `semantic.color.primary.solid` is required whether or not you list it, because nothing can invent your brand color. Its absence is `TST1201`, which fires even with no `derivation` block at all.
 
 ## `units`
 
-- `remBase` — what one `rem` is worth, as a `px` length: `"16px"` (the default). Exporters whose target wants pixels (ECharts, Storybook) convert `rem` dimensions at this base and name it in the `approximated` row of the report. Set it when your system's root font size is not 16px: GOV.UK's 62.5 % trick is `"10px"`, some enterprise systems use `"14px"`. A value that is not a positive `px` length (`"abc"`, `"0px"`, `"100%"`) is `TST1010`. Storybook's own `options.remBase` (a number) still overrides it for that target.
+- `remBase`: what one `rem` is worth, as a `px` length, `"16px"` by default. Exporters whose target wants pixels (ECharts, Storybook) convert `rem` dimensions at this base and name it in the `approximated` row of the report. Set it when your system's root font size isn't 16px: GOV.UK's 62.5 % trick is `"10px"`, some enterprise systems use `"14px"`. A value that isn't a positive `px` length (`"abc"`, `"0px"`, `"100%"`) is `TST1010`. Storybook's own `options.remBase` (a number) still overrides it for that target.
 
 ## `targets` — instances, not just names
 
-Each key is a **target instance**. The optional `exporter` field selects the plugin (defaults to the key), which is how one exporter runs twice with different options — e.g. shadcn in both Tailwind eras. `output` is the emit directory (relative to the config, or to the product's config when a base declares the target: see [`extends`](#extends--several-products-one-design-system)). `options` are exporter-specific; see each exporter's page.
+Each key is a **target instance**. The optional `exporter` field selects the plugin (defaults to the key), which is how one exporter runs twice with different options, for example shadcn in both Tailwind eras. `output` is the emit directory (relative to the config, or to the product's config when a base declares the target: see [`extends`](#extends--several-products-one-design-system)). `options` are exporter-specific; see each exporter's page.
 
 `transtyle build` builds all instances; `transtyle build shadcn-v3` selects by instance name.
 
@@ -282,9 +284,9 @@ Tell Transtyle which version of the framework your project uses with `version` (
 }
 ```
 
-Each exporter supports version _ranges_ of its framework, one mapping profile per range, and the compiler picks the range covering your version: Bootstrap has one profile, `>=5.3 <6`; shadcn follows your **Tailwind** version, `>=3 <4` (the `tailwind-v3` era) or `>=4 <5` (`tailwind-v4`). Things to know:
+Each exporter supports version _ranges_ of its framework, one mapping profile per range, and the compiler picks the range covering your version. Bootstrap has one profile, `>=5.3 <6`. shadcn follows your **Tailwind** version, `>=3 <4` (the `tailwind-v3` era) or `>=4 <5` (`tailwind-v4`). Things to know:
 
-- **A version no range covers stops the build** with `TST1313`, which lists the ranges the exporter supports, and nothing is written for that target: `"version": "4.6.2"` on Bootstrap fails rather than producing variables Bootstrap 4 doesn't have.
+- **A version no range covers stops the build** with `TST1313`, which lists the ranges the exporter supports. Nothing is written for that target: `"version": "4.6.2"` on Bootstrap fails rather than producing variables Bootstrap 4 doesn't have.
 - **It's recorded.** That target's `report.json` gets `"version": { "requested": "5.3.8", "profile": ">=5.3 <6" }`.
 - **Leave it out and nothing changes.** Without `version` each exporter uses its newest profile, exactly as before.
 - **shadcn's `era` still works** as an explicit choice; if `era` and `version` disagree, `era` wins and the build warns (`TST2105`).
@@ -310,11 +312,11 @@ That Bootstrap build emits no `data-bs-theme="dark"` block, its `usage.md` lists
 
 ## `check`
 
-- `failOn` — `error` (default) | `warning` | `approximation`: the diagnostic level that makes the build exit non-zero. CI teams typically tighten this over time.
-- `suppress` — silence a known warning or info and say why: an array of `{ "code": "TST1305", "path": "scratch", "reason": "…" }`. `reason` is required and can't be blank; `path` is optional (an exact token path, or a prefix ending in `.*`). Suppressed diagnostics leave the printed output and `failOn`, and are listed under `suppressed` in `report.json`. Errors can't be suppressed. See [Suppressing a diagnostic](/docs/diagnostics/#suppressing-a-diagnostic).
-- `completeness` — `minimal` | `recommended` (default) | `complete`: the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) `build` and `check` summarize on their `authored n/m <level>` line, and `check --json` reports on. It never changes the exit code; `transtyle check --completeness <level>` overrides it for one run. To fail on a level, put it in `derivation.require`.
-- `contrast.standard` — `wcag21-aa` (4.5:1, the default), `wcag21-aaa` (7:1) or `apca` (Lc 75 for body text, Lc 60 for the rest; see [WCAG 2.1 or APCA](#wcag-21-or-apca)). Contrast is checked on `text.base` and `text.muted` against the `elevation.0` and `elevation.1` surfaces, and on every role's `on-solid` and `on-tint`, derived or authored; failures are warnings (`TST2101`), never silent. The same standard drives [`transtyle diff`](/docs/cli/)'s contrast-regression flag, so `check` and `diff` always agree on what "passing" means.
-- `hygiene.unusedOption`, `hygiene.duplicateOption` — `info` (default) | `warning` | `off`: the severity of `TST1114` (option tokens no alias resolves to) and `TST1115` (option tokens of the same type with the same value). Both are reported once per build, with the count and the first paths in the message and the full lists in `check --json`. Set `warning` (with `failOn: warning`) to make CI refuse dead or duplicated palette entries.
+- `failOn`: `error` (default) | `warning` | `approximation`, the diagnostic level that makes the build exit non-zero. CI teams typically tighten this over time.
+- `suppress`: silence a known warning or info and say why, with an array of `{ "code": "TST1305", "path": "scratch", "reason": "…" }`. `reason` is required and can't be blank; `path` is optional (an exact token path, or a prefix ending in `.*`). Suppressed diagnostics leave the printed output and `failOn`, and are listed under `suppressed` in `report.json`. Errors can't be suppressed. See [Suppressing a diagnostic](/docs/diagnostics/#suppressing-a-diagnostic).
+- `completeness`: `minimal` | `recommended` (default) | `complete`, the [completeness level](/docs/derivation/#what-to-author-next-completeness-levels) `build` and `check` summarize on their `authored n/m <level>` line, and `check --json` reports on. It never changes the exit code; `transtyle check --completeness <level>` overrides it for one run. To fail on a level, put it in `derivation.require`.
+- `contrast.standard`: `wcag21-aa` (4.5:1, the default), `wcag21-aaa` (7:1) or `apca` (Lc 75 for body text, Lc 60 for the rest; see [WCAG 2.1 or APCA](#wcag-21-or-apca)). Contrast is checked on `text.base` and `text.muted` against the `elevation.0` and `elevation.1` surfaces, and on every role's `on-solid` and `on-tint`, derived or authored; failures are warnings (`TST2101`), never silent. The same standard drives [`transtyle diff`](/docs/cli/)'s contrast-regression flag, so `check` and `diff` always agree on what "passing" means.
+- `hygiene.unusedOption`, `hygiene.duplicateOption`: `info` (default) | `warning` | `off`, the severity of `TST1114` (option tokens no alias resolves to) and `TST1115` (option tokens of the same type with the same value). Both are reported once per build, with the count and the first paths in the message and the full lists in `check --json`. Set `warning` (with `failOn: warning`) to make CI refuse dead or duplicated palette entries.
 
 ### WCAG 2.1 or APCA
 
