@@ -17,6 +17,6 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "@transtyle/cli": "0.1.0-alpha.4",
-    "vite": "^6.0.0"
+    "vite": "^6.4.4"
   }
 }
