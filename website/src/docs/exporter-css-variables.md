@@ -1,6 +1,6 @@
 ---
 title: 'css-variables exporter'
-description: 'The plugin-API reference implementation and a framework-free escape hatch — every catalog slot as a plain CSS custom property.'
+description: 'The plugin-API reference implementation and a framework-free escape hatch: every catalog slot as a plain CSS custom property.'
 order: 13
 ---
 
@@ -8,12 +8,12 @@ order: 13
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/css-variables/">Acme</a> · <a href="/demo/cathode/css-variables/">Cathode</a> · <a href="/demo/govuk/css-variables/">GOV.UK</a> · <a href="/demo/carbon/css-variables/">Carbon</a> — one page, four design systems, compiled to CSS variables. <a href="/demo/">All 44 demos →</a></p>
+  <p><a href="/demo/acme/css-variables/">Acme</a> · <a href="/demo/cathode/css-variables/">Cathode</a> · <a href="/demo/govuk/css-variables/">GOV.UK</a> · <a href="/demo/carbon/css-variables/">Carbon</a>. One page, four design systems, compiled to CSS variables. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
-The simplest possible backend. Unlike every other reference exporter, it isn't really a _translation_ target — it's a 1:1 dump of the resolved semantic catalog as `--custom-properties`, with no framework mapping logic in the way. Two reasons it exists:
+The simplest possible backend. Unlike every other reference exporter, it isn't really a _translation_ target. It's a 1:1 dump of the resolved semantic catalog as `--custom-properties`, with no framework mapping logic in the way. Two reasons it exists:
 
-1. **The plugin API's reference implementation.** An exporter is exactly `emit(normalized, ctx) → { files, coverage }` — this one has nothing else going on, so it's what third-party plugin authors (and the Phase 2 conformance kit) diff their own exporter against.
+1. **The plugin API's reference implementation.** An exporter is exactly `emit(normalized, ctx) → { files, coverage }`. This one has nothing else going on, so it's what third-party plugin authors (and the Phase 2 conformance kit) diff their own exporter against.
 2. **A framework-free escape hatch.** If your stack isn't Bootstrap, shadcn, daisyUI, or Storybook, you still get something consumable: plain CSS variables you can wire into anything.
 
 ```json
@@ -33,13 +33,13 @@ The simplest possible backend. Unlike every other reference exporter, it isn't r
 
 ## Naming
 
-Strip `semantic.`, dots become dashes. Color-role [grid](/docs/language/#color-roles-the-role-grid) cells and content keep their `color.` segment — `--color-primary-solid`, `--color-text-base`, `--color-border`. The elevation ladder and `scrim` drop it, since they're surfaces, not role colors — `--elevation-1-surface`, `--elevation-1-shadow`, `--scrim`. Everything else keeps its own top group: `--radius-md` (+ `-control`/`-field`/`-container`), `--space-4`, `--type-size-md`, `--z-modal`, `--duration-normal`, `--easing-standard`.
+Strip `semantic.`, dots become dashes. Color-role [grid](/docs/language/#color-roles-the-role-grid) cells and content keep their `color.` segment: `--color-primary-solid`, `--color-text-base`, `--color-border`. The elevation ladder and `scrim` drop it, since they're surfaces, not role colors: `--elevation-1-surface`, `--elevation-1-shadow`, `--scrim`. Everything else keeps its own top group: `--radius-md` (+ `-control`/`-field`/`-container`), `--space-4`, `--type-size-md`, `--z-modal`, `--duration-normal`, `--easing-standard`.
 
-Composite values expand: a typography role (`type.role.body.md`) becomes four longhand properties (`-size`/`-weight`/`-leading`/`-family`); an elevation shadow collapses to one box-shadow-shaped value, usable directly as `box-shadow: var(--elevation-1-shadow)` — an authored stack of shadow layers becomes the same comma-separated list CSS takes. An authored `border` or `transition` composite becomes its CSS shorthand (`2px solid oklch(…)`, `150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms`); a `border` whose `style` is a dash-array object has no shorthand and is left out.
+Composite values expand: a typography role (`type.role.body.md`) becomes four longhand properties (`-size`/`-weight`/`-leading`/`-family`); an elevation shadow collapses to one box-shadow-shaped value, usable directly as `box-shadow: var(--elevation-1-shadow)`. An authored stack of shadow layers becomes the same comma-separated list CSS takes. An authored `border` or `transition` composite becomes its CSS shorthand (`2px solid oklch(…)`, `150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms`); a `border` whose `style` is a dash-array object has no shorthand and is left out.
 
 ## Mode handling
 
-`:root` carries the light map, `[data-color-scheme="dark"]` the dark map — mode _names_, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) still emits this way. Only values that carry a colour vary by mode (role colours, the categorical palette, shadows, borders); scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
+`:root` carries the light map, `[data-color-scheme="dark"]` the dark map. The modes go by _name_, never the default flag, so a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) still emits this way. Only values that carry a colour vary by mode (role colours, the categorical palette, shadows, borders); scales (radius, space, type, motion…) are mode-invariant and appear once. Configure `options.darkSelector` and `options.prefix` to fit your setup.
 
 ## Descriptions and deprecations
 
@@ -58,13 +58,13 @@ Only the first line of a description is written, and a `*/` in it is broken up s
 <!-- measured: acme.css-variables.distinct = 310 -->
 <!-- measured: acme.authored = 42 -->
 
-Every variable is `native` — there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 651 declarations across the mode blocks — 310 distinct variables — from 42 authored tokens.
+Every variable is `native`: there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 651 declarations across the mode blocks, 310 distinct variables, from 42 authored tokens.
 
 ## Extra mode dimensions
 
-Most targets only know about `color-scheme`. This one expresses **every** dimension a design system declares: a second dimension like `density` gets one selector block per non-default value — `[data-density="compact"]` by default (override the attribute via `options.dimensionSelectors`) — containing only the variables that actually differ from the defaults, not a full re-dump. [Acme's demo](/docs/examples/#acme--the-minimal-example) declares `density: comfortable|compact`, scaling `space.*` by 0.875 in compact; every other target reports it `dropped(mode:density)` in coverage since they don't touch it.
+Most targets only know about `color-scheme`. This one expresses **every** dimension a design system declares. A second dimension like `density` gets one selector block per non-default value, `[data-density="compact"]` by default (override the attribute via `options.dimensionSelectors`). Each block holds only the variables that actually differ from the defaults, not a full re-dump. [Acme's demo](/docs/examples/#acme--the-minimal-example) declares `density: comfortable|compact`, scaling `space.*` by 0.875 in compact. Every other target reports it `dropped(mode:density)` in coverage since they don't touch it.
 
-A combination gets a block of its own, `[data-color-scheme="dark"][data-contrast="more"]`, whenever the separate blocks would resolve it wrong: a dimension that changes colors ([`contrast`, `brand`](/docs/configuration/#contrast-motion-and-brand)) needs its dark values restated, or its light block would win on a dark page. Density changes no color, so Acme gets none. The `contrast: more` and `motion: reduced` blocks are also written inside `@media (prefers-contrast: more)` and `@media (prefers-reduced-motion: reduce)`, so the user's system setting applies until the page sets the attribute, and any value you set wins over it (`data-contrast="standard"` included). Set `options.mediaQueries: false` to keep only the attributes. Put every attribute on the element that carries `data-color-scheme`, usually `<html>`.
+A combination gets a block of its own, `[data-color-scheme="dark"][data-contrast="more"]`, whenever the separate blocks would resolve it wrong. A dimension that changes colors ([`contrast`, `brand`](/docs/configuration/#contrast-motion-and-brand)) needs its dark values restated, or its light block would win on a dark page. Density changes no color, so Acme gets none. The `contrast: more` and `motion: reduced` blocks are also written inside `@media (prefers-contrast: more)` and `@media (prefers-reduced-motion: reduce)`, so the user's system setting applies until the page sets the attribute, and any value you set wins over it (`data-contrast="standard"` included). Set `options.mediaQueries: false` to keep only the attributes. Put every attribute on the element that carries `data-color-scheme`, usually `<html>`.
 
 ## Your own tokens (custom vocabulary)
 
@@ -72,4 +72,4 @@ The same rule covers the `semantic.*` tokens you add outside the [catalog](/docs
 
 ## Custom roles (role archetypes)
 
-Nothing target-specific to add: a custom role that declares `$extensions.transtyle.role` gets its full grid derived under `semantic.color.<name>.*` just like a built-in role, and this exporter already walks every `semantic.*` slot it finds — the archetyped role's cells show up automatically. See Cathode's `crt-amber` role in its `dist/css-variables/` output.
+Nothing target-specific to add. A custom role that declares `$extensions.transtyle.role` gets its full grid derived under `semantic.color.<name>.*` just like a built-in role. This exporter already walks every `semantic.*` slot it finds, so the archetyped role's cells show up automatically. See Cathode's `crt-amber` role in its `dist/css-variables/` output.
