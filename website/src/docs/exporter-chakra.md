@@ -8,15 +8,15 @@ order: 17
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/chakra/">Acme</a> · <a href="/demo/cathode/chakra/">Cathode</a> · <a href="/demo/govuk/chakra/">GOV.UK</a> · <a href="/demo/carbon/chakra/">Carbon</a> — one page, four design systems, compiled to Chakra UI. <a href="/demo/">All 44 demos →</a></p>
+  <p><a href="/demo/acme/chakra/">Acme</a> · <a href="/demo/cathode/chakra/">Cathode</a> · <a href="/demo/govuk/chakra/">GOV.UK</a> · <a href="/demo/carbon/chakra/">Carbon</a>: one page, four design systems, compiled to Chakra UI. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
-[Chakra UI](https://chakra-ui.com/) v3 colours its components through eight semantic keys per palette, each with a light and a dark value, and its recipes read those keys rather than numbered shades. That is [the role grid](/docs/language/#color-roles-the-role-grid) under other names, so this exporter is the closest thing to a rename among the targets. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `config`, a `defineConfig()` object holding only overrides and additions, and `system`, Chakra's own `createSystem(defaultConfig, config)`.
+[Chakra UI](https://chakra-ui.com/) v3 colours its components through eight semantic keys per palette, each with a light and a dark value, and its recipes read those keys rather than numbered shades. That's [the role grid](/docs/language/#color-roles-the-role-grid) under other names, so this exporter is the closest thing to a rename among the targets. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `config`, a `defineConfig()` object holding only overrides and additions, and `system`, Chakra's own `createSystem(defaultConfig, config)`.
 
 <!-- measured: acme.chakra.rows = 340 -->
 <!-- measured: acme.chakra.native = 155 -->
 
-On [Acme](/docs/examples/) that is 340 classified rows in `report.json`, 155 of them native, measured against [Chakra's whole theming surface](#measured-against-chakras-whole-surface).
+On [Acme](/docs/examples/) that's 340 classified rows in `report.json`, 155 of them native, measured against [Chakra's whole theming surface](#measured-against-chakras-whole-surface).
 
 ```json
 "targets": { "chakra": { "output": "dist/chakra" } }
@@ -50,7 +50,7 @@ Each role becomes `semanticTokens.colors.<role>` with Chakra's eight keys, strai
 
 Chakra derives its own hovers (`solid/90` for a solid button, `muted` for the softer variants), so the grid's hover, active and selected cells have no key and are reported `dropped`. Custom roles work like built-in ones: [Cathode](/demo/cathode/chakra/)'s `crt-amber` is `colorPalette="crt-amber"`.
 
-The page colours come from the rest of the catalog: `bg` and `bg.panel` from the elevation ladder, `fg`, `fg.muted`, `fg.subtle` from the text rungs, `border` and `border.subtle` from the border ladder, `bg.inverted` and `fg.inverted` from the inverse pair, and `bg.error`, `fg.error`, `border.error` (and warning, success, info) from the status roles. The modal backdrop takes the design system's `scrim`.
+The page colours come from the rest of the catalog. `bg` and `bg.panel` come from the elevation ladder, `fg`, `fg.muted`, `fg.subtle` from the text rungs, and `border` and `border.subtle` from the border ladder. `bg.inverted` and `fg.inverted` come from the inverse pair, and `bg.error`, `fg.error`, `border.error` (and warning, success, info) from the status roles. The modal backdrop takes the design system's `scrim`.
 
 ## Chakra's defaults read roles, not hues
 
@@ -73,13 +73,13 @@ Chakra's recipes already read the semantic routes, `l2` for control radius and t
 <!-- measured: acme.chakra.follow = 1526 -->
 <!-- measured: acme.chakra.default = 773 -->
 
-The rows above say what the exporter maps. A checked-in inventory says what there is to map: 2426 entries extracted from the installed `@chakra-ui/react`, every token, semantic token, breakpoint, text and layer style of its default config, and every recipe leaf that reads a token, resolved the way Chakra resolves it (`px: "4"` reads `spacing.4`). Chakra's ten hue palettes fold into one `<palette>` entry per key. On Acme, this config sets 127 entries, Chakra derives 1526 more from those (a recipe's `borderRadius: "l2"`, every `colorPalette.solid` once the default palette is routed to `neutral`), and 773 keep Chakra's value. The token-level ones each have their own row in `report.json` with the reason: the hue palettes, the rungs Chakra's scales have beyond the catalog's, its measure scale, constants such as `transparent`. The recipe leaves among them keep Chakra's value only because a token they read does. The [coverage bar](/docs/concepts/#5-provenance-and-coverage) fails the build when an entry is unaccounted for or kept without a reason.
+The rows above say what the exporter maps. A checked-in inventory says what there is to map. It holds 2426 entries extracted from the installed `@chakra-ui/react`. They cover every token, semantic token, breakpoint, text and layer style of its default config, and every recipe leaf that reads a token, resolved the way Chakra resolves it (`px: "4"` reads `spacing.4`). Chakra's ten hue palettes fold into one `<palette>` entry per key. On Acme, this config sets 127 entries, Chakra derives 1526 more from those (a recipe's `borderRadius: "l2"`, every `colorPalette.solid` once the default palette is routed to `neutral`), and 773 keep Chakra's value. The token-level ones each have their own row in `report.json` with the reason: the hue palettes, the rungs Chakra's scales have beyond the catalog's, its measure scale, constants such as `transparent`. The recipe leaves among them keep Chakra's value only because a token they read does. The [coverage bar](/docs/concepts/#5-provenance-and-coverage) fails the build when an entry is unaccounted for or kept without a reason.
 
 The full mapping is in the [exporter spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/exporters/chakra.md). See it running on real Chakra components: `npm run dev -w acme-demo-chakra` (or `cathode-demo-chakra`) in the [examples](/docs/examples/). The demo's build type-checks the emitted config against Chakra's own types before bundling it.
 
 ## Descriptions and deprecations
 
-A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the palette keys, the global colours (`bg`, `fg`, `border`, `scrim`), every `tokens.*` entry, the semantic radii and shadows, the breakpoints and the disabled layer style. The text styles, recipes and component tier read several slots or a derived one and get none. A `{ value: … }` leaf stays on one line below its comment.
+A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`). The description shows on hover. `@deprecated <reason>` strikes the property through in an editor. That covers the palette keys, the global colours (`bg`, `fg`, `border`, `scrim`), every `tokens.*` entry, the semantic radii and shadows, the breakpoints and the disabled layer style. The text styles, recipes and component tier read several slots or a derived one and get none. A `{ value: … }` leaf stays on one line below its comment.
 
 ## Contrast, motion and brand
 
