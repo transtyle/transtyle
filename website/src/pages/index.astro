@@ -248,14 +248,14 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
       </p>
       <div class="gallery-strip">
         {EXAMPLES.map((example) => (
-          <a class="gcard" href={withBase(`/demo/${example.id}/shadcn/`)}>
+          <a class="gcard d-bracket d-bracket--hover" href={withBase(`/demo/${example.id}/shadcn/`)}>
             <span class="gswatch" aria-hidden="true">
               <i style={`background:${themes[example.id].light.primary}`}></i>
               <i style={`background:${themes[example.id].light.page}`}></i>
               <i style={`background:${themes[example.id].light.text}`}></i>
               <i style={`background:${themes[example.id].light.border}`}></i>
             </span>
-            <span class="gname"><span class="d-dimension">{example.title}</span></span>
+            <span class="gname">{example.title}</span>
             <span class="gkicker">{example.kicker}</span>
           </a>
         ))}
@@ -452,14 +452,13 @@ echarts    ↳ dist/echarts/theme.acme-{'{light,dark}'}.json
     /* Radius/clipping/ring come from `.code-wrap` (global.css) now, not a border here. */
     .band.final .start pre { margin: 0; }
     /* The demo-gallery strip: four design systems as four real palettes. The card
-       is the package's ProjectCard look: square, a hairline, the title under the
-       dimension line, and the lift on hover, all on the motion tokens. */
+       is the package's ProjectCard look: square, a hairline, and the package's
+       brackets drawn around the card on hover and focus (`d-bracket--hover`). */
     .gallery-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: var(--space-3); margin: var(--space-6) 0 0; }
     .gcard {
       display: block; border: var(--stroke-hairline) solid var(--color-line); padding: var(--space-4); background: var(--color-panel); color: var(--color-fg);
-      transition: border-color var(--motion-duration-dimension) var(--motion-easing-precise), transform var(--motion-duration-dimension) var(--motion-easing-precise);
     }
-    .gcard:hover { text-decoration: none; color: var(--color-fg); border-color: var(--color-primary); transform: translateY(-2px); }
+    .gcard:hover { text-decoration: none; color: var(--color-fg); }
     .gswatch { display: flex; gap: var(--space-1); margin-bottom: var(--space-3); }
     .gswatch i { flex: 1; height: 1.5rem; border-radius: var(--radius-sm); border: var(--stroke-hairline) solid var(--color-line); }
     .gname { display: block; font: var(--type-heading); letter-spacing: var(--type-heading-letter-spacing); text-transform: uppercase; }
