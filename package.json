@@ -96,6 +96,9 @@
     "satori": "0.33.4"
   },
   "overrides": {
+    "@angular/build": {
+      "vite": "^8.3.3"
+    },
     "fflate": "0.7.5"
   }
 }
