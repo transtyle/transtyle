@@ -6,7 +6,7 @@ order: 10
 
 # Example walkthroughs
 
-Four example design systems live in the repo. Acme and Cathode are invented, chosen as opposites — minimal input vs. maximal weirdness. [GOV.UK](#govuk--a-real-design-system) and [Carbon](#carbon--a-real-design-system) are real, published, independently-designed systems adopted through the same [binding-layer playbook](/docs/adopt-existing/) — the project's **T11 "real-DS run"**, proof the catalog holds up against systems nobody on this project designed.
+Four example design systems live in the repo. Acme and Cathode are invented, chosen as opposites: minimal input vs. maximal weirdness. [GOV.UK](#govuk--a-real-design-system) and [Carbon](#carbon--a-real-design-system) are real, published, independently-designed systems adopted through the same [binding-layer playbook](/docs/adopt-existing/). That's the project's **T11 "real-DS run"**, proof the catalog holds up against systems nobody on this project designed.
 
 ## Acme — the minimal example
 
@@ -14,7 +14,7 @@ Four example design systems live in the repo. Acme and Cathode are invented, cho
 <!-- measured: acme.authored.component = 4 -->
 <!-- measured: acme.authored.option = 16 -->
 
-`examples/acme` authors **22 semantic tokens and 4 component-tier ones**, and only nine of the semantic ones are design decisions: a brand blue, background/surface/text/text-muted/border (each with authored dark values), one radius, two font stacks. The remaining thirteen are an explicit space scale, spelled out to exercise the machinery rather than because the system needs it. Plus a 16-token option palette they alias into.
+`examples/acme` authors **22 semantic tokens and 4 component-tier ones**, and only nine of the semantic ones are design decisions: a brand blue, background/surface/text/text-muted/border (each with authored dark values), one radius, two font stacks. The remaining thirteen are an explicit space scale, spelled out to exercise the machinery rather than because the system needs it. They alias into a 16-token option palette.
 
 ```bash
 cd examples/acme
@@ -27,12 +27,12 @@ What to study:
 
 <!-- measured: acme.engine = 237 -->
 
-- **Derivation in action.** The other 237 slots per mode are the engine's: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
+- **Derivation in action.** The engine fills the other 237 slots per mode: hover/active states, subtle tints, contrast-picked on-colors, `secondary`, `danger`, the chart palette. Grep the output for `· derived`.
 - **One brand color drives everything.** Change `option.color.blue.600`, rebuild, and watch the accent tint, on-colors, and all five chart colors follow coherently.
-- **Both mode-authoring forms.** Acme uses inline `$extensions` for dark values — the compact form for hand-edited files.
-- **Target instances.** Its config builds the same design system for both shadcn eras side by side — plus [per-mode ECharts themes](/docs/exporter-echarts/) whose `color[]` palette shares its first five colors with shadcn's `--chart-*`: one brand, one data-viz palette, everywhere.
-- **Contrast and motion, hand-written.** Acme declares `contrast` (`standard`, `more`) and `motion` (`full`, `reduced`). Two small layers author the `more` values for `text.muted` and `border.base`, one for light and one, as a combo layer, for dark; `motion` needs no authoring, the reduced durations are derived as `0ms`. The css-variables, shadcn/ui and Radix demos have a toggle for each.
-- **A live diagnostic.** Acme's muted text sits near the AA contrast boundary — a deliberate teaching case for `TST2101`.
+- **Both mode-authoring forms.** Acme uses inline `$extensions` for dark values, the compact form for hand-edited files.
+- **Target instances.** Its config builds the same design system for both shadcn eras side by side. It also builds [per-mode ECharts themes](/docs/exporter-echarts/) whose `color[]` palette shares its first five colors with shadcn's `--chart-*`. One brand, one data-viz palette, everywhere.
+- **Contrast and motion, hand-written.** Acme declares `contrast` (`standard`, `more`) and `motion` (`full`, `reduced`). Two small layers author the `more` values for `text.muted` and `border.base`, one for light and one, as a combo layer, for dark; `motion` needs no authoring, since the reduced durations are derived as `0ms`. The css-variables, shadcn/ui and Radix demos have a toggle for each.
+- **A live diagnostic.** Acme's muted text sits near the AA contrast boundary, a deliberate teaching case for `TST2101`.
 
 Acme is also the conformance fixture from the Phase 0 design exercise; `examples/acme/expected/` preserves the original hand-written expected output for comparison against real compiler output.
 
@@ -40,7 +40,7 @@ Acme is also the conformance fixture from the Phase 0 design exercise; `examples
 
 `examples/cathode` is a retro CRT terminal design system built to attack every default assumption:
 
-- **Alien vocabulary.** Its native language is `crt.ink`, `crt.tube`, `crt.glass`, `crt.scanline`, `crt.amber`, `crt.meltdown` — no "primary" anywhere.
+- **Alien vocabulary.** Its native language is `crt.ink`, `crt.tube`, `crt.glass`, `crt.scanline`, `crt.amber`, `crt.meltdown`. No "primary" anywhere.
 - **Dark-native.** The terminal look is the default mode; light is a paper-printout mode.
 - **Brand = text.** Phosphor green is simultaneously `primary` and `text`, and flips polarity across modes.
 - **Radius 0, monospace everything.**
@@ -54,15 +54,15 @@ npx transtyle build          # same eleven targets as Acme, radically different 
 
 What to study:
 
-- **The layered layout.** Three token files, all pure DTCG: `cathode.tokens.json` (source of truth), `cathode.light.tokens.json` (mode overlay — its mode assignment lives in the config), `transtyle.bindings.tokens.json` (catalog → vocabulary aliases). The pattern for real teams whose token files are generated. Restructuring Cathode from inline-extensions form to this layout produced byte-identical output — the equivalence is proven, not claimed.
-- **Mode polarity.** `:root` in the output is paper mode, `.dark` is the terminal: exporters bind mode names, not your default flag. Cathode found this bug during development; it's now a stated IR rule.
-- **Derivation under stress.** `--primary-foreground` in dark mode is near-black, contrast-picked against glowing green. The chart palette derives green-anchored — build the ECharts target and open the dark theme: phosphor-green series on tube-black, a dashboard from 1983. `success` derives to hue 150 — nearly phosphor. On a CRT, everything is success.
-- **The honest limitation.** Derived `info` is conventionally blue — coherent, wrong for the aesthetic, and fixed by one authored line. Derivation has no taste; that's your job.
-- **A CSS curiosity.** `--radius: 0rem` makes shadcn's `calc(var(--radius) - 4px)` negative; browsers clamp a negative `calc()` radius to 0 — the correct brutalist result by accident of CSS, which is why `TST2104` only speaks up for a small radius above 0.
+- **The layered layout.** Three token files, all pure DTCG: `cathode.tokens.json` (source of truth), `cathode.light.tokens.json` (mode overlay; its mode assignment lives in the config), `transtyle.bindings.tokens.json` (catalog → vocabulary aliases). It's the pattern for real teams whose token files are generated. Restructuring Cathode from inline-extensions form to this layout produced byte-identical output, so the equivalence is proven, not claimed.
+- **Mode polarity.** `:root` in the output is paper mode, `.dark` is the terminal, because exporters bind mode names, not your default flag. Cathode found this bug during development, and it's now a stated IR rule.
+- **Derivation under stress.** `--primary-foreground` in dark mode is near-black, contrast-picked against glowing green. The chart palette derives green-anchored. Build the ECharts target and open the dark theme to see phosphor-green series on tube-black, a dashboard from 1983. `success` derives to hue 150, nearly phosphor. On a CRT, everything is success.
+- **The limitation.** Derived `info` is conventionally blue. That's coherent, wrong for the aesthetic, and fixed by one authored line. Derivation has no taste; that's your job.
+- **A CSS curiosity.** `--radius: 0rem` makes shadcn's `calc(var(--radius) - 4px)` negative. Browsers clamp a negative `calc()` radius to 0, which is the correct brutalist result by accident of CSS. That's why `TST2104` only speaks up for a small radius above 0.
 
 ## GOV.UK — a real design system
 
-`examples/govuk` adopts the [GOV.UK Design System](https://design-system.service.gov.uk/styles/colour/) — the UK government's public-service design system — via the binding-layer pattern: its published colors live verbatim in `option.*`, its own "functional colour" names (`govuk.brand`, `govuk.error`, `govuk.focus`, …) are custom semantic tokens, and `transtyle.bindings.tokens.json` maps catalog slots onto them.
+`examples/govuk` adopts the [GOV.UK Design System](https://design-system.service.gov.uk/styles/colour/), the UK government's public-service design system, via the binding-layer pattern. Its published colors live verbatim in `option.*`, its own "functional colour" names (`govuk.brand`, `govuk.error`, `govuk.focus`, …) are custom semantic tokens, and `transtyle.bindings.tokens.json` maps catalog slots onto them.
 
 ```bash
 cd examples/govuk
@@ -73,11 +73,11 @@ npx transtyle build          # same eleven targets as Acme/Cathode
 
 What to study:
 
-- **A clean 1:1 mapping, found by accident.** GOV.UK's iconic yellow keyboard-focus color maps directly onto the catalog's `ring` slot — no judgment call needed.
-- **Honest gaps.** GOV.UK's functional-colour set has no distinct `secondary`, `accent`, `warning`, or `info` role — those four are left unbound and derive from `primary` via the standard rule pack, exactly the "don't translate everything on day one" guidance in the [adoption playbook](/docs/adopt-existing/).
-- **A single-mode config, on purpose.** GOV.UK's public system has no published dark theme, so `modes.color-scheme` declares only `"light"` — legal, and proof a mode dimension is optional infrastructure, not a requirement.
+- **A clean 1:1 mapping, found by accident.** GOV.UK's iconic yellow keyboard-focus color maps directly onto the catalog's `ring` slot, with no judgment call needed.
+- **Gaps.** GOV.UK's functional-colour set has no distinct `secondary`, `accent`, `warning`, or `info` role. Those four are left unbound and derive from `primary` via the standard rule pack, which is exactly the "don't translate everything on day one" guidance in the [adoption playbook](/docs/adopt-existing/).
+- **A single-mode config, on purpose.** GOV.UK's public system has no published dark theme, so `modes.color-scheme` declares only `"light"`. That's legal, and proof a mode dimension is optional infrastructure, not a requirement.
 - **A licensing limitation, not a compiler one.** GOV.UK's real typeface (GDS Transport) is licensed to crown services only; the demo projects render in GOV.UK's own documented `arial` fallback instead.
-- **Radius 0 is authentic here too** — but for a different reason than Cathode: it's GOV.UK's actual, deliberate flat aesthetic, not an invented quirk.
+- **Radius 0 is authentic here too**, but for a different reason than Cathode. It's GOV.UK's actual, deliberate flat aesthetic, not an invented quirk.
 
 Full reasoning for every binding decision: [`docs/findings/govuk-adoption.md`](https://github.com/transtyle/transtyle/blob/main/docs/findings/govuk-adoption.md).
 
@@ -94,10 +94,10 @@ npx transtyle build          # same eleven targets
 
 What to study:
 
-- **Better native role coverage than GOV.UK.** Carbon has real, named tokens for `danger`/`success`/`warning`/`info` (its "Support" group) _and_ a real `secondary` (`$button-secondary`) — bound directly, not derived.
-- **Real per-mode tokens, not synthetic dark mode.** Carbon ships four themes (White, G10, G90, G100); this example binds White → light, G100 → dark, carrying each color's actual documented value in both modes via `$extensions."transtyle.modes"`. Thirteen of its fifteen Carbon tokens have a distinct dark value — `$focus`, `$link-primary`, `$link-visited`, `$button-secondary`, and three of the four Support colors among them. `$button-primary` and `$support-warning` deliberately have none, because Carbon keeps them the same in every theme: overrides where the source publishes one, silence where it doesn't.
-- **A genuinely open type system.** IBM Plex Sans/Mono are open-source and load for real in the demo projects — unlike GOV.UK's licensed font.
-- **The button, not the link.** `primary` binds Carbon's `$button-primary`, which stays Blue 60 on G100, not `$link-primary`, which lightens to Blue 40 there for text contrast; the catalog's `link.*` slots take the link tokens. So `primary` and `warning` carry their light values into dark mode, as Carbon does. The build says so out loud: `transtyle check` prints an informational `TST1204` for exactly those two roles and `neutral` — and stays quiet about the roles whose dark values differ, because the test is the resolved colour rather than where it was written.
+- **Better native role coverage than GOV.UK.** Carbon has real, named tokens for `danger`/`success`/`warning`/`info` (its "Support" group) _and_ a real `secondary` (`$button-secondary`), bound directly, not derived.
+- **Real per-mode tokens, not synthetic dark mode.** Carbon ships four themes (White, G10, G90, G100); this example binds White → light, G100 → dark, carrying each color's actual documented value in both modes via `$extensions."transtyle.modes"`. Thirteen of its fifteen Carbon tokens have a distinct dark value: `$focus`, `$link-primary`, `$link-visited`, `$button-secondary`, and three of the four Support colors among them. `$button-primary` and `$support-warning` deliberately have none, because Carbon keeps them the same in every theme: overrides where the source publishes one, silence where it doesn't.
+- **An open type system.** IBM Plex Sans/Mono are open-source and load for real in the demo projects, unlike GOV.UK's licensed font.
+- **The button, not the link.** `primary` binds Carbon's `$button-primary`, which stays Blue 60 on G100, not `$link-primary`, which lightens to Blue 40 there for text contrast; the catalog's `link.*` slots take the link tokens. So `primary` and `warning` carry their light values into dark mode, as Carbon does. The build says so out loud. `transtyle check` prints an informational `TST1204` for exactly those two roles and `neutral`. It stays quiet about the roles whose dark values differ, because the test is the resolved colour rather than where it was written.
 
 Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/transtyle/transtyle/blob/main/docs/findings/carbon-adoption.md).
 
@@ -105,12 +105,12 @@ Full reasoning: [`docs/findings/carbon-adoption.md`](https://github.com/transtyl
 
 <!-- measured: demos = 44 -->
 
-Each example ships eleven npm-runnable **demo projects** (`examples/<example>/demo/<target>/`) — the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), Angular [PrimeNG](/docs/exporter-primeng/), [Mantine](/docs/exporter-mantine/), [Chakra UI](/docs/exporter-chakra/) and [Material UI](/docs/exporter-mui/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 44 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI.
+Each example ships eleven npm-runnable **demo projects** (`examples/<example>/demo/<target>/`). They show the same fake page in real [Bootstrap](/docs/exporter-bootstrap/) (Sass path), real [shadcn/ui](/docs/exporter-shadcn/) registry components, [daisyUI](/docs/exporter-daisyui/), [`@radix-ui/themes`](/docs/exporter-radix/), Angular [PrimeNG](/docs/exporter-primeng/), [Mantine](/docs/exporter-mantine/), [Chakra UI](/docs/exporter-chakra/) and [Material UI](/docs/exporter-mui/); an [ECharts](/docs/exporter-echarts/) dashboard; a minimal [Storybook](/docs/exporter-storybook/) whose own chrome wears the theme; and the plain [css-variables](/docs/exporter-css-variables/) reference page. That's 44 projects across the four examples, every one consuming only the compiled `dist/` artifacts, and every one built in CI.
 
-**All 44 are deployed — [open the demo gallery](/demo/).** Every one is rebuilt from the examples on each deploy, so what is running there is what today's compiler emits. Each demo carries a switcher in the corner: from Acme's Bootstrap page you are one click from Carbon's, and the markup underneath is byte-identical, so the difference is entirely the design system.
+**All 44 are deployed: [open the demo gallery](/demo/).** Each one is rebuilt from the examples on each deploy, so what's running there is what today's compiler emits. Each demo carries a switcher in the corner: from Acme's Bootstrap page you are one click from Carbon's, and the markup underneath is byte-identical, so the difference is entirely the design system.
 
 To run them locally instead, from the repo root: `npm run dev -w acme-demo-bootstrap` (ports 4101–4110, 6101; Cathode: 4201–4210, 6201; GOV.UK: 4301–4310, 6301; Carbon: 4401–4410, 6401).
 
 ## Using them as templates
 
-Copy any example's structure for your own system: Acme's two-file shape for solo/hand-maintained systems, Cathode's three-layer shape for teams with generated tokens or split ownership, GOV.UK/Carbon's binding-layer shape for adopting an existing published system without renaming it. Then follow the [authoring workflow](/docs/derivation/#practical-workflow): author your opinions, build, read the report, override selectively.
+Copy any example's structure for your own system. Use Acme's two-file shape for solo/hand-maintained systems, Cathode's three-layer shape for teams with generated tokens or split ownership, and GOV.UK/Carbon's binding-layer shape for adopting an existing published system without renaming it. Then follow the [authoring workflow](/docs/derivation/#practical-workflow): author your opinions, build, read the report, override selectively.
