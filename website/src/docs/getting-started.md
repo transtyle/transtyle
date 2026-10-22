@@ -6,11 +6,11 @@ order: 2
 
 # Getting started
 
-Transtyle is on npm as an alpha: `@transtyle/cli`. Node ≥ 22.12 is the only requirement — the compiler has **zero external dependencies**, so installing it brings nothing else with it.
+Transtyle is on npm as an alpha: `@transtyle/cli`. Node ≥ 22.12 is the only requirement. The compiler has **zero external dependencies**, so installing it brings nothing else with it.
 
 <div class="callout"><span class="callout-title">Already have a design system?</span>
 
-This page builds a project from scratch. The more common path — keeping your existing names and values and binding them to the catalog — is [You already have a design system](/docs/adopt-existing/).
+This page builds a project from scratch. The more common path is [You already have a design system](/docs/adopt-existing/): keep your existing names and values and bind them to the catalog.
 
 </div>
 
@@ -30,9 +30,9 @@ mkdir my-ds && cd my-ds
 npx transtyle init
 ```
 
-In a terminal, `init` asks five questions: your brand color, light and dark or light only, which targets, a preset and a file layout. Press Enter to take a default; every question also has a flag (`--brand '#e8590c' --targets shadcn,bootstrap`), and without a terminal it asks nothing. The [CLI reference](/docs/cli/#transtyle-init-name) lists them all.
+In a terminal, `init` asks five questions: your brand color, light and dark or light only, which targets, a preset and a file layout. Press Enter to take a default. Every question also has a flag (`--brand '#e8590c' --targets shadcn,bootstrap`), and without a terminal it asks nothing. The [CLI reference](/docs/cli/#transtyle-init-name) lists them all.
 
-The default `recommended` preset authors the honest minimum — **six real decisions**, each marked `TODO` with a description of what it is:
+The default `recommended` preset authors the minimum: **six real decisions**, each marked `TODO` with a description of what it is:
 
 | You author       | Catalog slot          | Why you author it                      |
 | ---------------- | --------------------- | -------------------------------------- |
@@ -43,7 +43,11 @@ The default `recommended` preset authors the honest minimum — **six real decis
 | Muted text color | `text.muted`          | Second rung of that hierarchy          |
 | Default border   | `border.base`         | The neutral hairline everything shares |
 
-The five neutrals start as a near-gray ladder in your brand's hue, each with a dark value: placeholders that already pass contrast, not your design. Only the brand color is required. Leave the page background out and it defaults to white, or near-black in dark mode; leave the body text out and it defaults to whichever of near-black and white contrasts more with the page. Author the body text without a dark value and leave the page out, and dark mode swaps the light pair: the page takes your text color and the text takes white. Both are honest defaults, marked `defaulted` in `report.json`, and the five other decisions are what make the neutrals yours. (Card background, muted text and the border derive from the page and the text too; the scaffold asks for them because they are part of your look.) The `minimal` preset (`--preset minimal`) writes the brand color alone and leaves all of that to the defaults.
+The five neutrals start as a near-gray ladder in your brand's hue, each with a dark value: placeholders that already pass contrast, not your design. Only the brand color is required.
+
+Leave the page background out and it defaults to white, or near-black in dark mode. Leave the body text out and it defaults to whichever of near-black and white contrasts more with the page. Author the body text without a dark value and leave the page out, and dark mode swaps the light pair: the page takes your text color and the text takes white. Both defaults are marked `defaulted` in `report.json`.
+
+The five other decisions are what make the neutrals yours. Card background, muted text and the border derive from the page and the text too, but the scaffold asks for them because they're part of your look. The `minimal` preset (`--preset minimal`) writes the brand color alone and leaves all of that to the defaults.
 
 In DTCG form (this is the default scaffold's `tokens/brand.tokens.json`, abridged):
 
@@ -71,7 +75,7 @@ In DTCG form (this is the default scaffold's `tokens/brand.tokens.json`, abridge
 }
 ```
 
-Note the two tiers: `option.color.brand.500` is _your_ name for _your_ value; `primary.solid` is the catalog slot that aliases it. The dark values sit in `tokens/brand.dark.tokens.json`, a mode-scoped DTCG file the config loads for `color-scheme: dark` only:
+Note the two tiers. `option.color.brand.500` is _your_ name for _your_ value, and `primary.solid` is the catalog slot that aliases it. The dark values sit in `tokens/brand.dark.tokens.json`, a mode-scoped DTCG file the config loads for `color-scheme: dark` only:
 
 ```json
 "tokens": [
@@ -80,7 +84,7 @@ Note the two tiers: `option.color.brand.500` is _your_ name for _your_ value; `p
 ]
 ```
 
-Values can also go inline per token — see [Authoring tokens](/docs/authoring-tokens/#modes). Before it exits, `init` checks the new project and shows your brand color with the text color derived for it.
+Values can also go inline per token (see [Authoring tokens](/docs/authoring-tokens/#modes)). Before it exits, `init` checks the new project and shows your brand color with the text color derived for it.
 
 ## 3. Add targets and build
 
@@ -93,7 +97,7 @@ npx transtyle build
 
 Each target gets a directory under `dist/` holding its native artifacts, a generated `usage.md` telling you how to wire them into that ecosystem, and a `report.json` recording where every value came from.
 
-Everything you didn't author — hover states, on-colors, `secondary`, the full role grids, the chart palette — is <span class="prov derived">derived</span> deterministically, and `report.json` says so per variable, so you can override selectively: author any slot and derivation yields to you.
+Everything you didn't author (hover states, on-colors, `secondary`, the full role grids, the chart palette) is <span class="prov derived">derived</span> deterministically. `report.json` says so per variable, so you can override selectively: author any slot and derivation yields to you.
 
 Two more commands to know early:
 
@@ -112,7 +116,7 @@ For a Tailwind v4 shadcn app: copy `globals.transtyle.css` next to your global s
 @import './globals.transtyle.css';
 ```
 
-Dark mode uses the standard shadcn class strategy — toggle `dark` on `<html>`. Details for the Tailwind v3 era are in the [shadcn exporter page](/docs/exporter-shadcn/). Every target works the same way: build, then follow the generated `usage.md`. To _see_ a theme on real components first, each example ships [runnable demo projects](/docs/examples/) per target.
+Dark mode uses the standard shadcn class strategy: toggle `dark` on `<html>`. The [shadcn exporter page](/docs/exporter-shadcn/) has the details for the Tailwind v3 era. Every target works the same way: build, then follow the generated `usage.md`. To _see_ a theme on real components first, each example ships [runnable demo projects](/docs/examples/) per target.
 
 ## 5. Or start from the examples
 
@@ -128,15 +132,15 @@ npx transtyle build shadcn
 
 Output lands in `dist/shadcn/`:
 
-- `globals.transtyle.css` — the complete shadcn theme (light + dark + `@theme inline`)
-- `usage.md` — generated paste-in instructions for your target project
-- `report.json` — coverage classification and provenance for every variable
+- `globals.transtyle.css`: the complete shadcn theme (light + dark + `@theme inline`)
+- `usage.md`: generated paste-in instructions for your target project
+- `report.json`: coverage classification and provenance for every variable
 
 [Your first build](/docs/your-first-build/) walks through that output line by line.
 
 ## Where next
 
-- [Core concepts](/docs/concepts/) — the pipeline, tiers, the semantic catalog, modes, provenance
-- [The Transtyle language](/docs/language/) — every catalog slot, with derivation rules and per-exporter consumers
-- [Configuration](/docs/configuration/) — every manifest field
-- [Weird things & diagnostics](/docs/diagnostics/) — when output surprises you, it's explained there
+- [Core concepts](/docs/concepts/): the pipeline, tiers, the semantic catalog, modes, provenance
+- [The Transtyle language](/docs/language/): every catalog slot, with derivation rules and per-exporter consumers
+- [Configuration](/docs/configuration/): every manifest field
+- [Weird things & diagnostics](/docs/diagnostics/): when output surprises you, it's explained there

@@ -6,9 +6,9 @@ order: 23
 
 # Write an exporter
 
-The core knows nothing about any target. Every official exporter — Bootstrap, shadcn/ui, PrimeNG — uses the same public API you're about to use, and nothing in this guide touches core.
+The core knows nothing about any target. Every official exporter (Bootstrap, shadcn/ui, PrimeNG) uses the same public API you're about to use, and nothing in this guide touches core.
 
-We'll build a real one: compile a design system into an **Alacritty terminal colour scheme**. It's small enough to read in one sitting and awkward enough to be honest — a terminal has 16 colours and no concept of radius, spacing, or type, so you'll have to say what doesn't fit.
+We'll build a real one: compile a design system into an **Alacritty terminal colour scheme**. It's small enough to read in one sitting and awkward enough to be a real test. A terminal has 16 colours and no concept of radius, spacing, or type, so you'll have to say what doesn't fit.
 
 <div class="callout"><div class="callout-title">Before npm publication</div>
 
@@ -17,7 +17,7 @@ Transtyle isn't on npm yet, so the install steps below use a local path to a clo
 
 ## The whole API
 
-One function. It receives the fully resolved design system and returns files plus an honest account of how well they map:
+One function. It receives the fully resolved design system and returns files plus an account of how well they map:
 
 ```ts
 {
@@ -26,7 +26,7 @@ One function. It receives the fully resolved design system and returns files plu
 }
 ```
 
-That's it. No build step, no framework, no registration ceremony. Three rules the [conformance kit](#4-prove-it) enforces: `emit` must be **deterministic**, it must **not mutate** the IR, and it must never touch the filesystem — you return file _descriptions_, core writes them.
+That's it: no build step, framework or registration. The [conformance kit](#4-prove-it) enforces three rules. `emit` must be **deterministic**, it must **not mutate** the IR, and it must never touch the filesystem. You return file _descriptions_, and core writes them.
 
 If your target is just a list of variables, you may not need that function at all: start with a mapping table.
 
@@ -73,7 +73,7 @@ Save it next to your config and point a target at it:
 }
 ```
 
-`npx transtyle build ourlib` writes `ourlib.css` (a `:root` block, then `.ourlib-dark` with every colour row in dark mode) and `_ourlib.scss`, and a `report.json` whose coverage comes straight from the rows: `native` unless a row says `derived` or `approximated`, `dropped` (with the row's `note`) when the design system has no value for the slot, `approximated` when a `hex` colour had to be clamped into sRGB. What a mapping can say:
+`npx transtyle build ourlib` writes `ourlib.css` (a `:root` block, then `.ourlib-dark` with every colour row in dark mode) and `_ourlib.scss`. It also writes a `report.json` whose coverage comes straight from the rows: `native` unless a row says `derived` or `approximated`, `dropped` (with the row's `note`) when the design system has no value for the slot, `approximated` when a `hex` colour had to be clamped into sRGB. What a mapping can say:
 
 - **Four templates**: `css-custom-properties`, `scss-variables`, `less-variables`, `json`. Variable names carry their sigil (`--x`, `$x`, `@x`).
 - **A `part`** picks a member of a composite slot (`fontSize`, `fontWeight`, `lineHeight`, `fontFamily` of a typography role; `color`, `width` of a border); a **`format`** writes a colour as `oklch` (default), `hex` or `hsl-triplet`.
@@ -82,7 +82,7 @@ Save it next to your config and point a target at it:
 
 To share it, publish a package with no code: a `package.json` whose `transtyle` manifest (the [one below](#1-set-up-the-package)) adds `"declarative": "ourlib.mapping.json"`. Users install it and name it in `exporter` like any exporter; the CLI reads the mapping from the package and never imports it. The kit tests a mapping like any plugin: `conformance(createDeclarativeExporter(mapping), { manifest })`, with `createDeclarativeExporter` from `@transtyle/core`.
 
-**When to graduate to code.** A mapping has no conditions, no arithmetic, no naming patterns: each row is one variable from one slot. When your target needs a value computed from two slots, a name built from the role, a contrast pick, or a file format that isn't one of the four (a TOML terminal theme), write `emit` — the rest of this guide. The format's full reference is [the declarative mapping spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/declarative-mapping.md).
+**When to graduate to code.** A mapping has no conditions, no arithmetic, no naming patterns: each row is one variable from one slot. When your target needs a value computed from two slots, a name built from the role, a contrast pick, or a file format that isn't one of the four (a TOML terminal theme), write `emit`, as the rest of this guide does. The format's full reference is [the declarative mapping spec](https://github.com/transtyle/transtyle/blob/main/docs/specs/declarative-mapping.md).
 
 ## 1. Set up the package
 
@@ -92,7 +92,7 @@ npm init -y
 npm install @transtyle/plugin-kit    # while unpublished: npm install /path/to/transtyle/packages/plugin-kit
 ```
 
-Your `package.json` carries a `transtyle` manifest — static metadata that tools can read _without executing your code_, which is what makes `transtyle add` and any future registry safe:
+Your `package.json` carries a `transtyle` manifest: static metadata that tools can read _without executing your code_. That's what makes `transtyle add` and any future registry safe:
 
 ```json
 {
@@ -120,7 +120,7 @@ The `transtyle-exporter` keyword is how community exporters are discoverable.
 
 ## 2. Write the mapping table
 
-Keep the mapping as **data**, separate from the code that renders it. Yours is the only code that reads it, so the shape is up to you — but a flat table is what makes an exporter reviewable by someone who knows the target and not the compiler.
+Keep the mapping as **data**, separate from the code that renders it. Yours is the only code that reads it, so the shape is up to you. A flat table is what makes an exporter reviewable by someone who knows the target and not the compiler.
 
 Alacritty wants eight "normal" and eight "bright" ANSI colours. The [role grid](/docs/language/#color-roles-the-role-grid) supplies both from the same roles: `solid` for normal, `solid-hover` for bright. That is exactly what the grid's state axis is for.
 
@@ -147,7 +147,7 @@ const ANSI = [
 ];
 ```
 
-Note the `class` on each row. **You** decide how honest each mapping is, because only you know the target: `native` where it really means what we mean, `approximated` where you bent a meaning to fit. Don't be shy about `approximated` — the [coverage report](/docs/concepts/#5-provenance-and-coverage) is the product's credibility, and a wall of green nobody believes is worth less than an amber row with a reason.
+Note the `class` on each row. **You** decide how exact each mapping is, because only you know the target: `native` where it really means what we mean, `approximated` where you bent a meaning to fit. Don't be shy about `approximated`. The [coverage report](/docs/concepts/#5-provenance-and-coverage) is the product's credibility, and an amber row with a reason beats a wall of green nobody believes.
 
 ## 3. Write `emit`
 
@@ -255,25 +255,25 @@ export default {
 };
 ```
 
-Things worth pointing at:
+Some things to point out:
 
-- **`ctx` gives you the colour helpers** — `formatHex`, `formatColor`, `formatHslTriplet`, `contrastRatio`, `mix`. Use them. They're the same functions the derivation engine uses, so your output agrees with everyone else's by construction.
+- **`ctx` gives you the colour helpers**: `formatHex`, `formatColor`, `formatHslTriplet`, `contrastRatio`, `mix`. Use them. They're the same functions the derivation engine uses, so your output agrees with everyone else's by construction.
 - **`ctx.targetProfile` says which version you're building for.** It is one of the ranges in your manifest's `targets`, chosen from the project's `version` (shadcn reads it to pick its Tailwind v3 or v4 output). An exporter with one profile can ignore it.
 - **`ctx.units` converts dimensions.** `ctx.units.toPx("0.5rem")` and `toRem("8px")` use the config's `units.remBase`, return `undefined` for anything that is not a `px` or `rem` dimension, and `ctx.units.remBase` is the base itself, for your coverage note. Don't hard-code 16.
 - **A missing slot is data, not a crash.** If the IR has no `accent.solid`, record `unsupported` and carry on. Never throw because a design system didn't author something.
-- **Don't name a file `report.json` or `transtyle-manifest.json`.** Core writes both at the root of every target's output directory after your files (the build report and the manifest of what was generated), so a file of yours with either name would be silently overwritten. The kit's `no-reserved-file-names` check fails it.
+- **Don't name a file `report.json` or `transtyle-manifest.json`.** Core writes both at the root of every target's output directory after your files (the build report and the manifest of what was generated). A file of yours with either name would be silently overwritten. The kit's `no-reserved-file-names` check fails it.
 - **The dropped rows are the point.** A terminal can't express radius or type, and one file can't hold light and dark or two densities. Saying so, in the report, is the difference between a translation and a guess; a mode dimension you ignore without a `(mode:<dimension>)` row fails the kit.
-- **More modes than one file can hold have helpers.** `@transtyle/ir` exports the two encodings the official exporters use for a dimension beyond `color-scheme` (`brand`, `contrast`, `motion`, `density`): `modeBlocks(ir, { dims, render, darkSelector })` plans the attribute, media and combination blocks a CSS target appends after its own `:root` and dark blocks, from a `render(map, { dark })` that returns your declarations; `emitPerValue(ir, 'brand', (view) => emitOne(view, ctx))` runs your emit once per value and names the files `<file>.<value>.<ext>`. `droppedDimensions(names, expressed, reasons)` writes the `dropped` rows with a reason per dimension.
+- **More modes than one file can hold have helpers.** `@transtyle/ir` exports the two encodings the official exporters use for a dimension beyond `color-scheme` (`brand`, `contrast`, `motion`, `density`): `modeBlocks(ir, { dims, render, darkSelector })` plans the attribute, media and combination blocks a CSS target appends after its own `:root` and dark blocks, from a `render(map, { dark })` that returns your declarations. `emitPerValue(ir, 'brand', (view) => emitOne(view, ctx))` runs your emit once per value and names the files `<file>.<value>.<ext>`. `droppedDimensions(names, expressed, reasons)` writes the `dropped` rows with a reason per dimension.
 - **Make each row findable.** `transtyle explain --variable <name> --target <yours>` reads your coverage rows to go from a variable back to its slot. One variable per row, with `slot` set to the exact IR path you read, is all it needs. When the label says more than a path (`semantic.duration.fast + easing.standard`, `… (fontSize)`), add `slots: [...]` with the paths; when the variable just follows another of your variables, add `via: ['<that variable>']`. The conformance kit checks every `slots` entry exists in the IR ([coverage report fields](https://github.com/transtyle/transtyle/blob/main/docs/specs/validation-and-coverage.md#structured-fields-slots-and-via)).
 - **Your rows decide which custom tokens reach you.** A design system's own `semantic.*` tokens outside the catalog are accounted for by core after your `emit`: a token a catalog slot aliases reaches your target when one of your rows names that slot (in `slot` or `slots`), and every other one gets a `dropped` row. A row labelled in prose hides the slots behind it, which is one more reason to name them. If your target takes any variable name (like css-variables or daisyUI), set `openVocabulary: true`, write each token of `ctx.customTokens` with a `native` row, and declare a `customTokens: "emit" | "omit"` option; the kit checks the three ([open-vocabulary targets](https://github.com/transtyle/transtyle/blob/main/docs/architecture/plugins.md#open-vocabulary-targets)).
-- **Read only what you use.** The compiler records every slot an exporter looks up in the mode maps (`get`, `has`, or an entry opened while iterating): it is your target's `reads` in `report.json`, and `transtyle check --matrix` lists your target as a reader of each. Looking a slot up "just in case" makes your target show up as depending on it. Listing the keys to filter them, as css-variables does, is not a read.
+- **Read only what you use.** The compiler records every slot an exporter looks up in the mode maps (`get`, `has`, or an entry opened while iterating). It's your target's `reads` in `report.json`, and `transtyle check --matrix` lists your target as a reader of each. Looking a slot up "just in case" makes your target show up as depending on it. Listing the keys to filter them, as css-variables does, is not a read.
 - **Diagnostics are optional, and for your target's quirks.** When your target's own conventions turn an authored value into something the author didn't ask for, return `diagnostics: [{ severity: 'info', code, message, hint }]` next to `files` and `coverage` (shadcn does this when its radius offsets collapse a small `radius.md` to 0, [`TST2104`](/docs/diagnostics/)). Core prints them with your target's name in front. Only `info` and `warning`: to stop a build, the design system has to be wrong, and core already checks that.
 - **Descriptions are on the entry.** An authored token's `$description` is `entry.description` and its `$deprecated` is `entry.deprecated` (`true` or the reason). If your files take comments, write them above the declaration: `entryNotes(entry)` from `@transtyle/ir` gives the lines, `blockComment()` / `lineComment()` make them safe for `/* */` and `//`. You don't add them to coverage rows, or list deprecated tokens in `usage.md`: core does both for every target.
 - **Say what an `unsupported` row is missing.** When the target themes something the catalog has no word for, add a `meaning` to the row (`meaning: 'icon.size'`), reusing a key from the [registry](https://github.com/transtyle/transtyle/blob/main/docs/findings/catalog-meanings.json) when another exporter already reports the same concept. Rows that share a meaning across exporters are the evidence the [catalog grows on](/docs/language/#how-the-language-grows).
 
 ## 4. Prove it
 
-The conformance kit is the real specification — prose drifts, executable fixtures don't. Point it at your plugin:
+The conformance kit is the real specification: prose drifts, executable fixtures don't. Point it at your plugin:
 
 ```js
 // conformance.test.mjs
@@ -298,7 +298,7 @@ node conformance.test.mjs
 106/106 checks pass
 ```
 
-The kit runs your plugin against ten small fixture design systems, each twice: the canonical one, then the shapes that broke exporters before the kit could see them (one token, three tokens, `color-scheme` × `density`, light only, an authored component tier, a custom role, custom semantic tokens, authored composites, DTCG object forms). On each it checks the contract: that you didn't mutate the IR, that two runs are byte-identical, that no `undefined`, `NaN` or `[object Object]` reached a file, that no `native` row names a slot the design system never filled, and that a `density` mode you can't express has its `dropped` row. Each failure names the fixture, so `one-token: emit-runs` means your plugin crashed on a design system with nothing but a brand color. Open `node_modules/@transtyle/plugin-kit/fixtures/<name>/` to see exactly what it received. With `{ manifest }`, `manifest-valid`, `manifest-compatible` and `manifest-targets-ranges` check the manifest once. A plugin that returns `diagnostics` also gets `emit-diagnostics-valid` on each. Passing it is what "official" means, and community exporters can advertise it.
+The kit runs your plugin against ten small fixture design systems, each twice: the canonical one, then the shapes that broke exporters before the kit could see them (one token, three tokens, `color-scheme` × `density`, light only, an authored component tier, a custom role, custom semantic tokens, authored composites, DTCG object forms). On each it checks the contract: that you didn't mutate the IR, that two runs are byte-identical, and that no `undefined`, `NaN` or `[object Object]` reached a file. It also checks that no `native` row names a slot the design system never filled, and that a `density` mode you can't express has its `dropped` row. Each failure names the fixture, so `one-token: emit-runs` means your plugin crashed on a design system with nothing but a brand color. Open `node_modules/@transtyle/plugin-kit/fixtures/<name>/` to see exactly what it received. With `{ manifest }`, `manifest-valid`, `manifest-compatible` and `manifest-targets-ranges` check the manifest once. A plugin that returns `diagnostics` also gets `emit-diagnostics-valid` on each. Passing it is what "official" means, and community exporters can advertise it.
 
 ## 5. Use it in a real project
 
@@ -328,10 +328,10 @@ alacritty  55% native · 23% approximated · 18% dropped · 5% unsupported
   ↳ dist/alacritty/transtyle-manifest.json
 ```
 
-That coverage line is your exporter being honest in public — and `dist/alacritty/alacritty.transtyle.toml` is a terminal theme built from the same tokens as your buttons.
+That coverage line is your exporter reporting its limits in public. And `dist/alacritty/alacritty.transtyle.toml` is a terminal theme built from the same tokens as your buttons.
 
 ## Where next
 
-- [The Transtyle language](/docs/language/) — every catalog slot you can map from, and which exporters consume each
-- [Internals](/docs/internals/) — the pipeline your `emit` sits at the end of
-- [css-variables](/docs/exporter-css-variables/) — the reference implementation, deliberately trivial, worth reading start to finish
+- [The Transtyle language](/docs/language/): every catalog slot you can map from, and which exporters consume each
+- [Internals](/docs/internals/): the pipeline your `emit` sits at the end of
+- [css-variables](/docs/exporter-css-variables/): the reference implementation, deliberately trivial, and short enough to read start to finish
