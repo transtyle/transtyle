@@ -1,6 +1,6 @@
 ---
 title: 'shadcn/ui exporter'
-description: 'Era profiles, the mapping table, mode handling, honest limits.'
+description: 'Era profiles, the mapping table, mode handling, limits.'
 order: 8
 ---
 
@@ -8,19 +8,19 @@ order: 8
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/shadcn/">Acme</a> · <a href="/demo/cathode/shadcn/">Cathode</a> · <a href="/demo/govuk/shadcn/">GOV.UK</a> · <a href="/demo/carbon/shadcn/">Carbon</a> — one page, four design systems, compiled to shadcn/ui. <a href="/demo/">All 44 demos →</a></p>
+  <p><a href="/demo/acme/shadcn/">Acme</a> · <a href="/demo/cathode/shadcn/">Cathode</a> · <a href="/demo/govuk/shadcn/">GOV.UK</a> · <a href="/demo/carbon/shadcn/">Carbon</a>: one page, four design systems, compiled to shadcn/ui. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
-The first reference exporter. shadcn's theme _is_ a set of semantic CSS variables, so it exercises the semantic catalog almost 1:1 — which made it the right target to build first and the cleanest to learn from.
+The first reference exporter. shadcn's theme _is_ a set of semantic CSS variables, so it exercises the semantic catalog almost 1:1. That made it the right target to build first and the cleanest to learn from.
 
 <!-- measured: acme.shadcn.decls = 131 -->
 <!-- measured: acme.shadcn.distinct = 71 -->
 
-On the [Acme example](/docs/examples/) that is 131 custom-property declarations across `:root` and `.dark` — 71 distinct variables, each one classified in `report.json`.
+On the [Acme example](/docs/examples/) that's 131 custom-property declarations across `:root` and `.dark`, 71 distinct variables, each one classified in `report.json`.
 
 ## Era profiles
 
-shadcn isn't a versioned library; its theming convention shifted with the Tailwind v3 → v4 transition. The exporter ships two **profiles**, keyed on your **Tailwind** version: set `"version": "3.4.17"` on the target and the `tailwind-v3` profile is selected, `"4.1.13"` selects `tailwind-v4` (the ranges are `>=3 <4` and `>=4 <5`; anything else fails with `TST1313`, see [target versions](/docs/configuration/#target-versions)). `options.era` still picks one explicitly (see [target instances](/docs/configuration/#targets--instances-not-just-names)); when both are set and disagree, the era wins and the build warns with `TST2105`.
+shadcn isn't a versioned library; its theming convention shifted with the Tailwind v3 → v4 transition. The exporter ships two **profiles**, keyed on your **Tailwind** version. Set `"version": "3.4.17"` on the target to select the `tailwind-v3` profile; `"4.1.13"` selects `tailwind-v4` (the ranges are `>=3 <4` and `>=4 <5`; anything else fails with `TST1313`, see [target versions](/docs/configuration/#target-versions)). `options.era` still picks one explicitly (see [target instances](/docs/configuration/#targets--instances-not-just-names)); when both are set and disagree, the era wins and the build warns with `TST2105`.
 
 |               | `tailwind-v4` (default)                                       | `tailwind-v3`                                                                |
 | ------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -38,22 +38,22 @@ shadcn isn't a versioned library; its theming convention shifted with the Tailwi
 
 ## What maps where
 
-The full 33-variable set is emitted; highlights worth understanding:
+The full 33-variable set is emitted; the highlights:
 
-| shadcn variable                      | Comes from                                    | Note                                                                                                                                                             |
-| ------------------------------------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--background` / `--foreground`      | `elevation.0.surface` / `text.base`           |                                                                                                                                                                  |
-| `--card` / `--popover`               | `elevation.1.surface` / `elevation.3.surface` | the role-grid elevation ladder: card is one step up from the page, popover another two — see the [language reference](/docs/language/#color-roles-the-role-grid) |
-| `--primary` + `--primary-foreground` | `primary.solid` + `primary.on-solid`          | the foreground is contrast-picked and AA-checked                                                                                                                 |
-| `--secondary`, `--muted`             | `neutral.tint`                                | **shadcn's "secondary" is a subtle surface, not your brand secondary** — a deliberate mapping decision                                                           |
-| `--accent` + `--accent-foreground`   | `accent.tint` + `accent.on-tint`              | derived accent is brand-tinted — visibly nicer than stock shadcn's flat gray                                                                                     |
-| `--destructive`                      | `danger.solid`                                | name translation only                                                                                                                                            |
-| `--input`                            | `border.field`                                | the catalog's field border (proposal 0005): `derived` while it aliases `border.base`, `native` once authored                                                     |
-| `--ring`                             | `ring`                                        | derived from primary, lightened in dark mode                                                                                                                     |
-| `--chart-1…5`                        | `palette.categorical.1–5`                     | derived data-viz palette anchored on your brand hue                                                                                                              |
-| `--sidebar-*`                        | elevation/text/primary/accent grid cells      | exporter convention; properly a component-tier concern (v2)                                                                                                      |
-| `--radius`                           | `radius.md`                                   | shadcn derives sm/md/lg/xl from it via `calc()` (sm = −4px, md = −2px); a `radius.md` between 0 and 4px collapses sm (and md) to 0, reported as `TST2104`        |
-| `--font-sans` / `--font-mono`        | `font.sans` / `font.mono`                     | v4: `@theme`; v3: `fontFamily` in the config snippet                                                                                                             |
+| shadcn variable                      | Comes from                                    | Note                                                                                                                                                            |
+| ------------------------------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--background` / `--foreground`      | `elevation.0.surface` / `text.base`           |                                                                                                                                                                 |
+| `--card` / `--popover`               | `elevation.1.surface` / `elevation.3.surface` | the role-grid elevation ladder: card is one step up from the page, popover another two; see the [language reference](/docs/language/#color-roles-the-role-grid) |
+| `--primary` + `--primary-foreground` | `primary.solid` + `primary.on-solid`          | the foreground is contrast-picked and AA-checked                                                                                                                |
+| `--secondary`, `--muted`             | `neutral.tint`                                | **shadcn's "secondary" is a subtle surface, not your brand secondary**, a deliberate mapping decision                                                           |
+| `--accent` + `--accent-foreground`   | `accent.tint` + `accent.on-tint`              | derived accent is brand-tinted, visibly nicer than stock shadcn's flat gray                                                                                     |
+| `--destructive`                      | `danger.solid`                                | name translation only                                                                                                                                           |
+| `--input`                            | `border.field`                                | the catalog's field border (proposal 0005): `derived` while it aliases `border.base`, `native` once authored                                                    |
+| `--ring`                             | `ring`                                        | derived from primary, lightened in dark mode                                                                                                                    |
+| `--chart-1…5`                        | `palette.categorical.1–5`                     | derived data-viz palette anchored on your brand hue                                                                                                             |
+| `--sidebar-*`                        | elevation/text/primary/accent grid cells      | exporter convention; properly a component-tier concern (v2)                                                                                                     |
+| `--radius`                           | `radius.md`                                   | shadcn derives sm/md/lg/xl from it via `calc()` (sm = −4px, md = −2px); a `radius.md` between 0 and 4px collapses sm (and md) to 0, reported as `TST2104`       |
+| `--font-sans` / `--font-mono`        | `font.sans` / `font.mono`                     | v4: `@theme`; v3: `fontFamily` in the config snippet                                                                                                            |
 
 Every mapping decision is recorded per-variable in `report.json` with its coverage class and provenance.
 
@@ -61,17 +61,17 @@ A slot's own [`$description` and `$deprecated`](/docs/authoring-tokens/#describi
 
 ## Mode handling
 
-`color-scheme` maps to shadcn's class strategy: `:root` gets **light** values, `.dark` gets dark. This binds mode _names_ — a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) compiles correctly, its native look under `.dark`.
+`color-scheme` maps to shadcn's class strategy: `:root` gets **light** values, `.dark` gets dark. This binds mode _names_: a dark-native design system ([Cathode](/docs/examples/#cathode--the-hostile-example)) compiles correctly, its native look under `.dark`.
 
-## Out of scope, honestly
+## Out of scope
 
-- `components.json` with `cssVariables: false` (utility-class theming): without variables there's no theme artifact — theming would mean rewriting your component files, which Transtyle will never do.
+- `components.json` with `cssVariables: false` (utility-class theming): without variables there's no theme artifact. Theming would mean rewriting your component files, which Transtyle will never do.
 - Non-Tailwind projects: shadcn itself requires Tailwind. The `:root`/`.dark` blocks are self-contained CSS if you want just the variables; the dedicated framework-free [css-variables exporter](/docs/exporter-css-variables/) covers this properly.
 
 ## Using the output
 
-Each build writes a `usage.md` with era-specific paste-in steps next to the theme. Short version, v4: import `globals.transtyle.css` after Tailwind, toggle `dark` on `<html>`. v3: import the globals file, merge the `.cjs` theme into `tailwind.config`, set `darkMode: ["class"]`.
+Each build writes a `usage.md` with era-specific paste-in steps next to the theme. Short version, for v4: import `globals.transtyle.css` after Tailwind and toggle `dark` on `<html>`. For v3: import the globals file, merge the `.cjs` theme into `tailwind.config`, set `darkMode: ["class"]`.
 
 ## Contrast, motion and brand
 
-When a design system declares [`contrast` or `brand`](/docs/configuration/#contrast-motion-and-brand), the theme gains blocks after `.dark`: `[data-contrast="more"]`, `[data-brand="globex"]`, and a compound block such as `.dark[data-brand="globex"]` wherever the separate blocks would leave a light value on the dark page. Each holds only the variables that change. The `more` contrast block is repeated inside `@media (prefers-contrast: more)`, so the user's system setting applies until you set `data-contrast` yourself. Put the attributes next to the `dark` class: `<html class="dark" data-brand="globex">`. `motion` is reported `dropped`: shadcn's theme has no duration variable.
+When a design system declares [`contrast` or `brand`](/docs/configuration/#contrast-motion-and-brand), the theme gains blocks after `.dark`: `[data-contrast="more"]`, `[data-brand="globex"]`, and a compound block such as `.dark[data-brand="globex"]` wherever the separate blocks would leave a light value on the dark page. Each holds only the variables that change. The `more` contrast block is repeated inside `@media (prefers-contrast: more)`. The user's system setting applies until you set `data-contrast` yourself. Put the attributes next to the `dark` class: `<html class="dark" data-brand="globex">`. `motion` is reported `dropped`, because shadcn's theme has no duration variable.
