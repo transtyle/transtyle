@@ -6,7 +6,7 @@ order: 22
 
 # Your first build
 
-Ten minutes, using the [Acme example](/docs/examples/) that ships in the repository. Every output shown on this page is real — produced by running exactly these commands.
+Ten minutes, using the [Acme example](/docs/examples/) that ships in the repository. Every output shown on this page is real, produced by running exactly these commands.
 
 ## 1. Set up
 
@@ -19,7 +19,7 @@ cd examples/acme
 
 ## 2. Look at what Acme decides
 
-Open `tokens/semantic.tokens.json`. Acme's decision layer is deliberately tiny — one brand color, two surfaces, two text colors, a border, a radius, two fonts:
+Open `tokens/semantic.tokens.json`. Acme's decision layer is deliberately tiny: one brand color, two surfaces, two text colors, a border, a radius, two fonts:
 
 ```json
 "primary":   { "solid": { "$value": "{option.color.blue.600}" } },
@@ -29,7 +29,7 @@ Open `tokens/semantic.tokens.json`. Acme's decision layer is deliberately tiny �
 "border":    { "base":  { "$value": "{option.color.gray.200}" } }
 ```
 
-The `{option.color.blue.600}` references point at `tokens/option.tokens.json` — the raw palette, under Acme's own names. Dark-mode values live alongside (Acme uses the inline form; [separate mode files](/docs/authoring-tokens/#modes) are the recommended layout for real teams).
+The `{option.color.blue.600}` references point at `tokens/option.tokens.json`, the raw palette under Acme's own names. Dark-mode values live alongside. Acme uses the inline form, but [separate mode files](/docs/authoring-tokens/#modes) are the recommended layout for real teams.
 
 ## 3. Build
 
@@ -51,7 +51,9 @@ shadcn  41% native · 54% derived · 5% dropped
 ✔ build complete
 ```
 
-The first line says Acme authors every slot of the `recommended` [completeness level](/docs/derivation/#what-to-author-next-completeness-levels): brand, neutrals with their dark values, radius and fonts. The `shadcn` line is the [coverage summary](/docs/concepts/#5-provenance-and-coverage): under half of shadcn's variable set came straight from Acme's decisions; most of the rest was computed _from_ them; a sliver was bent to fit; and one thing shadcn can't express was dropped — with a note, not silently.
+The first line says Acme authors every slot of the `recommended` [completeness level](/docs/derivation/#what-to-author-next-completeness-levels): brand, neutrals with their dark values, radius and fonts.
+
+The `shadcn` line is the [coverage summary](/docs/concepts/#5-provenance-and-coverage). Under half of shadcn's variable set came straight from Acme's decisions. Most of the rest was computed _from_ them, and a sliver was bent to fit. One thing shadcn can't express was dropped, with a note, not silently.
 
 ## 4. Read the output
 
@@ -67,7 +69,7 @@ Open `dist/shadcn/globals.transtyle.css`. Every line says where its value came f
   ...
 ```
 
-`--background` and `--primary` trace to authored decisions. `--popover` carries `· derived` — Acme never decided a popover color, so a rule proposed one from the surface ladder. This file is disposable on purpose: never edit it, regenerate it.
+`--background` and `--primary` trace to authored decisions. `--popover` carries `· derived`: Acme never decided a popover color, so a rule proposed one from the surface ladder. This file is disposable on purpose: never edit it, regenerate it.
 
 ## 5. Ask why
 
@@ -103,13 +105,15 @@ Read bottom-up: Acme authored a blue and a surface; a named, versioned rule (`mi
   "note": "density mode dimension not expressed by this target" }
 ```
 
-The middle one is honesty at work: shadcn wants a dedicated input-border color, and the catalog has one, `border.field`, but Acme doesn't author it — so it defaults to Acme's own border and is graded `derived`, not passed off as native. Author `border.field` and it flips. The last one: Acme declares a `density` mode, shadcn has no such axis — dropped, with the reason.
+The middle one shows how grading works. shadcn wants a dedicated input-border color, and the catalog has one, `border.field`, but Acme doesn't author it. So it defaults to Acme's own border and is graded `derived`, not passed off as native. Author `border.field` and it flips.
+
+The last one: Acme declares a `density` mode, and shadcn has no such axis, so it's dropped, with the reason.
 
 To read the whole file as a page, open it in the [report viewer](/report/): the coverage bar with the same percentages as the terminal, the build's diagnostics with their `file:line`, what `check.suppress` silenced, and every row, filterable by class. It runs in your browser and uploads nothing.
 
 ## 7. Override a proposal
 
-Any derived value is yours to take over. Author the slot — for example, decide `accent.tint` yourself in `tokens/semantic.tokens.json` — rebuild, and the report's entry flips from <span class="prov derived">derived</span> to <span class="prov authored">authored</span>. Derivation never argues with you.
+Any derived value is yours to take over. Author the slot (for example, decide `accent.tint` yourself in `tokens/semantic.tokens.json`), rebuild, and the report's entry flips from <span class="prov derived">derived</span> to <span class="prov authored">authored</span>. Derivation never argues with you.
 
 ## 8. See it on real components
 
@@ -118,10 +122,10 @@ cd ../..
 npm run dev -w acme-demo-shadcn     # the same page in real shadcn/ui components, port 4103
 ```
 
-Each example ships one [demo project per target](/docs/examples/), consuming only the compiled `dist/` — the fastest way to eyeball a theme on the components it will actually style.
+Each example ships one [demo project per target](/docs/examples/), consuming only the compiled `dist/`. It's the fastest way to eyeball a theme on the components it will actually style.
 
 ## Where next
 
-- Do it for **your** system: [You already have a design system](/docs/adopt-existing/) — bind your names, rename nothing
+- Do it for **your** system: [You already have a design system](/docs/adopt-existing/). Bind your names, rename nothing.
 - The full vocabulary you just compiled through: [the Transtyle language](/docs/language/)
 - Every field of `transtyle.config.json`: [Configuration](/docs/configuration/)
