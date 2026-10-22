@@ -1,6 +1,6 @@
 ---
 title: 'Storybook exporter'
-description: "Theme Storybook's own chrome and compose sibling targets into the preview — the meta-target."
+description: "Theme Storybook's own chrome and compose sibling targets into the preview: the meta-target."
 order: 12
 ---
 
@@ -8,10 +8,10 @@ order: 12
 
 <div class="callout live-demos">
   <span class="callout-title">See it live</span>
-  <p><a href="/demo/acme/storybook/">Acme</a> · <a href="/demo/cathode/storybook/">Cathode</a> · <a href="/demo/govuk/storybook/">GOV.UK</a> · <a href="/demo/carbon/storybook/">Carbon</a> — one page, four design systems, compiled to Storybook. <a href="/demo/">All 44 demos →</a></p>
+  <p><a href="/demo/acme/storybook/">Acme</a> · <a href="/demo/cathode/storybook/">Cathode</a> · <a href="/demo/govuk/storybook/">GOV.UK</a> · <a href="/demo/carbon/storybook/">Carbon</a>: one page, four design systems, compiled to Storybook. <a href="/demo/">All 44 demos →</a></p>
 </div>
 
-Storybook isn't a UI framework — it's the tool that documents your other targets. This exporter themes **Storybook itself** (Storybook 8–9) and wires your sibling targets into its preview. All emitted files are **additive fragments**: you import them from your own `.storybook/` config; we never overwrite user files.
+Storybook isn't a UI framework. It's the tool that documents your other targets. This exporter themes **Storybook itself** (Storybook 8–9) and wires your sibling targets into its preview. All emitted files are **additive fragments**: you import them from your own `.storybook/` config; we never overwrite user files.
 
 <!-- measured: acme.storybook.rows = 34 -->
 
@@ -19,8 +19,8 @@ The themable surface is small and almost entirely native: 34 classified ThemeVar
 
 | File                   | What it does                                                                                                                                                                                                                              |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `theme.transtyle.ts`   | `create()` ThemeVars objects, one per color-scheme mode (hex output — Storybook's theming pipeline doesn't parse `oklch()`)                                                                                                               |
-| `manager.transtyle.ts` | `addons.setConfig({ theme })` with the design system's **native mode** — a dark-native DS gets dark chrome (chrome theming is static per boot)                                                                                            |
+| `theme.transtyle.ts`   | `create()` ThemeVars objects, one per color-scheme mode (hex output, because Storybook's theming pipeline doesn't parse `oklch()`)                                                                                                        |
+| `manager.transtyle.ts` | `addons.setConfig({ theme })` with the design system's **native mode**, so a dark-native DS gets dark chrome (chrome theming is static per boot)                                                                                          |
 | `preview.transtyle.ts` | imports sibling targets' stylesheets, adds a **Scheme** toolbar bound to your modes, one decorator that drives every sibling's mode encoding _and_ lets the canvas wear your `background`/`foreground`, plus DS-canvas background presets |
 
 ```json
@@ -39,30 +39,30 @@ import '../dist/storybook/manager.transtyle';
 export * from '../dist/storybook/preview.transtyle';
 ```
 
-## The interesting part: composition without coupling
+## Composition without coupling
 
-`previewTargets` names sibling _target instances_ from your own config. Core hands the exporter a manifest of sibling **artifact paths** — never their resolved values — so the no-cross-target-coupling invariant holds while `preview.transtyle.ts` still imports `../shadcn/globals.transtyle.css` and toggles `.dark` / `data-theme` / `data-bs-theme` from one decorator. Flip the Scheme toolbar and chrome canvas, sibling stylesheets, and backgrounds all follow.
+`previewTargets` names sibling _target instances_ from your own config. Core hands the exporter a manifest of sibling **artifact paths**, never their resolved values. The no-cross-target-coupling invariant holds, and `preview.transtyle.ts` still imports `../shadcn/globals.transtyle.css` and toggles `.dark` / `data-theme` / `data-bs-theme` from one decorator. Flip the Scheme toolbar and chrome canvas, sibling stylesheets, and backgrounds all follow.
 
 ## Mapping highlights
 
-| ThemeVars                                         | Comes from                                                      | Note                                                                                                  |
-| ------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `colorPrimary` / `colorSecondary`                 | `primary.solid` / `accent.solid`                                | `colorSecondary` is SB's actual highlight color                                                       |
-| `appBg`, `barBg` / `appContentBg`, `appPreviewBg` | `elevation.1.surface` / `elevation.0.surface`                   | the canvas is _your_ canvas, not chrome                                                               |
-| `textColor`, `textMutedColor`, `textInverseColor` | `text.base`, `text.muted`, `text.inverse`                       | `text.inverse` is the content ladder's own cross-mode rung — the engine's job now, not the exporter's |
-| `barHoverColor`, `barSelectedColor`               | `primary.solid-hover`, `ring`                                   | first chrome consumers of role states                                                                 |
-| `buttonBg`, `booleanBg` / `booleanSelectedBg`     | `neutral.tint` / `elevation.2.surface`                          |                                                                                                       |
-| `input*`                                          | `elevation.0.surface`, `border.field`, `text.base`, `radius.sm` | radii `approximated` (rem→px at `units.remBase`, or `options.remBase`)                                |
-| `brandTitle`                                      | config `name` (override via `options.brand`)                    | not a token                                                                                           |
-| everything chrome can't express                   | —                                                               | `dropped (chrome)`, delivered through preview composition instead                                     |
+| ThemeVars                                         | Comes from                                                      | Note                                                                                                        |
+| ------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `colorPrimary` / `colorSecondary`                 | `primary.solid` / `accent.solid`                                | `colorSecondary` is SB's actual highlight color                                                             |
+| `appBg`, `barBg` / `appContentBg`, `appPreviewBg` | `elevation.1.surface` / `elevation.0.surface`                   | the canvas is _your_ canvas, not chrome                                                                     |
+| `textColor`, `textMutedColor`, `textInverseColor` | `text.base`, `text.muted`, `text.inverse`                       | `text.inverse` is the content ladder's own cross-mode rung; that's the engine's job now, not the exporter's |
+| `barHoverColor`, `barSelectedColor`               | `primary.solid-hover`, `ring`                                   | first chrome consumers of role states                                                                       |
+| `buttonBg`, `booleanBg` / `booleanSelectedBg`     | `neutral.tint` / `elevation.2.surface`                          |                                                                                                             |
+| `input*`                                          | `elevation.0.surface`, `border.field`, `text.base`, `radius.sm` | radii `approximated` (rem→px at `units.remBase`, or `options.remBase`)                                      |
+| `brandTitle`                                      | config `name` (override via `options.brand`)                    | not a token                                                                                                 |
+| everything chrome can't express                   | —                                                               | `dropped (chrome)`, delivered through preview composition instead                                           |
 
-Most of a design system is inexpressible in chrome theming — that's fine and honestly reported; it flows through the preview path.
+Most of a design system is inexpressible in chrome theming. That's fine, it's reported, and it flows through the preview path.
 
 A colour outside sRGB is written clamped to hex, and its ThemeVars row is `approximated` with the note `sRGB gamut clamp during oklch → hex`.
 
 ### Identity: `options.brand`
 
-`brandTitle` defaults to the config's `name`, and the sidebar's logo and link have no token to come from at all — they are identity, not design decisions. `options.brand` is where they go:
+`brandTitle` defaults to the config's `name`, and the sidebar's logo and link have no token to come from at all. They're identity, not design decisions. `options.brand` is where they go:
 
 ```json
 "storybook": {
@@ -77,15 +77,15 @@ A colour outside sRGB is written clamped to hex, and its ThemeVars row is `appro
 }
 ```
 
-All three are optional; `title` overrides the default, and `url` and `image` are emitted only when set. `image` is a URL your Storybook serves — a file in a `staticDirs` folder, typically `public/`. Storybook shows the image _instead of_ the title and uses the title as its alt text, so keep the title meaningful even when you set an image.
+All three are optional; `title` overrides the default, and `url` and `image` are emitted only when set. `image` is a URL your Storybook serves: a file in a `staticDirs` folder, typically `public/`. Storybook shows the image _instead of_ the title and uses the title as its alt text, so keep the title meaningful even when you set an image.
 
 Every example uses this: each one's Storybook demo serves `public/logo.png` and points `brand.image` at it, which is why the four demos carry a logo in the sidebar rather than Storybook's own.
 
-See it running — the demo _is_ Storybook's own chrome: `npm run dev -w acme-demo-storybook` (light corporate chrome) or `cathode-demo-storybook` (boots terminal-dark) in the [examples](/docs/examples/).
+See it running (the demo _is_ Storybook's own chrome): `npm run dev -w acme-demo-storybook` (light corporate chrome) or `cathode-demo-storybook` (boots terminal-dark) in the [examples](/docs/examples/).
 
 ## Descriptions and deprecations
 
-Each `create({ … })` property in `theme.transtyle.ts` carries the `description` and `deprecated` of the one slot it maps as a `/** … */` JSDoc block above it (`jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. Both the light and the dark export carry them. `brandTitle` is not a token and gets none, and `manager.transtyle.ts` and `preview.transtyle.ts` hold no slot-level values.
+Each `create({ … })` property in `theme.transtyle.ts` carries the `description` and `deprecated` of the one slot it maps as a `/** … */` JSDoc block above it (`jsdocComment()` from `@transtyle/ir`). The description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. Both the light and the dark export carry them. `brandTitle` is not a token and gets none. `manager.transtyle.ts` and `preview.transtyle.ts` hold no slot-level values.
 
 ## Contrast, motion and brand
 
