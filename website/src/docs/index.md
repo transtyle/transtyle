@@ -6,14 +6,14 @@ order: 1
 
 # A compiler for design systems
 
-Transtyle takes a framework-agnostic description of your design system — tokens, semantics, modes — and compiles it into **native, ready-to-use theme artifacts**. Eleven targets ship today: shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI, and plain CSS variables.
+Transtyle takes a framework-agnostic description of your design system (tokens, semantics, modes) and compiles it into **native, ready-to-use theme artifacts**. Eleven targets ship today: shadcn/ui, daisyUI, Apache ECharts, Bootstrap, Storybook, Radix Themes, PrimeNG, Mantine, Chakra UI, Material UI, and plain CSS variables.
 
 Describe your design system once. Change it in one place. Regenerate every target.
 
 <div class="callout warn">
-<p class="callout-title">Alpha — how to read these docs</p>
+<p class="callout-title">Alpha: how to read these docs</p>
 <p>Transtyle is at an experimental alpha. Breaking changes ship without a deprecation cycle, and
-nothing described here carries a stability promise yet — pin an exact version if you try it.</p>
+nothing described here carries a stability promise yet. Pin an exact version if you try it.</p>
 <p>These pages document <strong>what the compiler does today</strong>. Where a page describes something
 designed but not yet built, it says so inline: <span class="badge live">compiled</span> means it runs
 now, <span class="badge spec">specced</span> means it exists in the
@@ -25,7 +25,7 @@ now, <span class="badge spec">specced</span> means it exists in the
   <div class="s-col">
     <span class="s-kicker">You write</span>
     <span class="s-main">Design tokens (DTCG)</span>
-    <span class="s-sub">your names, your values — one source of truth, plain JSON</span>
+    <span class="s-sub">your names, your values, one source of truth, plain JSON</span>
   </div>
   <div class="s-arrow" aria-hidden="true">→</div>
   <div class="s-col hi">
@@ -37,7 +37,7 @@ now, <span class="badge spec">specced</span> means it exists in the
   <div class="s-col">
     <span class="s-kicker">You ship</span>
     <span class="s-main">11 native themes</span>
-    <span class="s-sub">shadcn, Bootstrap, ECharts, daisyUI, Storybook, Radix, PrimeNG, Mantine, Chakra UI, Material UI, CSS variables — each idiomatic, plus a coverage report</span>
+    <span class="s-sub">shadcn, Bootstrap, ECharts, daisyUI, Storybook, Radix, PrimeNG, Mantine, Chakra UI, Material UI, CSS variables, each idiomatic, plus a coverage report</span>
   </div>
 </div>
 
@@ -66,25 +66,25 @@ npx transtyle build
   <a href="/docs/internals/">
     <span class="path-kicker">Extend</span>
     <span class="path-title">Write an exporter</span>
-    <span class="path-desc">All eleven official exporters use the same public plugin API — the core knows nothing about any target.</span>
+    <span class="path-desc">All eleven official exporters use the same public plugin API. The core knows nothing about any target.</span>
   </a>
 </div>
 
 ## Why another token tool?
 
-Existing token pipelines (Style Dictionary, Terrazzo) transform token files into _variables_. Transtyle understands what your design system _means_ — that `danger` maps to shadcn's `--destructive` and daisyUI's `--color-error`, that a subtle background needs its own readable foreground, that a data-viz palette must be derived from your brand, not copy-pasted — and produces configuration a framework practitioner would recognize as idiomatic.
+Existing token pipelines (Style Dictionary, Terrazzo) transform token files into _variables_. Transtyle understands what your design system _means_. It knows that `danger` maps to shadcn's `--destructive` and daisyUI's `--color-error`, that a subtle background needs its own readable foreground, and that a data-viz palette must be derived from your brand, not copy-pasted. It produces configuration a framework practitioner would recognize as idiomatic.
 
 | Principle                    | What it means for you                                                                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **DTCG superset**            | Your token files are valid W3C Design Tokens. Figma, Tokens Studio, Style Dictionary can read them. No lock-in.                             |
-| **Deterministic derivation** | Missing tokens (hover states, on-colors, a secondary color) are filled by inspectable rules — never magic. Authored values always win.      |
-| **Honest lossiness**         | Every build reports what mapped natively, what was derived, what was approximated, what was dropped — per variable.                         |
+| **DTCG superset**            | Your token files are valid W3C Design Tokens. Figma, Tokens Studio and Style Dictionary can read them. No lock-in.                          |
+| **Deterministic derivation** | Missing tokens (hover states, on-colors, a secondary color) are filled by inspectable rules, never magic. Authored values always win.       |
+| **Lossiness, reported**      | Every build reports what mapped natively, what was derived, what was approximated, what was dropped, per variable.                          |
 | **Native output**            | You get a `globals.css` a shadcn user would write, not a pile of generic variables. Generated files are disposable: regenerate, never edit. |
 | **No runtime**               | Transtyle ships nothing into your app. Files out, nothing in.                                                                               |
 
 ## If you run a design system, this is for you
 
-In your vocabulary: **option tokens** are your primitives, **semantic tokens** are your alias/decision layer, and the catalog is a _published interface_ over that decision layer which frameworks plug into. You keep your names, your Figma sync, your governance; Transtyle compiles the decision layer outward — and reports, per variable, what was your decision (<span class="prov authored">authored</span>), what was inferred from it (<span class="prov derived">derived</span>), and what got bent in translation (<span class="prov approx">approximated</span>).
+In your vocabulary: **option tokens** are your primitives, **semantic tokens** are your alias/decision layer, and the catalog is a _published interface_ over that decision layer which frameworks plug into. You keep your names, your Figma sync, your governance. Transtyle compiles the decision layer outward and reports, per variable, what was your decision (<span class="prov authored">authored</span>), what was inferred from it (<span class="prov derived">derived</span>), and what got bent in translation (<span class="prov approx">approximated</span>).
 
 Seeing is believing. From **one authored brand color** <span class="sw" style="--c:oklch(0.55 0.18 255)"></span> `oklch(0.55 0.18 255)`, the standard rules derive the full role set:
 
@@ -112,16 +112,16 @@ Seeing is believing. From **one authored brand color** <span class="sw" style="-
   <div class="swatch"><i style="--c:#7e8814" aria-hidden="true"></i><b>chart-8</b><span>#7e8814</span></div>
 </div>
 
-Every one of these is deterministic, provenance-tagged, contrast-checked where it pairs with text, and overridable by authoring one token. Nothing here is a mockup — these are the compiled values from the [Acme example](/docs/examples/), and `npx transtyle explain` will show you each one's derivation chain.
+Every one of these is deterministic, provenance-tagged, contrast-checked where it pairs with text, and overridable by authoring one token. Nothing here is a mockup. These are the compiled values from the [Acme example](/docs/examples/), and `npx transtyle explain` will show you each one's derivation chain.
 
 ## Proof it generalizes
 
 <!-- measured: acme.authored = 42 -->
 
-The [Acme example](/docs/examples/) authors **42 tokens** — nine of them actual design decisions — and compiles complete themes for all eleven targets. [Cathode](/docs/examples/#cathode--the-hostile-example) proves the hostile direction: alien vocabulary (`crt.ink`, `crt.tube`), dark-native, bound through the same catalog with one-line aliases. And two **real, independently-designed systems** — [GOV.UK and IBM Carbon](/docs/examples/) — compile to every target with zero warnings or errors, using only their published values (Carbon draws informational notes where its dark theme reuses a light value — the compiler saying so rather than hiding it). For the full worked proof — source values, judgment calls, and per-target coverage all shown — see [GOV.UK, end to end](/docs/govuk-showcase/).
+The [Acme example](/docs/examples/) authors **42 tokens**, nine of them actual design decisions, and compiles complete themes for all eleven targets. [Cathode](/docs/examples/#cathode--the-hostile-example) proves the hostile direction: alien vocabulary (`crt.ink`, `crt.tube`), dark-native, bound through the same catalog with one-line aliases. And two **real, independently-designed systems**, [GOV.UK and IBM Carbon](/docs/examples/), compile to every target with zero warnings or errors, using only their published values. Carbon draws informational notes where its dark theme reuses a light value: the compiler says so rather than hiding it. For the full worked proof, with source values, judgment calls, and per-target coverage all shown, see [GOV.UK, end to end](/docs/govuk-showcase/).
 
-> **Status honesty:** Transtyle is published as an alpha (`@transtyle/cli@alpha`) — early enough that the token vocabulary, the generated output and the CLI surface can each change between releases. What's real today: the full pipeline, the derivation engine (role grids, elevation, scales, modes), `build` / `check` / `explain` / `init` / `add` / `diff`, eleven exporters, four examples with runnable demo projects for every target, and CI-verified deterministic builds. What's specced but not implemented: `import`, `preview`, and the importers. The [roadmap](/docs/roadmap/) tells the truth about which is which.
+> **Status:** Transtyle is published as an alpha (`@transtyle/cli@alpha`), early enough that the token vocabulary, the generated output and the CLI surface can each change between releases. What's real today: the full pipeline, the derivation engine (role grids, elevation, scales, modes), `build` / `check` / `explain` / `init` / `add` / `diff`, eleven exporters, four examples with runnable demo projects for every target, and CI-verified deterministic builds. What's specced but not implemented: `import`, `preview`, and the importers. The [roadmap](/docs/roadmap/) tells the truth about which is which.
 
-Start with the path card above that matches your situation — or read [Core concepts](/docs/concepts/) first if you want the mental model before touching files: three token tiers, [the catalog as pivot language](/docs/language/), modes, and the provenance/coverage trust system.
+Start with the path card above that matches your situation. Or read [Core concepts](/docs/concepts/) first if you want the mental model before touching files: three token tiers, [the catalog as pivot language](/docs/language/), modes, and the provenance/coverage trust system.
 
-New to design tokens entirely? Take the short course: [What is a design token?](/docs/what-is-a-design-token/) → [How Transtyle works](/docs/how-transtyle-works/) → [Your first build](/docs/your-first-build/) — the first two are code-free.
+New to design tokens entirely? Take the short course: [What is a design token?](/docs/what-is-a-design-token/) → [How Transtyle works](/docs/how-transtyle-works/) → [Your first build](/docs/your-first-build/). The first two are code-free.
