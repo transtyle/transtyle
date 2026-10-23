@@ -29,8 +29,10 @@ from_ and _how honestly a target expressed it_; plus token-tree helpers (`collec
 `collectRoleArchetypes`), the coverage helpers for a target whose theming surface is a
 graph of entries reading each other (`surfaceStatus`, `surfaceRows`, `surfaceCounts`,
 `SURFACE_FAMILY_ROW`), which the Mantine, Chakra and MUI exporters measure their inventories with,
-and the two font-family helpers exporters share (`fontNames`, a `fontFamily` value as its
-list of names; `fontStack`, the same list as CSS, quoted).
+the two font-family helpers exporters share (`fontNames`, a `fontFamily` value as its
+list of names; `fontStack`, the same list as CSS, quoted), and `isAuthored`, the one test of
+"the design system authored this slot" (itself, or through the slot its default aliases) for a
+target that writes a slot only then.
 
 **Zero dependencies.**
 

@@ -180,13 +180,15 @@ export const REASONS = [
   ],
 
   // ---- focus ring and motion ----
+  // The ring's width and offset are catalog slots since #167 (`semantic.ring.{width,offset}`),
+  // written when authored: unauthored, they are explained by `mapped` below, naming the slot.
   [
-    /^theme\.focusVisible\.(outlineStyle|outlineWidth|outlineOffset)$/,
-    (m) => ({
+    /^theme\.focusVisible\.outlineStyle$/,
+    {
       cls: 'unsupported',
-      meaning: 'focus.ring-composite',
-      note: `the ring's ${{ outlineStyle: 'style', outlineWidth: 'width', outlineOffset: 'offset' }[m[1]]}: the catalog has the ring colour only, which focusVisible.outlineColor takes; MUI's 2px solid ring at 2px stays (#167)`,
-    }),
+      meaning: 'focus.ring-style',
+      note: "the ring's style: every outline-family target draws it solid, so the catalog has no slot for it (proposal 0002, row 8); MUI's solid stays",
+    },
   ],
   [/^theme\.motion\.reducedMotion$/, config('whether MUI turns its transitions off under prefers-reduced-motion (never, system, always): a behaviour switch, not a design value')],
 ];

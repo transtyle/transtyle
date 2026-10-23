@@ -11,11 +11,6 @@
       "summary": "Series-type styling (candlestick colours, gauge bands): chart configuration, not design-token semantics.",
       "ref": "docs/specs/exporters/echarts.md"
     },
-    "color.wide-gamut": {
-      "status": "watch",
-      "summary": "A wide-gamut (P3) variant of each colour. Radix ships a P3 pair per scale; the IR holds one OKLCH value per slot. Single-source so far.",
-      "ref": "docs/specs/exporters/radix.md"
-    },
     "color.gradient": {
       "status": "open",
       "summary": "A default gradient (start colour, end colour, angle) for a gradient variant: the IR has no gradient. Single-source so far (Mantine's `defaultGradient`).",
@@ -25,6 +20,11 @@
       "status": "target-specific",
       "summary": "The target's own named colours and palettes (Mantine's `white`, `black`, `red`, `teal`; Chakra's hue palettes, their ramps and its `black` and `white`; MUI's `grey` ramp and its `common` black and white), kept beside the design system's roles: what they seed on the page is set directly from the catalog, and the rest is the target's colour vocabulary, not a design-token concept.",
       "ref": "docs/specs/exporters/mantine.md"
+    },
+    "color.wide-gamut": {
+      "status": "watch",
+      "summary": "A wide-gamut (P3) variant of each colour. Radix ships a P3 pair per scale; the IR holds one OKLCH value per slot. Single-source so far.",
+      "ref": "docs/specs/exporters/radix.md"
     },
     "custom.vocabulary": {
       "status": "custom",
@@ -37,9 +37,14 @@
       "ref": "docs/specs/exporters/chakra.md"
     },
     "focus.ring-composite": {
-      "status": "open",
-      "summary": "The focus ring's width, offset and style beside its colour: the IR has `semantic.color.ring` alone. Proposal 0002 deferred a composite until a second component-heavy target needed the same fields; Chakra has four of the five, and MUI's `focusVisible` reports style, width and offset (#167).",
-      "ref": "docs/proposals/0002-component-theming-primeng.md"
+      "status": "promoted",
+      "summary": "The focus ring's geometry beside its colour. Proposal 0002 deferred a five-field composite until a second component-heavy target needed the same fields; Chakra and MUI each read colour, width, offset and style, so the width and the offset are catalog slots since 2026-10-18, `semantic.ring.{width,offset}`, written only when authored (#167). No composite: every independent source (Chakra, MUI, Spectrum, Material 3) uses separate scalars. The style is `focus.ring-style`.",
+      "ref": "docs/proposals/0002-component-theming-primeng.md#amendment-2026-10-18-row-8-decided-a-ring-width-and-a-ring-offset-no-composite"
+    },
+    "focus.ring-style": {
+      "status": "rejected",
+      "summary": "The focus ring's outline style (MUI's `focusVisible.outlineStyle`). Every outline-family target draws it `solid`, and PrimeNG writes `none` only where a halo preset switches the outline off, so it is not a design value; proposal 0002 row 8 kept it out of the catalog with the shadow (#167).",
+      "ref": "docs/proposals/0002-component-theming-primeng.md#amendment-2026-10-18-row-8-decided-a-ring-width-and-a-ring-offset-no-composite"
     },
     "geometry.component": {
       "status": "rejected",

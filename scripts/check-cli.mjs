@@ -1080,8 +1080,9 @@ try {
   const flat = (tree, prefix = []) => Object.entries(tree).flatMap(([k, v]) => k.startsWith('$') ? []
     : v && typeof v === 'object' && '$value' in v ? [[[...prefix, k].join('.'), v.$value]] : flat(v, [...prefix, k]));
   const parse = (text) => { try { return JSON.parse(text); } catch { return null; } };
-  // In scope: role solids but neutral, text rungs, elevation 0/1, border, ring, links, fonts. radius.md is a literal, not a binding.
-  const inScope = (slot) => !/^semantic\.color\.neutral\./.test(slot) && !slot.startsWith('semantic.radius.') && !/^semantic\.color\.[^.]+-[^.]+\.solid$/.test(slot);
+  // In scope: role solids but neutral, text rungs, elevation 0/1, border, ring, links, fonts. radius.md is a literal, not a
+  // binding, and the ring's geometry (GOV.UK binds `ring.width` to its focus width) is a dimension suggest doesn't propose.
+  const inScope = (slot) => !/^semantic\.color\.neutral\./.test(slot) && !slot.startsWith('semantic.radius.') && !slot.startsWith('semantic.ring.') && !/^semantic\.color\.[^.]+-[^.]+\.solid$/.test(slot);
   const examples = {
     // Cathode binds font.sans to its mono stack on purpose (the CRT look): no
     // sans-serif token exists to suggest, so that one is the expected miss.

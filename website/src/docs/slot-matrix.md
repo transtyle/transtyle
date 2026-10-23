@@ -22,7 +22,7 @@ order: 8
 
 Authoring a slot changes the targets that read it, and only those. This page answers "if I author `elevation.3.surface`, which libraries change?" for every slot of the [catalog](/docs/language/): one row per slot, one column per target.
 
-It is compiled, not written. [Acme](/docs/examples/) is built with each of the 11 exporters while the compiler records every slot each exporter reads, and each cell is classed from that exporter's [coverage report](/docs/concepts/). The rows are the 260 catalog slots all 4 examples share. `npm run gen:matrix` regenerates the page and `npm run check:matrix` fails when it no longer matches the exporters.
+It is compiled, not written. [Acme](/docs/examples/) is built with each of the 11 exporters while the compiler records every slot each exporter reads, and each cell is classed from that exporter's [coverage report](/docs/concepts/). The rows are the 262 catalog slots all 4 examples share. `npm run gen:matrix` regenerates the page and `npm run check:matrix` fails when it no longer matches the exporters.
 
 For your own design system and targets, run `transtyle check --matrix` (add `--json` for a `matrix` key in the report, see the [CLI reference](/docs/cli/#--matrix)).
 
@@ -296,11 +296,11 @@ Each slot below is `semantic.color.text.<slot>`.
 
 Each slot below is `semantic.border-width.<slot>`.
 
-| Slot     | Read by | shadcn | daisyUI | ECharts | Bootstrap                              | Storybook | Radix | PrimeNG | Mantine | Chakra UI | Material UI | CSS vars                              |
-| -------- | ------- | ------ | ------- | ------- | -------------------------------------- | --------- | ----- | ------- | ------- | --------- | ----------- | ------------------------------------- |
-| `medium` | 2/11    |        |         |         | <span class="sm approx">approx.</span> |           |       |         |         |           |             | <span class="sm native">native</span> |
-| `thick`  | 1/11    |        |         |         |                                        |           |       |         |         |           |             | <span class="sm native">native</span> |
-| `thin`   | 1/11    |        |         |         |                                        |           |       |         |         |           |             | <span class="sm native">native</span> |
+| Slot     | Read by | shadcn | daisyUI | ECharts | Bootstrap                              | Storybook | Radix | PrimeNG                             | Mantine | Chakra UI                           | Material UI                         | CSS vars                              |
+| -------- | ------- | ------ | ------- | ------- | -------------------------------------- | --------- | ----- | ----------------------------------- | ------- | ----------------------------------- | ----------------------------------- | ------------------------------------- |
+| `medium` | 5/11    |        |         |         | <span class="sm approx">approx.</span> |           |       | <span class="sm input">input</span> |         | <span class="sm input">input</span> | <span class="sm input">input</span> | <span class="sm native">native</span> |
+| `thick`  | 1/11    |        |         |         |                                        |           |       |                                     |         |                                     |                                     | <span class="sm native">native</span> |
+| `thin`   | 1/11    |        |         |         |                                        |           |       |                                     |         |                                     |                                     | <span class="sm native">native</span> |
 
 ## Breakpoint
 
@@ -385,6 +385,15 @@ Each slot below is `semantic.radius.<slot>`.
 | `none`      | 2/11    |                                       |                                        |                                        |                                         |                                        |       |                                     |                                       | <span class="sm native">native</span>  |                                       | <span class="sm native">native</span> |
 | `sm`        | 5/11    |                                       |                                        |                                        | <span class="sm derived">derived</span> | <span class="sm approx">approx.</span> |       |                                     | <span class="sm native">native</span> | <span class="sm native">native</span>  |                                       | <span class="sm native">native</span> |
 | `xl`        | 4/11    |                                       |                                        |                                        | <span class="sm derived">derived</span> |                                        |       |                                     | <span class="sm native">native</span> | <span class="sm native">native</span>  |                                       | <span class="sm native">native</span> |
+
+## Ring
+
+Each slot below is `semantic.ring.<slot>`.
+
+| Slot     | Read by | shadcn | daisyUI | ECharts | Bootstrap                           | Storybook | Radix | PrimeNG                             | Mantine | Chakra UI                           | Material UI                         | CSS vars                              |
+| -------- | ------- | ------ | ------- | ------- | ----------------------------------- | --------- | ----- | ----------------------------------- | ------- | ----------------------------------- | ----------------------------------- | ------------------------------------- |
+| `offset` | 4/11    |        |         |         |                                     |           |       | <span class="sm input">input</span> |         | <span class="sm input">input</span> | <span class="sm input">input</span> | <span class="sm native">native</span> |
+| `width`  | 5/11    |        |         |         | <span class="sm input">input</span> |           |       | <span class="sm input">input</span> |         | <span class="sm input">input</span> | <span class="sm input">input</span> | <span class="sm native">native</span> |
 
 ## Size
 

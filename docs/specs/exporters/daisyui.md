@@ -14,6 +14,8 @@ Base ramp `base-100/200/300` ← `elevation.0.surface`/`elevation.1.surface`/`bo
 
 **Role archetypes (T7):** daisyUI has an open color set — any `--color-<name>` custom property is a usable Tailwind utility color — so every role in `normalized.roleArchetypes` (custom `semantic.color.<name>` groups declaring `$extensions.transtyle.role`) gets `--color-<name>` + `--color-<name>-content` emitted alongside the built-in roles, `native`. This is the exporter the plan names for demonstrating the open-role-set path (contrast Bootstrap/shadcn's closed sets, which don't emit archetyped roles at all).
 
+**Focus ring geometry:** `semantic.ring.{width,offset}` are reported `dropped`. daisyUI draws its focus outline (2px solid at 2px) in component CSS, and a theme block has no ring geometry variable; its ring colour is component CSS too, so `ring` has no row either.
+
 **Token metadata:** the slot's own `description` and `deprecated` (`entryNotes()` from `@transtyle/ir`) are written as `/* … */` lines above its declaration in the light theme block (custom roles included); the dark block doesn't repeat them. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).
 
 ## Reserved dimensions: contrast, motion, brand

@@ -54,11 +54,11 @@ Only the first line of a description is written, and a `*/` in it is broken up s
 
 ## Coverage
 
-<!-- measured: acme.css-variables.decls = 651 -->
-<!-- measured: acme.css-variables.distinct = 310 -->
+<!-- measured: acme.css-variables.decls = 653 -->
+<!-- measured: acme.css-variables.distinct = 312 -->
 <!-- measured: acme.authored = 42 -->
 
-Every variable is `native`: there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 651 declarations across the mode blocks, 310 distinct variables, from 42 authored tokens.
+Every variable is `native`: there's no target framework to lose fidelity translating into. This _is_ the IR, rendered as CSS. On Acme it's 653 declarations across the mode blocks, 312 distinct variables, from 42 authored tokens.
 
 ## Extra mode dimensions
 

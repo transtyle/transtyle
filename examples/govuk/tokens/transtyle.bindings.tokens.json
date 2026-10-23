@@ -57,6 +57,13 @@
         "$value": "0rem",
         "$description": "GOV.UK Design System components (buttons, inputs, panels) render with no border-radius — a deliberate, flat visual language, not a gap in the catalog."
       }
+    },
+    "ring": {
+      "width": {
+        "$type": "dimension",
+        "$value": "{option.measurement.focus-width}",
+        "$description": "GOV.UK's $govuk-focus-width (3px): the thickness of the yellow focus outline. Every target that draws an outline ring takes it; the offset stays the catalog's 2px."
+      }
     }
   }
 }

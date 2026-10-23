@@ -49,6 +49,10 @@ Current split: **88 driven · 1600 inherited · 1071 on Aura's default** on Cath
 
 Components with no builder yet (DataTable, Galleria, Tree, Splitter, Timeline, …) keep Aura's defaults. They are no longer listed from a hand-maintained array — the inventory measures them, so the list cannot go stale.
 
+## Focus ring
+
+`semantic.focusRing` is `{ width, style, color: '{primary.color}', offset, shadow: 'none' }`. The colour reuses PrimeNG's own alias, so it follows the active scheme like Rating and ProgressBar do. `width` and `offset` are the catalog's `ring.width` and `ring.offset` ([proposal 0002, row 8](../../proposals/0002-component-theming-primeng.md#amendment-2026-10-18-row-8-decided-a-ring-width-and-a-ring-offset-no-composite)) when the design system authors them, the width itself or through `border-width.medium`; otherwise Aura's own `1px` and `2px` are written and the row is `dropped`, naming the slot to author. `style` and `shadow` have no slot: every outline-family library draws a solid ring, and the shadow is how Lara and Material swap the outline for a halo. `formField.focusRing.*` keeps Aura's `0`/`none`: PrimeNG's inputs draw no outline ring. GOV.UK authors `3px`.
+
 ## Token metadata
 
 A property that maps exactly one slot carries that slot's `description` and `deprecated` as a `/** … */` JSDoc block above it (`Documented` and `jsdocComment()` from `@transtyle/ir`): the description shows on hover, and `@deprecated <reason>` strikes the property through in an editor. That covers the semantic typography, durations and disabled opacity, and the `colorScheme.light` primary, highlight, mask and text colours; the `dark` half maps the same slots and does not repeat them. The surface ramps, the archetype helpers and the component tier read several slots or a derived one and get none. See [validation-and-coverage.md](../validation-and-coverage.md#token-metadata-description-and-deprecated).

@@ -23,7 +23,7 @@
  * builds both per-mode maps and assembles that split throughout.
  */
 
-import { Documented, droppedDimensions, fontStack, emitPerValue, withDoc, withoutDocs } from '@transtyle/ir';
+import { Documented, droppedDimensions, fontStack, emitPerValue, isAuthored, withDoc, withoutDocs } from '@transtyle/ir';
 import { projectRamp } from './ramp.js';
 import { field, list, navigation, overlay, content } from './archetypes.js';
 import { coverageRows, INVENTORY } from './surface-coverage.js';
@@ -191,6 +191,22 @@ function emitOne(normalized, ctx) {
     class: 'approximated',
     note: "PrimeNG's own convention is 0.3s; the nearest motion-scale rung is used so the veil fade is authorable (was hardcoded)",
   });
+  // Focus ring geometry (#167): written only when the design system authors
+  // it, so Aura's 1px ring at 2px stands for everyone else. `formField.focusRing.*`
+  // keeps Aura's own `0`/`none`: PrimeNG's inputs draw no outline ring.
+  const ringAuthored = { width: isAuthored(light, 'semantic.ring.width'), offset: isAuthored(light, 'semantic.ring.offset') };
+  for (const [key, aura] of [['width', '1px'], ['offset', '2px']]) {
+    coverage.push(
+      ringAuthored[key]
+        ? { variable: `semantic.focusRing.${key}`, slot: `semantic.ring.${key}`, class: 'native', note: `the outline ring of every component but form fields (${key === 'width' ? 'Aura draws 1px' : 'Aura draws 2px'})` }
+        : {
+            variable: `semantic.focusRing.${key}`,
+            slot: `semantic.ring.${key}`,
+            class: 'dropped',
+            note: `not authored: Aura's own ${key} (${aura}) stands — author semantic.ring.${key}${key === 'width' ? ' (or border-width.medium, which it defaults from)' : ''} and it is driven`,
+          },
+    );
+  }
 
   // A property that maps exactly one slot carries that slot's description and
   // deprecation as a JSDoc block (#194), in the light half only (the dark half
@@ -213,14 +229,19 @@ function emitOne(normalized, ctx) {
     transitionDuration: doc('duration.fast'),
     disabledOpacity: new Documented(String(get(light, 'opacity.disabled')), light.get('semantic.opacity.disabled')), // AL2: promoted to the catalog once Bootstrap independently needed it (was a hardcoded 0.6 here)
     iconSize: '1rem',
-    // width/style/offset are PrimeNG conventions we deliberately don't have a composite
-    // for yet (proposal 0002 gap #8) — `color` reuses PrimeNG's own alias mechanism
-    // (`{primary.color}`) rather than a resolved value, exactly like Rating/ProgressBar.
+    // Focus ring (#167, proposal 0002 row 8): `width` and `offset` are the
+    // catalog's `ring.width` / `ring.offset` when the design system authors
+    // them (itself, or the width through `border-width.medium`), else Aura's
+    // own 1px and 2px, so an unauthored preset reads as before. `style` and
+    // `shadow` have no slot: every outline-family witness is `solid`, and the
+    // shadow is the halo presets' rendering strategy. `color` reuses PrimeNG's
+    // own alias mechanism (`{primary.color}`) rather than a resolved value,
+    // exactly like Rating/ProgressBar.
     focusRing: {
-      width: '1px',
+      width: ringAuthored.width ? doc('ring.width') : '1px',
       style: 'solid',
       color: '{primary.color}',
-      offset: '2px',
+      offset: ringAuthored.offset ? doc('ring.offset') : '2px',
       shadow: 'none',
     },
     primary: primaryRamp.ramp,

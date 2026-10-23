@@ -8,6 +8,7 @@ Source: [design-system.service.gov.uk/styles/colour](https://design-system.servi
 - `danger.solid` ← `govuk-functional-colour("error")` (#ca3535).
 - `success.solid` ← `govuk-functional-colour("success")` (#0f7a52).
 - `ring` ← `govuk-functional-colour("focus")` (#ffdd00). **The best mapping found in this pass** — GOV.UK's iconic yellow keyboard-focus outline is _exactly_ what the catalog's `ring` slot exists for, no interpretation needed.
+- `ring.width` ← `$govuk-focus-width` (3px, `settings/_measurements.scss`), through `option.measurement.focus-width`. Added 2026-10-18, when the catalog gained the ring's geometry ([#167](https://github.com/transtyle/transtyle/issues/167)): the first dimension bound from GOV.UK's own settings, and the proof that an authored width reaches the targets that draw an outline ring (PrimeNG, Chakra UI, Material UI) and Bootstrap's halo. The offset stays unauthored: GOV.UK's outline has no gap setting, and the targets keep their own.
 - `text.base`/`text.muted` ← `text`/`secondary-text` functional colours.
 - `border` ← `border` functional colour.
 - `elevation.0.surface`/`elevation.1.surface` ← `body-background`/`template-background`.

@@ -13,10 +13,10 @@ order: 17
 
 [Chakra UI](https://chakra-ui.com/) v3 colours its components through eight semantic keys per palette, each with a light and a dark value, and its recipes read those keys rather than numbered shades. That's [the role grid](/docs/language/#color-roles-the-role-grid) under other names, so this exporter is the closest thing to a rename among the targets. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `config`, a `defineConfig()` object holding only overrides and additions, and `system`, Chakra's own `createSystem(defaultConfig, config)`.
 
-<!-- measured: acme.chakra.rows = 340 -->
+<!-- measured: acme.chakra.rows = 342 -->
 <!-- measured: acme.chakra.native = 155 -->
 
-On [Acme](/docs/examples/) that's 340 classified rows in `report.json`, 155 of them native, measured against [Chakra's whole theming surface](#measured-against-chakras-whole-surface).
+On [Acme](/docs/examples/) that's 342 classified rows in `report.json`, 155 of them native, measured against [Chakra's whole theming surface](#measured-against-chakras-whole-surface).
 
 ```json
 "targets": { "chakra": { "output": "dist/chakra" } }
@@ -49,6 +49,8 @@ Each role becomes `semanticTokens.colors.<role>` with Chakra's eight keys, strai
 | `focusRing`  | `ring`        | approximated: Chakra wants one ring per palette, the design system has one     |
 
 Chakra derives its own hovers (`solid/90` for a solid button, `muted` for the softer variants), so the grid's hover, active and selected cells have no key and are reported `dropped`. Custom roles work like built-in ones: [Cathode](/demo/cathode/chakra/)'s `crt-amber` is `colorPalette="crt-amber"`.
+
+The ring's width and offset are `--focus-ring-width` and `--focus-ring-offset` on `<html>`, which every `focusVisibleRing` variant reads. They're written only when you author `ring.width` or `ring.offset` (the width itself, or through `border-width.medium`). Otherwise Chakra's own rings stay: 2px outside, 1px inside, 3px mixed. [GOV.UK](/demo/govuk/chakra/) authors 3px.
 
 The page colours come from the rest of the catalog. `bg` and `bg.panel` come from the elevation ladder, `fg`, `fg.muted`, `fg.subtle` from the text rungs, and `border` and `border.subtle` from the border ladder. `bg.inverted` and `fg.inverted` come from the inverse pair, and `bg.error`, `fg.error`, `border.error` (and warning, success, info) from the status roles. The modal backdrop takes the design system's `scrim`.
 

@@ -458,6 +458,7 @@ function emitOne(normalized, ctx) {
 
   // ---------- what Mantine has no slot for ----------
   row('(focus ring)', `${S}ring`, 'dropped', "Mantine draws every focus outline from --mantine-primary-color-filled (the primary solid), in its stylesheet; there is no ring variable to set");
+  row('(focus ring width, offset)', 'semantic.ring.{width,offset}', 'dropped', "Mantine's focus outline is 2px solid at 2px in its stylesheet, with no width or offset variable to set");
   row('(z-index ladder)', 'semantic.z.*', 'dropped', "Mantine components take their z-index from getDefaultZIndex() in JS; the --mantine-z-index-* variables are not read by its stylesheet");
   row('(link hover / visited)', `${S}link.{hover,visited}`, 'dropped', 'Mantine has one anchor colour');
   row('(motion, scrim, text.inverse, opacity.disabled)', '—', 'dropped', 'no theme slot: transitions are per-component props and overlays take their colour as a prop');

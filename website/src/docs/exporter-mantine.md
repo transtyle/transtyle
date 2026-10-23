@@ -13,10 +13,10 @@ order: 16
 
 [Mantine](https://mantine.dev/) themes through one object passed to `<MantineProvider>`: colours are named ten-shade tuples, `primaryShade` picks the filled shade per scheme, and `virtualColor()` lets one name stand for a different tuple in light and in dark. That is [the role grid](/docs/language/#color-roles-the-role-grid) in another shape, so this exporter is mostly a mapping table. It emits one TypeScript module, `theme.transtyle.ts`, with two exports: `theme` and `cssVariablesResolver`.
 
-<!-- measured: acme.mantine.rows = 198 -->
+<!-- measured: acme.mantine.rows = 199 -->
 <!-- measured: acme.mantine.native = 116 -->
 
-On [Acme](/docs/examples/) that is 198 classified rows in `report.json`, 116 of them native, measured against [Mantine's whole theming surface](#measured-against-mantines-whole-surface).
+On [Acme](/docs/examples/) that is 199 classified rows in `report.json`, 116 of them native, measured against [Mantine's whole theming surface](#measured-against-mantines-whole-surface).
 
 ```json
 "targets": { "mantine": { "output": "dist/mantine" } }
@@ -60,7 +60,7 @@ Mantine's two neutral tuples, `gray` and `dark`, are read directly by its styles
 
 ## What Mantine has no slot for
 
-- **The focus ring.** Mantine draws every focus outline from the primary filled colour, in its stylesheet; `ring` is reported `dropped`.
+- **The focus ring.** Mantine draws every focus outline from the primary filled colour, 2px solid at 2px, in its stylesheet; `ring`, `ring.width` and `ring.offset` are reported `dropped`.
 - **The z-index ladder.** Mantine's components take z-index from JavaScript defaults, not from the `--mantine-z-index-*` variables.
 - **Display type, `2xl` breakpoint, link hover/visited, motion, density.** No matching key; each is a `dropped` row with its reason.
 

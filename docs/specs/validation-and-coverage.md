@@ -236,7 +236,7 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 <!-- measured: acme.bootstrap.native = 62 -->
 <!-- measured: acme.bootstrap.derived = 489 -->
 <!-- measured: acme.bootstrap.approximated = 41 -->
-<!-- measured: acme.bootstrap.dropped = 71 -->
+<!-- measured: acme.bootstrap.dropped = 73 -->
 <!-- measured: acme.bootstrap.unsupported = 56 -->
 <!-- measured: acme.primeng.driven = 89 -->
 <!-- measured: acme.primeng.inherited = 1600 -->
@@ -245,16 +245,16 @@ A target's coverage percentage measures how much of _its_ surface we drive. It d
 |                                          | Bootstrap                                                               | PrimeNG                                                                                             |
 | ---------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Surface                                  | 952 variables (657 component-scoped)                                    | 2759 slots across 98 families                                                                       |
-| Driven                                   | 62 native + 489 derived = 551 of 719 rows (77%), plus 41 `approximated` | 89 driven + 1600 inherited = 1689 (61%), 1070 left on Aura's default                                |
-| Undriven                                 | 71 `dropped` + 56 `unsupported`                                         | the family rows in `report.json`; slot by slot in [catalog signals](../findings/catalog-signals.md) |
+| Driven                                   | 62 native + 489 derived = 551 of 721 rows (76%), plus 41 `approximated` | 89 driven + 1600 inherited = 1689 (61%), 1070 left on Aura's default                                |
+| Undriven                                 | 73 `dropped` + 56 `unsupported`                                         | the family rows in `report.json`; slot by slot in [catalog signals](../findings/catalog-signals.md) |
 | Reachable without new catalog vocabulary | **~0**                                                                  | **221**                                                                                             |
 
-The 61% is the target with room to grow; the 77% is the one that has converged. The reason is architectural:
+The 61% is the target with room to grow; the 76% is the one that has converged. The reason is architectural:
 
-<!-- measured: acme.bootstrap.undriven = 127 -->
+<!-- measured: acme.bootstrap.undriven = 129 -->
 
 - **PrimeNG resolves `{token.path}` references at runtime**, so driving one semantic path cascades to every component slot pointing at it — a multiplier. Driving `formField.paddingX` alone reaches Button plus every form component. 1,552 of its covered slots are `inherited` this way, and 221 more sit behind 100 semantic paths this exporter drives only partially (`form.field.*` 125, `navigation.item.*` 65, `list.*` 21, `overlay.*` 10) — all expressible with catalog vocabulary that already ships.
-- **Bootstrap's Sass path binds per variable**, with no multiplier. Its 127 undriven variables were measured group by group and every group fails for a structural reason, not for missing work. The five largest account for 98 of them: structural/behavioral options like cursor and order (29), Bootstrap's own shade/tint derivation knobs (18, made redundant by our own state derivation), `null` cascade no-ops on non-inherited properties (18), bespoke geometry already tested and rejected by [proposal 0004](../proposals/0004-component-geometry.md) (17), and embedded SVG assets (16). The remaining 29 sit in eleven smaller groups, the largest being per-component opacity values with no shared meaning (12) and concepts both reference targets model incompatibly (4).
+- **Bootstrap's Sass path binds per variable**, with no multiplier. Its 129 undriven variables were measured group by group and every group fails for a structural reason, not for missing work (two of them, the focus ring's width and offset, only until a design system authors `ring.width`; Acme doesn't). The five largest account for 98 of them: structural/behavioral options like cursor and order (29), Bootstrap's own shade/tint derivation knobs (18, made redundant by our own state derivation), `null` cascade no-ops on non-inherited properties (18), bespoke geometry already tested and rejected by [proposal 0004](../proposals/0004-component-geometry.md) (17), and embedded SVG assets (16). The remaining 29 sit in eleven smaller groups, the largest being per-component opacity values with no shared meaning (12) and concepts both reference targets model incompatibly (4).
 
 Two consequences for reading the bar:
 
@@ -306,7 +306,7 @@ Terminal rendering:
 What the CLI actually prints, from `npx transtyle build shadcn --cwd examples/acme`:
 
 ```
-shadcn  41% native · 54% derived · 5% dropped
+shadcn  39% native · 53% derived · 8% dropped
   ↳ dist/shadcn/globals.transtyle.css
   ↳ dist/shadcn/usage.md
   ↳ dist/shadcn/report.json

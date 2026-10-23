@@ -148,6 +148,14 @@
           "slot": "semantic.radius.xl"
         },
         {
+          "variable": "--ring-offset",
+          "slot": "semantic.ring.offset"
+        },
+        {
+          "variable": "--ring-width",
+          "slot": "semantic.ring.width"
+        },
+        {
           "variable": "--size-control-lg",
           "slot": "semantic.size.control.lg"
         },
