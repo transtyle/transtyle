@@ -1,5 +1,14 @@
 # @transtyle/plugin-kit
 
+## 0.1.0-alpha.5
+
+### Patch Changes
+
+- Updated dependencies [f790c6a]
+- Updated dependencies [511e2d2]
+- Updated dependencies [864b0a6]
+  - @transtyle/core@0.1.0-alpha.5
+
 ## 0.1.0-alpha.4
 
 ### Minor Changes

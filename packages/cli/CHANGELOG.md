@@ -1,5 +1,31 @@
 # @transtyle/cli
 
+## 0.1.0-alpha.5
+
+### Minor Changes
+
+- 1c5ea8b: `transtyle add <npm package>` installs a community exporter by its exact npm name (or a local `npm pack` tarball). It reads the package's manifest without installing or running anything and prints it, then installs with `--ignore-scripts` and adds a target `{ "exporter": "<package>", "output": "dist/<name>" }` named after the manifest. A declarative package prints "No code will run" and installs without a question; a package that runs code asks for a yes on a terminal, `--yes` skips the question, and without a terminal it exits 2. A package with no manifest, an importer, a target already configured and an IR spec or plugin API this version does not accept are refused (exit 2) before anything is installed. Official names work as before.
+
+### Patch Changes
+
+- Updated dependencies [f790c6a]
+- Updated dependencies [c345e51]
+- Updated dependencies [511e2d2]
+- Updated dependencies [864b0a6]
+- Updated dependencies [0da21d6]
+  - @transtyle/core@0.1.0-alpha.5
+  - @transtyle/exporter-chakra@0.1.0-alpha.5
+  - @transtyle/exporter-mantine@0.1.0-alpha.5
+  - @transtyle/exporter-primeng@0.1.0-alpha.5
+  - @transtyle/exporter-mui@0.1.0-alpha.5
+  - @transtyle/exporter-storybook@0.1.0-alpha.5
+  - @transtyle/exporter-echarts@0.1.0-alpha.5
+  - @transtyle/exporter-radix@0.1.0-alpha.5
+  - @transtyle/exporter-bootstrap@0.1.0-alpha.5
+  - @transtyle/exporter-css-variables@0.1.0-alpha.5
+  - @transtyle/exporter-daisyui@0.1.0-alpha.5
+  - @transtyle/exporter-shadcn@0.1.0-alpha.5
+
 ## 0.1.0-alpha.4
 
 ### Minor Changes

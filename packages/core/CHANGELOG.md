@@ -1,5 +1,29 @@
 # @transtyle/core
 
+## 0.1.0-alpha.5
+
+### Minor Changes
+
+- 511e2d2: The catalog gains the focus ring's geometry: `semantic.ring.width` and `semantic.ring.offset`, two scalars next to `semantic.color.ring` (proposal 0002, row 8, #167).
+
+  The width defaults to `{semantic.border-width.medium}` (2px) and the offset to 2px. There is no style and no shadow slot, and no composite: every outline-family library draws a solid ring, and Chakra UI, Material UI, Adobe Spectrum and Material 3 all publish the width and the offset as separate values. The targets write them only when you author them (the width itself, or through `border-width.medium`), so a design system that doesn't keeps each library's own ring: PrimeNG's `focusRing.width` and `.offset`, Chakra's `--focus-ring-width` and `--focus-ring-offset` on `<html>` (every `focusVisibleRing` variant reads them), Material UI's `focusVisible.outlineWidth` and `.outlineOffset`, and Bootstrap's `$focus-ring-width` (its ring is a box-shadow halo with no gap, so the offset is reported `dropped`). The css-variables target writes `--ring-width` and `--ring-offset` for everyone. Mantine, daisyUI, Radix Themes and shadcn/ui draw their rings in component CSS and report both slots `dropped`. The GOV.UK example authors its 3px `$govuk-focus-width`, so its PrimeNG, Chakra, Material UI and Bootstrap themes now draw a 3px ring.
+
+  `isAuthored(map, path)` in `@transtyle/ir` is the test the exporters share: `authored` or `aliased`, or an `alias(<slot>)` default of a slot the design system authored. `transtyle catalog` lists 266 slots.
+
+- 864b0a6: `check` now holds the focus ring to a non-text contrast level (`TST2101`).
+
+  `ring` on `elevation.0.surface` and `elevation.1.surface` must reach 3:1 under `wcag21-aa` and `wcag21-aaa` (WCAG 2.1 SC 1.4.11) and Lc 30 under `apca`, whose Bronze mode has no non-text level. In a `contrast: more` combination the ring is raised to 4.5:1 or Lc 45, not to the 7:1 of text. Borders stay unchecked: they measure 1.2:1 to 1.6:1 on every example and the catalog default, and most are decorative. `transtyle diff` flags a ring regression like any other pair. A derived ring on a very light or very dark brand can warn; GOV.UK suppresses the pair, since its yellow focus is paired with a dark outline.
+
+### Patch Changes
+
+- f790c6a: Report an alias loop once, without the tokens that alias into it.
+
+  A token that points at a loop without being on it (`x` → `a`, with `a` and `b` aliasing each other) used to get a `TST1104` of its own, repeating the whole loop after its own name. `check` now prints one `TST1104` for the loop, `a → b → a`, located on `a`, and nothing for `x`: it has no value because of the loop, which the error already explains. A tail of N tokens used to print N + 1 errors whose length grew with N². Pure loops, self-references and every other diagnostic are unchanged.
+
+- Updated dependencies [c345e51]
+- Updated dependencies [511e2d2]
+  - @transtyle/ir@0.1.0-alpha.5
+
 ## 0.1.0-alpha.4
 
 ### Minor Changes

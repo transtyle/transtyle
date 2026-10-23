@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/core",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "Transtyle core: compilation pipeline (load, normalize, derive, resolve, emit, report).",
   "keywords": [
     "design-tokens",
@@ -22,7 +22,7 @@
     "./browser": "./src/browser.js"
   },
   "dependencies": {
-    "@transtyle/ir": "0.1.0-alpha.4"
+    "@transtyle/ir": "0.1.0-alpha.5"
   },
   "peerDependencies": {
     "apca-w3": "^0.1.9"

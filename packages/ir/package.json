@@ -1,6 +1,6 @@
 {
   "name": "@transtyle/ir",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "Transtyle IR: semantic catalog, provenance constants, token-tree helpers. Zero dependencies.",
   "keywords": [
     "design-tokens",

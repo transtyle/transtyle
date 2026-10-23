@@ -1,5 +1,25 @@
 # @transtyle/exporter-mui
 
+## 0.1.0-alpha.5
+
+### Minor Changes
+
+- c345e51: The TypeScript targets write a slot's `$description` and `$deprecated` as JSDoc.
+
+  Chakra, Mantine, PrimeNG, MUI and Storybook put a `/** … */` block above each property that maps exactly one slot, and ECharts does the same in its `.js` theme (the `.json` twin takes no comments). The description shows on hover in an editor, and `@deprecated <reason>` strikes the property through. Radix writes the same text as a `/* … */` comment above each variable that is exactly one grid cell. A property computed from several slots, or from a derived one, gets no comment, and a `*/` in a description is broken up so the file still parses. `@transtyle/ir` exports `jsdocComment()`, `Documented`, `withDoc()` and `withoutDocs()` for exporters that print an object tree.
+
+- 511e2d2: The catalog gains the focus ring's geometry: `semantic.ring.width` and `semantic.ring.offset`, two scalars next to `semantic.color.ring` (proposal 0002, row 8, #167).
+
+  The width defaults to `{semantic.border-width.medium}` (2px) and the offset to 2px. There is no style and no shadow slot, and no composite: every outline-family library draws a solid ring, and Chakra UI, Material UI, Adobe Spectrum and Material 3 all publish the width and the offset as separate values. The targets write them only when you author them (the width itself, or through `border-width.medium`), so a design system that doesn't keeps each library's own ring: PrimeNG's `focusRing.width` and `.offset`, Chakra's `--focus-ring-width` and `--focus-ring-offset` on `<html>` (every `focusVisibleRing` variant reads them), Material UI's `focusVisible.outlineWidth` and `.outlineOffset`, and Bootstrap's `$focus-ring-width` (its ring is a box-shadow halo with no gap, so the offset is reported `dropped`). The css-variables target writes `--ring-width` and `--ring-offset` for everyone. Mantine, daisyUI, Radix Themes and shadcn/ui draw their rings in component CSS and report both slots `dropped`. The GOV.UK example authors its 3px `$govuk-focus-width`, so its PrimeNG, Chakra, Material UI and Bootstrap themes now draw a 3px ring.
+
+  `isAuthored(map, path)` in `@transtyle/ir` is the test the exporters share: `authored` or `aliased`, or an `alias(<slot>)` default of a slot the design system authored. `transtyle catalog` lists 266 slots.
+
+### Patch Changes
+
+- Updated dependencies [c345e51]
+- Updated dependencies [511e2d2]
+  - @transtyle/ir@0.1.0-alpha.5
+
 ## 0.1.0-alpha.4
 
 ### Minor Changes
