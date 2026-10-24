@@ -42,7 +42,7 @@
     "suppress": [
       {
         "code": "TST2101",
-        "path": "ring",
+        "path": "semantic.color.ring",
         "reason": "GOV.UK's yellow focus state (#ffdd00) is paired with a dark text-colored outline, so the indicator meets WCAG 1.4.11 as a whole; the yellow alone is under 3:1 on white."
       }
     ]
