@@ -93,7 +93,7 @@
     "apca-w3": "0.1.9",
     "playwright": "1.63.0",
     "prettier": "3.9.6",
-    "satori": "0.33.4"
+    "satori": "0.33.5"
   },
   "overrides": {
     "@angular/build": {
